@@ -43,7 +43,6 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iter::iter`
     /// # Safety
     /// - caller must ensure that iter.param points to type T
     pub unsafe fn new(iter: &'a mut sys::ecs_iter_t) -> Self {
@@ -92,31 +91,16 @@ where
     }
 
     /// Wrap the system id in the iterator in an [`EntityView`] object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::system`
-    #[doc(alias = "iter::system")]
     pub fn system(&self) -> EntityView<'a> {
         EntityView::new_from(self.world(), self.iter.system)
     }
 
     /// Wrap the event id in the iterator in an [`EntityView`] object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::event`
-    #[doc(alias = "iter::event")]
     pub fn event(&self) -> EntityView<'a> {
         EntityView::new_from(self.world(), self.iter.event)
     }
 
     /// Wrap the event id in the iterator in an [`IdView`] object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::event_id`
-    #[doc(alias = "iter::event_id")]
     pub fn event_id(&self) -> IdView<'a> {
         IdView::new_from_id(self.world(), self.iter.event_id)
     }
@@ -126,31 +110,16 @@ where
     /// # Arguments
     ///
     /// * `row` - Row being iterated over
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::entity`
-    #[doc(alias = "iter::entity")]
     pub fn entity(&self, row: usize) -> EntityView<'a> {
         unsafe { EntityView::new_from(self.real_world(), *self.iter.entities.add(row)) }
     }
 
     /// Return a mut reference to the raw iterator object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::c_ptr`
-    #[doc(alias = "iter::c_ptr")]
     pub fn iter_mut(&mut self) -> &mut sys::ecs_iter_t {
         self.iter
     }
 
     /// Return the count of entities in the iterator.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::count`
-    #[doc(alias = "iter::count")]
     pub fn count(&self) -> usize {
         //TODO soft assert
         // ecs_check(iter_->flags & EcsIterIsValid, ECS_INVALID_PARAMETER,
@@ -165,8 +134,6 @@ where
     /// # See also
     ///
     /// * [`TableIter::delta_system_time()`]
-    /// * C++ API: `iter::delta_time`
-    #[doc(alias = "iter::delta_time")]
     pub fn delta_time(&self) -> FTime {
         self.iter.delta_time
     }
@@ -178,42 +145,29 @@ where
     /// # See also
     ///
     /// * [`TableIter::delta_time()`]
-    /// * C++ API: `iter::delta_system_time`
-    #[doc(alias = "iter::delta_system_time")]
     pub fn delta_system_time(&self) -> FTime {
         self.iter.delta_system_time
     }
 
     /// Return the table stored in the iterator as an `Archetype` object
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::type`
-    #[doc(alias = "iter::type")]
     pub fn archetype(&self) -> Option<Archetype<'a>> {
         self.table().map(|t| t.archetype())
     }
 
     /// # See also
     ///
-    /// * C++ API: `iter::table`
-    #[doc(alias = "iter::table")]
     pub fn table(&self) -> Option<Table<'a>> {
         NonNull::new(self.iter.table).map(|ptr| Table::new(self.real_world(), ptr))
     }
 
     /// # See also
     ///
-    /// * C++ API: `iter::other_table`
-    #[doc(alias = "iter::table")]
     pub fn other_table(&self) -> Option<Table<'a>> {
         NonNull::new(self.iter.other_table).map(|ptr| Table::new(self.real_world(), ptr))
     }
 
     /// # See also
     ///
-    /// * C++ API: `iter::range`
-    #[doc(alias = "iter::range")]
     pub fn range(&self) -> Option<TableRange<'a>> {
         self.table()
             .map(|t| TableRange::new(t, self.iter.offset, self.iter.count))
@@ -224,11 +178,6 @@ where
     /// # Arguments
     ///
     /// * `var_id` - The variable id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::get_var`
-    #[doc(alias = "iter::get_var")]
     pub fn get_var(&self, var_id: i32) -> EntityView<'a> {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         let var =
@@ -242,11 +191,6 @@ where
     /// # Arguments
     ///
     /// * `var_id` - The variable id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::get_var`
-    #[doc(alias = "iter::get_var")]
     pub fn get_var_by_name(&self, name: &str) -> EntityView<'a> {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -268,22 +212,15 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iter::ctx`
     ///
     /// # Safety
     /// - caller must ensure the ctx variable was set to a type accessible as C and is not aliased
-    #[doc(alias = "iter::ctx")]
     pub unsafe fn context<T>(&mut self) -> &'a mut T {
         unsafe { &mut *(self.iter.ctx as *mut T) }
     }
 
     /// Access ctx.
     /// ctx contains the context pointer assigned to a system
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::ctx`
-    #[doc(alias = "iter::ctx")]
     pub fn context_ptr(&self) -> *mut c_void {
         self.iter.ctx
     }
@@ -294,11 +231,6 @@ where
     /// # Safety
     ///
     /// - Caller must ensure the type is correct when accessing the pointer.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::param`
-    #[doc(alias = "iter::param")]
     pub unsafe fn param_untyped(&self) -> *mut c_void {
         self.iter.param
     }
@@ -308,11 +240,6 @@ where
     ///
     /// There is no `param_mut` function to discourage the user from making changes to events sent to observers as
     /// order of execution is not defined.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::param`
-    #[doc(alias = "iter::param")]
     pub fn param(&self) -> &P::UnderlyingType {
         const {
             assert!(
@@ -338,11 +265,6 @@ where
     /// # Returns
     ///
     /// Returns whether field is matched on self
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::is_self`
-    #[doc(alias = "iter::is_self")]
     pub fn is_self(&self, index: i8) -> bool {
         unsafe { sys::ecs_field_is_self(self.iter, index) }
     }
@@ -354,11 +276,6 @@ where
     /// # Returns
     ///
     /// Returns whether field is set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::is_set`
-    #[doc(alias = "iter::is_set")]
     pub fn is_set(&self, index: i8) -> bool {
         unsafe { sys::ecs_field_is_set(self.iter, index) }
     }
@@ -370,21 +287,11 @@ where
     /// # Returns
     ///
     /// Returns whether field is readonly
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::is_readonly`
-    #[doc(alias = "iter::is_readonly")]
     pub fn is_readonly(&self, index: i8) -> bool {
         unsafe { sys::ecs_field_is_readonly(self.iter, index) }
     }
 
     /// Number of fields in iterator.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field_count`
-    #[doc(alias = "iter::field_count")]
     pub fn field_count(&self) -> i8 {
         self.iter.field_count
     }
@@ -394,11 +301,6 @@ where
     /// # Arguments
     ///
     /// * `index` - The field id.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::size`
-    #[doc(alias = "iter::size")]
     pub fn size(&self, index: i8) -> usize {
         unsafe { sys::ecs_field_size(self.iter, index) }
     }
@@ -408,11 +310,6 @@ where
     /// # Arguments
     ///
     /// * `index` - The field index.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::src`
-    #[doc(alias = "iter::src")]
     pub fn src(&self, index: usize) -> EntityView<'a> {
         unsafe { EntityView::new_from(self.world(), sys::ecs_field_src(self.iter, index as i8)) }
     }
@@ -422,11 +319,6 @@ where
     /// # Arguments
     ///
     /// * `index` - The field index.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::id`
-    #[doc(alias = "iter::id")]
     pub fn id(&self, index: i8) -> IdView<'a> {
         unsafe { IdView::new_from_id(self.world(), sys::ecs_field_id(self.iter, index)) }
     }
@@ -437,11 +329,6 @@ where
     /// # Arguments
     ///
     /// * `index` - The field index.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::pair`
-    #[doc(alias = "iter::pair")]
     pub fn pair(&self, index: i8) -> Option<IdView<'a>> {
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
@@ -458,30 +345,16 @@ where
     /// # Arguments
     ///
     /// * `index` - The field index.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::column_index`
-    #[doc(alias = "iter::column_index")]
     pub fn column_index(&self, index: i8) -> i32 {
         unsafe { sys::ecs_field_column(self.iter, index) }
     }
 
     /// Obtain term that triggered an observer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::term_index`
     pub fn term_index(&self) -> i8 {
         self.iter.term_index
     }
 
     /// Convert current iterator result to string
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::str`
-    #[doc(alias = "iter::str")]
     pub fn to_str(&self) -> &'a CStr {
         let c_str = unsafe { sys::ecs_iter_str(self.iter) };
         ecs_assert!(!c_str.is_null(), FlecsErrorCode::InvalidParameter);
@@ -513,11 +386,6 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field`
-    #[doc(alias = "iter::field")]
     pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T, true> {
         ecs_assert!(
             index < self.iter.field_count,
@@ -860,10 +728,6 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field`
     pub fn field_mut<T: ComponentId>(
         &self,
         index: i8,
@@ -965,11 +829,6 @@ where
     /// # Returns
     ///
     /// Returns an `FieldUntyped` object that can be used to access the field data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field`
-    #[doc(alias = "iter::field")]
     pub fn field_untyped(&self, index: i8) -> FieldUntyped {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0),
@@ -996,10 +855,6 @@ where
     /// # Returns
     ///
     /// Returns a pointer to the field data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field_at`
     pub fn field_at_untyped(&self, index: i8, row: i32) -> *mut c_void {
         ecs_assert!(
             index < self.iter.field_count,
@@ -1029,10 +884,6 @@ where
     /// # Returns
     ///
     /// An option containing a mutable reference to the field data
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field_at`
     pub fn field_at_mut<T>(
         &self,
         index: i8,
@@ -1073,10 +924,6 @@ where
     /// # Returns
     ///
     /// An option containing a reference to the field data
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field_at`
     pub fn field_at<T>(&self, index: i8, row: usize) -> Option<FieldAt<T::UnderlyingType>>
     where
         T: ComponentId,
@@ -1171,10 +1018,6 @@ where
     /// # Returns
     ///
     /// The entity ids.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::entities`
     #[doc(alias = "iter::entities")]
     pub fn entities(&self) -> &[Entity] {
         unsafe {
@@ -1198,8 +1041,6 @@ where
     /// # See also
     ///
     /// * [`Query::is_changed()`]
-    /// * C++ API: `iter::changed`
-    #[doc(alias = "iter::changed")]
     pub fn is_changed(&mut self) -> bool {
         unsafe { sys::ecs_iter_changed(self.iter) }
     }
@@ -1233,11 +1074,6 @@ where
     ///
     /// When this operation is invoked, the components of the current table will
     /// not be marked dirty.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::skip`
-    #[doc(alias = "iter::skip")]
     pub fn skip(&mut self) {
         unsafe { sys::ecs_iter_skip(self.iter) };
     }
@@ -1249,11 +1085,6 @@ where
     /// # Safety
     ///
     /// grouped queries only
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::group_id`
-    #[doc(alias = "iter::group_id")]
     pub fn group_id(&self) -> sys::ecs_id_t {
         self.iter.group_id
     }
@@ -1725,11 +1556,6 @@ where
     /// assert_eq!(count, 1);
     /// assert_eq!(tgt_count, 2);
     /// ```
-    ///
-    /// # See Also
-    ///
-    /// * C++ API: `iter::targets`
-    #[doc(alias = "iter::targets")]
     pub fn targets(&mut self, index: i8, mut func: impl FnMut(EntityView)) {
         ecs_assert!(!self.iter.table.is_null(), FlecsErrorCode::InvalidOperation);
         ecs_assert!(
@@ -1768,11 +1594,6 @@ where
     ///
     /// This operation is valid inside a `run()` callback. An example of an
     /// invalid context is inside an `each()` callback.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::next`
-    #[doc(alias = "iter::next")]
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> bool {
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {

@@ -40,8 +40,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # See also
     ///
     /// * [`EventBuilder::new_untyped()`]
-    /// * C++ API: `event_builder_typed::event_builder_typed`
-    #[doc(alias = "event_builder_typed::event_builder_typed")]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let mut obj = Self {
             world: world.world(),
@@ -69,8 +67,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # See also
     ///
     /// * [`EventBuilder::new()`]
-    /// * C++ API: `event_builder_base::event_builder_base`
-    #[doc(alias = "event_builder_base::event_builder_base")]
     pub(crate) fn new_untyped(
         world: impl WorldProvider<'a>,
         event: impl Into<Entity>,
@@ -91,11 +87,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `id` - The id of the component to add to the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::id`
-    #[doc(alias = "event_builder_base::id")]
     pub fn add_id(&mut self, id: impl IntoId) -> &mut Self {
         let id = *id.into();
         let ids = &mut self.ids;
@@ -113,11 +104,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Type parameters
     ///
     /// * `C` - The component to add to the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::id`
-    #[doc(alias = "event_builder_base::id")]
     pub fn add<C>(&mut self) -> &mut Self
     where
         C: ComponentOrPairId,
@@ -151,11 +137,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `second` - The id of the second component to add to the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::id`
-    #[doc(alias = "event_builder_base::id")]
     fn add_first<First>(&mut self, second: impl Into<Entity>) -> &mut Self
     where
         First: ComponentId,
@@ -164,7 +145,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         self.add_id(ecs_pair(First::id(world), *second.into()))
     }
 
-    #[doc(alias = "event_builder_base::id")]
     fn add_second<Second>(&mut self, first: impl Into<Entity>) -> &mut Self
     where
         Second: ComponentId,
@@ -178,11 +158,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `entity` - The target entity to emit for the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::entity`
-    #[doc(alias = "event_builder_base::entity")]
     pub fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
         let desc = &mut self.desc;
         desc.entity = *entity.into();
@@ -196,11 +171,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// * `table` - The table to emit for the event
     /// * `offset` - The offset tof the table to emit for the event
     /// * `count` - The count of the table to emit for the event
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `event_builder_base::table`
-    #[doc(alias = "event_builder_base::table")]
     pub fn table(&mut self, table: impl IntoTable, offset: i32, count: i32) -> &mut Self {
         let desc = &mut self.desc;
         desc.table = table.table_ptr_mut();

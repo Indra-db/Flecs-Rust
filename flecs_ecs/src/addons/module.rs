@@ -72,7 +72,6 @@ impl World {
     /// * [`addons::module`](crate::addons::module)
     /// * [`Module`]
     /// * [`World::module()`]
-    /// * C++ API: `world::import`
     pub fn import<T: Module>(&self) -> EntityView {
         // Reset scope
         let prev_scope = self.set_scope_id(0);
@@ -143,7 +142,6 @@ impl World {
     /// * [`addons::module`](crate::addons::module)
     /// * [`Module`]
     /// * [`World::import()`]
-    /// * C++ API: `world::module`
     pub fn module<M: ComponentId>(&self, name: &str) -> EntityView {
         let comp = self.component::<M>();
         let id = comp.id();

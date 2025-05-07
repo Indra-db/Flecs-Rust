@@ -54,11 +54,6 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// # Arguments
     ///
     /// * `world`: the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::component`
-    #[doc(alias = "component::component")]
     #[inline(never)]
     pub fn new(world: impl WorldProvider<'a>) -> Self {
         let world = world.world();
@@ -77,11 +72,6 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * `world`: the world.
     /// * `name`: the name of the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::component`
-    #[doc(alias = "component::component")]
     pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let id = T::__register_or_get_id_named::<false>(world.world(), name);
 
@@ -98,11 +88,6 @@ impl<'a, T> Component<'a, T> {
     /// # Arguments
     ///
     /// * `world`: the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::component`
-    #[doc(alias = "component::component")]
     #[cfg(feature = "flecs_meta")]
     pub(crate) fn new_id(world: impl WorldProvider<'a>, id: FetchedId<T>) -> Self {
         let world = world.world();
@@ -120,11 +105,6 @@ impl<'a, T> Component<'a, T> {
     /// * `world`: the world.
     /// * `name`: the name of the component.
     ///   Return the component as an entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::component`
-    #[doc(alias = "component::component")]
     #[cfg(feature = "flecs_meta")]
     pub fn new_named_id(world: impl WorldProvider<'a>, id: FetchedId<T>, name: &str) -> Self {
         let _name = compact_str::format_compact!("{}\0", name);
@@ -147,11 +127,6 @@ impl<'a, T> Component<'a, T> {
         }
     }
     /// Return the component as an entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::entity`
-    #[doc(alias = "id::entity")]
     #[inline(always)]
     pub fn entity(self) -> EntityView<'a> {
         self.base.entity
@@ -162,11 +137,6 @@ impl<'a, T> Component<'a, T> {
     /// # Arguments
     ///
     /// * `type_hooks`: the type hooks.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::get_binding_context`
-    #[doc(alias = "component::get_binding_context")]
     fn get_binding_context(type_hooks: &mut sys::ecs_type_hooks_t) -> &mut ComponentBindingCtx {
         let mut binding_ctx: *mut ComponentBindingCtx = type_hooks.binding_ctx as *mut _;
 
@@ -181,11 +151,6 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Get the type hooks for the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::get_hooks`
-    #[doc(alias = "component::get_hooks")]
     pub fn get_hooks(&self) -> sys::ecs_type_hooks_t {
         let type_hooks: *const sys::ecs_type_hooks_t =
             unsafe { sys::ecs_get_hooks_id(self.world.world_ptr(), *self.id) };
@@ -200,8 +165,6 @@ impl<'a, T> Component<'a, T> {
     ///
     /// # See also
     ///
-    /// * C++ API: `component::binding_ctx_free`
-    #[doc(alias = "component::binding_ctx_free")]
     unsafe extern "C-unwind" fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {
@@ -210,11 +173,6 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on add hook.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::on_add`
-    #[doc(alias = "component::on_add")]
     pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,
@@ -239,11 +197,6 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on remove hook.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::on_remove`
-    #[doc(alias = "component::on_remove")]
     pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,
@@ -268,11 +221,6 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on set hook.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `component::on_set`
-    #[doc(alias = "component::on_set")]
     pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,

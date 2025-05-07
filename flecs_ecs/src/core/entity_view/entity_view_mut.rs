@@ -28,7 +28,6 @@ impl<'a> EntityView<'a> {
     /// # See Also
     ///
     /// * C++ API equivalent: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_id(self, id: impl IntoId) -> Self {
         let id = *id.into();
         let world = self.world.world_ptr_mut();
@@ -63,11 +62,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Add a Tag or Tags relationship to an entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add<T>(self) -> Self
     where
         T: ComponentOrPairId,
@@ -77,11 +71,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Adds a flecs trait.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_trait<T>(self) -> Self
     where
         T: ComponentOrPairId,
@@ -116,11 +105,6 @@ impl<'a> EntityView<'a> {
     ///
     /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
     /// use `set_first` for ZST types.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         const {
             if !First::IS_TAG && !First::IMPLS_DEFAULT {
@@ -162,11 +146,6 @@ impl<'a> EntityView<'a> {
     ///
     /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
     /// use `set_second` for ZST types.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         let world_ptr = world.world_ptr();
@@ -197,11 +176,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Adds a pair to the entity composed of a tag and an (C) flecs enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_pair_enum<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
@@ -231,11 +205,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `enum_value`: The enumeration value.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add`
-    #[doc(alias = "entity_builder::add")]
     pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
@@ -259,11 +228,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `component`: The component to add.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
     pub fn add_id_if<T>(self, id: T, condition: bool) -> Self
     where
         T: IntoId,
@@ -301,11 +265,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `condition`: The condition to evaluate.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
     pub fn add_if<T: ComponentOrPairId>(self, condition: bool) -> Self {
         let world = self.world;
         if condition {
@@ -343,11 +302,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
     pub fn add_first_if<First: ComponentId>(
         self,
         second: impl Into<Entity>,
@@ -368,11 +322,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
     pub fn add_second_if<Second: ComponentId>(
         self,
         first: impl Into<Entity>,
@@ -393,11 +342,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `enum_value`: The enumeration constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::add_if`
-    #[doc(alias = "entity_builder::add_if")]
     pub fn add_enum_if<T>(self, enum_value: T, condition: bool) -> Self
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -417,11 +361,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `component_id`: The entity to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
     pub fn remove_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
         self
@@ -432,11 +371,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: the type of the component to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
     pub fn remove<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
 
@@ -459,11 +393,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `enum_value`: the enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove`
-    #[doc(alias = "entity_builder::remove")]
     pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
     where
         First: ComponentId,
@@ -483,11 +412,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove_second`
-    #[doc(alias = "entity_builder::remove_second")]
     pub fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((First::id(world), second.into()))
@@ -503,11 +427,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::remove_second`
-    #[doc(alias = "entity_builder::remove_second")]
     pub fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.remove_id((first.into(), Second::id(world)))
@@ -518,11 +437,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::is_a`
-    #[doc(alias = "entity_builder::is_a")]
     pub fn is_a_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_IS_A, second.into())) }
     }
@@ -532,11 +446,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::is_a`
-    #[doc(alias = "entity_builder::is_a")]
     pub fn is_a<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.is_a_id(T::id(world))
@@ -547,11 +456,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::child_of`
-    #[doc(alias = "entity_builder::child_of")]
     pub fn child_of_id(self, parent: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into())) }
     }
@@ -561,11 +465,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::child_of`
-    #[doc(alias = "entity_builder::child_of")]
     pub fn child_of<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.child_of_id(T::id(world))
@@ -576,11 +475,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
     pub fn depends_on_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into())) }
     }
@@ -590,11 +484,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
     pub fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
         let world = self.world;
         self.depends_on_id(T::id(world))
@@ -609,11 +498,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `enum_value`: The enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::depends_on`
-    #[doc(alias = "entity_builder::depends_on")]
     pub fn depends_on_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         self,
         enum_value: T,
@@ -627,11 +511,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot_of`
-    #[doc(alias = "entity_builder::slot_of")]
     pub fn slot_of_id(self, second: impl Into<Entity>) -> Self {
         unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into())) }
     }
@@ -641,22 +520,12 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: the type associated with the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot_of`
-    #[doc(alias = "entity_builder::slot_of")]
     pub fn slot_of<T: ComponentId>(self) -> Self {
         let world = self.world;
         self.slot_of_id(T::id(world))
     }
 
     /// Shortcut for `add_id((flecs::SlotOf::ID, target(ChildOf)))`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::slot`
-    #[doc(alias = "entity_builder::slot")]
     pub fn slot(self) -> Self {
         ecs_assert!(
             self.target::<flecs::ChildOf>(0).is_some(),
@@ -676,11 +545,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `id`: The id to mark for overriding.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
     pub fn auto_override_id(self, id: impl IntoId) -> Self {
         unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into()) }
     }
@@ -690,11 +554,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// * `T`: The component to mark for overriding.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
     pub fn auto_override<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.auto_override_id(T::get_id(world))
@@ -709,11 +568,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
     pub fn auto_override_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
@@ -732,11 +586,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::override`
-    #[doc(alias = "entity_builder::override")]
     pub fn auto_override_second<Second: ComponentId + DataComponent>(
         self,
         first: impl Into<Entity>,
@@ -751,11 +600,6 @@ impl<'a> EntityView<'a> {
     /// This function sets a component for an entity and marks the component
     /// as overridden, meaning that it will not be updated by systems that
     /// typically update this component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
     pub fn set_auto_override_id(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_add_id(
@@ -768,11 +612,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Sets a component mark override for the entity and sets the component data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
     pub fn set_auto_override<T: ComponentId + DataComponent + ComponentType<Struct>>(
         self,
         component: T,
@@ -781,10 +620,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Sets a pair, mark component for auto-overriding.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_auto_override`
     pub fn set_pair_override<First, Second>(
         self,
         data: <(First, Second) as ComponentOrPairId>::CastType,
@@ -804,11 +639,6 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Caller must ensure that `First` and `second` pair id data type is the one provided.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
     pub unsafe fn set_auto_override_first<First>(
         self,
         first: First,
@@ -828,11 +658,6 @@ impl<'a> EntityView<'a> {
     /// # Safety
     ///
     /// Caller must ensure that `Sirst` and `fecond` pair id data type is the one provided.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_auto_override`
-    #[doc(alias = "entity_builder::set_auto_override")]
     pub unsafe fn set_auto_override_second<Second>(
         self,
         second: Second,
@@ -852,11 +677,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `component` - The component to set on the entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
     pub fn set<T: ComponentId + DataComponent>(self, component: T) -> Self {
         set_helper(
             self.world.world_ptr_mut(),
@@ -908,8 +728,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::add_id`]
     /// * [`EntityView::set`]
     /// * [`EntityView::set_pair`]
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
     where
         T: ComponentId + DataComponent,
@@ -959,8 +777,6 @@ impl<'a> EntityView<'a> {
     /// ```
     /// # See also
     ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
     pub fn set_pair<First, Second>(
         self,
         data: <(First, Second) as ComponentOrPairId>::CastType,
@@ -990,11 +806,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Set a pair for an entity using the first element type and a second component ID.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
     pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
     where
         First: ComponentId + DataComponent,
@@ -1020,11 +831,6 @@ impl<'a> EntityView<'a> {
     /// # Panics
     ///
     /// Caller must ensure that first is a zero-sized type (ZST) or entity and not a pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_second`
-    #[doc(alias = "entity_builder::set_second")]
     pub fn set_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1059,11 +865,6 @@ impl<'a> EntityView<'a> {
     ///
     /// * `constant`: The enum constant.
     /// * `value`: The value to set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set`
-    #[doc(alias = "entity_builder::set")]
     pub fn set_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1089,11 +890,6 @@ impl<'a> EntityView<'a> {
     /// * `component_id` - The ID of the component to set the pointer to.
     /// * `size` - The size of the component.
     /// * `ptr` - A pointer to the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_ptr`
-    #[doc(alias = "entity_builder::set_ptr")]
     pub unsafe fn set_ptr_w_size(
         self,
         id: impl Into<Entity>,
@@ -1116,11 +912,6 @@ impl<'a> EntityView<'a> {
     /// * `self` - A mutable reference to the entity.
     /// * `component_id` - The ID of the component to set the pointer to.
     /// * `ptr` - A pointer to the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_ptr`
-    #[doc(alias = "entity_builder::set_ptr")]
     pub unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
         unsafe {
             let id = id.into();
@@ -1146,11 +937,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the name to be set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_name`
-    #[doc(alias = "entity_builder::set_name")]
     pub fn set_name(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1177,11 +963,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `name` - A string slice that holds the alias name to be set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_alias`
-    #[doc(alias = "entity_builder::set_alias")]
     pub fn set_alias(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1198,11 +979,6 @@ impl<'a> EntityView<'a> {
     /// Enables itself (the entity).
     ///
     /// Enabled entities are matched with systems and can be searched with queries.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, true) }
         self
@@ -1216,11 +992,6 @@ impl<'a> EntityView<'a> {
     ///
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), true) }
         self
@@ -1231,11 +1002,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// - `T`: The component to enable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.enable_id(T::get_id(world))
@@ -1250,11 +1016,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `second`: The ID of the second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((First::id(world), second.into()))
@@ -1269,11 +1030,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `first`: The ID of the first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::enable`
-    #[doc(alias = "entity_builder::enable")]
     pub fn enable_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
         let world = self.world;
         self.enable_id((first.into(), Second::id(world)))
@@ -1283,11 +1039,6 @@ impl<'a> EntityView<'a> {
     ///
     /// Disabled entities are not matched with systems and cannot be searched with queries,
     /// unless explicitly specified in the query expression.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
     pub fn disable_self(self) -> Self {
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, false) }
         self
@@ -1301,11 +1052,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `component_id`: The ID to disable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
     pub fn disable_id(self, id: impl IntoId) -> Self {
         unsafe { sys::ecs_enable_id(self.world.world_ptr_mut(), *self.id, *id.into(), false) }
         self
@@ -1316,11 +1062,6 @@ impl<'a> EntityView<'a> {
     /// # Type Parameters
     ///
     /// - `T`: The component to disable.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
     pub fn disable<T: ComponentOrPairId>(self) -> Self {
         let world = self.world;
         self.disable_id(T::get_id(world))
@@ -1335,11 +1076,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `second`: The ID of the second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::disable`
-    #[doc(alias = "entity_builder::disable")]
     pub fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
         let world = self.world;
         self.disable_id((First::id(world), second.into()))
@@ -1350,11 +1086,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id);
@@ -1373,8 +1104,6 @@ impl<'a> EntityView<'a> {
     /// - `func`: The function to call.///
     /// # See also
     ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_first_id(self, first: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
@@ -1394,11 +1123,6 @@ impl<'a> EntityView<'a> {
     ///
     /// - `second`: The second element of the pair.
     /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_second_id(self, second: impl Into<Entity>, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
@@ -1421,11 +1145,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
         self.with_first_id(First::id(world), func)
@@ -1441,11 +1160,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::with`
-    #[doc(alias = "entity_builder::with")]
     pub fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
         let world = self.world;
         self.with_second_id(Second::id(world), func)
@@ -1456,11 +1170,6 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `func`: The function to call.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::scope`
-    #[doc(alias = "entity_builder::scope")]
     pub fn run_in_scope(self, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id);
@@ -1471,11 +1180,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Calls the provided function with a world scoped to entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::scope`
-    #[doc(alias = "entity_builder::scope")]
     pub fn scope(self, f: impl FnMut(&World)) -> Self {
         let world = &*self.world;
         world.scope_id(self.id, f);
@@ -1493,8 +1197,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::modified()`]
     /// * [`EntityView::modified_first()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified_id(self, id: impl IntoId) {
         unsafe { sys::ecs_modified_id(self.world.world_ptr_mut(), *self.id, *id.into()) }
     }
@@ -1510,8 +1212,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::modified_first()`]
     /// * [`EntityView::modified_id()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified<T: ComponentOrPairId>(&self) {
         const {
             assert!(
@@ -1538,8 +1238,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::modified()`]
     /// * [`EntityView::modified_id()`]
     /// * [`World::modified()`]
-    /// * C++ API: `entity::modified`
-    #[doc(alias = "entity::modified")]
     pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
         ecs_assert!(
             core::mem::size_of::<First>() != 0,
@@ -1603,8 +1301,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::get_ref()`]
     /// * [`EntityView::get_ref_first()`]
     /// * [`EntityView::get_ref_second()`]
-    /// * C++ API: `entity::get_ref_w_id`
-    #[doc(alias = "entity::get_ref_w_id")]
     pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -1621,11 +1317,6 @@ impl<'a> EntityView<'a> {
     /// - `T`: Component for which to get a reference.
     ///
     /// Returns: The reference component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref<T>(&self) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -1650,11 +1341,6 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// A reference to the first component in the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_first<First: ComponentId + DataComponent>(
         self,
         second: impl Into<Entity>,
@@ -1691,11 +1377,6 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// A reference to the first component in the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::get_ref`
-    #[doc(alias = "entity::get_ref")]
     pub fn get_ref_second<Second: ComponentId + DataComponent>(
         &self,
         first: impl Into<Entity>,
@@ -1721,12 +1402,7 @@ impl<'a> EntityView<'a> {
     ///
     /// This operation removes all components from an entity without recycling
     /// the entity id.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::clear`
-    #[doc(alias = "entity::clear")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
         unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id) }
     }
@@ -1735,11 +1411,6 @@ impl<'a> EntityView<'a> {
     ///
     /// Entities have to be deleted explicitly, and are not deleted when the
     /// entity object goes out of scope.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::destruct`
-    #[doc(alias = "entity::destruct")]
     pub fn destruct(self) {
         unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
     }

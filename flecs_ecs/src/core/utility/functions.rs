@@ -408,7 +408,6 @@ pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row:
 ///
 /// # See also
 ///
-/// * C++ API: `type_to_oper`
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }

@@ -184,11 +184,6 @@ impl World {
     /// let new_world = world.reset();
     /// assert!(!new_world.exists(e));
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::reset`
-    #[doc(alias = "world::reset")]
     pub fn reset(self) -> Self {
         if unsafe { sys::flecs_poly_refcount(self.raw_world.as_ptr() as *mut c_void) } > 1 {
             panic!("Reset would invalidate other world handles that are still lingering in the user's code base. 
@@ -203,11 +198,6 @@ impl World {
     /// # Returns
     ///
     /// Returns a pointer to the C world object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::c_ptr`
-    #[doc(alias = "world::c_ptr")]
     #[inline(always)]
     #[doc(hidden)]
     pub fn ptr_mut(&self) -> *mut sys::ecs_world_t {
@@ -230,11 +220,6 @@ impl World {
     /// //assert!(world_info.world_time_total_raw > 0.0); //BUG TODO
     /// //assert!(world_info.systems_ran_frame == 0);
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::get_info`
-    #[doc(alias = "world::get_info")]
     pub fn info(&self) -> sys::WorldInfo {
         // SAFETY: The pointer is valid for the lifetime of the world.
         unsafe { *sys::ecs_get_world_info(self.raw_world.as_ptr()) }
@@ -263,8 +248,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::should_quit()`]
-    /// * C++ API: `world::quit`
-    #[doc(alias = "world::quit")]
     pub fn quit(&self) {
         unsafe {
             sys::ecs_quit(self.raw_world.as_ptr());
@@ -292,18 +275,11 @@ impl World {
     /// # See also
     ///
     /// * [`World::quit()`]
-    /// * C++ API: `world::should_quit`
-    #[doc(alias = "world::should_quit")]
     pub fn should_quit(&self) -> bool {
         unsafe { sys::ecs_should_quit(self.raw_world.as_ptr()) }
     }
 
     /// Registers an action to be executed when the world is destroyed.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::atfini`
-    #[doc(alias = "world::atfini")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn on_destroyed(&self, action: sys::ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
@@ -366,8 +342,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::frame_end()`]
-    /// * C++ API: `world::frame_begin`
-    #[doc(alias = "world::frame_begin")]
     pub fn frame_begin(&self, delta_time: f32) -> f32 {
         unsafe { sys::ecs_frame_begin(self.raw_world.as_ptr(), delta_time) }
     }
@@ -383,8 +357,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::frame_begin()`]
-    /// * C++ API: `world::frame_end`
-    #[doc(alias = "world::frame_end")]
     pub fn frame_end(&self) {
         unsafe {
             sys::ecs_frame_end(self.raw_world.as_ptr());
@@ -484,8 +456,6 @@ impl World {
     ///
     /// * [`World::is_readonly()`]
     /// * [`World::readonly_end()`]
-    /// * C++ API: `world::readonly_begin`
-    #[doc(alias = "world::readonly_begin")]
     pub fn readonly_begin(&self, multi_threaded: bool) -> bool {
         unsafe { sys::ecs_readonly_begin(self.raw_world.as_ptr(), multi_threaded) }
     }
@@ -511,8 +481,6 @@ impl World {
     ///
     /// * [`World::is_readonly()`]
     /// * [`World::readonly_begin()`]
-    /// * C++ API: `world::readonly_end`
-    #[doc(alias = "world::readonly_end")]
     pub fn readonly_end(&self) {
         unsafe {
             sys::ecs_readonly_end(self.raw_world.as_ptr());
@@ -550,8 +518,6 @@ impl World {
     ///
     /// * [`World::readonly_begin()`]
     /// * [`World::readonly_end()`]
-    /// * C++ API: `world::is_readonly`
-    #[doc(alias = "world::is_readonly")]
     pub fn is_readonly(&self) -> bool {
         unsafe { sys::ecs_stage_is_readonly(self.raw_world.as_ptr()) }
     }
@@ -599,8 +565,6 @@ impl World {
     /// * [`World::defer_suspend()`]
     /// * [`World::defer_resume()`]
     /// * [`World::is_deferred()`]
-    /// * C++ API: `world::defer_begin`
-    #[doc(alias = "world::defer_begin")]
     pub fn defer_begin(&self) -> bool {
         unsafe { sys::ecs_defer_begin(self.raw_world.as_ptr()) }
     }
@@ -626,8 +590,6 @@ impl World {
     /// * [`World::defer_suspend()`]
     /// * [`World::defer_resume()`]
     /// * [`World::is_deferred()`]
-    /// * C++ API: `world::defer_end`
-    #[doc(alias = "world::defer_end")]
     pub fn defer_end(&self) -> bool {
         unsafe { sys::ecs_defer_end(self.raw_world.as_ptr()) }
     }
@@ -663,8 +625,6 @@ impl World {
     /// * [`World::defer_end()`]
     /// * [`World::defer_suspend()`]
     /// * [`World::defer_resume()`]
-    /// * C++ API: `world::is_deferred`
-    #[doc(alias = "world::is_deferred")]
     pub fn is_deferred(&self) -> bool {
         unsafe { sys::ecs_is_deferred(self.raw_world.as_ptr()) }
     }
@@ -691,8 +651,6 @@ impl World {
     /// * [`World::defer_suspend()`]
     /// * [`World::defer_resume()`]
     /// * [`World::is_deferred()`]
-    /// * C++ API: `world::defer`
-    #[doc(alias = "world::defer")]
     pub fn defer<T>(&self, func: impl FnOnce() -> T) -> T {
         unsafe {
             sys::ecs_defer_begin(self.raw_world.as_ptr());
@@ -720,8 +678,6 @@ impl World {
     /// * [`World::defer_end()`]
     /// * [`World::defer_resume()`]
     /// * [`World::is_deferred()`]
-    /// * C++ API: `world::defer_suspend`
-    #[doc(alias = "world::defer_suspend")]
     pub fn defer_suspend(&self) {
         unsafe {
             sys::ecs_defer_suspend(self.raw_world.as_ptr());
@@ -737,8 +693,6 @@ impl World {
     /// * [`World::defer_end()`]
     /// * [`World::defer_suspend()`]
     /// * [`World::is_deferred()`]
-    /// * C++ API: `world::defer_resume`
-    #[doc(alias = "world::defer_resume")]
     pub fn defer_resume(&self) {
         unsafe {
             sys::ecs_defer_resume(self.raw_world.as_ptr());
@@ -788,8 +742,6 @@ impl World {
     /// * [`World::merge()`]
     /// * [`World::stage()`]
     /// * [`World::stage_id()`]
-    /// * C++ API: `world::set_stage_count`
-    #[doc(alias = "world::set_stage_count")]
     pub fn set_stage_count(&self, stages: i32) {
         unsafe {
             sys::ecs_set_stage_count(self.raw_world.as_ptr(), stages);
@@ -825,8 +777,6 @@ impl World {
     /// * [`World::set_stage_count()`]
     /// * [`World::stage()`]
     /// * [`World::stage_id()`]
-    /// * C++ API: `world::get_stage_count`
-    #[doc(alias = "world::get_stage_count")]
     pub fn get_stage_count(&self) -> i32 {
         unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
     }
@@ -865,8 +815,6 @@ impl World {
     /// * [`World::merge()`]
     /// * [`World::set_stage_count()`]
     /// * [`World::stage()`]
-    /// * C++ API: `world::get_stage_id`
-    #[doc(alias = "world::get_stage_id")]
     pub fn stage_id(&self) -> i32 {
         unsafe { sys::ecs_stage_get_id(self.raw_world.as_ptr()) }
     }
@@ -901,8 +849,6 @@ impl World {
     /// * [`World::set_stage_count()`]
     /// * [`World::stage()`]
     /// * [`World::stage_id()`]
-    /// * C++ API: `world::is_stage`
-    #[doc(alias = "world::is_stage")]
     pub fn is_stage(&self) -> bool {
         unsafe {
             ecs_assert!(
@@ -965,8 +911,6 @@ impl World {
     /// * [`World::set_stage_count()`]
     /// * [`World::stage()`]
     /// * [`World::stage_id()`]
-    /// * C++ API: `world::merge`
-    #[doc(alias = "world::merge")]
     pub fn merge(&self) {
         unsafe { sys::ecs_merge(self.raw_world.as_ptr()) };
     }
@@ -1016,8 +960,6 @@ impl World {
     /// * [`World::merge()`]
     /// * [`World::set_stage_count()`]
     /// * [`World::stage_id()`]
-    /// * C++ API: `world::get_stage`
-    #[doc(alias = "world::get_stage")]
     pub fn stage(&self, stage_id: i32) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
     }
@@ -1069,8 +1011,6 @@ impl World {
     /// ```
     /// # See also
     ///
-    /// * C++ API: `world::async_stage`
-    #[doc(alias = "world::async_stage")]
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
     }
@@ -1103,7 +1043,6 @@ impl World {
     /// * [`World::is_stage()`]
     /// * [`World::stage()`]
     /// * [`WorldRef`]
-    #[doc(alias = "world::get_world")]
     pub fn real_world(&self) -> WorldRef {
         self.world().real_world()
     }
@@ -1142,8 +1081,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::context()`]
-    /// * C++ API: `world::set_ctx`
-    #[doc(alias = "world::set_ctx")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn set_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
         unsafe { sys::ecs_set_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
@@ -1162,8 +1099,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_context()`]
-    /// * C++ API: `world::get_ctx`
-    #[doc(alias = "world::get_ctx")]
     pub fn context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_ctx(self.raw_world.as_ptr()) }
     }
@@ -1219,8 +1154,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::get_binding_context()`]
-    /// * C++ API: `world::set_binding_context`
-    #[doc(alias = "world::set_binding_context")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn set_binding_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
         unsafe { sys::ecs_set_binding_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
@@ -1235,8 +1168,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_binding_context()`]
-    /// * C++ API: `world::get_binding_context`
-    #[doc(alias = "world::get_binding_context")]
     pub(crate) fn get_binding_context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) }
     }
@@ -1248,11 +1179,6 @@ impl World {
     /// # Arguments
     ///
     /// * `entity_count` - Number of entities to preallocate memory for.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::dim`
-    #[doc(alias = "world::dim")]
     pub fn preallocate_entity_count(&self, entity_count: i32) {
         unsafe { sys::ecs_dim(self.raw_world.as_ptr(), entity_count) };
     }
@@ -1288,8 +1214,6 @@ impl World {
     ///
     /// * [`World::enable_range_check()`]
     /// * [`World::preallocate_entity_count()`]
-    /// * C++ API: `world::set_entity_range`
-    #[doc(alias = "world::set_entity_range")]
     pub fn set_entity_range(&self, min: impl Into<Entity>, max: impl Into<Entity>) {
         unsafe { sys::ecs_set_entity_range(self.raw_world.as_ptr(), *min.into(), *max.into()) };
     }
@@ -1324,8 +1248,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_entity_range()`]
-    /// * C++ API: `world::enable_range_check`
-    #[doc(alias = "world::enable_range_check")]
     pub fn enable_range_check(&self, enabled: bool) {
         unsafe { sys::ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
     }
@@ -1358,8 +1280,6 @@ impl World {
     ///
     /// * [`World::set_scope()`]
     /// * [`World::set_scope_id()`]
-    /// * C++ API: `world::get_scope`
-    #[doc(alias = "world::get_scope")]
     #[inline(always)]
     pub fn get_scope(&self) -> Option<EntityView> {
         let scope = unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) };
@@ -1406,8 +1326,6 @@ impl World {
     ///
     /// * [`World::get_scope()`]
     /// * [`World::set_scope()`]
-    /// * C++ API: `world::set_scope`
-    #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
         EntityView::new_from(self, unsafe {
@@ -1450,8 +1368,6 @@ impl World {
     ///
     /// * [`World::get_scope()`]
     /// * [`World::set_scope_id()`]
-    /// * C++ API: `world::set_scope`
-    #[doc(alias = "world::set_scope")]
     #[inline(always)]
     pub fn set_scope<T: ComponentId>(&self) -> EntityView {
         self.set_scope_id(T::id(self))
@@ -1491,10 +1407,7 @@ impl World {
     /// * [`World::lookup_recursive()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
-    /// * C++ API: `world::set_lookup_path`
     /// * C API: `sys::ecs_set_lookup_path`
-    #[doc(alias = "world::set_lookup_path")]
-    #[doc(alias = "wsys::ecs_set_lookup_path")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     // TODO we need to improve this function somehow, it's not very ergonomic
     pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut sys::ecs_entity_t {
@@ -1544,8 +1457,6 @@ impl World {
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
@@ -1577,8 +1488,6 @@ impl World {
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
@@ -1624,8 +1533,6 @@ impl World {
     /// * [`World::lookup_recursive()`]
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, true)
@@ -1647,8 +1554,6 @@ impl World {
     /// * [`World::lookup_recursive()`]
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup_recursive()`]
-    /// * C++ API: `world::lookup`
-    #[doc(alias = "world::lookup")]
     #[inline(always)]
     pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
         self.try_lookup_impl(name, false)
@@ -1659,11 +1564,6 @@ impl World {
     /// # Arguments
     ///
     /// * `component` - The singleton component to set on the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set`
-    #[doc(alias = "world::set")]
     pub fn set<T: ComponentId + DataComponent + ComponentType<Struct>>(&self, component: T) {
         let id = T::id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
@@ -1674,11 +1574,6 @@ impl World {
     /// # Safety
     ///
     /// Caller must ensure that `First` and `second` pair id data type is the one provided.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set`
-    #[doc(alias = "world::set")]
     pub fn set_first<First>(&self, second: impl Into<Entity>, first: First)
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1692,11 +1587,6 @@ impl World {
     /// # Safety
     ///
     /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set`
-    #[doc(alias = "world::set")]
     pub fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1708,11 +1598,6 @@ impl World {
     /// Set singleton pair.
     /// This operation sets the pair value, and uses the first non tag / ZST as type. If the
     /// entity did not yet have the pair, it will be added, otherwise overridden.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::set`
-    #[doc(alias = "world::set")]
     pub fn set_pair<First, Second>(&self, data: <(First, Second) as ComponentOrPairId>::CastType)
     where
         First: ComponentId,
@@ -1743,8 +1628,6 @@ impl World {
     ///
     /// * [`EntityView::modified()`]
     /// * [`World::modified()`]
-    /// * C++ API: `world::modified`
-    #[doc(alias = "world::modified")]
     #[inline(always)]
     pub fn modified_id(&self, id: impl Into<Entity>) {
         let id = id.into();
@@ -1761,8 +1644,6 @@ impl World {
     ///
     /// * [`EntityView::modified()`]
     /// * [`World::modified_id()`]
-    /// * C++ API: `world::modified`
-    #[doc(alias = "world::modified")]
     #[inline(always)]
     pub fn modified<T>(&self)
     where
@@ -2020,7 +1901,6 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::get_ref`
     // #[doc(alias = "world::get_ref")]
     // #[inline(always)]
     pub fn get_ref<T>(&self) -> CachedRef<T::CastType>
@@ -2040,11 +1920,6 @@ impl World {
     /// # Returns
     ///
     /// The entity representing the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::singleton`
-    #[doc(alias = "world::singleton")]
     #[inline(always)]
     pub fn singleton<T: ComponentId>(&self) -> EntityView {
         EntityView::new_from(self, T::id(self))
@@ -2067,8 +1942,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::target_id()`]
-    /// * C++ API: `world::target`
-    #[doc(alias = "world::target")]
     pub fn target<First>(&self, index: Option<i32>) -> EntityView
     where
         First: ComponentId,
@@ -2093,8 +1966,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::target()`]
-    /// * C++ API: `world::target`
-    #[doc(alias = "world::target")]
     pub fn target_id(&self, relationship: impl Into<Entity>, index: Option<usize>) -> EntityView {
         let relationship = *relationship.into();
         EntityView::new_from(self, unsafe {
@@ -2121,8 +1992,6 @@ impl World {
     ///
     /// * [`World::has()`]
     /// * [`World::has_enum()`]
-    /// * C++ API: `world::has`
-    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_id(&self, id: impl IntoId) -> bool {
         let id = *id.into();
@@ -2143,8 +2012,6 @@ impl World {
     ///
     /// * [`World::has_enum()`]
     /// * [`World::has_id()`]
-    /// * C++ API: `world::has`
-    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has<T>(&self) -> bool
     where
@@ -2171,8 +2038,6 @@ impl World {
     ///
     /// * [`World::has()`]
     /// * [`World::has_id()`]
-    /// * C++ API: `world::has`
-    #[doc(alias = "world::has")]
     #[inline(always)]
     pub fn has_enum<T>(&self, constant: T) -> bool
     where
@@ -2192,11 +2057,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` handle to the singleton component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::add`
-    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_id<T>(&self, id: T) -> EntityView
     where
@@ -2221,11 +2081,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` handle to the singleton component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::add`
-    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add<T: ComponentOrPairId>(&self) -> EntityView {
         let id = T::CastType::id(self);
@@ -2241,11 +2096,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` handle to the singleton enum component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::add`
-    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
@@ -2280,11 +2130,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` handle to the singleton pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::add`
-    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_first<First: ComponentId + TagComponent>(
         &self,
@@ -2307,11 +2152,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` handle to the singleton pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::add`
-    #[doc(alias = "world::add")]
     #[inline(always)]
     pub fn add_pair_enum<First, Second>(&self, enum_value: Second) -> EntityView
     where
@@ -2327,11 +2167,6 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id of the component to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove`
-    #[doc(alias = "world::remove")]
     pub fn remove_id<T>(&self, id: T) -> EntityView
     where
         T: IntoId,
@@ -2350,11 +2185,6 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T` - The component to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove`
-    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove<T: ComponentOrPairId>(&self) {
         if T::IS_PAIR {
@@ -2375,11 +2205,6 @@ impl World {
     /// # Arguments
     ///
     /// * `enum_value` - The enum value to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove`
-    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
     where
@@ -2398,11 +2223,6 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The first element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove`
-    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
         EntityView::new_from(self, Second::id(self)).remove_second::<Second>(first);
@@ -2417,11 +2237,6 @@ impl World {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove`
-    #[doc(alias = "world::remove")]
     #[inline(always)]
     pub fn remove_first<First: ComponentId>(&self, second: impl Into<Entity>) {
         EntityView::new_from(self, First::id(self)).remove_first::<First>(second);
@@ -2432,11 +2247,6 @@ impl World {
     /// # Arguments
     ///
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(EntityView)`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::children`
-    #[doc(alias = "world::children")]
     #[inline(always)]
     pub fn each_child(&self, callback: impl FnMut(EntityView)) {
         EntityView::new(self).each_child(callback);
@@ -2455,11 +2265,6 @@ impl World {
     /// # Returns
     ///
     /// The entity representing the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::use`
-    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView {
         let alias = compact_str::format_compact!("{}\0", alias);
@@ -2489,11 +2294,6 @@ impl World {
     /// # Returns
     ///
     /// The entity found by name.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::use`
-    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> EntityView {
         let name = compact_str::format_compact!("{}\0", name);
@@ -2520,11 +2320,6 @@ impl World {
     ///
     /// * `entity` - The entity to create an alias for.
     /// * `alias` - The alias to create.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::use`
-    #[doc(alias = "world::use")]
     #[inline(always)]
     pub fn set_alias_entity(&self, entity: impl Into<Entity>, alias: &str) {
         let alias = compact_str::format_compact!("{}\0", alias);
@@ -2554,11 +2349,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided id.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count_id(&self, id: impl IntoId) -> i32 {
         unsafe { sys::ecs_count_id(self.raw_world.as_ptr(), *id.into()) }
     }
@@ -2572,11 +2362,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count<T: ComponentOrPairId>(&self) -> i32 {
         self.count_id(T::get_id(self))
     }
@@ -2594,11 +2379,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> i32 {
         self.count_id((first.into(), Second::id(self)))
     }
@@ -2616,11 +2396,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count_first<First: ComponentId>(&self, second: impl Into<Entity>) -> i32 {
         self.count_id((First::id(self), second.into()))
     }
@@ -2638,11 +2413,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
@@ -2664,11 +2434,6 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided pair enum tag.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::count`
-    #[doc(alias = "world::count")]
     pub fn count_enum_tag_pair<First, Second>(&self, enum_value: Second) -> i32
     where
         First: ComponentId,
@@ -2689,11 +2454,6 @@ impl World {
     ///
     /// * `parent_id` - The id of the scope to use.
     /// * `func` - The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::scope`
-    #[doc(alias = "world::scope")]
     pub fn run_in_scope_with_id(&self, parent_id: impl Into<Entity>, mut func: impl FnMut()) {
         let prev: sys::ecs_id_t =
             unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into()) };
@@ -2713,11 +2473,6 @@ impl World {
     /// # Arguments
     ///
     /// * `func` - The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::scope`
-    #[doc(alias = "world::scope")]
     pub fn run_in_scope_with<T: ComponentId>(&self, func: impl FnMut()) {
         self.run_in_scope_with_id(T::id(self), func);
     }
@@ -2732,11 +2487,6 @@ impl World {
     /// # Returns
     ///
     /// A scoped world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::scope`
-    #[doc(alias = "world::scope")]
     pub fn scope_id(&self, parent_id: impl IntoId, mut f: impl FnMut(&World)) {
         let previous_scope = self.set_scope_id(parent_id);
         f(self);
@@ -2753,11 +2503,6 @@ impl World {
     /// # Returns
     ///
     /// A scoped world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::scope`
-    #[doc(alias = "world::scope")]
     pub fn scope<T: ComponentId>(&self, mut f: impl FnMut(&World)) {
         let previous_scope = self.set_scope_id(T::id(self));
         f(self);
@@ -2774,11 +2519,6 @@ impl World {
     /// # Returns
     ///
     /// A scoped world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::scope`
-    #[doc(alias = "world::scope")]
     pub fn scope_name(&self, name: &str, f: impl FnMut(&World)) {
         self.scope_id(EntityView::new_named(self, name).id, f);
     }
@@ -2789,11 +2529,6 @@ impl World {
     ///
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with_id(&self, id: impl IntoId, mut func: impl FnMut()) {
         let prev: sys::ecs_id_t = unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into()) };
         func();
@@ -2811,11 +2546,6 @@ impl World {
     /// # Arguments
     ///
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with<T: ComponentOrPairId>(&self, func: impl FnMut()) {
         self.with_id(T::get_id(self), func);
     }
@@ -2830,11 +2560,6 @@ impl World {
     ///
     /// * `first`: The first element of the pair.
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with_second<Second: ComponentId>(&self, first: impl Into<Entity>, func: impl FnMut()) {
         self.with_id(ecs_pair(*first.into(), Second::id(self)), func);
     }
@@ -2849,11 +2574,6 @@ impl World {
     ///
     /// * `second`: The second element of the pair.
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with_first<First: ComponentId>(&self, second: impl Into<Entity>, func: impl FnMut()) {
         self.with_id(ecs_pair(First::id(self), *second.into()), func);
     }
@@ -2868,11 +2588,6 @@ impl World {
     ///
     /// * `enum_value`: The enum value to give the entity.
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with_enum<T>(&self, enum_value: T, func: impl FnMut())
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -2891,11 +2606,6 @@ impl World {
     ///
     /// * `enum_value`: The enum value to give the entity.
     /// * `func`: The function to run.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::with`
-    #[doc(alias = "world::with")]
     pub fn with_enum_pair<First, Second>(&self, enum_value: Second, func: impl FnMut())
     where
         First: ComponentId,
@@ -2912,11 +2622,6 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id to delete.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delete_with`
-    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_id(&self, id: impl IntoId) {
         unsafe {
             sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into());
@@ -2928,11 +2633,6 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T`: The component type to delete.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delete_with`
-    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with<T: ComponentOrPairId>(&self) {
         self.delete_entities_with_id(T::get_id(self));
     }
@@ -2946,11 +2646,6 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The first id of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delete_with`
-    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
         self.delete_entities_with_id(ecs_pair(*first.into(), Second::id(self)));
     }
@@ -2964,11 +2659,6 @@ impl World {
     /// # Arguments
     ///
     /// * `second`: The second id of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delete_with`
-    #[doc(alias = "world::delete_with")]
     pub fn delete_entities_with_first<First: ComponentId>(&self, second: impl Into<Entity>) {
         self.delete_entities_with_id(ecs_pair(First::id(self), *second.into()));
     }
@@ -2982,11 +2672,6 @@ impl World {
     /// # Arguments
     ///
     /// * `enum_value`: The enum value to query against for deletion.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::delete_with`
-    #[doc(alias = "world::delete_with")]
     pub fn delete_with_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
@@ -3021,11 +2706,6 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all_id(&self, id: impl IntoId) {
         unsafe {
             sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into());
@@ -3037,11 +2717,6 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T`: The component type to remove.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all<T: ComponentOrPairId>(&self) {
         self.remove_all_id(T::get_id(self));
     }
@@ -3055,11 +2730,6 @@ impl World {
     /// # Arguments
     ///
     /// * `first`: The first id of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
         self.remove_all_id((first.into(), Second::id(self)));
     }
@@ -3073,11 +2743,6 @@ impl World {
     /// # Arguments
     ///
     /// * `second`: The second id of the pair.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all_first<First: ComponentId>(&self, second: impl Into<Entity>) {
         self.remove_all_id((First::id(self), second.into()));
     }
@@ -3091,11 +2756,6 @@ impl World {
     /// # Arguments
     ///
     /// * `enum_value`: The enum value to query against for removal.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
@@ -3113,11 +2773,6 @@ impl World {
     /// # Arguments
     ///
     /// * `enum_value`: The enum value to query against for removal.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::remove_all`
-    #[doc(alias = "world::remove_all")]
     pub fn remove_all_enum_pair<First, Second>(&self, enum_value: Second)
     where
         First: ComponentId,
@@ -3135,32 +2790,17 @@ impl World {
     /// # Returns
     ///
     /// True if the entity exists, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::exists`
-    #[doc(alias = "world::exists")]
     pub fn exists(&self, entity: impl Into<Entity>) -> bool {
         unsafe { sys::ecs_exists(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is alive in the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::is_alive`
-    #[doc(alias = "world::is_alive")]
     pub fn is_alive(&self, entity: impl Into<Entity>) -> bool {
         unsafe { sys::ecs_is_alive(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is valid.
     /// Invalid entities cannot be used with API functions.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::is_valid`
-    #[doc(alias = "world::is_valid")]
     pub fn is_valid(&self, entity: impl Into<Entity>) -> bool {
         unsafe { sys::ecs_is_valid(self.raw_world.as_ptr(), *entity.into()) }
     }
@@ -3176,11 +2816,6 @@ impl World {
     /// The entity with the current generation. If the entity is not alive, this
     /// function will return an Entity of 0. Use `try_get_alive` if you want to
     /// return an `Option<EntityView>`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::try_get_alive`
-    #[doc(alias = "world::try_get_alive")]
     pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
 
@@ -3197,11 +2832,6 @@ impl World {
     ///
     /// The entity with the current generation.
     /// If the entity is not alive, this function will return `None`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::try_get_alive`
-    #[doc(alias = "world::try_get_alive")]
     pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView> {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
         if entity == 0 {
@@ -3222,11 +2852,6 @@ impl World {
     /// # Returns
     ///
     /// The entity with the provided generation.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::make_alive`
-    #[doc(alias = "world::make_alive")]
     pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView {
         let entity = *entity.into();
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
@@ -3239,11 +2864,6 @@ impl World {
     ///
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::run_post_frame`
-    #[doc(alias = "world::run_post_frame")]
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn run_post_frame(&self, action: sys::ecs_fini_action_t, ctx: *mut c_void) {
         unsafe {
@@ -3267,11 +2887,6 @@ impl World {
     /// # Returns
     ///
     /// `EntityView` wrapping the id of the enum constant.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     #[doc(alias = "world::id")] //enum mixin implementation
     pub fn entity_from_enum<T>(&self, enum_value: T) -> EntityView
     where
@@ -3289,11 +2904,6 @@ impl World {
     /// # Arguments
     ///
     /// * `name` - The name to use for the new entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity_from_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
         EntityView::new_from(self, T::__register_or_get_id_named::<true>(self, name))
     }
@@ -3303,10 +2913,6 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T` - The component type to associate with the new entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::entity`
     pub fn entity_from<T: ComponentId>(&self) -> EntityView {
         EntityView::new_from(self, T::id(self))
     }
@@ -3335,8 +2941,6 @@ impl World {
     ///
     /// * [`World::entity()`]
     /// * [`World::entity_named_cstr()`]
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity_named(&self, name: &str) -> EntityView {
         EntityView::new_named(self, name)
     }
@@ -3364,8 +2968,6 @@ impl World {
     ///
     /// * [`World::entity()`]
     /// * [`World::entity_named()`]
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity_named_cstr(&self, name: &CStr) -> EntityView {
         EntityView::new_named_cstr(self, name)
     }
@@ -3376,8 +2978,6 @@ impl World {
     ///
     /// * [`World::entity_named()`]
     /// * [`World::entity_named_cstr()`]
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity(&self) -> EntityView {
         EntityView::new(self)
     }
@@ -3395,11 +2995,6 @@ impl World {
     /// let entity = world.entity_null();
     /// assert_eq!(entity.id(), 0);
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity_null(&self) -> EntityView {
         EntityView::new_null(self)
     }
@@ -3409,11 +3004,6 @@ impl World {
     /// # Arguments
     ///
     /// * `id` - The id to use for the new entity.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::entity`
-    #[doc(alias = "world::entity")]
     pub fn entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
         EntityView::new_from(self, id.into())
     }
@@ -3429,8 +3019,6 @@ impl World {
     /// * [`World::prefab_named()`]
     /// * [`World::prefab_type()`]
     /// * [`World::prefab_type_named()`]
-    /// * C++ API: `world::prefab`
-    #[doc(alias = "world::prefab")]
     pub fn prefab(&self) -> EntityView {
         let result = EntityView::new(self);
         result.add_id(flecs::Prefab::ID);
@@ -3452,8 +3040,6 @@ impl World {
     /// * [`World::prefab()`]
     /// * [`World::prefab_type()`]
     /// * [`World::prefab_type_named()`]
-    /// * C++ API: `world::prefab`
-    #[doc(alias = "world::prefab")]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
         result.add_id(ECS_PREFAB);
@@ -3475,8 +3061,6 @@ impl World {
     /// * [`World::prefab()`]
     /// * [`World::prefab_named()`]
     /// * [`World::prefab_type_named()`]
-    /// * C++ API: `world::prefab`
-    #[doc(alias = "world::prefab")]
     pub fn prefab_type<T: ComponentId>(&self) -> EntityView {
         let result = self.entity_from::<T>();
         result.add_id(ECS_PREFAB);
@@ -3502,8 +3086,6 @@ impl World {
     /// * [`World::prefab()`]
     /// * [`World::prefab_named()`]
     /// * [`World::prefab_type()`]
-    /// * C++ API: `world::prefab`
-    #[doc(alias = "world::prefab")]
     pub fn prefab_type_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
         let result = self.entity_from_named::<T>(name);
         result.add_id(ECS_PREFAB);
@@ -3542,12 +3124,6 @@ impl World {
     /// # Returns
     ///
     /// The id of the component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::id`
-    /// * C++ API: `world::pair`
-    #[doc(alias = "world::pair")]
     pub fn id_from<T: ComponentOrPairId>(&self) -> IdView {
         IdView::new_from_id(self, T::get_id(self))
     }
@@ -3561,13 +3137,6 @@ impl World {
     /// # Returns
     ///
     /// The `IdView` from the provided id.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::pair`
-    /// * C++ API: `world::id`
-    #[doc(alias = "world::pair")]
-    #[doc(alias = "world::id")]
     pub fn id_from_id<Id>(&self, id: Id) -> IdView
     where
         Id: IntoId,
@@ -3601,11 +3170,6 @@ impl World {
     /// # Returns
     ///
     /// The pair as Id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::pair`
-    #[doc(alias = "world::pair")]
     pub fn id_first<First: ComponentId>(&self, second: impl Into<Entity>) -> IdView {
         let id: Entity = second.into();
         ecs_assert!(
@@ -3629,11 +3193,6 @@ impl World {
     /// # Returns
     ///
     /// The pair as Id
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::pair`
-    #[doc(alias = "world::pair")]
     pub fn id_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> IdView {
         let id = first.into();
         ecs_assert!(
@@ -3656,11 +3215,6 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     #[inline(never)]
     pub fn component<T: ComponentId>(&self) -> Component<T::UnderlyingType> {
         Component::<T::UnderlyingType>::new(self)
@@ -3679,11 +3233,6 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_named<'a, T: ComponentId>(
         &'a self,
         name: &str,
@@ -3692,21 +3241,11 @@ impl World {
     }
 
     /// Create new untyped component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_untyped(&self) -> UntypedComponent {
         UntypedComponent::new(self)
     }
 
     /// Create new named untyped component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_untyped_named(&self, name: &str) -> UntypedComponent {
         UntypedComponent::new_named(self, name)
     }
@@ -3720,11 +3259,6 @@ impl World {
     /// # Returns
     ///
     /// The found or registered untyped component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_untyped_from<T: ComponentId>(&self) -> UntypedComponent {
         UntypedComponent::new_from(self, T::id(self))
     }
@@ -3738,11 +3272,6 @@ impl World {
     /// # Returns
     ///
     /// The found or registered untyped component.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::component`
-    #[doc(alias = "world::component")]
     pub fn component_untyped_from_id(&self, id: impl Into<Entity>) -> UntypedComponent {
         UntypedComponent::new_from(self, id)
     }
@@ -3756,11 +3285,6 @@ impl World {
     /// # Arguments
     ///
     /// * `enum_value` - The enum value to convert.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::to_entity`
-    #[doc(alias = "world::to_entity")]
     pub fn to_entity<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
@@ -3810,7 +3334,6 @@ impl World {
     /// * [`EntityView::emit()`]
     /// * [`EntityView::enqueue()`]
     /// * [`World::event()`]
-    /// * C++ API: `world::event`
     pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<()> {
         EventBuilder::<()>::new_untyped(self, event)
     }
@@ -3830,8 +3353,6 @@ impl World {
     /// * [`EntityView::emit()`]
     /// * [`EntityView::enqueue()`]
     /// * [`World::event_id()`]
-    /// * C++ API: `world::event`
-    #[doc(alias = "world::event")]
     pub fn event<T: ComponentId>(&self) -> EventBuilder<T> {
         EventBuilder::<T>::new(self)
     }
@@ -3849,11 +3370,6 @@ impl World {
     /// # Returns
     ///
     /// An observer object.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::observer`
-    #[doc(alias = "world::observer")]
     pub fn observer_from<'a>(&'a self, e: EntityView<'a>) -> Observer<'a> {
         Observer::new_from_existing(e)
     }
@@ -3873,8 +3389,6 @@ impl World {
     /// * [`World::observer_from()`]
     /// * [`World::observer_id()`]
     /// * [`World::observer_named()`]
-    /// * C++ API: `world::observer`
-    #[doc(alias = "world::observer")]
     pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<Event, Components>
     where
         Components: QueryTuple,
@@ -3913,8 +3427,6 @@ impl World {
     /// * [`World::observer_from()`]
     /// * [`World::observer()`]
     /// * [`World::observer_id()`]
-    /// * C++ API: `world::observer`
-    #[doc(alias = "world::observer")]
     pub fn observer_named<'a, Event: ComponentId, Components>(
         &'a self,
         name: &str,
@@ -3940,8 +3452,6 @@ impl World {
     /// * [`World::new_query_named()`]
     /// * [`World::query()`]
     /// * [`World::query_named()`]
-    /// * C++ API: `world::query`
-    #[doc(alias = "world::query")]
     pub fn new_query<Components>(&self) -> Query<Components>
     where
         Components: QueryTuple,
@@ -3969,8 +3479,6 @@ impl World {
     /// * [`World::new_query_named()`]
     /// * [`World::query()`]
     /// * [`World::query_named()`]
-    /// * C++ API: `world::query`
-    #[doc(alias = "world::query")]
     pub fn new_query_named<Components>(&self, name: &str) -> Query<Components>
     where
         Components: QueryTuple,
@@ -3993,8 +3501,6 @@ impl World {
     /// * [`World::new_query()`]
     /// * [`World::new_query_named()`]
     /// * [`World::query_named()`]
-    /// * C++ API: `world::query_builder`
-    #[doc(alias = "world::query_builder")]
     pub fn query<Components>(&self) -> QueryBuilder<Components>
     where
         Components: QueryTuple,
@@ -4021,8 +3527,6 @@ impl World {
     /// * [`World::new_query()`]
     /// * [`World::new_query_named()`]
     /// * [`World::query()`]
-    /// * C++ API: `world::query_builder`
-    #[doc(alias = "world::query_builder")]
     pub fn query_named<'a, Components>(&'a self, name: &str) -> QueryBuilder<'a, Components>
     where
         Components: QueryTuple,
@@ -4082,8 +3586,6 @@ impl World {
     ///
     /// * [`QueryAPI::each()`]
     /// * [`World::each_entity()`]
-    /// * C++ API: `world::each`
-    #[doc(alias = "world::each")]
     pub fn each<Components>(&self, func: impl FnMut(Components::TupleType<'_>)) -> Query<Components>
     where
         Components: QueryTuple,
@@ -4109,8 +3611,6 @@ impl World {
     ///
     /// * [`QueryAPI::each_entity()`]
     /// * [`World::each()`]
-    /// * C++ API: `world::each`
-    #[doc(alias = "world::each")]
     pub fn each_entity<Components>(
         &self,
         func: impl FnMut(EntityView, Components::TupleType<'_>),
@@ -4134,11 +3634,6 @@ impl World {
     ///
     /// # Arguments
     /// * `entity` - An `EntityView` that represents a system within the world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::system`
-    #[doc(alias = "world::system")]
     pub fn system_from<'a>(&'a self, entity: EntityView<'a>) -> System<'a> {
         System::new_from_existing(entity)
     }
@@ -4154,8 +3649,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::system_named()`]
-    /// * C++ API: `world::system_builder`
-    #[doc(alias = "world::system_builder")]
     pub fn system<Components>(&self) -> SystemBuilder<Components>
     where
         Components: QueryTuple,
@@ -4177,8 +3670,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::system()`]
-    /// * C++ API: `world::system_builder`
-    #[doc(alias = "world::system_builder")]
     pub fn system_named<'a, Components>(&'a self, name: &str) -> SystemBuilder<'a, Components>
     where
         Components: QueryTuple,
@@ -4196,11 +3687,6 @@ impl World {
     ///
     /// # Type Parameters
     /// - `Components`: The components to match on. Must implement the `QueryTuple` trait.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::system_builder`
-    #[doc(alias = "world::system_builder")]
     pub fn system_builder_from_desc<Components>(
         &self,
         desc: sys::ecs_system_desc_t,
@@ -4221,8 +3707,6 @@ impl World {
     ///
     /// * [`World::pipeline_named()`]
     /// * [`World::pipeline_type()`]
-    /// * C++ API: `world::pipeline`
-    #[doc(alias = "world::pipeline")]
     #[inline(always)]
     pub fn pipeline(&self) -> PipelineBuilder<()> {
         PipelineBuilder::<()>::new(self)
@@ -4238,8 +3722,6 @@ impl World {
     ///
     /// * [`World::pipeline()`]
     /// * [`World::pipeline_type()`]
-    /// * C++ API: `world::pipeline`
-    #[doc(alias = "world::pipeline")]
     #[inline(always)]
     pub fn pipeline_named<'a>(&'a self, name: &str) -> PipelineBuilder<'a, ()> {
         PipelineBuilder::<()>::new_named(self, name)
@@ -4255,8 +3737,6 @@ impl World {
     ///
     /// * [`World::pipeline()`]
     /// * [`World::pipeline_named()`]
-    /// * C++ API: `world::pipeline`
-    #[doc(alias = "world::pipeline")]
     #[inline(always)]
     pub fn pipeline_type<Pipeline>(&self) -> PipelineBuilder<()>
     where
@@ -4275,8 +3755,6 @@ impl World {
     ///
     /// * [`World::get_pipeline()`]
     /// * [`World::set_pipeline()`]
-    /// * C++ API: `world::set_pipeline_id`
-    #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
     pub fn set_pipeline_id(&self, pipeline: impl Into<Entity>) {
         unsafe {
@@ -4294,8 +3772,6 @@ impl World {
     ///
     /// * [`World::get_pipeline()`]
     /// * [`World::set_pipeline_id()`]
-    /// * C++ API: `world::set_pipeline_id`
-    #[doc(alias = "world::set_pipeline_id")]
     #[inline(always)]
     pub fn set_pipeline<Pipeline>(&self)
     where
@@ -4316,8 +3792,6 @@ impl World {
     ///
     /// * [`World::set_pipeline()`]
     /// * [`World::set_pipeline_id()`]
-    /// * C++ API: `world::get_pipeline`
-    #[doc(alias = "world::get_pipeline")]
     #[inline(always)]
     pub fn get_pipeline(&self) -> EntityView {
         EntityView::new_from(self, unsafe {
@@ -4343,8 +3817,6 @@ impl World {
     ///
     /// * [`World::progress_time()`]
     /// * C API: `ecs_progress`
-    /// * C++ API: `world::progress`
-    #[doc(alias = "world::progress")]
     #[inline(always)]
     pub fn progress(&self) -> bool {
         self.progress_time(0.0)
@@ -4371,8 +3843,6 @@ impl World {
     ///
     /// * [`World::progress()`]
     /// * C API: `ecs_progress`
-    /// * C++ API: `world::progress`
-    #[doc(alias = "world::progress")]
     #[inline(always)]
     pub fn progress_time(&self, delta_time: f32) -> bool {
         unsafe { sys::ecs_progress(self.raw_world.as_ptr(), delta_time) }
@@ -4400,8 +3870,6 @@ impl World {
     /// * [`World::run_pipeline()`]
     /// * [`World::run_pipeline_id_time()`]
     /// * [`World::run_pipeline_time()`]
-    /// * C++ API: `world::run_pipeline`
-    #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
     pub fn run_pipeline_id(&self, pipeline: impl Into<Entity>) {
         Self::run_pipeline_id_time(self, pipeline, 0.0);
@@ -4430,8 +3898,6 @@ impl World {
     /// * [`World::run_pipeline()`]
     /// * [`World::run_pipeline_id()`]
     /// * [`World::run_pipeline_time()`]
-    /// * C++ API: `world::run_pipeline`
-    #[doc(alias = "world::run_pipeline")]
     #[inline(always)]
     pub fn run_pipeline_id_time(&self, pipeline: impl Into<Entity>, delta_time: super::FTime) {
         unsafe {
@@ -4464,8 +3930,6 @@ impl World {
     /// * [`World::run_pipeline()`]
     /// * [`World::run_pipeline_id()`]
     /// * [`World::run_pipeline_id_time()`]
-    /// * C++ API: `world::run_pipeline`
-    #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline_time<Component>(&self, delta_time: super::FTime)
     where
         Component: ComponentType<Struct> + ComponentId,
@@ -4496,8 +3960,6 @@ impl World {
     /// * [`World::run_pipeline_id()`]
     /// * [`World::run_pipeline_id_time()`]
     /// * [`World::run_pipeline_time()`]
-    /// * C++ API: `world::run_pipeline`
-    #[doc(alias = "world::run_pipeline")]
     pub fn run_pipeline<Component>(&self)
     where
         Component: ComponentType<Struct> + ComponentId,
@@ -4514,8 +3976,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::get_time_scale()`]
-    /// * C++ API: `world::set_time_scale`
-    #[doc(alias = "world::set_time_scale")]
     #[inline(always)]
     pub fn set_time_scale(&self, mul: super::FTime) {
         unsafe {
@@ -4537,8 +3997,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_time_scale()`]
-    /// * C++ API: `world::get_time_scale`
-    #[doc(alias = "world::get_time_scale")]
     #[inline(always)]
     pub fn get_time_scale(&self) -> super::FTime {
         self.info().time_scale
@@ -4558,8 +4016,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_target_fps()`]
-    /// * C++ API: `world::get_target_fps`
-    #[doc(alias = "world::get_target_fps")]
     #[inline(always)]
     pub fn get_target_fps(&self) -> super::FTime {
         self.info().target_fps
@@ -4587,8 +4043,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::get_target_fps()`]
-    /// * C++ API: `world::set_target_fps`
-    #[doc(alias = "world::set_target_fps")]
     #[inline(always)]
     pub fn set_target_fps(&self, target_fps: super::FTime) {
         unsafe {
@@ -4597,11 +4051,6 @@ impl World {
     }
 
     /// Reset world clock. Reset the clock that keeps track of the total time passed in the simulation.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::reset_clock`
-    #[doc(alias = "world::reset_clock")]
     #[inline(always)]
     pub fn reset_clock(&self) {
         unsafe {
@@ -4625,8 +4074,6 @@ impl World {
     ///
     /// * [`World::set_stage_count()`]
     /// * [`World::set_task_threads()`]
-    /// * C++ API: `world::set_threads`
-    #[doc(alias = "world::set_threads")]
     #[inline(always)]
     pub fn set_threads(&self, threads: i32) {
         unsafe {
@@ -4644,8 +4091,6 @@ impl World {
     ///
     /// * [`World::set_stage_count()`]
     /// * [`World::set_threads()`]
-    /// * C++ API: `world::get_threads`
-    #[doc(alias = "world::get_threads")]
     #[inline(always)]
     pub fn get_threads(&self) -> i32 {
         unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
@@ -4673,8 +4118,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::using_task_threads()`]
-    /// * C++ API: `world::set_task_threads`
-    #[doc(alias = "world::set_task_threads")]
     #[inline(always)]
     pub fn set_task_threads(&self, task_threads: i32) {
         unsafe {
@@ -4691,8 +4134,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_task_threads()`]
-    /// * C++ API: `world::using_task_threads`
-    #[doc(alias = "world::using_task_threads")]
     #[inline(always)]
     pub fn using_task_threads(&self) -> bool {
         unsafe { sys::ecs_using_task_threads(self.raw_world.as_ptr()) }
@@ -4703,7 +4144,6 @@ impl World {
     /// # See also
     ///
     /// * C API: `ecs_delete_empty_tables`
-    #[doc(alias = "ecs_delete_empty_tables")]
     #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }

@@ -125,7 +125,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::message`
-    #[doc(alias = "ecs_alert_desc_t::message")]
     pub fn message(&mut self, message: &str) -> &mut Self {
         let message = ManuallyDrop::new(format!("{}\0", message));
         self.desc.message = message.as_ptr() as *const _;
@@ -142,7 +141,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::brief`
-    #[doc(alias = "ecs_alert_desc_t::brief")]
     pub fn brief(&mut self, brief: &str) -> &mut Self {
         let brief = ManuallyDrop::new(format!("{}\0", brief));
         self.desc.brief = brief.as_ptr() as *const _;
@@ -159,7 +157,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::doc_name`
-    #[doc(alias = "ecs_alert_desc_t::doc_name")]
     pub fn doc_name(&mut self, doc_name: &str) -> &mut Self {
         let doc_name = ManuallyDrop::new(format!("{}\0", doc_name));
         self.desc.doc_name = doc_name.as_ptr() as *const _;
@@ -176,7 +173,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity`
-    #[doc(alias = "ecs_alert_desc_t::severity")]
     pub fn severity_id(&mut self, severity: impl Into<Entity>) -> &mut Self {
         self.desc.severity = *severity.into();
         self
@@ -191,7 +187,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity`
-    #[doc(alias = "ecs_alert_desc_t::severity")]
     pub fn severity<Severity>(&mut self) -> &mut Self
     where
         Severity: ComponentId + SeverityAlert,
@@ -208,7 +203,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::retain_period`
-    #[doc(alias = "ecs_alert_desc_t::retain_period")]
     pub fn retain_period(&mut self, period: f32) -> &mut Self {
         self.desc.retain_period = period;
         self
@@ -225,7 +219,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity_filters`
-    #[doc(alias = "ecs_alert_desc_t::severity_filters")]
     pub fn severity_filter_id(
         &mut self,
         severity: impl Into<Entity>,
@@ -263,7 +256,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity_filters`
-    #[doc(alias = "ecs_alert_desc_t::severity_filters")]
     pub fn severity_filter<Severity>(&mut self, with: impl Into<Id>, var: Option<&str>) -> &mut Self
     where
         Severity: ComponentId,
@@ -286,7 +278,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity_filters`
-    #[doc(alias = "ecs_alert_desc_t::severity_filters")]
     pub fn severity_filter_component<Severity, With>(&mut self, var: Option<&str>) -> &mut Self
     where
         Severity: ComponentId,
@@ -312,7 +303,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity_filters`
-    #[doc(alias = "ecs_alert_desc_t::severity_filters")]
     pub fn severity_filter_enum<Severity, With>(
         &mut self,
         with: With,
@@ -339,7 +329,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::member`
-    #[doc(alias = "ecs_alert_desc_t::member")]
     pub fn member_id(&mut self, member: impl Into<Entity>) -> &mut Self {
         self.desc.member = *member.into();
         self
@@ -355,7 +344,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::id`
-    #[doc(alias = "ecs_alert_desc_t::id")]
     pub fn id(&mut self, id: impl Into<Id>) -> &mut Self {
         self.desc.id = *id.into();
         self
@@ -375,7 +363,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::member`
-    #[doc(alias = "ecs_alert_desc_t::member")]
     pub fn member_type<With>(&mut self, member_name: &str, var: Option<&str>) -> &mut Self
     where
         With: ComponentId,
@@ -420,7 +407,6 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::var`
-    #[doc(alias = "ecs_alert_desc_t::var")]
     pub fn var(&mut self, var: &str) -> &mut Self {
         let var = ManuallyDrop::new(format!("{}\0", var));
         self.desc.var = var.as_ptr() as *const _;
@@ -470,8 +456,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let alert = Alert::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

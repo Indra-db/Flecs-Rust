@@ -107,8 +107,6 @@ pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_ho
 ///
 /// # See also
 ///
-/// * C++ API: `ctor_impl`
-#[doc(alias = "ctor_impl")]
 extern "C-unwind" fn ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
@@ -138,8 +136,6 @@ extern "C-unwind" fn ctor<T: Default>(
 ///
 /// # See also
 ///
-/// * C++ API: `dtor_impl`
-#[doc(alias = "dtor_impl")]
 extern "C-unwind" fn dtor<T>(
     ptr: *mut c_void,
     count: i32,
@@ -163,8 +159,6 @@ extern "C-unwind" fn dtor<T>(
 ///
 /// # See also
 ///
-/// * C++ API: `copy_impl`
-#[doc(alias = "copy_impl")]
 extern "C-unwind" fn copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -193,8 +187,6 @@ extern "C-unwind" fn copy<T: Clone>(
 ///
 /// # See also
 ///
-/// * C++ API: `copy_impl`
-#[doc(alias = "copy_impl")]
 extern "C-unwind" fn copy_ctor<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -245,8 +237,6 @@ extern "C-unwind" fn panic_copy<T>(
 ///
 /// # See also
 ///
-/// * C++ API: `move_impl`
-#[doc(alias = "move_impl")]
 extern "C-unwind" fn move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
@@ -278,8 +268,6 @@ extern "C-unwind" fn move_dtor<T>(
 ///
 /// # See also
 ///
-/// * C++ API: `move_impl`
-#[doc(alias = "move_impl")]
 extern "C-unwind" fn move_ctor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,

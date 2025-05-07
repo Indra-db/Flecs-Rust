@@ -14,14 +14,7 @@ where
     P: ComponentId,
 {
     /// Set context
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `observer_builder_i::ctx`
-    /// * C++ API: `system_builder_i::ctx`
-    #[doc(alias = "observer_builder_i::ctx")]
-    #[doc(alias = "system_builder_i::ctx")]
-    fn set_context(&mut self, context: *mut c_void) -> &mut Self;
+fn set_context(&mut self, context: *mut c_void) -> &mut Self;
 
     fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
@@ -205,12 +198,7 @@ where
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+fn run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<true, P>) + 'static,
     {
@@ -304,12 +292,7 @@ where
     /// //  Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run_each<Func, FuncEach>(
+fn run_each<Func, FuncEach>(
         &mut self,
         func: Func,
         func_each: FuncEach,
@@ -419,12 +402,7 @@ where
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run_each_entity<Func, FuncEachEntity>(
+fn run_each_entity<Func, FuncEachEntity>(
         &mut self,
         func: Func,
         func_each_entity: FuncEachEntity,

@@ -52,8 +52,6 @@ where
     /// # See also
     ///
     /// * [`World::each()`]
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         const {
             assert!(
@@ -111,8 +109,6 @@ where
     /// # See also
     ///
     /// * [`World::each_entity()`]
-    /// * C++ API: `iterable::each`
-    #[doc(alias = "iterable::each")]
     fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
         const {
             assert!(
@@ -276,12 +272,7 @@ where
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
+fn find(&self, mut func: impl FnMut(T::TupleType<'_>) -> bool) -> Option<EntityView<'a>> {
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
@@ -330,12 +321,7 @@ where
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find_entity(
+fn find_entity(
         &self,
         mut func: impl FnMut(EntityView, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>> {
@@ -389,12 +375,7 @@ where
     /// # Returns
     ///
     /// * `Some(EntityView<'_>)` if the entity was found, `None` if no entity was found.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `find_delegate::invoke_callback`
-    #[doc(alias = "find_delegate::invoke_callback")]
-    fn find_iter(
+fn find_iter(
         &self,
         mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>) -> bool,
     ) -> Option<EntityView<'a>>
@@ -517,12 +498,7 @@ where
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity: Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run(&self, mut func: impl FnMut(TableIter<true, P>))
+fn run(&self, mut func: impl FnMut(TableIter<true, P>))
     where
         P: ComponentId,
     {
@@ -617,12 +593,7 @@ where
     /// //  Tag, Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_each: FuncEach)
+fn run_each<FuncEach>(&self, mut func: impl FnMut(TableIter<true, P>), mut func_each: FuncEach)
     where
         P: ComponentId,
         FuncEach: FnMut(T::TupleType<'_>),
@@ -711,12 +682,7 @@ where
     /// //  Entity name:  -- id: 512 -- archetype: flecs_ecs.main.Tag, flecs_ecs.main.Position, flecs_ecs.main.Velocity : Position { x: 0, y: 0 }
     /// //  end operations
     /// ```
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::run`
-    #[doc(alias = "iterable::run")]
-    fn run_each_entity<FuncEachEntity>(
+fn run_each_entity<FuncEachEntity>(
         &self,
         mut func: impl FnMut(TableIter<true, P>),
         mut func_each: FuncEachEntity,
@@ -746,23 +712,13 @@ where
     /// # Returns
     ///
     /// The entity of the current query
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::entity`
-    #[doc(alias = "query_base::entity")]
-    fn entity(&self) -> EntityView;
+fn entity(&self) -> EntityView;
 
     /// Each term iterator.
     /// The `each_term` iterator accepts a function that is invoked for each term
     /// in the query. The following function signature is valid:
     ///  - func(term: &mut Term)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term`
-    #[doc(alias = "query_base::each_term")]
-    fn each_term(&self, mut func: impl FnMut(&TermRef)) {
+fn each_term(&self, mut func: impl FnMut(&TermRef)) {
         let query = self.query_ptr();
         ecs_assert!(
             !query.is_null(),
@@ -787,12 +743,7 @@ where
     /// # Returns
     ///
     /// The term requested
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::term`
-    #[doc(alias = "query_base::term")]
-    fn term(&self, index: usize) -> TermRef<'_> {
+fn term(&self, index: usize) -> TermRef<'_> {
         let query = self.query_ptr();
         ecs_assert!(
             !query.is_null(),
@@ -812,12 +763,7 @@ where
     /// # Returns
     ///
     /// The field count of the current query
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::field_count`
-    #[doc(alias = "query_base::field_count")]
-    fn field_count(&self) -> i8 {
+fn field_count(&self) -> i8 {
         let query = self.query_ptr();
         unsafe { (*query).field_count }
     }
@@ -838,12 +784,7 @@ where
     /// # Returns
     ///
     /// The string representation of the query
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::str`
-    #[doc(alias = "query_base::str")]
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
+#[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
     fn to_string(&self) -> String {
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
@@ -898,8 +839,6 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iterable::first`
-    /// * C++ API: `iter_iterable::first`
     ///
     /// ```rust
     /// use flecs_ecs::prelude::*;
@@ -932,8 +871,6 @@ where
     /// * [`Query::first`]
     /// * [`Query::try_first_only`]
     /// * [`Query::first_only`]
-    #[doc(alias = "iterable::first")]
-    #[doc(alias = "iter_iterable::first")]
     fn try_first_entity(&self) -> Option<EntityView<'a>> {
         let it = &mut self.retrieve_iter();
 
@@ -971,8 +908,6 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `iterable::first`
-    /// * C++ API: `iter_iterable::first`
     ///
     /// ```rust
     /// use flecs_ecs::prelude::*;
@@ -1001,8 +936,6 @@ where
     /// * [`Query::first`]
     /// * [`Query::try_first_only`]
     /// * [`Query::first_only`]
-    #[doc(alias = "iterable::first")]
-    #[doc(alias = "iter_iterable::first")]
     fn first_entity(&self) -> EntityView<'a> {
         self.try_first_entity()
             .expect("Expected at least one entity, but none were found.")
@@ -1261,12 +1194,7 @@ where
     /// # Returns
     ///
     /// The total number of entities in the result
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::count`
-    #[doc(alias = "iter_iterable::count")]
-    fn count(&self) -> i32 {
+fn count(&self) -> i32 {
         let mut it = self.retrieve_iter();
         let mut result = 0;
         while self.iter_next(&mut it) {
@@ -1280,12 +1208,7 @@ where
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_group`
-    #[doc(alias = "iter_iterable::set_group")]
-    fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
+fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group_id(&mut iter, group_id);
         iter
@@ -1296,12 +1219,7 @@ where
     /// # Type parameters
     ///
     /// * `Group`: the group to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_group`
-    #[doc(alias = "iter_iterable::set_group")]
-    fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
+fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group::<Group>(&mut iter);
         iter
@@ -1314,12 +1232,7 @@ where
     /// * `var_id`: the variable id to set
     ///
     /// * `value`: the value to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iterable::set_var`
-    #[doc(alias = "iterable::set_var")]
-    #[must_use = "This method returns a new query iterator that should be used"]
+#[must_use = "This method returns a new query iterator that should be used"]
     fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var(&mut iter, var_id, value);
@@ -1333,12 +1246,7 @@ where
     /// * `var_id`: the variable id to set
     ///
     /// * `range`: the range to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
-    fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
+fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table(&mut iter, var_id, table);
         iter
@@ -1350,12 +1258,7 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `value`: the value to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
-    fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
+fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_expr(&mut iter, name, value);
         iter
@@ -1367,24 +1270,14 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `range`: the range to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
-    fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
+fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table_expr(&mut iter, name, table);
         iter
     }
 
     /// Serialize iterator result to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::to_json`
-    #[doc(alias = "iter::to_json")]
-    #[cfg(feature = "flecs_json")]
+#[cfg(feature = "flecs_json")]
     fn to_json(&self, desc: Option<&crate::prelude::json::IterToJsonDesc>) -> Option<String> {
         let desc_ptr = desc
             .map(|d| d as *const crate::prelude::json::IterToJsonDesc)

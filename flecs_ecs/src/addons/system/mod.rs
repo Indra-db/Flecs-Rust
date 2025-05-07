@@ -52,11 +52,6 @@ impl<'a> System<'a> {
     ///
     /// * `world` - The world to create the system in.
     /// * `desc` - The system description.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::system`
-    #[doc(alias = "system::system")]
     pub fn new(world: impl WorldProvider<'a>, desc: sys::ecs_system_desc_t) -> Self {
         let id = unsafe { sys::ecs_system_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
@@ -70,11 +65,6 @@ impl<'a> System<'a> {
     ///
     /// * `world` - The world the system is in.
     /// * `system_entity` - The entity of the system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::system`
-    #[doc(alias = "system::system")]
     pub fn new_from_existing(system_entity: EntityView<'a>) -> Self {
         Self {
             entity: system_entity,
@@ -86,11 +76,6 @@ impl<'a> System<'a> {
     /// # Arguments
     ///
     /// * `context` - The context to set.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::ctx`
-    #[doc(alias = "system::ctx")]
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_system_desc_t = sys::ecs_system_desc_t {
             entity: *self.id(),
@@ -104,21 +89,11 @@ impl<'a> System<'a> {
     }
 
     /// Get the context for the system
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::ctx`
-    #[doc(alias = "system::ctx")]
     pub fn context(&self) -> *mut c_void {
         unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).ctx }
     }
 
     /// Get the underlying query for the system
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::query`
-    #[doc(alias = "system::query")]
     pub fn query(&self) -> Query<()> {
         let query = unsafe {
             NonNull::new_unchecked((*sys::ecs_system_get(self.world.world_ptr(), *self.id())).query)
@@ -132,12 +107,7 @@ impl<'a> System<'a> {
     ///
     /// * `delta_time` - The time delta.
     /// * `param` - A user-defined parameter to pass to the system
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::run`
-    #[doc(alias = "system::run")]
-    #[inline]
+#[inline]
     pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
         SystemRunnerFluent::new(self.world.real_world(), *self.id(), 0, 0, delta_time, param)
     }
@@ -147,23 +117,13 @@ impl<'a> System<'a> {
     /// # Arguments
     ///
     /// * `delta_time` - The time delta.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::run`
-    #[doc(alias = "system::run")]
-    #[inline]
+#[inline]
     pub fn run_dt(&self, delta_time: FTime) -> SystemRunnerFluent {
         self.run_dt_param(delta_time, core::ptr::null_mut())
     }
 
     /// Run the system
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::run`
-    #[doc(alias = "system::run")]
-    #[inline]
+#[inline]
     pub fn run(&self) -> SystemRunnerFluent {
         self.run_dt_param(0.0, core::ptr::null_mut())
     }
@@ -176,11 +136,6 @@ impl<'a> System<'a> {
     /// * `stage_count` - The total number of stages.
     /// * `delta_time` - The time delta.
     /// * `param` - An optional parameter to pass to the system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::run_worker`
-    #[doc(alias = "system::run_worker")]
     pub fn run_worker(
         &self,
         stage_current: i32,

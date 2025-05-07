@@ -33,11 +33,6 @@ where
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_group`
-    #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group_id(&mut self, group_id: impl Into<Entity>) -> &mut Self {
         unsafe { sys::ecs_iter_set_group(&mut self.iter, *group_id.into()) }
         self
@@ -48,11 +43,6 @@ where
     /// # Type parameters
     ///
     /// * `Group`: the group to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_group`
-    #[doc(alias = "iter_iterable::set_group")]
     pub fn set_group<Group: ComponentId>(&mut self) -> &mut Self {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         unsafe { sys::ecs_iter_set_group(&mut self.iter, Group::id(world)) }
@@ -66,11 +56,6 @@ where
     /// * `var_id`: the variable id to set
     ///
     /// * `value`: the value to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var(&mut self, var_id: i32, value: impl Into<Entity>) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         unsafe { sys::ecs_iter_set_var(&mut self.iter, var_id, *value.into()) };
@@ -84,11 +69,6 @@ where
     /// * `var_id`: the variable id to set
     ///
     /// * `range`: the range to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_table(&mut self, var_id: i32, table: impl IntoTableRange) -> &mut Self {
         ecs_assert!(var_id != -1, FlecsErrorCode::InvalidParameter, 0);
         unsafe { sys::ecs_iter_set_var_as_range(&mut self.iter, var_id, &table.range_raw()) };
@@ -101,11 +81,6 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `value`: the value to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_expr(&mut self, name: &str, value: impl Into<Entity>) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -126,11 +101,6 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `range`: the range to set
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter_iterable::set_var`
-    #[doc(alias = "iter_iterable::set_var")]
     pub fn set_var_table_expr(&mut self, name: &str, table: impl IntoTableRange) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 

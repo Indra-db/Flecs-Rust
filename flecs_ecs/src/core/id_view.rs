@@ -144,30 +144,17 @@ impl<'a> IdView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `id::is_pair`
-    #[doc(alias = "id::is_pair")]
     /// * C API: `ecs_id_is_pair`
-    #[doc(alias = "ecs_id_is_pair")]
     pub fn is_pair(self) -> bool {
         unsafe { sys::ecs_id_is_pair(*self.id) }
     }
 
     /// checks if the id is a entity
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::is_entity`
-    #[doc(alias = "id::is_entity")]
     pub fn is_entity(self) -> bool {
         self.id & RUST_ecs_id_FLAGS_MASK == 0
     }
 
     /// checks if entity is valid
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::is_valid`
-    #[doc(alias = "entity_view::is_valid")]
     pub fn is_valid(self) -> bool {
         unsafe { sys::ecs_is_valid(self.world.world_ptr(), *self.id) }
     }
@@ -177,12 +164,7 @@ impl<'a> IdView<'a> {
     /// # Arguments
     ///
     /// * `first` - The first id to test
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::has_relationship`
-    #[doc(alias = "id::has_relationship")]
-    #[inline(always)]
+#[inline(always)]
     pub fn has_relationship(self, first: impl Into<Entity>) -> bool {
         if !self.is_pair() {
             return false;
@@ -195,12 +177,7 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::first`
-    #[doc(alias = "id::first")]
-    #[inline(always)]
+#[inline(always)]
     pub fn first_id(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
@@ -212,12 +189,7 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::first`
-    #[doc(alias = "id::first")]
-    #[inline(always)]
+#[inline(always)]
     pub fn get_first_id(&self) -> Option<EntityView> {
         if !self.is_pair() {
             None
@@ -231,11 +203,6 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::second`
-    #[doc(alias = "id::second")]
     pub fn second_id(&self) -> EntityView {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
@@ -247,11 +214,6 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::second`
-    #[doc(alias = "id::second")]
     pub fn get_second_id(&self) -> Option<EntityView> {
         if !self.is_pair() {
             None
@@ -262,12 +224,7 @@ impl<'a> IdView<'a> {
     }
 
     /// Return id as entity (only allowed when id is valid entity)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::entity`
-    #[doc(alias = "id::entity")]
-    #[inline(always)]
+#[inline(always)]
     pub fn entity_view(self) -> EntityView<'a> {
         ecs_assert!(!self.is_pair(), FlecsErrorCode::InvalidOperation);
         ecs_assert!(self.flags().id == 0, FlecsErrorCode::InvalidOperation);
@@ -276,12 +233,7 @@ impl<'a> IdView<'a> {
     }
 
     /// Return id as entity (only allowed when id is valid entity)
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `id::entity`
-    #[doc(alias = "id::entity")]
-    #[inline(always)]
+#[inline(always)]
     pub fn get_entity_view(self) -> Option<EntityView<'a>> {
         if self.is_pair() || self.flags().id != 0 {
             None
@@ -311,10 +263,7 @@ impl<'a> IdView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `id::type_id`
-    #[doc(alias = "id::type_id")]
     /// * C API: `ecs_get_typeid`
-    #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
     pub fn get_type_id(self) -> Option<EntityView<'a>> {
         let type_id = unsafe { sys::ecs_get_typeid(self.world.world_ptr(), *self.id) };
@@ -346,10 +295,7 @@ impl<'a> IdView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `id::type_id`
-    #[doc(alias = "id::type_id")]
     /// * C API: `ecs_get_typeid`
-    #[doc(alias = "ecs_get_typeid")]
     #[inline(always)]
     pub fn type_id(self) -> EntityView<'a> {
         let type_id = unsafe { sys::ecs_get_typeid(self.world.world_ptr(), *self.id) };
@@ -373,10 +319,7 @@ impl<'a> IdOperations<'a> for IdView<'a> {
     ///
     /// # See also
     ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
     /// * C API: `ecs_id_t`
-    #[doc(alias = "ecs_id_t")]
     fn new_from_id(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
         Self {
             world: world.world(),
@@ -390,12 +333,7 @@ impl<'a> IdOperations<'a> for IdView<'a> {
     ///
     /// * `world` - The optional world to the id belongs to
     /// * `expr` - The expression to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `Id::Id`
-    #[doc(alias = "Id::Id")]
-    fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
+fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
         let expr = compact_str::format_compact!("{}\0", expr);
         let id = unsafe { sys::ecs_id_from_str(world.world_ptr(), expr.as_ptr() as *const _) };
         Self {

@@ -112,11 +112,6 @@ where
     /// # Arguments
     ///
     /// * `phase` - the phase
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::kind`
-    #[doc(alias = "system_builder_i::kind")]
     pub fn kind_id(&mut self, phase: impl Into<Entity>) -> &mut Self {
         let phase = *phase.into();
         let current_phase: sys::ecs_entity_t = unsafe {
@@ -144,11 +139,6 @@ where
     /// # Type Parameters
     ///
     /// * `Phase` - the phase
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::kind`
-    #[doc(alias = "system_builder_i::kind")]
     pub fn kind<Phase>(&mut self) -> &mut Self
     where
         Phase: ComponentId + ComponentType<Struct>,
@@ -161,11 +151,6 @@ where
     /// # Arguments
     ///
     /// * `phase` - the phase
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::kind`
-    #[doc(alias = "system_builder_i::kind")]
     pub fn kind_enum<Phase>(&mut self, phase: Phase) -> &mut Self
     where
         Phase: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -175,7 +160,6 @@ where
     }
 
     /// Specify whether system can run on multiple threads.
-    #[doc(alias = "system_builder_i::multi_threaded")]
     pub fn multi_threaded(&mut self) -> &mut Self {
         self.desc.multi_threaded = true;
         self
@@ -185,7 +169,6 @@ where
     ///
     /// This is the default behavior. If not previously set through [`SystemBuilder::multi_threaded()`],
     /// then there is no need to call this method.
-    #[doc(alias = "system_builder_i::multi_threaded")]
     pub fn disable_multi_threaded(&mut self) -> &mut Self {
         self.desc.multi_threaded = false;
         self
@@ -196,11 +179,6 @@ where
     /// # Arguments
     ///
     /// * `value` - If false,  system will always run staged.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder_i::immediate`
-    #[doc(alias = "system_builder_i::immediate")]
     pub fn immediate(&mut self, value: bool) -> &mut Self {
         self.desc.immediate = value;
         self
@@ -248,8 +226,6 @@ where
     ///
     /// See also
     ///
-    /// * C++ API: `node_builder::build`
-    #[doc(alias = "node_builder::build")]
     fn build(&mut self) -> Self::BuiltType {
         let system = System::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

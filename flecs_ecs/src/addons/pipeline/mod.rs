@@ -69,11 +69,6 @@ where
     ///
     /// * `world` - The world to create the pipeline in.
     /// * `desc` - The pipeline description.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `pipeline::pipeline`
-    #[doc(alias = "pipeline::pipeline")]
     pub(crate) fn new(world: impl WorldProvider<'a>, desc: sys::ecs_pipeline_desc_t) -> Self {
         let entity = EntityView::new(world.world());
         let mut pipeline = Self {

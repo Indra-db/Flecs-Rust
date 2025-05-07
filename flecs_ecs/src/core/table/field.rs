@@ -86,13 +86,8 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
-    #[doc(alias = "field::field")]
     #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
-    pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
+    pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
@@ -530,7 +525,6 @@ pub struct FieldUntyped {
 ///
 /// # See also
 ///
-/// * C++ API: `untyped_field::untyped_column`
 impl FieldUntyped {
     pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {

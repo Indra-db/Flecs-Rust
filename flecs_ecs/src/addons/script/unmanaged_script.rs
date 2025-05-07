@@ -52,7 +52,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_parse`
-    #[doc(alias = "ecs_script_parse")]
     pub fn parse(
         world: impl WorldProvider<'a>,
         name: &str,
@@ -100,7 +99,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_eval`
-    #[doc(alias = "ecs_script_eval")]
     pub fn eval(&self, desc: Option<sys::ecs_script_eval_desc_t>) -> bool {
         if let Some(desc) = desc {
             unsafe { sys::ecs_script_eval(self.script, &desc) == 0 }
@@ -129,7 +127,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_run`
-    #[doc(alias = "ecs_script_run")]
     pub fn run_code(world: impl WorldProvider<'a>, name: &str, code: &str) -> bool {
         let name = compact_str::format_compact!("{}\0", name);
         let code = compact_str::format_compact!("{}\0", code);
@@ -156,7 +153,6 @@ impl<'a> Script<'a> {
     /// True if success, false if failed.
     ///
     /// # See also
-    #[doc(alias = "ecs_script_run_file")]
     pub fn run_file(world: impl WorldProvider<'a>, filename: &str) -> bool {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world_ptr = world.world_ptr_mut();
@@ -175,7 +171,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `script_ast_to_buf`
-    #[doc(alias = "script_ast_to_buf")]
     pub fn ast(&mut self) -> Option<String> {
         let ast = unsafe { sys::ecs_script_ast_to_str(self.script, false) };
 
@@ -211,7 +206,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    /// * C++ API: `world::to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr_id(
         world: impl WorldProvider<'a>,
@@ -234,7 +228,6 @@ impl<'a> Script<'a> {
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    /// * C++ API: `world::to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
         let world = world.world();

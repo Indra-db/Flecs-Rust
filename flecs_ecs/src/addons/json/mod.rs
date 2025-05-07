@@ -24,11 +24,6 @@ pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 
 impl EntityView<'_> {
     /// Set component or pair id from JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_json`
-    #[doc(alias = "entity_builder::set_json")]
     pub fn set_json_id(self, comp: impl IntoId, json: &str, desc: Option<&FromJsonDesc>) -> Self {
         let comp: u64 = *comp.into();
         let world = self.world_ptr_mut();
@@ -65,11 +60,6 @@ impl EntityView<'_> {
     }
 
     /// Set component or pair from JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_json`
-    #[doc(alias = "entity_builder::set_json")]
     pub fn set_json<T: ComponentOrPairId>(self, json: &str, desc: Option<&FromJsonDesc>) -> Self {
         self.set_json_id(T::get_id(self.world), json, desc)
     }
@@ -85,11 +75,6 @@ impl EntityView<'_> {
     }
 
     /// Set pair from JSON where First is an entity id and Second is a type.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_builder::set_json_second`
-    #[doc(alias = "entity_builder::set_json_second")]
     pub fn set_json_second<Second: ComponentId>(
         self,
         rel: impl Into<Entity> + Copy,
@@ -100,11 +85,6 @@ impl EntityView<'_> {
     }
 
     /// Serialize entity to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity_view::to_json`
-    #[doc(alias = "entity_view::to_json")]
     pub fn to_json(&self, desc: Option<&EntityToJsonDesc>) -> String {
         let world = self.world_ptr();
         let id = *self.id;
@@ -124,11 +104,6 @@ impl EntityView<'_> {
     }
 
     /// Deserialize entity to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `entity::from_json`
-    #[doc(alias = "entity::from_json")]
     pub fn from_json(self, json: &str) -> Self {
         let world = self.world_ptr_mut();
         let id = *self.id;
@@ -143,12 +118,7 @@ impl EntityView<'_> {
 
 impl World {
     /// Serialize untyped value to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::to_json`
-    #[doc(alias = "world::to_json")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_json_id(&self, tid: impl IntoId, value: *const core::ffi::c_void) -> String {
         let tid: u64 = *tid.into();
         let world = self.world_ptr();
@@ -163,11 +133,6 @@ impl World {
     }
 
     /// Serialize value to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::to_json`
-    #[doc(alias = "world::to_json")]
     pub fn to_json<'a, T: ComponentOrPairId>(&'a self, value: &'a T::CastType) -> String {
         self.to_json_id(
             T::get_id(self),
@@ -176,21 +141,11 @@ impl World {
     }
 
     /// Serialize value to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::to_json`
-    #[doc(alias = "world::to_json")]
     pub fn to_json_dyn<'a, T>(&'a self, id: FetchedId<T>, value: &'a T) -> String {
         self.to_json_id(id.id(), value as *const T as *const core::ffi::c_void)
     }
 
     /// Serialize world to JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::to_json`
-    #[doc(alias = "world::to_json")]
     pub fn to_json_world(&self, desc: Option<&WorldToJsonDesc>) -> String {
         let world = self.world_ptr_mut();
         let desc_ptr = desc
@@ -209,12 +164,7 @@ impl World {
     }
 
     /// Deserialize value from JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::from_json`
-    #[doc(alias = "world::from_json")]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn from_json_id(
         &self,
         tid: impl IntoId,
@@ -236,11 +186,6 @@ impl World {
     }
 
     /// Deserialize value from JSON.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::from_json`
-    #[doc(alias = "world::from_json")]
     pub fn from_json<T: ComponentOrPairId>(
         &self,
         value: &mut T::CastType,
@@ -256,11 +201,6 @@ impl World {
     }
 
     /// Deserialize JSON into world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::from_json`
-    #[doc(alias = "world::from_json")]
     pub fn from_json_world(&self, json: &str, desc: Option<&FromJsonDesc>) -> &Self {
         let world = self.ptr_mut();
         //TODO json object to prevent multiple conversions
@@ -277,11 +217,6 @@ impl World {
     }
 
     /// Deserialize JSON file into world.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::from_json_file`
-    #[doc(alias = "world::from_json_file")]
     pub fn from_json_world_file(
         &mut self,
         json_file: &str,

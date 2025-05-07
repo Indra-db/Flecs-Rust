@@ -167,11 +167,6 @@ where
     /// # Arguments
     ///
     /// * `query` - The query pointer to wrap
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
     #[inline]
     pub unsafe fn new_from(query: NonNull<sys::ecs_query_t>) -> Self {
         unsafe {
@@ -199,11 +194,6 @@ where
     ///
     /// * `world` - The world to create the query in
     /// * `desc` - The query descriptor to create the query from
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query::query`
-    #[doc(alias = "query::query")]
     pub(crate) fn new_from_desc<'a>(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
@@ -292,11 +282,6 @@ where
     ///
     /// If the query is used as the parent of subqueries, those subqueries will be
     /// orphaned and must be deinitialized as well.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::destruct`
-    #[doc(alias = "query_base::destruct")]
     pub fn destruct(self) {
         ecs_assert!(
             unsafe { (*self.query.as_ptr()).entity } != 0,
@@ -329,8 +314,6 @@ where
     ///
     /// # See also
     ///
-    /// * C++ API: `query::get_iter`
-    #[doc(alias = "query::get_iter")]
     unsafe fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
@@ -352,8 +335,6 @@ where
     /// # See also
     ///
     /// * [`TableIter::is_changed()`]
-    /// * C++ API: `query_base::changed`
-    #[doc(alias = "query_base::changed")]
     pub fn is_changed(&self) -> bool {
         unsafe { sys::ecs_query_changed(self.query.as_ptr()) }
     }
@@ -367,11 +348,6 @@ where
     /// # Returns
     ///
     /// Returns a pointer to the group info
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::get_group_info`
-    #[doc(alias = "query_base::get_group_info")]
     pub fn group_info(&self, group_id: impl Into<Entity>) -> *const sys::ecs_query_group_info_t {
         unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
     }
@@ -385,11 +361,6 @@ where
     /// # Returns
     ///
     /// Returns a (void) pointer to the group context
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `query_base::group_ctx`
-    #[doc(alias = "query_base::group_ctx")]
     pub fn group_context(&self, group_id: impl Into<Entity>) -> *mut c_void {
         let group_info = self.group_info(group_id);
 

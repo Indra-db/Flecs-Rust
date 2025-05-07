@@ -57,7 +57,6 @@ impl World {
     /// # See also
     ///
     /// * C API: `ecs_script_run`
-    #[doc(alias = "ecs_script_run")]
     pub fn run_code(&self, name: &str, code: &str) -> bool {
         Script::run_code(self, name, code)
     }
@@ -74,7 +73,6 @@ impl World {
     /// True if success, false if failed.
     ///
     /// # See also
-    #[doc(alias = "ecs_script_run_file")]
     pub fn run_file(&self, filename: &str) -> bool {
         Script::run_file(self, filename)
     }
@@ -85,7 +83,6 @@ impl World {
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    /// * C++ API: `world::to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr_id(
         &self,
@@ -101,7 +98,6 @@ impl World {
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    /// * C++ API: `world::to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
         Script::to_expr(self, value)
     }

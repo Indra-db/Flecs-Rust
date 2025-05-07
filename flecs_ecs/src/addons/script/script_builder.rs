@@ -80,7 +80,6 @@ impl<'a> ScriptBuilder<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_init`
-    #[doc(alias = "ecs_script_init")]
     pub fn build_from_file(&mut self, filename: &str) -> ScriptEntityView<'a> {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world = self.world.world_ptr_mut();
@@ -109,7 +108,6 @@ impl<'a> ScriptBuilder<'a> {
     /// # See also
     ///
     /// * C API: `ecs_script_init`
-    #[doc(alias = "ecs_script_init")]
     pub fn build_from_code(&mut self, code: &str) -> ScriptEntityView<'a> {
         let code = compact_str::format_compact!("{}\0", code);
         let world = self.world.world_ptr_mut();

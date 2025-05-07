@@ -23,12 +23,7 @@ pub trait TimerAPI: Sized {
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
     /// If the tick source ticked this frame, the 'tick' member will be true.
     /// When the tick source is a system, the system will tick when the timer ticks.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::interval`
-    /// * C++ API: `timer::interval`
-    fn set_interval(self, interval: f32) -> Self {
+fn set_interval(self, interval: f32) -> Self {
         unsafe { sys::ecs_set_interval(self.world_ptr_mut(), *self.id(), interval) };
         self
     }
@@ -40,12 +35,7 @@ pub trait TimerAPI: Sized {
     /// # Returns
     ///
     /// The interval. If the entity is not a timer, the operation will return 0.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::interval`
-    /// * C++ API: `timer::interval`
-    fn interval(&self) -> f32 {
+fn interval(&self) -> f32 {
         unsafe { sys::ecs_get_interval(self.world_ptr(), *self.id()) }
     }
 
@@ -60,12 +50,7 @@ pub trait TimerAPI: Sized {
     /// Tick sources can be read by getting the [`flecs::TickSource`](crate::core::flecs::system::TickSource) component.
     /// If the tick source ticked this frame, the 'tick' member will be true.
     /// When the tick source is a system, the system will tick when the timer ticks.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::timeout`
-    /// * C++ API: `timer::timeout`
-    fn set_timeout(self, timeout: f32) -> Self {
+fn set_timeout(self, timeout: f32) -> Self {
         unsafe { sys::ecs_set_timeout(self.world_ptr_mut(), *self.id(), timeout) };
         self
     }
@@ -86,12 +71,7 @@ pub trait TimerAPI: Sized {
     /// # Returns
     ///
     /// The timeout. If no timer is active for this entity, the operation returns 0.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::timeout`
-    /// * C++ API: `timer::timeout`
-    fn timeout(&self) -> f32 {
+fn timeout(&self) -> f32 {
         unsafe { sys::ecs_get_timeout(self.world_ptr(), *self.id()) }
     }
 
@@ -118,8 +98,6 @@ pub trait TimerAPI: Sized {
     /// # See also
     ///
     /// * [`TimerAPI::set_rate_w_tick_source()`]
-    /// * C++ API: `system::rate`
-    /// * C++ API: `timer::rate`
     fn set_rate(self, rate: i32) -> Self {
         unsafe { sys::ecs_set_rate(self.world_ptr_mut(), *self.id(), rate, 0) };
         self
@@ -149,8 +127,6 @@ pub trait TimerAPI: Sized {
     /// # See also
     ///
     /// * [`TimerAPI::set_rate()`]
-    /// * C++ API: `system::rate`
-    /// * C++ API: `timer::rate`
     fn set_rate_w_tick_source(self, rate: i32, tick_source: impl Into<Entity>) -> Self {
         unsafe { sys::ecs_set_rate(self.world_ptr_mut(), *self.id(), rate, *tick_source.into()) };
         self
@@ -158,23 +134,13 @@ pub trait TimerAPI: Sized {
 
     /// Start timer.
     /// This operation resets the timer and starts it with the specified timeout.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::start`
-    /// * C++ API: `timer::start`
-    fn start(&self) {
+fn start(&self) {
         unsafe { sys::ecs_start_timer(self.world_ptr_mut(), *self.id()) };
     }
 
     /// Stop timer.
     /// This operation stops a timer from triggering.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::stop`
-    /// * C++ API: `timer::stop`
-    fn stop(&self) {
+fn stop(&self) {
         unsafe { sys::ecs_stop_timer(self.world_ptr_mut(), *self.id()) };
     }
 }
@@ -237,19 +203,11 @@ impl TimerAPI for Timer<'_> {
 
 impl World {
     /// Find or register a singleton Timer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::timer`
     pub fn timer(&self) -> Timer {
         Timer::new(self)
     }
 
     /// Find or register a Timer
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::timer`
     pub fn timer_from<T: ComponentId>(&self) -> Timer {
         Timer::new_from::<T>(self)
     }
@@ -257,10 +215,6 @@ impl World {
     /// Enable randomizing initial time value of timers.
     /// Initializes timers with a random time value, which can improve scheduling as systems/timers
     /// for the same interval don't all happen on the same tick.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `world::randomize_timers`
     pub fn randomize_timers(&self) {
         unsafe { sys::ecs_randomize_timers(self.ptr_mut()) }
     }
@@ -294,10 +248,6 @@ impl System<'_> {
     /// If the provided entity is not a tick source the system will not be ran.
     ///
     /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::set_tick_source`
     pub fn set_tick_source<T: ComponentId>(&self) {
         unsafe {
             sys::ecs_set_tick_source(self.entity.world_ptr_mut(), *self.id, T::id(self.world()));
@@ -317,10 +267,6 @@ impl System<'_> {
     /// If the provided entity is not a tick source the system will not be ran.
     ///
     /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system::set_tick_source`
     pub fn set_tick_source_id(&self, id: impl Into<Entity>) {
         unsafe { sys::ecs_set_tick_source(self.entity.world_ptr_mut(), *self.id, *id.into()) }
     }
@@ -337,10 +283,6 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
     /// This operation will cause the system to be ran at the specified interval.
     ///
     /// The timer is synchronous, and is incremented each frame by `delta_time`.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder::interval`
     pub fn set_interval(&mut self, interval: f32) -> &mut Self {
         self.desc.interval = interval;
         self
@@ -350,10 +292,6 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
     /// This operation will cause the system to be ran at a multiple of the
     /// provided tick source. The tick source may be any entity, including
     /// another system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder::rate`
     pub fn set_tick_source_rate(&mut self, tick_source: impl Into<Entity>, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self.desc.tick_source = *tick_source.into();
@@ -364,10 +302,6 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
     /// This operation will cause the system to be ran at a multiple of the
     /// frame tick frequency. If a tick source was provided, this just updates
     /// the rate of the system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder::rate`
     pub fn set_rate(&mut self, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self
@@ -376,10 +310,6 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
     /// Set tick source with the type associated with the singleton
     /// tick source to use for the system.
     /// This operation sets a shared tick source for the system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder::tick_source`
     pub fn set_tick_source<C: ComponentId>(&mut self) -> &mut Self {
         self.desc.tick_source = C::id(self.world());
         self
@@ -387,10 +317,6 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
 
     /// Set tick source.
     /// This operation sets a shared tick source for the system.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `system_builder::tick_source`
     pub fn set_tick_source_id(&mut self, tick_source: impl Into<Entity>) -> &mut Self {
         self.desc.tick_source = *tick_source.into();
         self
