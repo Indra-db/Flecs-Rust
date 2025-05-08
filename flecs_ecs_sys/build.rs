@@ -318,6 +318,47 @@ fn main() {
             Some(term_count_max.to_string().as_str()),
         );
 
+        if std::env::var("TARGET").unwrap() == "wasm32-unknown-unknown" {
+            // There is no libc for wasm32-unknown-unknown, so we have isolated
+            // a subset of the sysroot that is required and we build it here.
+            // A bunch of other C files need to be copied here, modified as
+            // necessary to build, and then linked in.
+            // As additional flecs features are enabled, additional bits of
+            // the libc will have to be provided. (This is particularly true
+            // when meta is enabled.
+            use std::path::Path;
+            println!("cargo:rerun-if-changed=wasm-sysroot");
+            build
+                .include(&Path::new("wasm-sysroot/include/internal")) // Internal can override non-internal
+                .include(&Path::new("wasm-sysroot/include"))
+                .file(&Path::new("wasm-sysroot/src/math/__fpclassifyl.c"))
+                .file(&Path::new("wasm-sysroot/src/prng/rand.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/abort.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/atof.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/atoi.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/atol.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/atoll.c"))
+                .file(&Path::new("wasm-sysroot/src/stdlib/strtod.c")) // This isn't actually done yet
+                .file(&Path::new("wasm-sysroot/src/stdlib/strtol.c")) // Neither is this
+                .file(&Path::new("wasm-sysroot/src/string/memchr.c"))
+                .file(&Path::new("wasm-sysroot/src/string/memcmp.c"))
+                .file(&Path::new("wasm-sysroot/src/string/memcpy.c"))
+                .file(&Path::new("wasm-sysroot/src/string/memmove.c"))
+                .file(&Path::new("wasm-sysroot/src/string/memrchr.c"))
+                .file(&Path::new("wasm-sysroot/src/string/memset.c"))
+                .file(&Path::new("wasm-sysroot/src/string/stpcpy.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strcat.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strchr.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strchrnul.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strcmp.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strcpy.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strlen.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strncmp.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strncpy.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strrchr.c"))
+                .file(&Path::new("wasm-sysroot/src/string/strstr.c"));
+        }
+
         build.compile("flecs");
 
         //TODO C might complain about unused functions when disabling certain features, turn the warning off?
