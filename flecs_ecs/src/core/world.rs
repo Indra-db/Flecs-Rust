@@ -3358,7 +3358,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::run_pipeline()`]
-    /// * [`World::run_pipeline_id_time()`]
     /// * [`World::run_pipeline_time()`]
     #[inline(always)]
     pub fn run_pipeline(&self, pipeline: impl IntoEntity) {

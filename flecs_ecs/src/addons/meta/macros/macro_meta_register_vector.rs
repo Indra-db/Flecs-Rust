@@ -2,7 +2,7 @@
 ///
 /// This macro expands to a function that registers a vector component type with metadata.
 /// It performs the following actions:
-/// - Generates a unique ID for the vector component type using the [`id!`](crate::addons::meta::id) macro.
+/// - Generates a unique ID for the vector component type using the [`id!`](crate::addons::meta::id!) macro.
 /// - Registers the vector component type with the [`World`](crate::core::World) using the [`component_ext`](crate::core::World::component_ext) function.
 /// - Associates the generated function with the vector component type using the [`meta_register_vector_func`] macro.
 ///

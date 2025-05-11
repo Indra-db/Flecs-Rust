@@ -76,7 +76,7 @@ impl<T: IntoEntity> InternalIntoEntity for T {
 }
 
 // we implement this to optimize the case where we add a component id<T> to add
-// normally we shouldn't implment IntoEntity for Id
+// normally we shouldn't implement IntoEntity for Id
 #[doc(hidden)]
 impl InternalIntoEntity for crate::core::Id {
     const IS_TYPED_PAIR: bool = false;
@@ -94,7 +94,7 @@ impl InternalIntoEntity for crate::core::Id {
 }
 
 // we implement this to optimize the case where we add a component id<T> to add
-// normally we shouldn't implment IntoEntity for Id
+// normally we shouldn't implement IntoEntity for Id
 #[doc(hidden)]
 impl InternalIntoEntity for crate::core::IdView<'_> {
     const IS_TYPED_PAIR: bool = false;
