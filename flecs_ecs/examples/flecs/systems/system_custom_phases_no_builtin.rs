@@ -19,33 +19,30 @@ fn main() {
     // which is necessary for the builtin pipeline to discover which systems it
     // should run.
 
-    let update = world.entity().add::<flecs::pipeline::Phase>();
+    let update = world.entity().add(id::<flecs::pipeline::Phase>());
 
     let physics = world
         .entity()
-        .add::<flecs::pipeline::Phase>()
-        .depends_on_id(update);
+        .add(id::<flecs::pipeline::Phase>())
+        .depends_on(update);
 
     let collisions = world
         .entity()
-        .add::<flecs::pipeline::Phase>()
-        .depends_on_id(physics);
+        .add(id::<flecs::pipeline::Phase>())
+        .depends_on(physics);
 
     // Create 3 dummy systems.
     world
         .system_named::<()>("CollisionSystem")
-        .kind_id(collisions)
+        .kind(collisions)
         .run(sys);
 
     world
         .system_named::<()>("PhysicsSystem")
-        .kind_id(physics)
+        .kind(physics)
         .run(sys);
 
-    world
-        .system_named::<()>("GameSystem")
-        .kind_id(update)
-        .run(sys);
+    world.system_named::<()>("GameSystem").kind(update).run(sys);
 
     // Run pipeline
     world.progress();

@@ -207,12 +207,13 @@ impl<'a> Script<'a> {
     ///
     /// * C API: `ecs_ptr_to_expr`
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_expr_id(
+    pub fn to_expr(
         world: impl WorldProvider<'a>,
-        id_of_value: impl Into<Entity>,
+        id_of_value: impl IntoEntity,
         value: *const core::ffi::c_void,
     ) -> String {
-        let id = *id_of_value.into();
+        let world = world.world();
+        let id = *id_of_value.into_entity(world);
         let world = world.world_ptr_mut();
         let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value) };
         let c_str = unsafe { CStr::from_ptr(expr) };
@@ -221,17 +222,5 @@ impl<'a> Script<'a> {
             sys::ecs_os_api.free_.expect("os api is missing")(expr as *mut core::ffi::c_void);
         };
         str
-    }
-
-    /// Convert value to string
-    ///
-    /// # See also
-    ///
-    /// * C API: `ecs_ptr_to_expr`
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_expr<T: ComponentId>(world: impl WorldProvider<'a>, value: &T) -> String {
-        let world = world.world();
-        let id = T::get_id(world);
-        Self::to_expr_id(world, id, value as *const T as *const core::ffi::c_void)
     }
 }

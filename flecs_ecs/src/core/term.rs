@@ -287,13 +287,14 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    fn set_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_id(&mut self, id: impl IntoEntity) -> &mut Self {
+        let world = self.world();
         if self.current_term_ref_mode() != TermRefMode::Src {
             check_term_access_validity(self);
         }
 
         let term_ref = self.term_ref_mut();
-        term_ref.id = *id.into();
+        term_ref.id = *id.into_entity(world);
         self
     }
 
@@ -386,17 +387,8 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    fn set_src_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_src(&mut self, id: impl IntoEntity) -> &mut Self {
         self.src().set_id(id)
-    }
-
-    /// Select src identifier, initialize it with id associated with type
-    ///
-    /// # Type Arguments
-    ///
-    /// * `T` - The type to use.
-    fn set_src<T: ComponentId>(&mut self) -> &mut Self {
-        self.set_src_id(T::id(self.world()))
     }
 
     /// Select src identifier, initialize it with name. If name starts with a $
@@ -425,22 +417,13 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    fn set_first_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_first(&mut self, id: impl IntoEntity) -> &mut Self {
         check_term_access_validity(self);
+        let id = id.into_entity(self.world());
         self.first().set_id(id);
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
         self.set_term_ref_mode(TermRefMode::Src);
         self
-    }
-
-    /// Select first identifier, initialize it with id associated with type
-    ///
-    /// # Type Arguments
-    ///
-    /// * `T` - The type to use.
-    fn set_first<First: ComponentId>(&mut self) -> &mut Self {
-        check_term_access_validity(self);
-        self.set_first_id(First::id(self.world()))
     }
 
     /// Select first identifier, initialize it with name. If name starts with a $
@@ -473,22 +456,13 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    fn set_second_id(&mut self, id: impl Into<Entity>) -> &mut Self {
+    fn set_second(&mut self, id: impl IntoEntity) -> &mut Self {
         check_term_access_validity(self);
+        let id = id.into_entity(self.world());
         self.second().set_id(id);
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
         self.set_term_ref_mode(TermRefMode::Src);
         self
-    }
-
-    /// Select second identifier, initialize it with id associated with type
-    ///
-    /// # Type Arguments
-    ///
-    /// * `T` - The type to use.
-    fn set_second<Second: ComponentId>(&mut self) -> &mut Self {
-        check_term_access_validity(self);
-        self.set_second_id(Second::id(self.world()))
     }
 
     /// Select second identifier, initialize it with name. If name starts with a $
@@ -543,7 +517,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `traverse_relationship` - The relationship to traverse.
-    fn up_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+    fn up_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
         ecs_assert!(
             self.current_term_ref_mode() == TermRefMode::Src,
             FlecsErrorCode::InvalidParameter,
@@ -551,25 +525,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         );
         let term_ref = self.term_ref_mut();
         term_ref.id |= ECS_UP;
-        self.current_term_mut().trav = *traverse_relationship.into();
-        self
-    }
-
-    /// The up flag indicates that the term identifier may be substituted by
-    /// traversing a relationship upwards. For example: substitute the identifier
-    /// with its parent by traversing the `ChildOf` relationship.
-    ///
-    /// # Type Arguments
-    ///
-    /// * `TravRel` - The relationship to traverse.
-    fn up_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        ecs_assert!(
-            self.current_term_ref_mode() == TermRefMode::Src,
-            FlecsErrorCode::InvalidParameter,
-            "up traversal can only be applied to term source"
-        );
-        self.term_ref_mut().id |= ECS_UP;
-        self.current_term_mut().trav = TravRel::id(self.world());
+        self.current_term_mut().trav = *traverse_relationship.into_entity(self.world());
         self
     }
 
@@ -589,21 +545,8 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `traverse_relationship` - The optional relationship to traverse.
-    fn cascade_id(&mut self, traverse_relationship: impl Into<Entity>) -> &mut Self {
+    fn cascade_id(&mut self, traverse_relationship: impl IntoEntity) -> &mut Self {
         self.up_id(traverse_relationship);
-        self.term_ref_mut().id |= ECS_CASCADE;
-        self
-    }
-
-    /// Cascade iterates a hierarchy in top to bottom order (breadth first search)
-    /// The cascade flag is like up, but returns results in breadth-first order.
-    /// Only supported for `flecs::query`
-    ///
-    /// # Type Arguments
-    ///
-    /// * `TravRel` - The relationship to traverse.
-    fn cascade_type<TravRel: ComponentId>(&mut self) -> &mut Self {
-        self.up_type::<TravRel>();
         self.term_ref_mut().id |= ECS_CASCADE;
         self
     }
@@ -620,8 +563,8 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * `traverse_relationship` - The relationship to traverse.
     /// * `flags` - The direction to traverse.
-    fn trav(&mut self, traverse_relationship: impl Into<Entity>, flags: u64) -> &mut Self {
-        self.current_term_mut().trav = *traverse_relationship.into();
+    fn trav(&mut self, traverse_relationship: impl IntoEntity, flags: u64) -> &mut Self {
+        self.current_term_mut().trav = *traverse_relationship.into_entity(self.world());
         self.term_ref_mut().id |= flags;
         self
     }
@@ -704,7 +647,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * [`Self::inout_stage`]
     /// * [`InOutKind`]
     #[inline(always)]
-    fn read_write(&mut self) -> &mut Self {
+    fn read_write_curr(&mut self) -> &mut Self {
         check_term_access_validity(self);
         self.inout_stage(InOutKind::InOut)
     }

@@ -4,7 +4,7 @@ use core::ops::{Deref, DerefMut};
 
 use flecs_ecs_sys::{self as sys};
 
-use crate::core::{ComponentId, Entity, EntityView, QueryTuple, World, WorldProvider};
+use crate::core::{ComponentId, Entity, EntityView, IntoEntity, QueryTuple, World, WorldProvider};
 
 use super::system::{System, SystemBuilder};
 
@@ -235,25 +235,6 @@ impl TimerAPI for System<'_> {
 }
 
 impl System<'_> {
-    /// Assign tick source to system based on a type.
-    /// Systems can be their own tick source, which can be any of the tick sources (one shot timers, interval times and rate filters).
-    /// However, in some cases it is must be guaranteed that different systems tick on the exact same frame.
-    ///
-    /// This cannot be guaranteed by giving two systems the same interval/rate filter as it is possible
-    /// that one system is (for example) disabled, which would cause the systems to go out of sync.
-    /// To provide these guarantees, systems must use the same tick source, which is what this operation enables.
-    ///
-    /// When two systems share the same tick source, it is guaranteed that they tick in the same frame.
-    /// The provided tick source can be any entity that is a tick source, including another system.
-    /// If the provided entity is not a tick source the system will not be ran.
-    ///
-    /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
-    pub fn set_tick_source<T: ComponentId>(&self) {
-        unsafe {
-            sys::ecs_set_tick_source(self.entity.world_ptr_mut(), *self.id, T::id(self.world()));
-        }
-    }
-
     /// Assign tick source to system based on an id.
     /// Systems can be their own tick source, which can be any of the tick sources (one shot timers, interval times and rate filters).
     /// However, in some cases it is must be guaranteed that different systems tick on the exact same frame.
@@ -267,8 +248,14 @@ impl System<'_> {
     /// If the provided entity is not a tick source the system will not be ran.
     ///
     /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
-    pub fn set_tick_source_id(&self, id: impl Into<Entity>) {
-        unsafe { sys::ecs_set_tick_source(self.entity.world_ptr_mut(), *self.id, *id.into()) }
+    pub fn set_tick_source(&self, id: impl IntoEntity) {
+        unsafe {
+            sys::ecs_set_tick_source(
+                self.entity.world_ptr_mut(),
+                *self.id,
+                *id.into_entity(self.world),
+            );
+        }
     }
 
     /// Reset, disassociate a tick source from a system
@@ -307,18 +294,10 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
         self
     }
 
-    /// Set tick source with the type associated with the singleton
-    /// tick source to use for the system.
-    /// This operation sets a shared tick source for the system.
-    pub fn set_tick_source<C: ComponentId>(&mut self) -> &mut Self {
-        self.desc.tick_source = C::id(self.world());
-        self
-    }
-
     /// Set tick source.
     /// This operation sets a shared tick source for the system.
-    pub fn set_tick_source_id(&mut self, tick_source: impl Into<Entity>) -> &mut Self {
-        self.desc.tick_source = *tick_source.into();
+    pub fn set_tick_source(&mut self, tick_source: impl IntoEntity) -> &mut Self {
+        self.desc.tick_source = *tick_source.into_entity(self.world());
         self
     }
 }

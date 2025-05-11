@@ -13,24 +13,28 @@ fn main() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
+        .with(id::<Position>())
         .each_iter(|it, index, _| {
-            // We use .with::<Position>() because we cannot safely access the component
+            // We use .with(id::<Position>()) because we cannot safely access the component
             // value here. The component value is uninitialized when the OnAdd event
             // is emitted, which is UB in Rust. To work around this, we use .with::<T>
-            println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
+            println!(
+                " - OnAdd: {}: {}",
+                it.event_id().to_str(),
+                it.entity(index).unwrap()
+            );
         });
 
     // Create an observer for three events
     world
         .observer::<flecs::OnSet, &Position>()
-        .add_event::<flecs::OnRemove>() //or .add_event_id(OnRemove::ID)
+        .add_event(id::<flecs::OnRemove>())
         .each_iter(|it, index, pos| {
             println!(
                 " - {}: {}: {}: with {:?}",
                 it.event().name(),
                 it.event_id().to_str(),
-                it.entity(index),
+                it.entity(index).unwrap(),
                 pos
             );
         });
@@ -39,10 +43,10 @@ fn main() {
     let entity = world.entity_named("e1").set(Position { x: 10.0, y: 20.0 });
 
     // Remove Position (emits EcsOnRemove)
-    entity.remove::<Position>();
+    entity.remove(id::<Position>());
 
     // Remove Position again (no event emitted)
-    entity.remove::<Position>();
+    entity.remove(id::<Position>());
 
     // Output:
     //  - OnAdd: Position: e1

@@ -33,7 +33,7 @@ fn component_lifecycle_count_in_remove_hook() {
     world.set(Count(0));
 
     world.component::<Position>().on_remove(|e, _| {
-        e.world().set(Count(e.world().count::<Position>()));
+        e.world().set(Count(e.world().count(id::<Position>())));
     });
 
     let entity = world.entity().set(Position { x: 1, y: 2 });

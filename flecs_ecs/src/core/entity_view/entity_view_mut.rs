@@ -24,11 +24,37 @@ impl<'a> EntityView<'a> {
     /// # Usage
     ///
     /// For types that are not ZST and do not implement a constructor hook, use the `set_id` method to safely initialize the `id`.
-    pub fn add_id(self, id: impl IntoId) -> Self {
+    #[allow(clippy::should_implement_trait)]
+    pub fn add<T: IntoId>(self, id: T) -> Self {
         let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
-        check_add_id_validity(world, id);
+        if !T::IS_PAIR {
+            if !T::IS_TYPED {
+                check_add_id_validity(world, id);
+            } else if !T::IF_ID_IS_DEFAULT && !<T as IntoId>::IS_TYPE_TAG {
+                panic!("Default hook not implemented for non ZST type");
+            }
+        } else if T::IS_TYPED {
+            if !T::IF_ID_IS_DEFAULT {
+                if T::IS_TYPED_SECOND {
+                    if !T::IF_ID_IS_DEFAULT_SECOND && !<T as IntoId>::IS_TYPE_TAG {
+                        //for some reason const panic doesn't work here
+                        panic!(
+                            "none implement default, use `set_pair` instead to ensure valid data"
+                        )
+                    }
+                } else {
+                    check_add_id_validity(world, id);
+                }
+            }
+        } else if T::IS_TYPED_SECOND {
+            if !T::IF_ID_IS_DEFAULT_SECOND {
+                check_add_id_validity(world, id);
+            }
+        } else {
+            check_add_id_validity(world, id);
+        }
 
         unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
@@ -47,7 +73,6 @@ impl<'a> EntityView<'a> {
     ///
     /// # See Also
     ///
-    /// * [`add_id`](Self::add_id)
     /// * [`set_id`](Self::set_id)
     pub unsafe fn add_id_unchecked(self, id: impl IntoId) -> Self {
         let id = *id.into_id(self.world);
@@ -55,15 +80,6 @@ impl<'a> EntityView<'a> {
 
         unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
-    }
-
-    /// Add a Tag or Tags relationship to an entity.
-    pub fn add<T>(self) -> Self
-    where
-        T: ComponentOrPairId,
-    {
-        let world = self.world;
-        self.add_id(T::get_id(world))
     }
 
     /// Adds a flecs trait.
@@ -93,82 +109,6 @@ impl<'a> EntityView<'a> {
             panic!("Entity does not have the component to override");
         }
         unsafe { self.add_id_unchecked(id) }
-    }
-
-    /// Adds a pair to the entity
-    ///
-    /// # Panics
-    ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
-    /// use `set_first` for ZST types.
-    pub fn add_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
-        const {
-            if !First::IS_TAG && !First::IMPLS_DEFAULT {
-                panic!(
-                    "Adding an element that is not a Tag / Zero sized type requires to implement Default"
-                );
-            }
-        }
-
-        let world = self.world;
-        let world_ptr = world.world_ptr();
-
-        let second = *second.into();
-
-        let is_valid_id = unsafe { sys::ecs_id_is_valid(world_ptr, second) };
-
-        if !is_valid_id {
-            panic!("Id is not a valid component or entity.");
-        }
-
-        if First::IS_TAG {
-            let is_second_not_tag = unsafe { sys::ecs_get_typeid(world_ptr, second) != 0 };
-
-            if is_second_not_tag {
-                assert!(
-                    has_default_hook(world_ptr, second),
-                    "second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait."
-                );
-            }
-        }
-
-        // SAFETY: we know that the id is a valid because first is a Type and second has been checked
-        unsafe { self.add_id_unchecked((First::id(world), second)) }
-    }
-
-    /// Adds a pair to the entity
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause you to read uninitialized payload data.
-    /// use `set_second` for ZST types.
-    pub fn add_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
-        let world = self.world;
-        let world_ptr = world.world_ptr();
-
-        let first = *first.into();
-
-        let is_valid = unsafe { sys::ecs_id_is_valid(world_ptr, first) };
-
-        if !is_valid {
-            panic!("Id is not a valid component or entity.");
-        }
-
-        let is_first_tag = unsafe { sys::ecs_get_typeid(world_ptr, first) == 0 };
-
-        if is_first_tag {
-            if !Second::IS_TAG && !Second::IMPLS_DEFAULT {
-                panic!(
-                    "first id is a tag type such as a Tag or Entity, but second id is not a zero-sized type (ZST) such as a Tag or Entity or does not implement the Default hook for a non ZST type. Default hooks are automatically implemented if the type has a Default trait."
-                );
-            }
-        } else {
-            assert!(has_default_hook(world_ptr,first),"first id is not a zero-sized type (ZST) such as a Tag or Entity and does not implement the Default hook.  Default hooks are automatically implemented if the type has a Default trait.
-                Use `set_id` or `set_pair`.");
-        }
-
-        // SAFETY: we know that the id is a valid because first is a Type and second has been checked
-        self.add_id((first, Second::id(world)))
     }
 
     /// Adds a pair to the entity composed of a tag and an (C) flecs enum constant.
@@ -224,12 +164,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * `condition`: The condition to evaluate.
     /// * `component`: The component to add.
-    pub fn add_id_if<T>(self, id: T, condition: bool) -> Self
-    where
-        T: IntoId,
-    {
+    pub fn add_if<T: IntoId>(self, id: T, condition: bool) -> Self {
         if condition {
-            self.add_id(id)
+            self.add(id)
         } else {
             // the compiler will optimize this branch away since it's known at compile time
             if T::IS_PAIR {
@@ -245,87 +182,11 @@ impl<'a> EntityView<'a> {
                 {
                     second = ECS_WILDCARD.into();
                 }
-                self.remove_id((first, second))
+                self.remove((first, second))
             } else {
-                self.remove_id(id)
+                self.remove(id)
             }
         }
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component to add.
-    ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    pub fn add_if<T: ComponentOrPairId>(self, condition: bool) -> Self {
-        let world = self.world;
-        if condition {
-            self.add::<T>()
-        } else {
-            let id = T::get_id(world);
-            // the compiler will optimize this branch away since it's known at compile time
-            if T::IS_PAIR {
-                // If second is 0 or if relationship is exclusive, use wildcard for
-                // second which will remove all instances of the relationship.
-                // Replacing 0 with Wildcard will make it possible to use the second
-                // as the condition.
-                let first = ecs_first(id, world);
-                let mut second = ecs_second(id, world);
-                if second == 0
-                    || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
-                {
-                    second = ECS_WILDCARD.into();
-                }
-                self.remove_id((first, second))
-            } else {
-                self.remove_id(id)
-            }
-        }
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    /// * `second`: The second element of the pair.
-    pub fn add_first_if<First: ComponentId>(
-        self,
-        second: impl Into<Entity>,
-        condition: bool,
-    ) -> Self {
-        let world = self.world;
-        self.add_id_if((First::id(world), second.into()), condition)
-    }
-
-    /// Conditional add.
-    /// This operation adds if condition is true, removes if condition is false.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair
-    ///
-    /// # Arguments
-    ///
-    /// * `condition`: The condition to evaluate.
-    /// * `first`: The first element of the pair.
-    pub fn add_second_if<Second: ComponentId>(
-        self,
-        first: impl Into<Entity>,
-        condition: bool,
-    ) -> Self {
-        let world = self.world;
-        self.add_id_if((first.into(), Second::id(world)), condition)
     }
 
     /// Conditional add.
@@ -345,7 +206,7 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world;
         // SAFETY: we know that the enum_value is a valid because of the T::id call
-        self.add_id_if(
+        self.add_if(
             (T::id(world), unsafe {
                 enum_value.id_variant_unchecked(world)
             }),
@@ -358,31 +219,17 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `component_id`: The entity to remove.
-    pub fn remove_id(self, id: impl IntoId) -> Self {
-        unsafe {
-            sys::ecs_remove_id(
-                self.world.world_ptr_mut(),
-                *self.id,
-                *id.into_id(self.world),
-            )
-        }
-        self
-    }
-
-    /// Remove a component from an entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type of the component to remove.
-    pub fn remove<T: ComponentOrPairId>(self) -> Self {
-        let world = self.world;
-
-        //this branch will be compiled away in release mode
-        if T::IS_ENUM {
-            self.remove_id((T::get_id(world), ECS_WILDCARD))
+    pub fn remove<T: IntoId>(self, id: T) -> Self {
+        let id = *id.into_id(self.world);
+        let id = if <T as IntoId>::IS_ENUM {
+            ecs_pair(id, ECS_WILDCARD)
         } else {
-            self.remove_id(T::get_id(world))
-        }
+            id
+        };
+
+        unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, id) }
+
+        self
     }
 
     /// Remove a pair.
@@ -402,37 +249,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let world = self.world;
-        self.remove_id((First::id(world), enum_value.id_variant(world)))
-    }
-
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    pub fn remove_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.remove_id((First::id(world), second.into()))
-    }
-
-    /// Removes a pair.
-    /// This operation removes a pair from the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    pub fn remove_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.remove_id((first.into(), Second::id(world)))
+        self.remove((First::id(world), enum_value.id_variant(world)))
     }
 
     /// Shortcut for `add((flecs::IsA, id))`.
@@ -440,37 +257,17 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    pub fn is_a_id(self, second: impl Into<Entity>) -> Self {
-        unsafe { self.add_id_unchecked((ECS_IS_A, second.into())) }
-    }
-
-    /// Shortcut for `add_id((flecs::IsA::ID, entity))`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type associated with the entity.
-    pub fn is_a<T: ComponentId>(self) -> Self {
-        let world = self.world;
-        self.is_a_id(T::id(world))
+    pub fn is_a(self, second: impl IntoEntity) -> Self {
+        unsafe { self.add_id_unchecked((ECS_IS_A, second.into_entity(self.world))) }
     }
 
     /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
     ///
     /// # Arguments
     ///
-    /// * `second`: The second element of the pair.
-    pub fn child_of_id(self, parent: impl Into<Entity>) -> Self {
-        unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into())) }
-    }
-
-    /// Shortcut for `add_id((flecs::ChildOf::ID, entity))`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type associated with the entity.
-    pub fn child_of<T: ComponentId>(self) -> Self {
-        let world = self.world;
-        self.child_of_id(T::id(world))
+    /// * `parent`: The parent entity to establish the relationship with.
+    pub fn child_of(self, parent: impl IntoEntity) -> Self {
+        unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into_entity(self.world))) }
     }
 
     /// Shortcut for `add_id((flecs::DependsOn::ID, entity))`.
@@ -478,18 +275,8 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    pub fn depends_on_id(self, second: impl Into<Entity>) -> Self {
-        unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into())) }
-    }
-
-    /// Shortcut for `add_id((flecs::ependsOn::ID, entity))`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type associated with the entity.
-    pub fn depends_on<T: ComponentId + ComponentType<Struct>>(self) -> Self {
-        let world = self.world;
-        self.depends_on_id(T::id(world))
+    pub fn depends_on(self, second: impl IntoEntity) -> Self {
+        unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into_entity(self.world))) }
     }
 
     /// Shortcut for `add_id((flecs::Dependency::ID, entity))`for Enums.
@@ -506,7 +293,7 @@ impl<'a> EntityView<'a> {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        self.depends_on_id(enum_value.id_variant(world))
+        self.depends_on(enum_value.id_variant(world))
     }
 
     /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
@@ -514,29 +301,19 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `second`: The second element of the pair.
-    pub fn slot_of_id(self, second: impl Into<Entity>) -> Self {
-        unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into())) }
-    }
-
-    /// Shortcut for `add_id((flecs::SlotOf::ID, entity))`.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: the type associated with the entity.
-    pub fn slot_of<T: ComponentId>(self) -> Self {
-        let world = self.world;
-        self.slot_of_id(T::id(world))
+    pub fn slot_of(self, second: impl IntoEntity) -> Self {
+        unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into_entity(self.world))) }
     }
 
     /// Shortcut for `add_id((flecs::SlotOf::ID, target(ChildOf)))`.
     pub fn slot(self) -> Self {
         ecs_assert!(
-            self.target::<flecs::ChildOf>(0).is_some(),
+            self.target(flecs::ChildOf::ID, 0).is_some(),
             FlecsErrorCode::InvalidParameter,
             "add ChildOf pair before using slot()"
         );
-        let id = self.target_id(ECS_CHILD_OF, 0);
-        self.slot_of_id(id.expect("ChildOf pair not found"))
+        let id = self.target(ECS_CHILD_OF, 0);
+        self.slot_of(id.expect("ChildOf pair not found"))
     }
 
     /// Mark id for auto-overriding.
@@ -548,70 +325,8 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `id`: The id to mark for overriding.
-    pub fn auto_override_id(self, id: impl IntoId) -> Self {
+    pub fn auto_override(self, id: impl IntoId) -> Self {
         unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into_id(self.world)) }
-    }
-
-    /// Mark component for auto-overriding.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component to mark for overriding.
-    pub fn auto_override<T: ComponentOrPairId>(self) -> Self {
-        let world = self.world;
-        self.auto_override_id(T::get_id(world))
-    }
-
-    /// Mark pair for auto-overriding with a given second ID.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    pub fn auto_override_first<First: ComponentId + DataComponent>(
-        self,
-        second: impl Into<Entity>,
-    ) -> Self {
-        let world = self.world;
-        let pair_id = ecs_pair(First::id(world), *second.into());
-        self.auto_override_id(pair_id)
-    }
-
-    /// Mark pair for auto-overriding with a given first ID.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    pub fn auto_override_second<Second: ComponentId + DataComponent>(
-        self,
-        first: impl Into<Entity>,
-    ) -> Self {
-        let world = self.world;
-        let pair_id = ecs_pair(*first.into(), Second::id(world));
-        self.auto_override_id(pair_id)
-    }
-
-    /// Sets a component for an entity and marks it as overridden.
-    ///
-    /// This function sets a component for an entity and marks the component
-    /// as overridden, meaning that it will not be updated by systems that
-    /// typically update this component.
-    pub fn set_auto_override_id(self, id: impl IntoId) -> Self {
-        unsafe {
-            sys::ecs_add_id(
-                self.world.world_ptr_mut(),
-                *self.id,
-                ECS_AUTO_OVERRIDE | *id.into_id(self.world),
-            );
-        }
-        self
     }
 
     /// Sets a component mark override for the entity and sets the component data.
@@ -619,7 +334,7 @@ impl<'a> EntityView<'a> {
         self,
         component: T,
     ) -> Self {
-        self.auto_override::<T>().set(component)
+        self.auto_override(id::<T>()).set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -634,7 +349,7 @@ impl<'a> EntityView<'a> {
         <(First, Second) as ComponentOrPairId>::CastType: DataComponent,
     {
         let id_pair = <(First, Second) as ComponentOrPairId>::get_id(self.world);
-        self.auto_override_id(id_pair).set_id(data, id_pair)
+        self.auto_override(id_pair).set_id(data, id_pair)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -653,7 +368,7 @@ impl<'a> EntityView<'a> {
         let second_id = *second.into();
         let first_id = First::id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
-        self.auto_override_id(pair_id).set_id(first, pair_id)
+        self.auto_override(pair_id).set_id(first, pair_id)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -672,7 +387,7 @@ impl<'a> EntityView<'a> {
         let first_id = first.into();
         let second_id = Second::id(self.world);
         let pair_id = ecs_pair(*first_id, second_id);
-        self.auto_override_id(pair_id).set_id(second, pair_id)
+        self.auto_override(pair_id).set_id(second, pair_id)
     }
 
     /// Sets a component of type `T` on the entity.
@@ -728,7 +443,6 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`EntityView::add`]
-    /// * [`EntityView::add_id`]
     /// * [`EntityView::set`]
     /// * [`EntityView::set_pair`]
     pub fn set_id<T>(self, data: T, id: impl IntoId) -> Self
@@ -995,54 +709,16 @@ impl<'a> EntityView<'a> {
     ///
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
-    pub fn enable_id(self, id: impl IntoId) -> Self {
+    pub fn enable(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_enable_id(
                 self.world.world_ptr_mut(),
                 *self.id,
                 *id.into_id(self.world),
                 true,
-            )
+            );
         }
         self
-    }
-
-    /// Enables a component or pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The component to enable.
-    pub fn enable<T: ComponentOrPairId>(self) -> Self {
-        let world = self.world;
-        self.enable_id(T::get_id(world))
-    }
-
-    /// Enables a pair with a specific ID for the second element.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `second`: The ID of the second element of the pair.
-    pub fn enable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.enable_id((First::id(world), second.into()))
-    }
-
-    /// Enables a pair with a specific ID for the first element.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `first`: The ID of the first element of the pair.
-    pub fn enable_second<Second: ComponentId>(self, first: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.enable_id((first.into(), Second::id(world)))
     }
 
     /// Disables self (entity).
@@ -1062,41 +738,18 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// - `component_id`: The ID to disable.
-    pub fn disable_id(self, id: impl IntoId) -> Self {
+    pub fn disable(self, id: impl IntoId) -> Self {
         unsafe {
             sys::ecs_enable_id(
                 self.world.world_ptr_mut(),
                 *self.id,
                 *id.into_id(self.world),
                 false,
-            )
+            );
         }
         self
     }
 
-    /// Disables a component or pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The component to disable.
-    pub fn disable<T: ComponentOrPairId>(self) -> Self {
-        let world = self.world;
-        self.disable_id(T::get_id(world))
-    }
-
-    /// Disables a pair with a specific ID for the second element.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `second`: The ID of the second element of the pair.
-    pub fn disable_first<First: ComponentId>(self, second: impl Into<Entity>) -> Self {
-        let world = self.world;
-        self.disable_id((First::id(world), second.into()))
-    }
     /// Entities created in the function will have the current entity.
     /// This operation is thread safe.
     ///
@@ -1121,11 +774,11 @@ impl<'a> EntityView<'a> {
     /// - `func`: The function to call.///
     /// # See also
     ///
-    pub fn with_first_id(self, first: impl Into<Entity>, func: impl FnOnce()) -> Self {
+    pub fn with_first(self, first: impl IntoEntity, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
-                ecs_pair(*first.into(), *self.id),
+                ecs_pair(*first.into_entity(self.world), *self.id),
             );
             func();
             sys::ecs_set_with(self.world.world_ptr_mut(), prev);
@@ -1140,46 +793,16 @@ impl<'a> EntityView<'a> {
     ///
     /// - `second`: The second element of the pair.
     /// - `func`: The function to call.
-    pub fn with_second_id(self, second: impl Into<Entity>, func: impl FnOnce()) -> Self {
+    pub fn with_second(self, second: impl IntoEntity, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
                 self.world.world_ptr_mut(),
-                ecs_pair(*self.id, *second.into()),
+                ecs_pair(*self.id, *second.into_entity(self.world)),
             );
             func();
             sys::ecs_set_with(self.world.world_ptr_mut(), prev);
         }
         self
-    }
-
-    /// Entities created in the function will have (First, self).
-    /// This operation is thread safe.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `func`: The function to call.
-    pub fn with_first<First: ComponentId>(self, func: impl FnOnce()) -> Self {
-        let world = self.world;
-        self.with_first_id(First::id(world), func)
-    }
-
-    /// Entities created in the function will have (self, Second)
-    /// This operation is thread safe.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `func`: The function to call.
-    pub fn with_second<Second: ComponentId>(self, func: impl FnOnce()) -> Self {
-        let world = self.world;
-        self.with_second_id(Second::id(world), func)
     }
 
     /// The function will be ran with the scope set to the current entity.
@@ -1199,7 +822,7 @@ impl<'a> EntityView<'a> {
     /// Calls the provided function with a world scoped to entity
     pub fn scope(self, f: impl FnMut(&World)) -> Self {
         let world = &*self.world;
-        world.scope_id(self.id, f);
+        world.scope(self.id, f);
         self
     }
 
@@ -1212,64 +835,21 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`EntityView::modified()`]
-    /// * [`EntityView::modified_first()`]
     /// * [`World::modified()`]
-    pub fn modified_id(self, id: impl IntoId) {
+    pub fn modified<T: IntoId>(self, id: T) {
+        const {
+            if <T as IntoId>::IS_TYPE_TAG {
+                panic!("Cannot modify tag component");
+            }
+        }
+
         unsafe {
             sys::ecs_modified_id(
                 self.world.world_ptr_mut(),
                 *self.id,
                 *id.into_id(self.world),
-            )
-        }
-    }
-
-    /// Signal that component was modified.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component that was modified.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::modified_first()`]
-    /// * [`EntityView::modified_id()`]
-    /// * [`World::modified()`]
-    pub fn modified<T: ComponentOrPairId>(&self) {
-        const {
-            assert!(
-                core::mem::size_of::<T::CastType>() != 0,
-                "cannot modify zero-sized-type / tag components"
             );
-        };
-
-        self.modified_id(T::get_id(self.world));
-    }
-
-    /// Signal that the first part of a pair was modified.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first part of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The second element of the pair.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::modified()`]
-    /// * [`EntityView::modified_id()`]
-    /// * [`World::modified()`]
-    pub fn modified_first<First: ComponentId>(self, second: impl Into<Entity>) {
-        ecs_assert!(
-            core::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "invalid type: {}",
-            core::any::type_name::<First>()
-        );
-
-        self.modified_id((First::id(self.world), second.into()));
+        }
     }
 
     /// Get reference to component specified by id.
@@ -1300,7 +880,7 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let base = world.component::<Base>();
-    /// let derived = world.component::<Derived>().is_a_id(base);
+    /// let derived = world.component::<Derived>().is_a(base);
     ///
     /// let entity = world.entity().set(Derived { x: 10 });
     ///
@@ -1324,6 +904,7 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::get_ref()`]
     /// * [`EntityView::get_ref_first()`]
     /// * [`EntityView::get_ref_second()`]
+    //TODO: can this be shrunk to just one function like with add,add_id
     pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,

@@ -34,10 +34,10 @@ impl DerefMut for ScriptEntityView<'_> {
 
 impl<'a> ScriptEntityView<'a> {
     /// Create a new script entity view.
-    pub fn new_from(world: impl WorldProvider<'a>, entity: impl Into<Entity>) -> Self {
+    pub fn new_from(world: impl WorldProvider<'a>, entity: impl IntoEntity) -> Self {
         let entity = EntityView::new_from(world, entity);
         ecs_assert!(
-            entity.has::<flecs::Script>(),
+            entity.has(id::<flecs::Script>()),
             FlecsErrorCode::InvalidParameter,
             "Entity does not have a script component"
         );

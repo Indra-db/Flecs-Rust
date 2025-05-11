@@ -73,18 +73,18 @@ fn item_kind(item: EntityView<'_>) -> Option<Entity> {
     let world = item.world();
     let mut result_entity: Option<Entity> = None;
 
-    item.each_component(|id| {
-        if id.is_entity() {
+    item.each_component(|comp| {
+        if comp.is_entity() {
             // If id is a plain entity (component), check if component inherits
             // from Item
-            if id.entity_view().has::<(flecs::IsA, Item)>() {
-                result_entity = Some(id.entity_view().id());
+            if comp.entity_view().has((id::<flecs::IsA>(), id::<Item>())) {
+                result_entity = Some(comp.entity_view().id());
             }
-        } else if id.is_pair() {
+        } else if comp.is_pair() {
             // If item has a base entity, check if the base has an attribute
             // that is an Item.
-            if id.first_id() == flecs::IsA::ID {
-                if let Some(base_kind) = item_kind(id.second_id()) {
+            if comp.first_id() == flecs::IsA::ID {
+                if let Some(base_kind) = item_kind(comp.second_id()) {
                     result_entity = Some(base_kind);
                 }
             }
@@ -100,14 +100,14 @@ fn item_name(item: EntityView<'_>) -> Option<String> {
     let world = item.world();
     let mut result_name: Option<String> = None;
 
-    item.each_component(|id| {
-        if id.is_entity() {
-            if id.entity_view().has::<(flecs::IsA, Item)>() {
-                result_name = id.entity_view().get_name();
+    item.each_component(|comp| {
+        if comp.is_entity() {
+            if comp.entity_view().has((id::<flecs::IsA>(), id::<Item>())) {
+                result_name = comp.entity_view().get_name();
             }
-        } else if id.is_pair() && id.first_id() == flecs::IsA::ID {
-            if let Some(base_kind) = item_kind(id.second_id()) {
-                result_name = id.second_id().get_name();
+        } else if comp.is_pair() && comp.first_id() == flecs::IsA::ID {
+            if let Some(base_kind) = item_kind(comp.second_id()) {
+                result_name = comp.second_id().get_name();
             }
         }
     });
@@ -118,10 +118,10 @@ fn item_name(item: EntityView<'_>) -> Option<String> {
 /// If entity is not a Container, get its Inventory target (the actual container).
 fn get_container(container: EntityView<'_>) -> Entity {
     let world = container.world();
-    if container.has::<Container>() {
+    if container.has(id::<Container>()) {
         return container.id();
     }
-    container.target::<Inventory>(0).unwrap().id()
+    container.target(id::<Inventory>(), 0).unwrap().id()
 }
 
 /// Iterate all items in an inventory
@@ -132,7 +132,7 @@ where
     let world = container.world();
     world
         .query::<()>()
-        .with_first::<ContainedBy>(container)
+        .with((id::<ContainedBy>(), container))
         .build()
         .each_entity(func);
 }
@@ -153,7 +153,7 @@ fn find_item_w_kind(
     for_each_item(container, |item, _| {
         // Check if we should only return active items. This is useful when
         // searching for an item that needs to be equipped.
-        if active_required && !item.has::<Active>() {
+        if active_required && !item.has(id::<Active>()) {
             return;
         }
 
@@ -196,7 +196,7 @@ fn transfer_item(container: EntityView<'_>, item: EntityView<'_>) {
     }
 
     // Move item to target container (replaces previous ContainedBy, if any)
-    item.add_first::<ContainedBy>(container);
+    item.add((id::<ContainedBy>(), container));
 }
 
 /// Move all items from `src` container to `dst` container.
@@ -396,40 +396,40 @@ impl Module for ItemComponentsModule {
 
         world
             .component::<Sword>()
-            .is_a::<Item>()
+            .is_a(id::<Item>())
             .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
         world
             .component::<Armor>()
-            .is_a::<Item>()
+            .is_a(id::<Item>())
             .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
         world
             .component::<Coin>()
-            .is_a::<Item>()
+            .is_a(id::<Item>())
             .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
         //register item prefabs
         world
             .prefab_type::<WoodenSword>()
-            .add::<Sword>()
+            .add(id::<Sword>())
             .set(Attack { value: 1 })
             // copy to instance, don't share
             .set(Health { value: 5 });
 
         world
             .prefab_type::<IronSword>()
-            .add::<Sword>()
+            .add(id::<Sword>())
             .set(Attack { value: 4 })
             .set(Health { value: 10 });
 
         world
             .prefab_type::<WoodenArmor>()
-            .add::<Armor>()
+            .add(id::<Armor>())
             .set(Health { value: 10 });
 
         world
             .prefab_type::<IronArmor>()
-            .add::<Armor>()
+            .add(id::<Armor>())
             .set(Health { value: 20 });
     }
 }
@@ -456,22 +456,23 @@ fn main() {
     // Create a loot box with items
     let loot_box = world
         .entity_named("Chest")
-        .add::<Container>()
-        .with_first::<ContainedBy>(|| {
-            world.entity().is_a::<IronSword>();
-            world.entity().is_a::<WoodenArmor>();
-            world.entity().add::<Coin>().set(Amount { amount: 30 });
+        .add(id::<Container>())
+        .with_first(id::<ContainedBy>(), || {
+            world.entity().is_a(id::<IronSword>());
+            world.entity().is_a(id::<WoodenArmor>());
+            world.entity().add(id::<Coin>()).set(Amount { amount: 30 });
         });
 
     // Create a player entity with an inventory
-    let player = world
-        .entity_named("Player")
-        .set(Health { value: 10 })
-        .add_first::<Inventory>(world.entity().add::<Container>().with_first::<ContainedBy>(
-            || {
-                world.entity().add::<Coin>().set(Amount { amount: 20 });
-            },
-        ));
+    let player = world.entity_named("Player").set(Health { value: 10 }).add((
+        id::<Inventory>(),
+        world
+            .entity()
+            .add(id::<Container>())
+            .with_first(id::<ContainedBy>(), || {
+                world.entity().add(id::<Coin>()).set(Amount { amount: 20 });
+            }),
+    ));
 
     // Print items in loot box
     print_items(loot_box);
@@ -490,11 +491,11 @@ fn main() {
 
     // Find armor entity & equip it
     if let Some(armor) = find_item_w_kind(player, world.component_id::<Armor>(), false) {
-        world.entity_from_id(armor).add::<Active>();
+        world.entity_from_id(armor).add(id::<Active>());
     }
 
     // Create a weapon to attack the player with
-    let my_sword = world.entity().is_a::<IronSword>();
+    let my_sword = world.entity().is_a(id::<IronSword>());
 
     // Attack player
     attack(player, my_sword);

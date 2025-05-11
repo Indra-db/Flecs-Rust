@@ -20,20 +20,20 @@ fn main() {
     let bob = world
         .entity_named("Bob")
         // Pairs can be constructed from a type and entity
-        .add_first::<Eats>(apples)
-        .add_first::<Eats>(pears)
+        .add((id::<Eats>(), apples))
+        .add((id::<Eats>(), pears))
         // Pairs can also be constructed from two entity ids
-        .add_id((grows, pears));
+        .add((grows, pears));
 
     // Has can be used with relationships as well
-    println!("Bob eats apples? {}", bob.has_first::<Eats>(apples));
+    println!("Bob eats apples? {}", bob.has((id::<Eats>(), apples)));
 
     // Wildcards can be used to match relationships
     println!(
         "Bob grows food? {}, {}",
-        bob.has_id((grows, flecs::Wildcard::ID)),
+        bob.has((grows, flecs::Wildcard::ID)),
         //or you can do
-        bob.has_second::<flecs::Wildcard>(grows)
+        bob.has((grows, id::<flecs::Wildcard>()))
     );
 
     println!();
@@ -45,7 +45,7 @@ fn main() {
     println!();
 
     // Relationships can be iterated for an entity. This iterates (Eats, *):
-    bob.each_target::<Eats>(|second| {
+    bob.each_target(id::<Eats>(), |second| {
         println!("Bob eats {}", second.name());
     });
 
@@ -59,10 +59,13 @@ fn main() {
     println!();
 
     // Get first target of relationship
-    println!("Bob eats {}", bob.target::<Eats>(0).unwrap().name());
+    println!("Bob eats {}", bob.target(id::<Eats>(), 0).unwrap().name());
 
     // Get second target of relationship
-    println!("Bob also eats {}", bob.target::<Eats>(1).unwrap().name());
+    println!(
+        "Bob also eats {}",
+        bob.target(id::<Eats>(), 1).unwrap().name()
+    );
 
     // Output:
     //  Bob eats apples? true

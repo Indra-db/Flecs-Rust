@@ -37,8 +37,8 @@ fn main() {
 
     // Register Movement and Direction as union relationships. This ensures that
     // an entity can only have one Movement and one Direction.
-    world.component::<Movement>().add::<flecs::Union>();
-    world.component::<Direction>().add::<flecs::Union>();
+    world.component::<Movement>().add(id::<flecs::Union>());
+    world.component::<Direction>().add(id::<flecs::Union>());
 
     // Create a query that subscribes for all entities that have a Direction
     // and that are walking.
@@ -69,7 +69,7 @@ fn main() {
 
     // Iterate the query
     q.each_iter(|it, index, ()| {
-        let entity = it.entity(index);
+        let entity = it.entity(index).unwrap();
 
         // Movement will always be Walking, Direction can be any state
         println!(

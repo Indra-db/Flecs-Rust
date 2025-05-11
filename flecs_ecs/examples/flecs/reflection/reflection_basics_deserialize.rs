@@ -16,12 +16,12 @@ fn main() {
     world.component::<Position>().meta();
 
     /* Alternatively, you can do it manually like so (without the derive macro)
-    .member::<f32>("x", 1 /* count */, core::mem::offset_of!(Position, x))
-    .member::<f32>("y", 1, core::mem::offset_of!(Position, y));
+    .member(id::<f32>(),"x", 1 /* count */, core::mem::offset_of!(Position, x))
+    .member(id::<f32>(),"y", 1, core::mem::offset_of!(Position, y));
     */
 
     // Create a new entity, set value of position using reflection API
-    let e = world.entity().add::<Position>();
+    let e = world.entity().add(id::<Position>());
 
     e.get::<&mut Position>(|pos| {
         let mut cur = world.cursor::<Position>(pos);

@@ -16,11 +16,11 @@ fn meta_struct_field_order() {
 
     world
         .component::<Test>()
-        .member::<u32>(("a", Count(1), offset_of!(Test, a)))
-        .member::<i64>(("b", Count(1), offset_of!(Test, b)))
-        .member::<i16>(("c", Count(1), offset_of!(Test, c)))
-        .member::<i8>(("d", Count(1), offset_of!(Test, d)))
-        .member::<i64>(("e", Count(1), offset_of!(Test, e)));
+        .member(id::<u32>(), ("a", Count(1), offset_of!(Test, a)))
+        .member(id::<i64>(), ("b", Count(1), offset_of!(Test, b)))
+        .member(id::<i16>(), ("c", Count(1), offset_of!(Test, c)))
+        .member(id::<i8>(), ("d", Count(1), offset_of!(Test, d)))
+        .member(id::<i64>(), ("e", Count(1), offset_of!(Test, e)));
 
     let e = world.entity().set(Test {
         a: 10,

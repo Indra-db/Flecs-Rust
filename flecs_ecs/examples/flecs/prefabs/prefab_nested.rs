@@ -31,18 +31,18 @@ fn main() {
     // method, which has the same effect as adding the (ChildOf, Car) pair.
     let car = world.prefab_named("Car");
     car.run_in_scope(|| {
-        world.prefab_named("FrontLeft").is_a_id(wheel);
+        world.prefab_named("FrontLeft").is_a(wheel);
 
-        world.prefab_named("FrontRight").is_a_id(wheel);
+        world.prefab_named("FrontRight").is_a(wheel);
 
-        world.prefab_named("BackLeft").is_a_id(wheel);
+        world.prefab_named("BackLeft").is_a(wheel);
 
-        world.prefab_named("BackRight").is_a_id(wheel);
+        world.prefab_named("BackRight").is_a(wheel);
     });
 
     // Create a prefab instance.
     let inst_car = world.entity_named("my_car");
-    inst_car.is_a_id(car);
+    inst_car.is_a(car);
 
     // Lookup one of the wheels
     if let Some(inst) = inst_car.try_lookup_recursive("FrontLeft") {

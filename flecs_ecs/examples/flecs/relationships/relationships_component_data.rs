@@ -78,7 +78,7 @@ fn main() {
     println!(
         "{}",
         world
-            .id_from::<(Requires, Gigawatts)>()
+            .id_view_from((id::<Requires>(), id::<Gigawatts>()))
             .type_id()
             .path()
             .unwrap()
@@ -86,7 +86,7 @@ fn main() {
     println!(
         "{}",
         world
-            .id_from::<(Gigawatts, Requires)>()
+            .id_view_from((id::<Gigawatts>(), id::<Requires>()))
             .type_id()
             .path()
             .unwrap()
@@ -94,7 +94,7 @@ fn main() {
     println!(
         "{}",
         world
-            .id_from::<(Expires, Position)>()
+            .id_view_from((id::<Expires>(), id::<Position>()))
             .type_id()
             .path()
             .unwrap()

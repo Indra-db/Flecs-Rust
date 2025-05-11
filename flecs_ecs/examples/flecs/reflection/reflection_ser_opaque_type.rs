@@ -21,9 +21,9 @@ fn main() {
         .opaque_id(
             world
                 .component_untyped()
-                .member::<i32>("a")
-                .member::<i32>("b")
-                .member::<i32>("result"),
+                .member(id::<i32>(), "a")
+                .member(id::<i32>(), "b")
+                .member(id::<i32>(), "result"),
         )
         // Forward struct members to serializer
         .serialize(|s: &Serializer, data: &Sum| {

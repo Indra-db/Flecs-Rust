@@ -53,7 +53,7 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 ///     .entity_named("Player")
 ///     .set(Position { x: 10.0, y: 20.0 })
 ///     .set(Velocity { x: 1.0, y: 0.0 })
-///     .add::<Walking>();
+///     .add(id::<Walking>());
 ///
 /// // Get component data
 /// player.get::<&Position>(|pos| {
@@ -61,10 +61,10 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 /// });
 ///
 /// // Check for components
-/// assert!(player.has::<Walking>());
+/// assert!(player.has(id::<Walking>()));
 ///
 /// // Remove components
-/// player.remove::<Walking>();
+/// player.remove(id::<Walking>());
 /// ```
 ///
 /// Working with hierarchies:
@@ -74,7 +74,7 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 /// let world = World::new();
 ///
 /// let parent = world.entity_named("parent");
-/// let child = world.entity_named("child").child_of_id(parent);
+/// let child = world.entity_named("child").child_of(parent);
 ///
 /// assert!(parent.has_children());
 /// assert_eq!(child.path().unwrap(), "::parent::child");
@@ -209,11 +209,10 @@ impl<'a> EntityView<'a> {
     /// * [`Entity::entity_view()`] - Convert Entity to EntityView
     /// * [`World::entity_from_id()`] - Get entity view from ID
     #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
-    pub fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
-        Self {
-            world: world.world(),
-            id: id.into(),
-        }
+    pub fn new_from(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
+        let world = world.world();
+        let id = id.into_entity(world);
+        Self { world, id }
     }
 
     /// Create a named entity.
@@ -492,7 +491,7 @@ impl<'a> EntityView<'a> {
     /// let parent = world.entity_named("Parent");
     ///
     /// // Create child entity
-    /// let child = world.entity_named("Child").child_of_id(parent);
+    /// let child = world.entity_named("Child").child_of(parent);
     ///
     /// assert_eq!(
     ///     child.path_w_sep("::", "::"),
@@ -509,7 +508,7 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::path()`] - Get path with default separator
     /// * [`EntityView::name()`] - Get entity name only
     pub fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
-        self.path_from_id_w_sep(0, sep, init_sep)
+        self.path_from_w_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -521,7 +520,7 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let parent = world.entity_named("Parent");
-    /// let child = world.entity_named("Child").child_of_id(parent);
+    /// let child = world.entity_named("Child").child_of(parent);
     ///
     /// assert_eq!(child.path(), Some("::Parent::Child".to_string()));
     /// ```
@@ -531,7 +530,7 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::path_w_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent
     pub fn path(self) -> Option<String> {
-        self.path_from_id(0)
+        self.path_from(0)
     }
 
     /// Return the hierarchical entity path relative to a parent.
@@ -550,18 +549,18 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let root = world.entity_named("Root");
-    /// let parent = world.entity_named("Parent").child_of_id(root);
-    /// let child = world.entity_named("Child").child_of_id(parent);
+    /// let parent = world.entity_named("Parent").child_of(root);
+    /// let child = world.entity_named("Child").child_of(parent);
     ///
     /// // Get path relative to root
     /// assert_eq!(
-    ///     child.path_from_id_w_sep(root, "::", "::"),
+    ///     child.path_from_w_sep(root, "::", "::"),
     ///     Some("Parent::Child".to_string())
     /// );
     ///
     /// // Get path relative to parent
     /// assert_eq!(
-    ///     child.path_from_id_w_sep(parent, "::", "::"),
+    ///     child.path_from_w_sep(parent, "::", "::"),
     ///     Some("Child".to_string())
     /// );
     /// ```
@@ -570,9 +569,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::path_from()`] - Get path relative to parent type
     /// * [`EntityView::path()`] - Get full path
-    pub fn path_from_id_w_sep(
+    pub fn path_from_w_sep(
         &self,
-        parent: impl Into<Entity>,
+        parent: impl IntoEntity,
         sep: &str,
         init_sep: &str,
     ) -> Option<String> {
@@ -582,28 +581,10 @@ impl<'a> EntityView<'a> {
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world.world_ptr(),
-                *parent.into(),
+                *parent.into_entity(self.world),
                 *self.id,
                 sep.as_ptr() as *const _,
                 init_sep.as_ptr() as *const _,
-            )
-        })
-        .map(|s| unsafe {
-            let len = CStr::from_ptr(s.as_ptr()).to_bytes().len();
-            // Convert the C string to a Rust String without any new heap allocation.
-            // The String will de-allocate the C string when it goes out of scope.
-            String::from_utf8_unchecked(Vec::from_raw_parts(s.as_ptr() as *mut u8, len, len))
-        })
-    }
-
-    fn path_from_id_default_sep(&self, parent: impl Into<Entity>) -> Option<String> {
-        NonNull::new(unsafe {
-            sys::ecs_get_path_w_sep(
-                self.world.world_ptr(),
-                *parent.into(),
-                *self.id,
-                SEPARATOR.as_ptr(),
-                SEPARATOR.as_ptr(),
             )
         })
         .map(|s| unsafe {
@@ -623,21 +604,21 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let root = world.entity_named("Root");
-    /// let parent = world.entity_named("Parent").child_of_id(root);
-    /// let child = world.entity_named("Child").child_of_id(parent);
+    /// let parent = world.entity_named("Parent").child_of(root);
+    /// let child = world.entity_named("Child").child_of(parent);
     ///
-    /// assert_eq!(child.path_from_id(root), Some("Parent::Child".to_string()));
+    /// assert_eq!(child.path_from(root), Some("Parent::Child".to_string()));
     /// ```
     ///
     /// # See also
     ///
-    /// * [`EntityView::path_from_id_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_from_w_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent type
-    pub fn path_from_id(self, parent: impl Into<Entity>) -> Option<String> {
+    pub fn path_from(self, parent: impl IntoEntity) -> Option<String> {
         NonNull::new(unsafe {
             sys::ecs_get_path_w_sep(
                 self.world.world_ptr(),
-                *parent.into(),
+                *parent.into_entity(self.world),
                 *self.id,
                 SEPARATOR.as_ptr(),
                 SEPARATOR.as_ptr(),
@@ -652,64 +633,9 @@ impl<'a> EntityView<'a> {
         })
     }
 
-    /// Return the hierarchical entity path relative to a parent type.
-    ///
-    /// Gets the path relative to an entity of the specified component type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use flecs_ecs::prelude::*;
-    /// #[derive(Component)]
-    /// struct Earth;
-    ///
-    /// let world = World::new();
-    /// let sun = world.entity_named("Sun");
-    /// let earth = world.component::<Earth>().child_of_id(sun);
-    /// let moon = world.entity_named("Moon").child_of_id(earth);
-    ///
-    /// // Get moon's path relative to nearest Planet
-    /// assert_eq!(moon.path_from::<Earth>(), Some("Moon".to_string()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::path_from_id()`] - Get path relative to specific entity
-    /// * [`EntityView::path()`] - Get full path
-    pub fn path_from<T: ComponentId>(self) -> Option<String> {
-        self.path_from_id_default_sep(T::id(self.world))
-    }
-    /// Return the hierarchical entity path relative to a parent type with custom separators.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use flecs_ecs::prelude::*;
-    /// #[derive(Component)]
-    /// struct Sun;
-    ///
-    /// let world = World::new();
-    /// let sun = world.component::<Sun>();
-    /// let earth = world.entity_named("Earth").child_of_id(sun);
-    /// let moon = world.entity_named("Moon").child_of_id(earth);
-    ///
-    /// assert_eq!(
-    ///     moon.path_from_w_sep::<Sun>("/", "/"),
-    ///     Some("Earth/Moon".to_string())
-    /// );
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::path_from()`] - Get path with default separator
-    /// * [`EntityView::path_from_id_w_sep()`] - Get path relative to ID with custom separator
-    pub fn path_from_w_sep<T: ComponentId>(&self, sep: &str, init_sep: &str) -> Option<String> {
-        self.path_from_id_w_sep(T::id(self.world), sep, init_sep)
-    }
-
     /// Return the hierarchical entity path relative to a parent type using the default separator "::".
-    pub fn hierarchy_path_from_parent_type<T: ComponentId>(self) -> Option<String> {
-        self.path_from_id(T::id(self.world))
+    pub fn hierarchy_path_from_parent(self, id: impl IntoEntity) -> Option<String> {
+        self.path_from(id)
     }
 
     /// Checks if the entity is enabled.
@@ -786,7 +712,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add::<Position>();
+    /// let entity = world.entity().add(id::<Position>());
     ///
     /// if let Some(table) = entity.table() {
     ///     println!(
@@ -829,7 +755,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add::<Position>();
+    /// let entity = world.entity().add(id::<Position>());
     ///
     /// if let Some(range) = entity.range() {
     ///     println!("Entity is at row {} in its table", range.offset());
@@ -918,8 +844,8 @@ impl<'a> EntityView<'a> {
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add_first::<Likes>(apple)
-    ///     .add_first::<Likes>(banana);
+    ///     .add((id::<Likes>(), apple))
+    ///     .add((id::<Likes>(), banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -986,11 +912,11 @@ impl<'a> EntityView<'a> {
     /// let parent = world.entity_named("Parent");
     ///
     /// // Create some child entities
-    /// let child1 = world.entity_named("Child1").child_of_id(parent);
-    /// let child2 = world.entity_named("Child2").child_of_id(parent);
+    /// let child1 = world.entity_named("Child1").child_of(parent);
+    /// let child2 = world.entity_named("Child2").child_of(parent);
     ///
     /// // Iterate over all children
-    /// parent.each_target_id(flecs::ChildOf::ID, |child| {
+    /// parent.each_target(flecs::ChildOf::ID, |child| {
     ///     println!("Found child: {}", child.name());
     /// });
     /// ```
@@ -1000,46 +926,11 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::each_component()`] - Iterate over all components
     /// * [`EntityView::each_pair()`] - Iterate over pairs
     /// * [`EntityView::target_id_count()`] - Get number of targets
-    pub fn each_target_id(self, relationship: impl Into<Entity>, mut func: impl FnMut(EntityView)) {
-        self.each_pair(relationship.into(), ECS_WILDCARD, |id| {
+    pub fn each_target(self, relationship: impl IntoEntity, mut func: impl FnMut(EntityView)) {
+        self.each_pair(relationship.into_entity(self.world), ECS_WILDCARD, |id| {
             let obj = id.second_id();
             func(obj);
         });
-    }
-
-    /// Iterate over targets for a given relationship type.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component)]
-    /// struct Likes;
-    ///
-    /// let world = World::new();
-    /// let entity = world.entity();
-    /// let apple = world.entity_named("Apple");
-    /// let banana = world.entity_named("Banana");
-    ///
-    /// entity.add_first::<Likes>(apple).add_first::<Likes>(banana);
-    ///
-    /// entity.each_target::<Likes>(|target| {
-    ///    println!("Entity likes: {}", target.name());
-    /// });
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::each_component()`] - Iterate over all components
-    /// * [`EntityView::each_pair()`] - Iterate over pairs
-    /// * [`EntityView::target_count()`] - Get number of targets
-    /// * [`EntityView::each_target_id()`] - Iterate over targets for a specific relationship
-    pub fn each_target<T>(self, func: impl FnMut(EntityView))
-    where
-        T: ComponentId,
-    {
-        self.each_target_id(EntityView::new_from(self.world, T::id(self.world)), func);
     }
 
     /// Get the count of targets for a given relationship.
@@ -1060,7 +951,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity.add_id((likes,apple)).add_id((likes,banana));
+    /// entity.add((likes,apple)).add((likes,banana));
     ///
     /// assert_eq!(entity.target_id_count(likes), Some(2));
     /// ```
@@ -1073,7 +964,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`EntityView::target_count()`] - Type-safe version
-    /// * [`EntityView::each_target_id()`] - Iterate over targets
+    /// * [`EntityView::each_target()`] - Iterate over targets
     pub fn target_id_count(self, relationship: impl Into<Entity>) -> Option<i32> {
         let world = self.world.real_world().ptr_mut();
         let id = ecs_pair(*relationship.into(), ECS_WILDCARD);
@@ -1101,7 +992,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity.add_first::<Likes>(apple).add_first::<Likes>(banana);
+    /// entity.add((id::<Likes>(), apple)).add((id::<Likes>(), banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```
@@ -1129,9 +1020,9 @@ impl<'a> EntityView<'a> {
     ///
     /// * `relationship` - The relationship to follow
     /// * `func` - The function invoked for each child. Must match the signature `FnMut(EntityView)`.
-    pub fn each_child_of_id(
+    pub fn each_child_of(
         self,
-        relationship: impl Into<Entity>,
+        relationship: impl IntoEntity,
         mut func: impl FnMut(EntityView),
     ) -> bool {
         let mut count = 0;
@@ -1143,8 +1034,12 @@ impl<'a> EntityView<'a> {
             return false;
         }
 
-        let mut it: sys::ecs_iter_t =
-            unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship.into(), *self.id)) };
+        let mut it: sys::ecs_iter_t = unsafe {
+            sys::ecs_each_id(
+                self.world_ptr(),
+                ecs_pair(*relationship.into_entity(self.world), *self.id),
+            )
+        };
         while unsafe { sys::ecs_each_next(&mut it) } {
             count += it.count;
             for i in 0..it.count as usize {
@@ -1160,19 +1055,6 @@ impl<'a> EntityView<'a> {
     }
 
     /// Iterate children for entity
-    ///
-    /// # Arguments
-    ///
-    /// * T - The relationship to follow
-    /// * `func` - The function invoked for each child. Must match the signature `FnMut(EntityView)`.
-    pub fn each_child_of<T>(self, func: impl FnMut(EntityView)) -> bool
-    where
-        T: ComponentId,
-    {
-        self.each_child_of_id(T::id(self.world), func)
-    }
-
-    /// Iterate children for entity
     /// This operation follows the `ChildOf` relationship.
     ///
     /// # Arguments
@@ -1183,7 +1065,7 @@ impl<'a> EntityView<'a> {
     ///
     /// Returns `true` if the entity has children, `false` otherwise.
     pub fn each_child(self, func: impl FnMut(EntityView)) -> bool {
-        self.each_child_of_id(flecs::ChildOf::ID, func)
+        self.each_child_of(flecs::ChildOf::ID, func)
     }
 
     /// Returns if the entity has any children.
@@ -1196,7 +1078,7 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let parent = world.entity();
-    /// let child = world.entity().child_of_id(parent);
+    /// let child = world.entity().child_of(parent);
     ///
     /// assert!(parent.has_children());
     /// assert!(!child.has_children());
@@ -1220,50 +1102,16 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let parent = world.entity();
-    /// let child = world.entity().child_of_id(parent);
+    /// let child = world.entity().child_of(parent);
     ///
     /// assert_eq!(parent.count_children(), 1);
     ///
-    /// let child2 = world.entity().child_of_id(parent);
+    /// let child2 = world.entity().child_of(parent);
     ///
     /// assert_eq!(parent.count_children(), 2);
     /// ```
     pub fn count_children(self) -> u32 {
         let mut it = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
-        unsafe { sys::ecs_iter_count(&mut it) as u32 }
-    }
-
-    /// Returns the count of targets for a given relationship.
-    ///
-    /// # Arguments
-    ///
-    /// * `relationship` - The relationship to follow
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// let world = World::new();
-    ///
-    /// let parent = world.entity();
-    /// let child = world.entity().child_of_id(parent);
-    ///
-    /// assert_eq!(parent.count_relationship::<flecs::ChildOf>(), 1);
-    ///
-    /// let child2 = world.entity().child_of_id(parent);
-    ///
-    /// assert_eq!(parent.count_relationship::<flecs::ChildOf>(), 2);
-    /// ```
-    pub fn count_relationship<T: ComponentId>(self) -> u32 {
-        let world = self.world;
-        let mut it = unsafe {
-            sys::ecs_each_id(
-                world.world_ptr(),
-                ecs_pair(*world.component_id::<T>(), *self.id),
-            )
-        };
-
         unsafe { sys::ecs_iter_count(&mut it) as u32 }
     }
 
@@ -1281,18 +1129,21 @@ impl<'a> EntityView<'a> {
     /// let world = World::new();
     ///
     /// let parent = world.entity();
-    /// let child = world.entity().child_of_id(parent);
+    /// let child = world.entity().child_of(parent);
     ///
-    /// assert_eq!(parent.count_relationship_id(flecs::ChildOf::ID), 1);
+    /// assert_eq!(parent.count_relationship(id::<flecs::ChildOf>()), 1);
     ///
-    /// let child2 = world.entity().child_of_id(parent);
+    /// let child2 = world.entity().child_of(parent);
     ///
-    /// assert_eq!(parent.count_relationship_id(flecs::ChildOf::ID), 2);
+    /// assert_eq!(parent.count_relationship(id::<flecs::ChildOf>()), 2);
     /// ```
-    pub fn count_relationship_id(self, relationship: impl Into<Entity>) -> u32 {
+    pub fn count_relationship(self, relationship: impl IntoEntity) -> u32 {
         let world = self.world;
         let mut it = unsafe {
-            sys::ecs_each_id(world.world_ptr(), ecs_pair(*relationship.into(), *self.id))
+            sys::ecs_each_id(
+                world.world_ptr(),
+                ecs_pair(*relationship.into_entity(self.world), *self.id),
+            )
         };
 
         unsafe { sys::ecs_iter_count(&mut it) as u32 }
@@ -1810,42 +1661,19 @@ impl<'a> EntityView<'a> {
     /// index can be used to iterate through targets, in case the entity `get_has`
     /// multiple instances for the same relationship.
     ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index (0 for the first instance of the relationship).
-    pub fn target<First: ComponentId>(self, index: i32) -> Option<EntityView<'a>> {
-        let id = unsafe {
-            sys::ecs_get_target(
-                self.world.world_ptr(),
-                *self.id,
-                First::id(self.world),
-                index,
-            )
-        };
-        if id == 0 {
-            None
-        } else {
-            Some(EntityView::new_from(self.world, id))
-        }
-    }
-
-    /// Get target for a given pair.
-    ///
-    /// This operation returns the target for a given pair. The optional
-    /// index can be used to iterate through targets, in case the entity `get_has`
-    /// multiple instances for the same relationship.
-    ///
     /// # Arguments
     ///
     /// * `first` - The first element of the pair for which to retrieve the target.
     /// * `index` - The index (0 for the first instance of the relationship).
-    pub fn target_id(self, first: impl Into<Entity>, index: i32) -> Option<EntityView<'a>> {
-        let id =
-            unsafe { sys::ecs_get_target(self.world.world_ptr(), *self.id, *first.into(), index) };
+    pub fn target(self, first: impl IntoEntity, index: i32) -> Option<EntityView<'a>> {
+        let id = unsafe {
+            sys::ecs_get_target(
+                self.world.world_ptr(),
+                *self.id,
+                *first.into_entity(self.world),
+                index,
+            )
+        };
         if id == 0 {
             None
         } else {
@@ -1872,16 +1700,16 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`EntityView::target_for()`]
-    pub fn target_for_id(
+    pub fn target_for(
         &self,
-        relationship: impl Into<Entity>,
+        relationship: impl IntoEntity,
         component_id: impl IntoId,
     ) -> Option<EntityView<'a>> {
         let id = unsafe {
             sys::ecs_get_target_for_id(
                 self.world.world_ptr(),
                 *self.id,
-                *relationship.into(),
+                *relationship.into_entity(self.world),
                 *component_id.into_id(self.world),
             )
         };
@@ -1890,47 +1718,6 @@ impl<'a> EntityView<'a> {
         } else {
             Some(EntityView::new_from(self.world, id))
         }
-    }
-
-    /// Get the target for a given component and relationship.
-    ///
-    /// This function is a convenient wrapper around `get_target_by_relationship_and_component_id`,
-    /// allowing callers to provide a type and automatically deriving the component id.
-    ///
-    /// This operation can be used to lookup, for example, which prefab is providing
-    /// a component by specifying the `IsA` pair:
-    ///
-    /// ```
-    /// # use flecs_ecs::prelude::*;
-    /// # let world = World::new();
-    /// # let entity = world.entity();
-    /// # #[derive(Component)]
-    /// # struct Position(f32, f32, f32);
-    /// // Is Position provided by the entity or one of its base entities?
-    /// let e = entity.target_for::<Position>(flecs::IsA::ID);
-    /// ```
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type to use for deriving the id.
-    ///
-    /// # Arguments
-    ///
-    /// * `relationship` - The relationship to follow.
-    ///
-    /// # Returns
-    ///
-    /// * The entity for which the target `get_has` been found.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::target_for_id()`]
-    #[inline(always)]
-    pub fn target_for<T: ComponentOrPairId>(
-        self,
-        relationship: impl Into<Entity>,
-    ) -> Option<EntityView<'a>> {
-        self.target_for_id(relationship, T::get_id(self.world))
     }
 
     // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
@@ -1981,25 +1768,14 @@ impl<'a> EntityView<'a> {
     ///
     /// * The depth of the relationship.
     #[inline(always)]
-    pub fn depth_id(self, relationship: impl Into<Entity>) -> i32 {
-        unsafe { sys::ecs_get_depth(self.world.world_ptr(), *self.id, *relationship.into()) }
-    }
-
-    /// Retrieves the depth for a specified relationship.
-    ///
-    /// This function is a convenient wrapper around `get_depth_id`, allowing callers
-    /// to provide a type and automatically deriving the relationship id.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The relationship type to use for deriving the id.
-    ///
-    /// # Returns
-    ///
-    /// * The depth of the relationship.
-    #[inline(always)]
-    pub fn depth<T: ComponentId>(self) -> i32 {
-        self.depth_id(T::id(self.world))
+    pub fn depth(self, relationship: impl IntoEntity) -> i32 {
+        unsafe {
+            sys::ecs_get_depth(
+                self.world.world_ptr(),
+                *self.id,
+                *relationship.into_entity(self.world),
+            )
+        }
     }
 
     /// Retrieves the parent of the entity.
@@ -2011,7 +1787,7 @@ impl<'a> EntityView<'a> {
     /// * The parent of the entity.
     #[inline(always)]
     pub fn parent(self) -> Option<EntityView<'a>> {
-        self.target_id(ECS_CHILD_OF, 0)
+        self.target(ECS_CHILD_OF, 0)
     }
 
     /// Lookup an entity by name.
@@ -2112,10 +1888,7 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!(
-                "Entity {} not found, when unsure, use try_lookup_recursive",
-                name
-            )
+            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
     }
 
@@ -2156,52 +1929,21 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::has()`]
     #[inline(always)]
-    pub fn has_id(self, id: impl IntoId) -> bool {
-        unsafe { sys::ecs_has_id(self.world.world_ptr(), *self.id, *id.into_id(self.world)) }
-    }
-
-    /// Check if entity has the provided component.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component to check.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has or inherits the provided component, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::has_id()`]
-    pub fn has<T: ComponentOrPairId>(self) -> bool {
-        if !T::IS_ENUM {
-            unsafe { sys::ecs_has_id(self.world.world_ptr(), *self.id, T::get_id(self.world)) }
+    pub fn has<T: IntoId>(self, id: T) -> bool {
+        if !<T as IntoId>::IS_ENUM {
+            unsafe { sys::ecs_has_id(self.world.world_ptr(), *self.id, *id.into_id(self.world)) }
         } else {
-            let component_id = T::get_id(self.world);
-            self.has_id((component_id, ECS_WILDCARD))
+            let component_id = id.into_id(self.world);
+            self.has((component_id, ECS_WILDCARD))
         }
     }
 
-    /// Check if entity has the provided enum constant.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The enum type.
-    ///
-    /// # Arguments
-    ///
-    /// * `constant` - The enum constant to check.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided constant, false otherwise.
-    pub fn has_enum<T>(self, constant: T) -> bool
+    // this is pub(crate) because it's used for development purposes only
+    pub(crate) fn has_enum<T>(self, enum_id: impl IntoEntity, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let component_id: sys::ecs_id_t = T::id(self.world);
-        // Safety: we know the enum fields are registered because of the previous T::id call
-        let enum_constant_entity_id = unsafe { constant.id_variant_unchecked(self.world) };
+        let enum_constant_entity_id = constant.id_variant(self.world);
 
         ecs_assert!(
             *enum_constant_entity_id.id != 0,
@@ -2209,50 +1951,7 @@ impl<'a> EntityView<'a> {
             "Constant was not found in Enum reflection data. Did you mean to use has<E>() instead of has(E)?"
         );
 
-        self.has_id((component_id, enum_constant_entity_id))
-    }
-
-    // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum_id<T>(self, enum_id: impl Into<Entity>, constant: T) -> bool
-    where
-        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        let enum_constant_entity_id = constant.id_variant(self.world);
-        self.has_id((enum_id.into(), enum_constant_entity_id))
-    }
-
-    /// Check if entity has the provided pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided component, false otherwise.
-    pub fn has_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
-        self.has_id((First::id(self.world), second.into()))
-    }
-
-    /// Check if entity has the provided pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// True if the entity has the provided component, false otherwise.
-    pub fn has_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
-        self.has_id((first.into(), Second::id(self.world)))
+        self.has((enum_id.into_entity(self.world), enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -2276,7 +1975,7 @@ impl<'a> EntityView<'a> {
         let component_id: sys::ecs_id_t = T::id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
-        self.has_id((component_id, enum_constant_entity_id))
+        self.has((component_id, enum_constant_entity_id))
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).
@@ -2287,72 +1986,12 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     /// - `true` if the entity owns the provided entity, `false` otherwise.
-    pub fn owns_id(self, entity_id: impl IntoId) -> bool {
+    pub fn owns(self, entity_id: impl IntoId) -> bool {
         unsafe {
             sys::ecs_owns_id(
                 self.world.world_ptr(),
                 *self.id,
                 *entity_id.into_id(self.world),
-            )
-        }
-    }
-
-    /// Check if the entity owns the provided component.
-    /// A component is owned if it is not shared from a base entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The component to check.
-    ///
-    /// # Returns
-    ///
-    /// - `true` if the entity owns the provided component, `false` otherwise.
-    pub fn owns<T: ComponentOrPairId>(self) -> bool {
-        unsafe { sys::ecs_owns_id(self.world.world_ptr(), *self.id, T::get_id(self.world)) }
-    }
-
-    /// Check if the entity owns the provided pair.
-    /// A pair is owned if it is not shared from a base entity.
-    ///
-    /// # Type Parameters
-    /// - `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `second`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn owns_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
-        unsafe {
-            sys::ecs_owns_id(
-                self.world.world_ptr(),
-                *self.id,
-                ecs_pair(First::id(self.world), *second.into()),
-            )
-        }
-    }
-
-    /// Check if the entity owns the provided pair.
-    /// A pair is owned if it is not shared from a base entity.
-    ///
-    /// # Type Parameters
-    /// - `Second`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// - `first`: The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// - `true` if the entity owns the provided pair, `false` otherwise.
-    pub fn owns_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
-        unsafe {
-            sys::ecs_owns_id(
-                self.world.world_ptr(),
-                *self.id,
-                ecs_pair(*first.into(), Second::id(self.world)),
             )
         }
     }
@@ -2364,47 +2003,8 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     /// - `true` if enabled, `false` if not.
-    pub fn is_enabled_id(self, id: impl IntoId) -> bool {
+    pub fn is_enabled(self, id: impl IntoId) -> bool {
         unsafe { sys::ecs_is_enabled_id(self.world.world_ptr(), *self.id, *id.into_id(self.world)) }
-    }
-
-    /// Test if component is enabled.
-    ///
-    /// # Type Parameters
-    /// - `T`: The component to test.
-    ///
-    /// # Returns
-    /// - `true` if enabled, `false` if not.
-    pub fn is_enabled<T: ComponentOrPairId>(self) -> bool {
-        unsafe { sys::ecs_is_enabled_id(self.world.world_ptr(), *self.id, T::get_id(self.world)) }
-    }
-
-    /// Test if pair is enabled.
-    ///
-    /// # Type Parameters
-    /// - `T`: The first element of the pair.
-    ///
-    /// # Arguments
-    /// - `second`: The second element of the pair.
-    ///
-    /// # Returns
-    /// - `true` if enabled, `false` if not.
-    pub fn is_enabled_first<First: ComponentId>(self, second: impl Into<Entity>) -> bool {
-        self.is_enabled_id((First::id(self.world), second.into()))
-    }
-
-    /// Test if pair is enabled.
-    ///
-    /// # Type Parameters
-    /// - `T`: The second element of the pair.
-    ///
-    /// # Arguments
-    /// - `first`: The second element of the pair.
-    ///
-    /// # Returns
-    /// - `true` if enabled, `false` if not.
-    pub fn is_enabled_second<Second: ComponentId>(self, first: impl Into<Entity>) -> bool {
-        self.is_enabled_id((first.into(), Second::id(self.world)))
     }
 
     /// Clones the current entity to a new or specified entity.

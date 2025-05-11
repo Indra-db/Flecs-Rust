@@ -34,13 +34,13 @@ fn main() {
                 println!(
                     " - Enter: {}: {}",
                     it.event_id().to_str(),
-                    it.entity(index).name()
+                    it.entity(index).unwrap().name()
                 );
             } else if it.event() == flecs::OnRemove::ID {
                 println!(
                     " - Leave: {}: {}",
                     it.event_id().to_str(),
-                    it.entity(index).name()
+                    it.entity(index).unwrap().name()
                 );
             }
         });
@@ -55,7 +55,7 @@ fn main() {
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
-    entity.remove::<Position>();
+    entity.remove(id::<Position>());
 
     // Output:
     //  - Enter: Velocity: e

@@ -32,9 +32,9 @@ fn main() {
 
     world
         .system_named::<()>("SetVelocitySP")
-        .with::<&PositionSP>()
+        .with(id::<&PositionSP>())
         .set_inout_none()
-        .write::<VelocitySP>() // VelocitySP is written, but shouldn't be matched
+        .with(id::<&mut VelocitySP>()) // VelocitySP is written, but shouldn't be matched
         .each_entity(|e, ()| {
             e.set(VelocitySP { x: 1.0, y: 2.0 });
         });
@@ -86,7 +86,7 @@ fn main() {
 
     // The "merge" lines indicate sync points.
     //
-    // Removing `.write::<VelocitySP>()` from the system will remove the first
+    // Removing `.with(id::<&mut VelocitySP>())` from the system will remove the first
     // sync point from the schedule.
 }
 

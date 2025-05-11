@@ -425,7 +425,7 @@ impl World {
     ///
     /// world.readonly_begin(false);
     ///
-    /// assert_eq!(stage.count::<Position>(), 0);
+    /// assert_eq!(stage.count(id::<Position>()), 0);
     ///
     /// world.readonly_end();
     ///
@@ -434,11 +434,11 @@ impl World {
     /// stage.entity().set(Position { x: 10, y: 20 });
     /// stage.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert_eq!(stage.count::<Position>(), 0);
+    /// assert_eq!(stage.count(id::<Position>()), 0);
     ///
     /// world.readonly_end();
     ///
-    /// assert_eq!(stage.count::<Position>(), 2);
+    /// assert_eq!(stage.count(id::<Position>()), 2);
     /// ```
     ///
     /// # See also
@@ -540,11 +540,11 @@ impl World {
     ///
     /// let e = world.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has::<Position>());
+    /// assert!(!e.has(id::<Position>()));
     ///
     /// world.defer_end();
     ///
-    /// assert!(e.has::<Position>());
+    /// assert!(e.has(id::<Position>()));
     /// ```
     ///
     /// # See also
@@ -886,11 +886,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has::<Position>());
+    /// assert!(!e.has(id::<Position>()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has::<Position>());
+    /// assert!(e.has(id::<Position>()));
     /// ```
     ///
     /// # See also
@@ -992,11 +992,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has::<Position>());
+    /// assert!(!e.has(id::<Position>()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has::<Position>());
+    /// assert!(e.has(id::<Position>()));
     /// ```
     /// # See also
     ///
@@ -1218,7 +1218,7 @@ impl World {
     /// world.set_entity_range(5000, 0);
     /// world.enable_range_check(true);
     ///
-    /// e.add_id(e2); // panics in debug mode! because e and e2 are outside the range
+    /// e.add(e2); // panics in debug mode! because e and e2 are outside the range
     /// panic!("in release mode, this does not panic, this is to prevent the test from failing")
     /// ```
     ///
@@ -1246,7 +1246,7 @@ impl World {
     ///
     /// let e = world.entity_named("scope");
     ///
-    /// world.set_scope_id(e);
+    /// world.set_scope(e);
     ///
     /// let s = world.get_scope();
     ///
@@ -1256,7 +1256,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_scope()`]
-    /// * [`World::set_scope_id()`]
     #[inline(always)]
     pub fn get_scope(&self) -> Option<EntityView> {
         let scope = unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) };
@@ -1292,7 +1291,7 @@ impl World {
     /// let e = world.entity_named("scope");
     ///
     /// // previous scope can be used to set the scope back to the original.
-    /// let previous_scope = world.set_scope_id(e);
+    /// let previous_scope = world.set_scope(e);
     ///
     /// let s = world.get_scope();
     ///
@@ -1304,50 +1303,10 @@ impl World {
     /// * [`World::get_scope()`]
     /// * [`World::set_scope()`]
     #[inline(always)]
-    pub fn set_scope_id(&self, id: impl IntoId) -> EntityView {
+    pub fn set_scope(&self, id: impl IntoId) -> EntityView {
         EntityView::new_from(self, unsafe {
             sys::ecs_set_scope(self.raw_world.as_ptr(), *id.into_id(self))
         })
-    }
-
-    /// Sets the current scope, but allows the scope type to be inferred from the type parameter.
-    /// This operation sets the scope of the current stage to the provided entity.
-    /// As a result new entities will be created in this scope, and lookups will be relative to the provided scope.
-    /// It is considered good practice to restore the scope to the old value.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type that implements `ComponentId`.
-    ///
-    /// # Returns
-    ///
-    /// Returns an `EntityView` representing the previous set scope.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component)]
-    /// struct Scope;
-    ///
-    /// let world = World::new();
-    ///
-    /// // previous scope can be used to set the scope back to the original.
-    /// let previous_scope = world.set_scope::<Scope>();
-    ///
-    /// let s = world.get_scope();
-    ///
-    /// assert_eq!(s.unwrap(), world.component_id::<Scope>());
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`World::get_scope()`]
-    /// * [`World::set_scope_id()`]
-    #[inline(always)]
-    pub fn set_scope<T: ComponentId>(&self) -> EntityView {
-        self.set_scope_id(T::id(self))
     }
 
     /// Sets the search path for entity lookup operations.
@@ -1425,7 +1384,7 @@ impl World {
     /// });
     ///
     /// let x = world.lookup_recursive("X");
-    /// assert!(x.has_id(a));
+    /// assert!(x.has(a));
     /// ```
     ///
     /// # See also
@@ -1606,27 +1565,9 @@ impl World {
     /// * [`EntityView::modified()`]
     /// * [`World::modified()`]
     #[inline(always)]
-    pub fn modified_id(&self, id: impl Into<Entity>) {
+    pub fn modified(&self, id: impl Into<Entity>) {
         let id = id.into();
-        EntityView::new_from(self, id).modified_id(id);
-    }
-
-    /// Signal that singleton component was modified.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the component that was modified.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::modified()`]
-    /// * [`World::modified_id()`]
-    #[inline(always)]
-    pub fn modified<T>(&self)
-    where
-        T: ComponentId,
-    {
-        self.modified_id(T::id(self));
+        EntityView::new_from(self, id).modified(id);
     }
 
     /// set the version of the provided entity.
@@ -1902,33 +1843,6 @@ impl World {
         EntityView::new_from(self, T::id(self))
     }
 
-    /// Gets the target for a given pair from a singleton entity.
-    ///
-    /// This operation returns the target for a given pair. The optional
-    /// `index` can be used to iterate through targets, in case the entity has
-    /// multiple instances for the same relationship.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index (None for the first instance of the relationship).
-    ///
-    /// # See also
-    ///
-    /// * [`World::target_id()`]
-    pub fn target<First>(&self, index: Option<i32>) -> EntityView
-    where
-        First: ComponentId,
-    {
-        let id = First::id(self);
-        EntityView::new_from(self, unsafe {
-            sys::ecs_get_target(self.raw_world.as_ptr(), id, id, index.unwrap_or(0))
-        })
-    }
-
     /// Retrieves the target for a given pair from a singleton entity.
     ///
     /// This operation fetches the target associated with a specific pair. An optional
@@ -1943,8 +1857,8 @@ impl World {
     /// # See also
     ///
     /// * [`World::target()`]
-    pub fn target_id(&self, relationship: impl Into<Entity>, index: Option<usize>) -> EntityView {
-        let relationship = *relationship.into();
+    pub fn target(&self, relationship: impl IntoEntity, index: Option<usize>) -> EntityView {
+        let relationship = *relationship.into_entity(self);
         EntityView::new_from(self, unsafe {
             sys::ecs_get_target(
                 self.raw_world.as_ptr(),
@@ -1970,36 +1884,14 @@ impl World {
     /// * [`World::has()`]
     /// * [`World::has_enum()`]
     #[inline(always)]
-    pub fn has_id<T: IntoId>(&self, id: T) -> bool {
+    pub fn has<T: IntoId>(&self, id: T) -> bool {
         let id = *id.into_id(self);
         if T::IS_PAIR {
             let first_id = id.get_id_first(self);
-            EntityView::new_from(self, first_id).has_id(id)
+            EntityView::new_from(self, first_id).has(id)
         } else {
-            EntityView::new_from(self, id).has_id(id)
+            EntityView::new_from(self, id).has(id)
         }
-    }
-
-    /// Check if world has the provided type (enum,pair,struct).
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type to check.
-    ///
-    /// # Returns
-    ///
-    /// True if the world has the provided type, false otherwise.
-    ///
-    /// # See also
-    ///
-    /// * [`World::has_enum()`]
-    /// * [`World::has_id()`]
-    #[inline(always)]
-    pub fn has<T>(&self) -> bool
-    where
-        T: ComponentOrPairId,
-    {
-        EntityView::new_from(self, T::get_id(self)).has::<T>()
     }
 
     /// Check if world has the provided enum constant.
@@ -2019,14 +1911,13 @@ impl World {
     /// # See also
     ///
     /// * [`World::has()`]
-    /// * [`World::has_id()`]
     #[inline(always)]
     pub fn has_enum<T>(&self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let id = T::id(self);
-        EntityView::new_from(self, id).has_enum_id::<T>(id, constant)
+        EntityView::new_from(self, id).has_enum(id, constant)
     }
 
     /// Add a singleton component by id.
@@ -2040,33 +1931,15 @@ impl World {
     ///
     /// `EntityView` handle to the singleton component.
     #[inline(always)]
-    pub fn add_id<T>(&self, id: T) -> EntityView
-    where
-        T: IntoId,
-    {
+    pub fn add<T: IntoId>(&self, id: T) -> EntityView {
         let id = *id.into_id(self);
         // this branch will compile out in release mode
         if T::IS_PAIR {
             let first_id = id.get_id_first(self);
-            EntityView::new_from(self, first_id).add_id(id)
+            EntityView::new_from(self, first_id).add(id)
         } else {
-            EntityView::new_from(self, id).add_id(id)
+            EntityView::new_from(self, id).add(id)
         }
-    }
-
-    /// Add a singleton component.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component to add.
-    ///
-    /// # Returns
-    ///
-    /// `EntityView` handle to the singleton component.
-    #[inline(always)]
-    pub fn add<T: ComponentOrPairId>(&self) -> EntityView {
-        let id = T::CastType::id(self);
-        EntityView::new_from(self, id).add::<T>()
     }
 
     /// Add a singleton enum component.
@@ -2084,40 +1957,6 @@ impl World {
         enum_value: T,
     ) -> EntityView {
         EntityView::new_from(self, T::id(self)).add_enum::<T>(enum_value)
-    }
-
-    /// Add a singleton pair by first id.
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause the payload to have uninitialized data.
-    ///
-    /// # Returns
-    ///
-    /// `EntityView` handle to the singleton pair.
-    #[inline(always)]
-    pub fn add_second<Second: ComponentId + TagComponent>(
-        &self,
-        first: impl Into<Entity>,
-    ) -> EntityView {
-        EntityView::new_from(self, Second::id(self)).add_second::<Second>(first)
-    }
-
-    /// Add a singleton pair by second id.
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure the id is a non ZST types. Otherwise it could cause the payload to have uninitialized data.
-    ///
-    /// # Returns
-    ///
-    /// `EntityView` handle to the singleton pair.
-    #[inline(always)]
-    pub fn add_first<First: ComponentId + TagComponent>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> EntityView {
-        EntityView::new_from(self, First::id(self)).add_first::<First>(second)
     }
 
     /// Add a singleton pair with enum tag.
@@ -2149,31 +1988,13 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id of the component to remove.
-    pub fn remove_id<T>(&self, id: T) -> EntityView
-    where
-        T: IntoId,
-    {
+    pub fn remove<T: IntoId>(&self, id: T) -> EntityView {
         let id = *id.into_id(self);
         if T::IS_PAIR {
             let first_id = id.get_id_first(self);
-            EntityView::new_from(self, first_id).remove_id(id)
+            EntityView::new_from(self, first_id).remove(id)
         } else {
-            EntityView::new_from(self, id).remove_id(id)
-        }
-    }
-
-    /// Remove singleton component.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component to remove.
-    #[inline(always)]
-    pub fn remove<T: ComponentOrPairId>(&self) {
-        if T::IS_PAIR {
-            let first_id = <T::First as ComponentId>::id(self);
-            EntityView::new_from(self, first_id).remove::<T>();
-        } else {
-            EntityView::new_from(self, T::get_id(self)).remove::<T>();
+            EntityView::new_from(self, id).remove(id)
         }
     }
 
@@ -2194,34 +2015,6 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
-    }
-
-    /// Remove singleton pair by first id.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    #[inline(always)]
-    pub fn remove_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
-        EntityView::new_from(self, Second::id(self)).remove_second::<Second>(first);
-    }
-
-    /// Remove singleton pair by second id.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    #[inline(always)]
-    pub fn remove_first<First: ComponentId>(&self, second: impl Into<Entity>) {
-        EntityView::new_from(self, First::id(self)).remove_first::<First>(second);
     }
 
     /// Iterate entities in root of world
@@ -2331,55 +2124,8 @@ impl World {
     /// # Returns
     ///
     /// The number of entities with the provided id.
-    pub fn count_id(&self, id: impl IntoId) -> i32 {
+    pub fn count(&self, id: impl IntoId) -> i32 {
         unsafe { sys::ecs_count_id(self.raw_world.as_ptr(), *id.into_id(self)) }
-    }
-
-    /// Count entities with the provided component.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component to count.
-    ///
-    /// # Returns
-    ///
-    /// The number of entities with the provided component.
-    pub fn count<T: ComponentOrPairId>(&self) -> i32 {
-        self.count_id(T::get_id(self))
-    }
-
-    /// Count entities with the provided pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The ID of the first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The number of entities with the provided pair.
-    pub fn count_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> i32 {
-        self.count_id((first.into(), Second::id(self)))
-    }
-
-    /// Count entities with the provided pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The ID of the second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The number of entities with the provided pair.
-    pub fn count_first<First: ComponentId>(&self, second: impl Into<Entity>) -> i32 {
-        self.count_id((First::id(self), second.into()))
     }
 
     /// Count entities with the provided enum constant.
@@ -2436,27 +2182,14 @@ impl World {
     ///
     /// * `parent_id` - The id of the scope to use.
     /// * `func` - The function to run.
-    pub fn run_in_scope_with_id(&self, parent_id: impl Into<Entity>, mut func: impl FnMut()) {
+    pub fn run_in_scope_with(&self, parent_id: impl IntoEntity, mut func: impl FnMut()) {
+        let world = self.world();
         let prev: sys::ecs_id_t =
-            unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into()) };
+            unsafe { sys::ecs_set_scope(self.raw_world.as_ptr(), *parent_id.into_entity(world)) };
         func();
         unsafe {
             sys::ecs_set_scope(self.raw_world.as_ptr(), prev);
         }
-    }
-
-    /// All entities created in function are created in scope. All operations
-    /// called in function (such as lookup) are relative to scope.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type to use as scope / parent.
-    ///
-    /// # Arguments
-    ///
-    /// * `func` - The function to run.
-    pub fn run_in_scope_with<T: ComponentId>(&self, func: impl FnMut()) {
-        self.run_in_scope_with_id(T::id(self), func);
     }
 
     /// Use provided scope for operations ran on returned world.
@@ -2469,26 +2202,10 @@ impl World {
     /// # Returns
     ///
     /// A scoped world.
-    pub fn scope_id(&self, parent_id: impl IntoId, mut f: impl FnMut(&World)) {
-        let previous_scope = self.set_scope_id(parent_id);
+    pub fn scope(&self, parent_id: impl IntoId, mut f: impl FnMut(&World)) {
+        let previous_scope = self.set_scope(parent_id);
         f(self);
-        self.set_scope_id(previous_scope);
-    }
-
-    /// Use provided scope for operations ran on returned world.
-    /// Operations need to be ran in a single statement
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type to use as scope.
-    ///
-    /// # Returns
-    ///
-    /// A scoped world.
-    pub fn scope<T: ComponentId>(&self, mut f: impl FnMut(&World)) {
-        let previous_scope = self.set_scope_id(T::id(self));
-        f(self);
-        self.set_scope_id(previous_scope);
+        self.set_scope(previous_scope);
     }
 
     /// Use provided scope of name for operations ran on returned world.
@@ -2502,7 +2219,7 @@ impl World {
     ///
     /// A scoped world.
     pub fn scope_name(&self, name: &str, f: impl FnMut(&World)) {
-        self.scope_id(EntityView::new_named(self, name).id, f);
+        self.scope(EntityView::new_named(self, name).id, f);
     }
 
     /// all entities created in function are created with id
@@ -2511,54 +2228,13 @@ impl World {
     ///
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
-    pub fn with_id(&self, id: impl IntoId, mut func: impl FnMut()) {
+    pub fn with(&self, id: impl IntoId, mut func: impl FnMut()) {
         let prev: sys::ecs_id_t =
             unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into_id(self)) };
         func();
         unsafe {
             sys::ecs_set_with(self.raw_world.as_ptr(), prev);
         }
-    }
-
-    /// Entities created in function are created with component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component type.
-    ///
-    /// # Arguments
-    ///
-    /// * `func`: The function to run.
-    pub fn with<T: ComponentOrPairId>(&self, func: impl FnMut()) {
-        self.with_id(T::get_id(self), func);
-    }
-
-    /// Entities created in function are created with pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first element of the pair.
-    /// * `func`: The function to run.
-    pub fn with_second<Second: ComponentId>(&self, first: impl Into<Entity>, func: impl FnMut()) {
-        self.with_id(ecs_pair(*first.into(), Second::id(self)), func);
-    }
-
-    /// Entities created in function are created with pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second element of the pair.
-    /// * `func`: The function to run.
-    pub fn with_first<First: ComponentId>(&self, second: impl Into<Entity>, func: impl FnMut()) {
-        self.with_id(ecs_pair(First::id(self), *second.into()), func);
     }
 
     /// Entities created in function are created with enum constant
@@ -2575,7 +2251,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.with_id(enum_value.id_variant(self), func);
+        self.with(enum_value.id_variant(self), func);
     }
 
     /// Entities created in function are created with enum tag pair
@@ -2594,7 +2270,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.with_id(
+        self.with(
             ecs_pair(First::id(self), **(enum_value.id_variant(self))),
             func,
         );
@@ -2605,45 +2281,10 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id to delete.
-    pub fn delete_entities_with_id(&self, id: impl IntoId) {
+    pub fn delete_entities_with(&self, id: impl IntoId) {
         unsafe {
             sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into_id(self));
         }
-    }
-
-    /// Delete all entities with the given component
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component type to delete.
-    pub fn delete_entities_with<T: ComponentOrPairId>(&self) {
-        self.delete_entities_with_id(T::get_id(self));
-    }
-
-    /// Delete all entities with the given pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first id of the pair.
-    pub fn delete_entities_with_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
-        self.delete_entities_with_id(ecs_pair(*first.into(), Second::id(self)));
-    }
-
-    /// Delete all entities with the given pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second id of the pair.
-    pub fn delete_entities_with_first<First: ComponentId>(&self, second: impl Into<Entity>) {
-        self.delete_entities_with_id(ecs_pair(First::id(self), *second.into()));
     }
 
     /// Delete all entities with the given enum constant
@@ -2659,7 +2300,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.delete_entities_with_id(enum_value.id_variant(self));
+        self.delete_entities_with(enum_value.id_variant(self));
     }
 
     /// Delete all entities with the given enum tag pair / relationship
@@ -2681,7 +2322,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.delete_entities_with_id(ecs_pair(First::id(self), **enum_value.id_variant(self)));
+        self.delete_entities_with(ecs_pair(First::id(self), **enum_value.id_variant(self)));
     }
 
     /// Remove all instances of the given id from entities
@@ -2689,45 +2330,10 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id to remove.
-    pub fn remove_all_id(&self, id: impl IntoId) {
+    pub fn remove_all(&self, id: impl IntoId) {
         unsafe {
             sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into_id(self));
         }
-    }
-
-    /// Remove all instances of the given component from entities
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component type to remove.
-    pub fn remove_all<T: ComponentOrPairId>(&self) {
-        self.remove_all_id(T::get_id(self));
-    }
-
-    /// Remove all instances of the given pair from entities
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second`: The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first`: The first id of the pair.
-    pub fn remove_all_second<Second: ComponentId>(&self, first: impl Into<Entity>) {
-        self.remove_all_id((first.into(), Second::id(self)));
-    }
-
-    /// Remove all instances of the given pair from entities
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First`: The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second`: The second id of the pair.
-    pub fn remove_all_first<First: ComponentId>(&self, second: impl Into<Entity>) {
-        self.remove_all_id((First::id(self), second.into()));
     }
 
     /// Remove all instances with the given enum constant from entities
@@ -2743,7 +2349,7 @@ impl World {
         &self,
         enum_value: T,
     ) {
-        self.remove_all_id(enum_value.id_variant(self));
+        self.remove_all(enum_value.id_variant(self));
     }
 
     /// Remove all instances with the given enum tag pair / relationship from entities
@@ -2761,7 +2367,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.remove_all_id((First::id(self), enum_value.id_variant(self)));
+        self.remove_all((First::id(self), enum_value.id_variant(self)));
     }
 
     /// Checks if the given entity ID exists in the world.
@@ -3004,7 +2610,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab(&self) -> EntityView {
         let result = EntityView::new(self);
-        result.add_id(flecs::Prefab::ID);
+        result.add(flecs::Prefab::ID);
         result
     }
 
@@ -3025,7 +2631,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
-        result.add_id(ECS_PREFAB);
+        result.add(ECS_PREFAB);
         result
     }
 
@@ -3046,7 +2652,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab_type<T: ComponentId>(&self) -> EntityView {
         let result = self.entity_from::<T>();
-        result.add_id(ECS_PREFAB);
+        result.add(ECS_PREFAB);
         result
     }
 
@@ -3071,7 +2677,7 @@ impl World {
     /// * [`World::prefab_type()`]
     pub fn prefab_type_named<'a, T: ComponentId>(&'a self, name: &str) -> EntityView<'a> {
         let result = self.entity_from_named::<T>(name);
-        result.add_id(ECS_PREFAB);
+        result.add(ECS_PREFAB);
         result
     }
 }
@@ -3094,21 +2700,8 @@ impl World {
     }
 
     /// Get the id of the provided pair of components.
-    pub fn relationship_id<First: ComponentId, Second: ComponentId>(&self) -> Id {
-        Id(ecs_pair(First::id(self), Second::id(self)))
-    }
-
-    /// Get the id view of component / pair
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type.
-    ///
-    /// # Returns
-    ///
-    /// The id of the component.
-    pub fn id_from<T: ComponentOrPairId>(&self) -> IdView {
-        IdView::new_from_id(self, T::get_id(self))
+    pub fn id_from<T: IntoId>(&self, id: T) -> Id {
+        Id(*id.into_id(self))
     }
 
     /// get `IdView` from an id or from a relationship pair
@@ -3120,10 +2713,7 @@ impl World {
     /// # Returns
     ///
     /// The `IdView` from the provided id.
-    pub fn id_from_id<Id>(&self, id: Id) -> IdView
-    where
-        Id: IntoId,
-    {
+    pub fn id_view_from<Id: IntoId>(&self, id: Id) -> IdView {
         let id = *id.into_id(self);
         if Id::IS_PAIR {
             ecs_assert!(
@@ -3138,52 +2728,6 @@ impl World {
         }
 
         IdView::new_from_id(self, id)
-    }
-
-    /// get pair id from relationship, object.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The id of the second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The pair as Id
-    pub fn id_first<First: ComponentId>(&self, second: impl Into<Entity>) -> IdView {
-        let id: Entity = second.into();
-        ecs_assert!(
-            !ecs_is_pair(id),
-            FlecsErrorCode::InvalidParameter,
-            "cannot create nested pairs"
-        );
-        IdView::new_from_id(self, (First::id(self), id))
-    }
-
-    /// get pair id from relationship, object.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The id of the first element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// The pair as Id
-    pub fn id_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> IdView {
-        let id = first.into();
-        ecs_assert!(
-            !ecs_is_pair(id),
-            FlecsErrorCode::InvalidParameter,
-            "cannot create nested pairs"
-        );
-        IdView::new_from_id(self, (id, Second::id(self)))
     }
 }
 
@@ -3234,19 +2778,6 @@ impl World {
 
     /// Find or register untyped component.
     ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type.
-    ///
-    /// # Returns
-    ///
-    /// The found or registered untyped component.
-    pub fn component_untyped_from<T: ComponentId>(&self) -> UntypedComponent {
-        UntypedComponent::new_from(self, T::id(self))
-    }
-
-    /// Find or register untyped component.
-    ///
     /// # Arguments
     ///
     /// * `id` - The component id.
@@ -3254,7 +2785,7 @@ impl World {
     /// # Returns
     ///
     /// The found or registered untyped component.
-    pub fn component_untyped_from_id(&self, id: impl Into<Entity>) -> UntypedComponent {
+    pub fn component_untyped_from(&self, id: impl IntoEntity) -> UntypedComponent {
         UntypedComponent::new_from(self, id)
     }
 
@@ -3382,7 +2913,7 @@ impl World {
         Components: QueryTuple,
     {
         let mut builder = ObserverBuilder::<(), Components>::new_untyped(self);
-        builder.add_event_id(event);
+        builder.add_event(event);
         builder
     }
 
@@ -3734,29 +3265,10 @@ impl World {
     /// * [`World::get_pipeline()`]
     /// * [`World::set_pipeline()`]
     #[inline(always)]
-    pub fn set_pipeline_id(&self, pipeline: impl Into<Entity>) {
+    pub fn set_pipeline(&self, pipeline: impl IntoEntity) {
+        let world = self.world();
         unsafe {
-            sys::ecs_set_pipeline(self.raw_world.as_ptr(), *pipeline.into());
-        }
-    }
-
-    /// Set a custom pipeline by type. This operation sets the pipeline to run when [`World::progress()`] is invoked.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Pipeline` - The associated type to use for the pipeline.
-    ///
-    /// # See also
-    ///
-    /// * [`World::get_pipeline()`]
-    /// * [`World::set_pipeline_id()`]
-    #[inline(always)]
-    pub fn set_pipeline<Pipeline>(&self)
-    where
-        Pipeline: ComponentType<Struct> + ComponentId,
-    {
-        unsafe {
-            sys::ecs_set_pipeline(self.raw_world.as_ptr(), Pipeline::id(self));
+            sys::ecs_set_pipeline(self.raw_world.as_ptr(), *pipeline.into_entity(world));
         }
     }
 
@@ -3769,7 +3281,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_pipeline()`]
-    /// * [`World::set_pipeline_id()`]
+    /// * [`World::set_pipeline()`]
     #[inline(always)]
     pub fn get_pipeline(&self) -> EntityView {
         EntityView::new_from(self, unsafe {
@@ -3832,7 +3344,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using [`World::progress()`] auto-invokes this for the
+    /// `set_pipeline()`). Using [`World::progress()`] auto-invokes this for the
     /// default pipeline. Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3849,8 +3361,8 @@ impl World {
     /// * [`World::run_pipeline_id_time()`]
     /// * [`World::run_pipeline_time()`]
     #[inline(always)]
-    pub fn run_pipeline_id(&self, pipeline: impl Into<Entity>) {
-        Self::run_pipeline_id_time(self, pipeline, 0.0);
+    pub fn run_pipeline(&self, pipeline: impl IntoEntity) {
+        Self::run_pipeline_time(self, pipeline, 0.0);
     }
 
     /// Run pipeline.
@@ -3859,7 +3371,7 @@ impl World {
     /// synchronization.
     ///
     /// Providing 0 for pipeline id runs the default pipeline (builtin or set via
-    /// `set_pipeline_id()`). Using [`World::progress()`] auto-invokes this for the
+    /// `set_pipeline()`). Using [`World::progress()`] auto-invokes this for the
     /// default pipeline. Additional pipelines may be run explicitly.
     ///
     /// # Note
@@ -3874,75 +3386,17 @@ impl World {
     /// # See also
     ///
     /// * [`World::run_pipeline()`]
-    /// * [`World::run_pipeline_id()`]
     /// * [`World::run_pipeline_time()`]
     #[inline(always)]
-    pub fn run_pipeline_id_time(&self, pipeline: impl Into<Entity>, delta_time: super::FTime) {
+    pub fn run_pipeline_time(&self, pipeline: impl IntoEntity, delta_time: super::FTime) {
+        let world = self.world();
         unsafe {
-            sys::ecs_run_pipeline(self.raw_world.as_ptr(), *pipeline.into(), delta_time);
+            sys::ecs_run_pipeline(
+                self.raw_world.as_ptr(),
+                *pipeline.into_entity(world),
+                delta_time,
+            );
         }
-    }
-
-    /// Run pipeline.
-    /// Runs all systems in the specified pipeline. Can be invoked from multiple
-    /// threads if staging is disabled, managing staging and, if needed, thread
-    /// synchronization.
-    ///
-    /// Using [`World::progress()`] auto-invokes this for the default pipeline.
-    /// Additional pipelines may be run explicitly.
-    ///
-    /// # Note
-    ///
-    /// Only supports single-threaded applications with a single stage when called from an application.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Component` - The associated type to use for the pipeline.
-    ///
-    /// # Arguments
-    ///
-    /// * `delta_time` - Time to advance the world.
-    ///
-    /// # See also
-    ///
-    /// * [`World::run_pipeline()`]
-    /// * [`World::run_pipeline_id()`]
-    /// * [`World::run_pipeline_id_time()`]
-    pub fn run_pipeline_time<Component>(&self, delta_time: super::FTime)
-    where
-        Component: ComponentType<Struct> + ComponentId,
-    {
-        unsafe {
-            sys::ecs_run_pipeline(self.raw_world.as_ptr(), Component::id(self), delta_time);
-        }
-    }
-
-    /// Run pipeline.
-    /// Runs all systems in the specified pipeline. Can be invoked from multiple
-    /// threads if staging is disabled, managing staging and, if needed, thread
-    /// synchronization.
-    ///
-    /// Using [`World::progress()`] auto-invokes this for the default pipeline.
-    /// Additional pipelines may be run explicitly.
-    ///
-    /// # Note
-    ///
-    /// Only supports single-threaded applications with a single stage when called from an application.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Component` - The associated type to use for the pipeline.
-    ///
-    /// # See also
-    ///
-    /// * [`World::run_pipeline_id()`]
-    /// * [`World::run_pipeline_id_time()`]
-    /// * [`World::run_pipeline_time()`]
-    pub fn run_pipeline<Component>(&self)
-    where
-        Component: ComponentType<Struct> + ComponentId,
-    {
-        Self::run_pipeline_time::<Component>(self, 0.0);
     }
 
     /// Set time scale. Increase or decrease simulation speed by the provided multiplier.

@@ -41,7 +41,7 @@ fn main() {
                 //
                 // The current entity can also be used to provide context. This
                 // is useful for functions that accept a flecs::entity:
-                //   t.to_delete.mut(it.entity(index)).destruct();
+                //   t.to_delete.mut(it.entity(index).unwrap()).destruct();
                 //
                 // A shortcut is to use the iterator directly:
                 let world = it.world();
@@ -65,12 +65,12 @@ fn main() {
     // Observer that triggers when entity is actually deleted
     world
         .observer::<flecs::OnRemove, ()>()
-        .with::<Tag>()
+        .with(id::<Tag>())
         .each_entity(|e, _tag| {
             println!("Expired: {} actually deleted", e.name());
         });
 
-    let to_delete = world.entity_named("ToDelete").add::<Tag>();
+    let to_delete = world.entity_named("ToDelete").add(id::<Tag>());
 
     world.entity_named("MyEntity").set(Timeout {
         to_delete: to_delete.id(),

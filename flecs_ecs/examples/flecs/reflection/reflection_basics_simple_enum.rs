@@ -32,7 +32,7 @@ fn main() {
     world.component::<TypeWithEnum>().meta();
 
     /* Alternatively, you can do it manually like so (without the derive macro)
-    .member::<Color>("color", 1, core::mem::offset_of!(TypeWithEnum, color));
+    .member(id::<Color>(),"color", 1, core::mem::offset_of!(TypeWithEnum, color));
      */
 
     // Create a new entity

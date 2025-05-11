@@ -16,7 +16,7 @@ fn main() {
     // Startup system
     world
         .system_named::<()>("Startup")
-        .kind::<flecs::pipeline::OnStart>()
+        .kind(id::<flecs::pipeline::OnStart>())
         .run(|mut it| {
             while it.next() {
                 println!("{}", it.system().name());

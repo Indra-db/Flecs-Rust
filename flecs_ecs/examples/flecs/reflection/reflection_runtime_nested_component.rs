@@ -7,16 +7,16 @@ fn main() {
 
     let point = world
         .component_untyped_named("Point")
-        .member::<f32>("x")
-        .member::<f32>("y");
+        .member(id::<f32>(), "x")
+        .member(id::<f32>(), "y");
 
     let line = world
         .component_untyped_named("Line")
-        .member_id(point, "start")
-        .member_id(point, "stop");
+        .member(point, "start")
+        .member(point, "stop");
 
     // Create entity, set value of line using reflection API
-    let e = world.entity().add_id(line);
+    let e = world.entity().add(line);
 
     let ptr = e.get_untyped_mut(line);
 

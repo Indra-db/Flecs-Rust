@@ -28,7 +28,7 @@ fn main() {
                 " - {}: {}: {}: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
-                it.entity(index),
+                it.entity(index).unwrap(),
                 pos.x,
                 pos.y
             );

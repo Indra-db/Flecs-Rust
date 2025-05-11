@@ -148,25 +148,9 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `event` - The event to add
-    pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut ObserverBuilder<(), T> {
-        let event = *event.into();
+    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<(), T> {
+        let event = *event.into_entity(self.world);
         self.desc.events[self.event_count] = event;
-        self.event_count += 1;
-        // SAFETY: Same layout
-        unsafe { core::mem::transmute(self) }
-    }
-
-    /// Specify the event(s) for when the observer should run.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the event
-    pub fn add_event<E>(&mut self) -> &mut ObserverBuilder<(), T>
-    where
-        E: ComponentId,
-    {
-        let id = E::id(self.world());
-        self.desc.events[self.event_count] = id;
         self.event_count += 1;
         // SAFETY: Same layout
         unsafe { core::mem::transmute(self) }

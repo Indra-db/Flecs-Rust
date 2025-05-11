@@ -86,10 +86,10 @@ impl World {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_expr_id(
         &self,
-        id_of_value: impl Into<Entity>,
+        id_of_value: impl IntoEntity,
         value: *const core::ffi::c_void,
     ) -> String {
-        Script::to_expr_id(self, id_of_value, value)
+        Script::to_expr(self, id_of_value, value)
     }
 
     /// Serialize value into a String.
@@ -99,7 +99,11 @@ impl World {
     ///
     /// * C API: `ecs_ptr_to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
-        Script::to_expr(self, value)
+        Script::to_expr(
+            self,
+            id::<T>(),
+            value as *const T as *const core::ffi::c_void,
+        )
     }
 
     /// Wraps the provided entity id in a [`ScriptEntityView`].
@@ -107,16 +111,7 @@ impl World {
     /// # Panics
     ///
     /// The entity must have a [`flecs::Script`] component.
-    pub fn script_entity_from_id(&self, id: impl Into<Entity>) -> ScriptEntityView {
+    pub fn script_entity_from(&self, id: impl IntoEntity) -> ScriptEntityView {
         ScriptEntityView::new_from(self, id)
-    }
-
-    /// Wraps the provided entity in a [`ScriptEntityView`].
-    ///
-    /// # Panics
-    ///
-    /// The entity must have a [`flecs::Script`] component.
-    pub fn script_entity_from<T: ComponentId>(&self) -> ScriptEntityView {
-        ScriptEntityView::new_from(self, T::id(self))
     }
 }
