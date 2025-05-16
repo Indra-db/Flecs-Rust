@@ -22,7 +22,7 @@ fn main() {
                 " - {}: {}: {}",
                 it.event().name(),
                 it.event_id().to_str(),
-                it.entity(index)
+                it.entity(index).unwrap()
             );
         });
 
@@ -34,7 +34,7 @@ fn main() {
     // Emit the custom event. This triggers the observer.
     world
         .event()
-        .add::<Position>()
+        .add(id::<Position>())
         .entity(entity)
         .emit(&MyEvent);
 

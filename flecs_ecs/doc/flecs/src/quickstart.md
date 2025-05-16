@@ -88,7 +88,7 @@ let e = world.entity();
 // Add a component. This creates the component in the ECS storage, but does not
 // assign it with a value. To add a component, it needs to be derived with the
 // Default trait otherwise it will panic at compile time.
-e.add::<Velocity>();
+e.add(id::<Velocity>());
 
 // Set the value for the Position & Velocity components. A component will be
 // added if the entity doesn't have it yet.
@@ -101,7 +101,7 @@ e.get::<&Position>(|p| {
 });
 
 // Remove component
-e.remove::<Position>();
+e.remove(id::<Position>());
 # }
 ```
 
@@ -123,7 +123,7 @@ let pos_e = world.entity_from::<Position>();
 println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
 
 // It's possible to add components like you would for any entity
-pos_e.add::<Serializable>();
+pos_e.add(id::<Serializable>());
 # }
 ```
 
@@ -162,21 +162,21 @@ A tag is a component that does not have any data. In Flecs tags are empty types 
 struct Enemy;
 
 // Create entity, add Enemy tag
-let e = world.entity().add::<Enemy>();
-e.has::<Enemy>(); // true!
+let e = world.entity().add(id::<Enemy>());
+e.has(id::<Enemy>()); // true!
 
-e.remove::<Enemy>();
-e.has::<Enemy>(); // false!
+e.remove(id::<Enemy>());
+e.has(id::<Enemy>()); // false!
 
 // Option 2: create Tag as entity
 let enemy = world.entity();
 
 // Create entity, add Enemy tag
-let e = world.entity().add_id(enemy);
-e.has_id(enemy); // true!
+let e = world.entity().add(enemy);
+e.has(enemy); // true!
 
-e.remove_id(enemy);
-e.has_id(enemy); // false!
+e.remove(enemy);
+e.has(enemy); // false!
 # }
 ```
 
@@ -201,12 +201,12 @@ struct Likes;
 let bob = world.entity();
 let alice = world.entity();
 
-bob.add_first::<Likes>(alice); // bob likes alice
-alice.add_first::<Likes>(bob); // alice likes bob
-bob.has_first::<Likes>(alice); // true!
+bob.add((id::<Likes>(), alice)); // bob likes alice
+alice.add((id::<Likes>(), bob)); // alice likes bob
+bob.has((id::<Likes>(), alice)); // true!
 
-bob.remove_first::<Likes>(alice);
-bob.has_first::<Likes>(alice); // false!
+bob.remove((id::<Likes>(), alice));
+bob.has((id::<Likes>(), alice)); // false!
 # }
 ```
 
@@ -222,7 +222,7 @@ A pair can be encoded in a single 64 bit identifier using the `world.id_first` f
 # fn main() {
 # let world = World::new();
 # let bob = world.entity();
-let id = world.id_first::<Likes>(bob);
+let id = world.id_view_from(id::<Likes>(),bob);
 # }
 ```
 
@@ -239,7 +239,7 @@ The following examples show how to get back the elements from a pair:
 # 
 # fn main() {
 # let world = World::new();
-let id = world.id_from::<(Likes, Apples)>();
+let id = world.id_view_from((id::<Likes>(), id::<Apples>()));
 if id.is_pair() {
     let relationship = id.first_id();
     let target = id.second_id();
@@ -260,13 +260,13 @@ A component or tag can be added multiple times to the same entity as long as it 
 # let apples = world.entity();
 # let pears = world.entity();
 let bob = world.entity();
-bob.add_id((eats, apples));
-bob.add_id((eats, pears));
-bob.add_id((grows, pears));
+bob.add((eats, apples));
+bob.add((eats, pears));
+bob.add((grows, pears));
 
-bob.has_id((eats, apples)); // true!
-bob.has_id((eats, pears)); // true!
-bob.has_id((grows, pears)); // true!
+bob.has((eats, apples)); // true!
+bob.has((eats, pears)); // true!
+bob.has((grows, pears)); // true!
 # }
 ```
 
@@ -282,15 +282,15 @@ The `target` function can be used to get the object for a relationship:
 # fn main() {
 # let world = World::new();
 # let bob = world.entity();
-let alice = world.entity().add_first::<Likes>(bob);
-let o = alice.target::<Likes>(0); // Returns bob
+let alice = world.entity().add((id::<Likes>(), bob));
+let o = alice.target(id::<Likes>(),0); // Returns bob
 # }
 ```
 
 Entity relationships enable lots of interesting patterns and possibilities. Make sure to check out the [Relationships manual](Relationships.md).
 
 ### Hierarchies
-Flecs has builtin support for hierarchies with the builtin `ChildOf` relationship. A hierarchy can be created with the regular relationship API or with the `child_of_id` function:
+Flecs has builtin support for hierarchies with the builtin `ChildOf` relationship. A hierarchy can be created with the regular relationship API or with the .child_of` function:
 
 ```rust
 # extern crate flecs_ecs;
@@ -299,7 +299,7 @@ Flecs has builtin support for hierarchies with the builtin `ChildOf` relationshi
 # fn main() {
 # let world = World::new();
 let parent = world.entity();
-let child = world.entity().child_of_id(parent);
+let child = world.entity().child_of(parent);
 
 // Deleting the parent also deletes its children
 parent.destruct();
@@ -315,7 +315,7 @@ When entities have names, they can be used together with hierarchies to generate
 # fn main() {
 # let world = World::new();
 let parent = world.entity_named("parent");
-let child = world.entity_named("child").child_of_id(parent);
+let child = world.entity_named("child").child_of(parent);
 
 println!("Child path: {}", child.path().unwrap()); // output: 'parent::child'
 
@@ -364,7 +364,7 @@ The type (often referred to as "archetype") is the list of ids an entity has. Ty
 # 
 # fn main() {
 # let world = World::new();
-let e = world.entity().add::<Position>().add::<Velocity>();
+let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
 
 println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
 # }
@@ -381,7 +381,7 @@ A type can also be iterated by an application:
 # 
 # fn main() {
 # let world = World::new();
-# let e = world.entity().add::<Position>();
+# let e = world.entity().add(id::<Position>());
 e.each_component(|id| {
     if id == world.component_id::<Position>() {
         // Found Position component!
@@ -497,7 +497,7 @@ q.run(|mut it| {
         let p = it.field_mut::<Position>(0).unwrap();
 
         for i in it.iter() {
-            println!("{}: ({}, {})", it.entity(i).name(), p[i].x, p[i].y);
+            println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
         }
     }
 });
@@ -520,7 +520,7 @@ The following example shows a query that matches all entities with a parent that
 let q = world
     .query::<()>()
     .with::<(flecs::ChildOf, flecs::Wildcard)>()
-    .with::<Position>()
+    .with(id::<Position>())
     .set_oper(OperKind::Not)
     .build();
 
@@ -579,7 +579,7 @@ Systems are stored as entities with additional components, similar to components
 #        p.y += v.y * it.delta_time();
 #    });
 println!("System: {}", move_sys.name());
-move_sys.add::<flecs::pipeline::OnUpdate>();
+move_sys.add(id::<flecs::pipeline::OnUpdate>());
 move_sys.destruct();
 # }
 ```
@@ -623,17 +623,17 @@ When a pipeline is executed, systems are ran in the order of the phases. This ma
 # let world = World::new();
 world
     .system_named::<(&mut Position, &Velocity)>("Move")
-    .kind::<flecs::pipeline::OnUpdate>()
+    .has(id::<flecs::pipeline::OnUpdate>())
     .each(|(p, v)| {});
 
 world
     .system_named::<(&mut Position, &Transform)>("Transform")
-    .kind::<flecs::pipeline::PostUpdate>()
+    .has(id::<flecs::pipeline::PostUpdate>())
     .each(|(p, t)| {});
     
 world
     .system_named::<(&Transform, &mut Mesh)>("Render")
-    .kind::<flecs::pipeline::OnStore>()
+    .has(id::<flecs::pipeline::OnStore>())
     .each(|(t, m)| {});
 
 world.progress();
@@ -659,8 +659,8 @@ Because phases are just tags that are added to systems, applications can use the
 #        p.x += v.x * it.delta_time();
 #        p.y += v.y * it.delta_time();
 #    });
-move_sys.add::<flecs::pipeline::OnUpdate>();
-move_sys.remove::<flecs::pipeline::PostUpdate>();
+move_sys.add(id::<flecs::pipeline::OnUpdate>());
+move_sys.remove(id::<flecs::pipeline::PostUpdate>());
 # }
 ```
 

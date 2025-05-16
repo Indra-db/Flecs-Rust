@@ -27,8 +27,8 @@ fn main() {
     // Create query to find all waiters without a plate
     let mut q_waiter = world
         .query::<()>()
-        .with::<Waiter>()
-        .without::<(&Plate, flecs::Wildcard)>()
+        .with(id::<Waiter>())
+        .without((id::<Plate>(), id::<flecs::Wildcard>()))
         .build();
 
     // System that assigns plates to waiter. By making this system no_readonly
@@ -36,12 +36,12 @@ fn main() {
     // ensures that we won't assign plates to the same waiter more than once.
     world
         .system_named::<()>("AssignPlate")
-        .with::<Plate>()
-        .without::<(&Waiter, flecs::Wildcard)>()
+        .with(id::<Plate>())
+        .without((id::<Waiter>(), id::<flecs::Wildcard>()))
         .immediate(true)
         .each_iter(move |mut it, index, plate| {
             let world = it.world();
-            let plate = it.entity(index);
+            let plate = it.entity(index).unwrap();
 
             // Find an available waiter
             if let Some(waiter) = q_waiter.try_first_entity() {
@@ -54,7 +54,7 @@ fn main() {
                 // components to the entities being iterated would interfere
                 // with the system iterator.
                 it.world().defer_suspend();
-                waiter.add_first::<&Plate>(plate);
+                waiter.add((id::<&Plate>(), plate));
                 it.world().defer_resume();
 
                 // Now that deferring is resumed, we can safely also add the
@@ -63,22 +63,22 @@ fn main() {
                 // currently iterating, and we don't want to move it to a
                 // different table while we're iterating it.
 
-                plate.add_first::<&Waiter>(waiter);
+                plate.add((id::<&Waiter>(), waiter));
 
                 println!("Assigned {} to {}!", waiter.name(), plate.name());
             }
         });
 
-    let waiter_1 = world.entity_named("waiter_1").add::<Waiter>();
-    world.entity_named("waiter_2").add::<Waiter>();
-    world.entity_named("waiter_3").add::<Waiter>();
+    let waiter_1 = world.entity_named("waiter_1").add(id::<Waiter>());
+    world.entity_named("waiter_2").add(id::<Waiter>());
+    world.entity_named("waiter_3").add(id::<Waiter>());
 
-    world.entity_named("plate_1").add::<Plate>();
-    let plate_2 = world.entity_named("plate_2").add::<Plate>();
-    world.entity_named("plate_3").add::<Plate>();
+    world.entity_named("plate_1").add(id::<Plate>());
+    let plate_2 = world.entity_named("plate_2").add(id::<Plate>());
+    world.entity_named("plate_3").add(id::<Plate>());
 
-    waiter_1.add_first::<&Plate>(plate_2);
-    plate_2.add_first::<&Waiter>(waiter_1);
+    waiter_1.add((id::<&Plate>(), plate_2));
+    plate_2.add((id::<&Waiter>(), waiter_1));
 
     // run systems
     world.progress();

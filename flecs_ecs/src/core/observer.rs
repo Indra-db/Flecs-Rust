@@ -70,15 +70,15 @@ impl<'a> Observer<'a> {
                             should be written as:
                             ```
                             .observer::<flecs::OnAdd, ()>()
-                            .with::<Position>() // Note: no `&` or `&mut` here! 
+                            .with(id::<Position>()) // Note: no `&` or `&mut` here! 
                             ```
                         
                             Invalid signatures include:
                             ```
                             .observer::<flecs::OnAdd, &T>()
                             .observer::<flecs::OnAdd, &mut T>()
-                            .observer::<flecs::OnAdd, ()>().with::<&T>()
-                            .observer::<flecs::OnAdd, ()>().with::<&mut T>()
+                            .observer::<flecs::OnAdd, ()>().with(id::<&T>())
+                            .observer::<flecs::OnAdd, ()>().read_write(id::<T>())
                             ```
                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                             "#

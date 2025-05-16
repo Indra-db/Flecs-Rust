@@ -60,8 +60,8 @@ fn query_builder_builder_assign_from_empty() {
     let q = world
         .query::<()>()
         .set_cache_kind(QueryCacheKind::Auto)
-        .with::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Position>())
+        .with(id::<&Velocity>())
         .build();
 
     let e1 = world
@@ -132,8 +132,8 @@ fn query_builder_builder_build_n_statements() {
     let world = World::new();
 
     let mut q = world.query::<()>();
-    q.with::<&Position>();
-    q.with::<&Velocity>();
+    q.with(id::<&Position>());
+    q.with(id::<&Velocity>());
     q.set_cache_kind(QueryCacheKind::Auto);
     let q = q.build();
 
@@ -209,13 +209,13 @@ fn query_builder_id_term() {
 
     let tag = world.entity();
 
-    let e1 = world.entity().add_id(tag);
+    let e1 = world.entity().add(tag);
 
     world.entity().set(Velocity { x: 10, y: 20 });
 
     let r = world
         .query::<()>()
-        .with_id(tag)
+        .with(tag)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -238,7 +238,7 @@ fn query_builder_type_term() {
 
     let r = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -259,13 +259,13 @@ fn query_builder_id_pair_term() {
     let apples = world.entity();
     let pears = world.entity();
 
-    let e1 = world.entity().add_id((likes, apples));
+    let e1 = world.entity().add((likes, apples));
 
-    world.entity().add_id((likes, pears));
+    world.entity().add((likes, pears));
 
     let r = world
         .query::<()>()
-        .with_id((likes, apples))
+        .with((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -286,24 +286,24 @@ fn query_builder_id_pair_wildcard_term() {
     let apples = world.entity();
     let pears = world.entity();
 
-    let e1 = world.entity().add_id((likes, apples));
+    let e1 = world.entity().add((likes, apples));
 
-    let e2 = world.entity().add_id((likes, pears));
+    let e2 = world.entity().add((likes, pears));
 
     let r = world
         .query::<()>()
-        .with_id((likes, *flecs::Wildcard))
+        .with((likes, *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let mut count = 0;
     r.each_iter(|it, index, ()| {
-        if it.entity(index) == e1 {
-            assert_eq!(it.id(0), world.id_from_id((likes, apples)));
+        if it.entity(index).unwrap() == e1 {
+            assert_eq!(it.id(0), world.id_view_from((likes, apples)));
             count += 1;
         }
-        if it.entity(index) == e2 {
-            assert_eq!(it.id(0), world.id_from_id((likes, pears)));
+        if it.entity(index).unwrap() == e2 {
+            assert_eq!(it.id(0), world.id_view_from((likes, pears)));
             count += 1;
         }
     });
@@ -314,24 +314,27 @@ fn query_builder_id_pair_wildcard_term() {
 fn query_builder_type_pair_term() {
     let world = World::new();
 
-    let e1 = world.entity().add::<(Likes, Apples)>();
+    let e1 = world.entity().add((id::<Likes>(), id::<Apples>()));
 
-    let e2 = world.entity().add::<(Likes, Pears)>();
+    let e2 = world.entity().add((id::<Likes>(), id::<Pears>()));
 
     let r = world
         .query::<()>()
-        .with_first::<&Likes>(*flecs::Wildcard)
+        .with((id::<&Likes>(), *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let mut count = 0;
     r.each_iter(|it, index, ()| {
-        if it.entity(index) == e1 {
-            assert_eq!(it.id(0), world.id_from::<(Likes, Apples)>());
+        if it.entity(index).unwrap() == e1 {
+            assert_eq!(
+                it.id(0),
+                world.id_view_from((id::<Likes>(), id::<Apples>()))
+            );
             count += 1;
         }
-        if it.entity(index) == e2 {
-            assert_eq!(it.id(0), world.id_from::<(Likes, Pears)>());
+        if it.entity(index).unwrap() == e2 {
+            assert_eq!(it.id(0), world.id_view_from((id::<Likes>(), id::<Pears>())));
             count += 1;
         }
     });
@@ -342,13 +345,13 @@ fn query_builder_type_pair_term() {
 fn query_builder_pair_term_w_var() {
     let world = World::new();
 
-    let e1 = world.entity().add::<(Likes, Apples)>();
+    let e1 = world.entity().add((id::<Likes>(), id::<Apples>()));
 
-    let e2 = world.entity().add::<(Likes, Pears)>();
+    let e2 = world.entity().add((id::<Likes>(), id::<Pears>()));
 
     let r = world
         .query::<()>()
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -358,16 +361,25 @@ fn query_builder_pair_term_w_var() {
 
     let mut count = 0;
     r.each_iter(|it, index, ()| {
-        if it.entity(index) == e1 {
-            assert_eq!(it.id(0), world.id_from::<(Likes, Apples)>());
-            assert_eq!(it.get_var_by_name("Food"), world.id_from::<Apples>());
-            assert_eq!(it.get_var(foo_d_var), world.id_from::<Apples>());
+        if it.entity(index).unwrap() == e1 {
+            assert_eq!(
+                it.id(0),
+                world.id_view_from((id::<Likes>(), id::<Apples>()))
+            );
+            assert_eq!(
+                it.get_var_by_name("Food"),
+                world.id_view_from(id::<Apples>())
+            );
+            assert_eq!(it.get_var(foo_d_var), world.id_view_from(id::<Apples>()));
             count += 1;
         }
-        if it.entity(index) == e2 {
-            assert_eq!(it.id(0), world.id_from::<(Likes, Pears)>());
-            assert_eq!(it.get_var_by_name("Food"), world.id_from::<Pears>());
-            assert_eq!(it.get_var(foo_d_var), world.id_from::<Pears>());
+        if it.entity(index).unwrap() == e2 {
+            assert_eq!(it.id(0), world.id_view_from((id::<Likes>(), id::<Pears>())));
+            assert_eq!(
+                it.get_var_by_name("Food"),
+                world.id_view_from(id::<Pears>())
+            );
+            assert_eq!(it.get_var(foo_d_var), world.id_view_from(id::<Pears>()));
             count += 1;
         }
     });
@@ -378,21 +390,21 @@ fn query_builder_pair_term_w_var() {
 fn query_builder_2_pair_terms_w_var() {
     let world = World::new();
 
-    let bob = world.entity().add::<(Eats, Apples)>();
+    let bob = world.entity().add((id::<Eats>(), id::<Apples>()));
 
     let alice = world
         .entity()
-        .add::<(Eats, Pears)>()
-        .add_first::<Likes>(bob);
+        .add((id::<Eats>(), id::<Pears>()))
+        .add((id::<Likes>(), bob));
 
-    bob.add_first::<Likes>(alice);
+    bob.add((id::<Likes>(), alice));
 
     let r = world
         .query::<()>()
-        .with::<&Eats>()
+        .with(id::<&Eats>())
         .second()
         .set_var("Food")
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -403,22 +415,28 @@ fn query_builder_2_pair_terms_w_var() {
 
     let mut count = 0;
     r.each_iter(|it, index, ()| {
-        if it.entity(index) == bob {
-            assert_eq!(it.id(0), world.id_from::<(Eats, Apples)>());
-            assert_eq!(it.get_var_by_name("Food"), world.id_from::<Apples>());
-            assert_eq!(it.get_var(foo_d_var), world.id_from::<Apples>());
+        if it.entity(index).unwrap() == bob {
+            assert_eq!(it.id(0), world.id_view_from((id::<Eats>(), id::<Apples>())));
+            assert_eq!(
+                it.get_var_by_name("Food"),
+                world.id_view_from(id::<Apples>())
+            );
+            assert_eq!(it.get_var(foo_d_var), world.id_view_from(id::<Apples>()));
 
-            assert_eq!(it.id(1), world.id_first::<Likes>(alice));
+            assert_eq!(it.id(1), world.id_view_from((id::<Likes>(), alice)));
             assert_eq!(it.get_var_by_name("Person"), alice);
             assert_eq!(it.get_var(person_var), alice);
             count += 1;
         }
-        if it.entity(index) == alice {
-            assert_eq!(it.id(0), world.id_from::<(Eats, Pears)>());
-            assert_eq!(it.get_var_by_name("Food"), world.id_from::<Pears>());
-            assert_eq!(it.get_var(foo_d_var), world.id_from::<Pears>());
+        if it.entity(index).unwrap() == alice {
+            assert_eq!(it.id(0), world.id_view_from((id::<Eats>(), id::<Pears>())));
+            assert_eq!(
+                it.get_var_by_name("Food"),
+                world.id_view_from(id::<Pears>())
+            );
+            assert_eq!(it.get_var(foo_d_var), world.id_view_from(id::<Pears>()));
 
-            assert_eq!(it.id(1), world.id_first::<Likes>(bob));
+            assert_eq!(it.id(1), world.id_view_from((id::<Likes>(), bob)));
             assert_eq!(it.get_var_by_name("Person"), bob);
             assert_eq!(it.get_var(person_var), bob);
             count += 1;
@@ -434,13 +452,13 @@ fn query_builder_set_var() {
     let apples = world.entity();
     let pears = world.entity();
 
-    world.entity().add_first::<Likes>(apples);
+    world.entity().add((id::<Likes>(), apples));
 
-    let e2 = world.entity().add_first::<Likes>(pears);
+    let e2 = world.entity().add((id::<Likes>(), pears));
 
     let r = world
         .query::<()>()
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -452,8 +470,8 @@ fn query_builder_set_var() {
     r.iterable()
         .set_var(foo_d_var, pears)
         .each_iter(|it, index, ()| {
-            assert_eq!(it.entity(index), e2);
-            assert_eq!(it.id(0), world.id_first::<Likes>(pears));
+            assert_eq!(it.entity(index).unwrap(), e2);
+            assert_eq!(it.id(0), world.id_view_from((id::<Likes>(), pears)));
             assert_eq!(it.get_var_by_name("Food"), pears);
             assert_eq!(it.get_var(foo_d_var), pears);
             count += 1;
@@ -469,21 +487,21 @@ fn query_builder_set_2_vars() {
     let apples = world.entity();
     let pears = world.entity();
 
-    let bob = world.entity().add_first::<Eats>(apples);
+    let bob = world.entity().add((id::<Eats>(), apples));
 
     let alice = world
         .entity()
-        .add_first::<Eats>(pears)
-        .add_first::<Likes>(bob);
+        .add((id::<Eats>(), pears))
+        .add((id::<Likes>(), bob));
 
-    bob.add_first::<Likes>(alice);
+    bob.add((id::<Likes>(), alice));
 
     let r = world
         .query::<()>()
-        .with::<&Eats>()
+        .with(id::<&Eats>())
         .second()
         .set_var("Food")
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -497,9 +515,9 @@ fn query_builder_set_2_vars() {
         .set_var(foo_d_var, pears)
         .set_var(person_var, bob)
         .each_iter(|it, index, ()| {
-            assert_eq!(it.entity(index), alice);
-            assert_eq!(it.id(0), world.id_first::<Eats>(pears));
-            assert_eq!(it.id(1), world.id_first::<Likes>(bob));
+            assert_eq!(it.entity(index).unwrap(), alice);
+            assert_eq!(it.id(0), world.id_view_from((id::<Eats>(), pears)));
+            assert_eq!(it.id(1), world.id_view_from((id::<Likes>(), bob)));
             assert_eq!(it.get_var_by_name("Food"), pears);
             assert_eq!(it.get_var(foo_d_var), pears);
             assert_eq!(it.get_var_by_name("Person"), bob);
@@ -516,13 +534,13 @@ fn query_builder_set_var_by_name() {
     let apples = world.entity();
     let pears = world.entity();
 
-    world.entity().add_first::<Likes>(apples);
+    world.entity().add((id::<Likes>(), apples));
 
-    let e2 = world.entity().add_first::<Likes>(pears);
+    let e2 = world.entity().add((id::<Likes>(), pears));
 
     let r = world
         .query::<()>()
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -532,8 +550,8 @@ fn query_builder_set_var_by_name() {
     r.iterable()
         .set_var_expr("Food", pears)
         .each_iter(|it, index, ()| {
-            assert_eq!(it.entity(index), e2);
-            assert_eq!(it.id(0), world.id_first::<Likes>(pears));
+            assert_eq!(it.entity(index).unwrap(), e2);
+            assert_eq!(it.id(0), world.id_view_from((id::<Likes>(), pears)));
             count += 1;
         });
     assert_eq!(count, 1);
@@ -546,21 +564,21 @@ fn query_builder_set_2_vars_by_name() {
     let apples = world.entity();
     let pears = world.entity();
 
-    let bob = world.entity().add_first::<Eats>(apples);
+    let bob = world.entity().add((id::<Eats>(), apples));
 
     let alice = world
         .entity()
-        .add_first::<Eats>(pears)
-        .add_first::<Likes>(bob);
+        .add((id::<Eats>(), pears))
+        .add((id::<Likes>(), bob));
 
-    bob.add_first::<Likes>(alice);
+    bob.add((id::<Likes>(), alice));
 
     let r = world
         .query::<()>()
-        .with::<&Eats>()
+        .with(id::<&Eats>())
         .second()
         .set_var("Food")
-        .with::<&Likes>()
+        .with(id::<&Likes>())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -574,9 +592,9 @@ fn query_builder_set_2_vars_by_name() {
         .set_var_expr("Food", pears)
         .set_var_expr("Person", bob)
         .each_iter(|it, index, ()| {
-            assert_eq!(it.entity(index), alice);
-            assert_eq!(it.id(0), world.id_first::<Eats>(pears));
-            assert_eq!(it.id(1), world.id_first::<Likes>(bob));
+            assert_eq!(it.entity(index).unwrap(), alice);
+            assert_eq!(it.id(0), world.id_view_from((id::<Eats>(), pears)));
+            assert_eq!(it.id(1), world.id_view_from((id::<Likes>(), bob)));
             assert_eq!(it.get_var_by_name("Food"), pears);
             assert_eq!(it.get_var(foo_d_var), pears);
             assert_eq!(it.get_var_by_name("Person"), bob);
@@ -592,7 +610,7 @@ fn query_builder_expr_w_var() {
 
     let rel = world.entity_named("Rel");
     let obj = world.entity();
-    let e = world.entity().add_id((rel, obj));
+    let e = world.entity().add((rel, obj));
 
     let r = world
         .query::<()>()
@@ -605,7 +623,7 @@ fn query_builder_expr_w_var() {
 
     let mut count = 0;
     r.each_iter(|it, index, ()| {
-        assert_eq!(it.entity(index), e);
+        assert_eq!(it.entity(index).unwrap(), e);
         assert_eq!(it.pair(0).unwrap().second_id(), obj);
         count += 1;
     });
@@ -619,7 +637,7 @@ fn query_builder_add_1_type() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -641,8 +659,8 @@ fn query_builder_add_2_types() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Position>())
+        .with(id::<&Velocity>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -667,7 +685,7 @@ fn query_builder_add_1_type_w_1_type() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Velocity>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -692,8 +710,8 @@ fn query_builder_add_2_types_w_1_type() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Velocity>()
-        .with::<&Mass>()
+        .with(id::<&Velocity>())
+        .with(id::<&Mass>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -723,12 +741,12 @@ fn query_builder_add_pair() {
 
     let q = world
         .query::<()>()
-        .with_id((likes, bob))
+        .with((likes, bob))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add_id((likes, bob));
-    world.entity().add_id((likes, alice));
+    let e1 = world.entity().add((likes, bob));
+    world.entity().add((likes, alice));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -745,7 +763,7 @@ fn query_builder_add_not() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Velocity>())
         .set_oper(OperKind::Not)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -771,9 +789,9 @@ fn query_builder_add_or() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_oper(OperKind::Or)
-        .with::<&Velocity>()
+        .with(id::<&Velocity>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -796,8 +814,8 @@ fn query_builder_add_optional() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Position>())
+        .with(id::<&Velocity>())
         .set_oper(OperKind::Optional)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -902,7 +920,7 @@ fn query_builder_singleton_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .singleton()
         .set_inout()
         .set_cache_kind(QueryCacheKind::Auto)
@@ -924,7 +942,7 @@ fn query_builder_singleton_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), it.entity(i).id());
+                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -939,11 +957,11 @@ fn query_builder_isa_superset_term() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<&SelfRef>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .src()
         .up_id(*flecs::IsA)
         .set_in()
@@ -952,11 +970,11 @@ fn query_builder_isa_superset_term() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -968,7 +986,7 @@ fn query_builder_isa_superset_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), it.entity(i).id());
+                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -983,11 +1001,11 @@ fn query_builder_isa_self_superset_term() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<&SelfRef>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .src()
         .self_()
         .up_id(*flecs::IsA)
@@ -997,11 +1015,11 @@ fn query_builder_isa_self_superset_term() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 20 });
     e.set(SelfRef { value: e.id() });
@@ -1025,7 +1043,7 @@ fn query_builder_isa_self_superset_term() {
             }
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), it.entity(i).id());
+                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1041,7 +1059,7 @@ fn query_builder_childof_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .src()
         .up()
         .set_in()
@@ -1050,11 +1068,11 @@ fn query_builder_childof_superset_term() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -1066,7 +1084,7 @@ fn query_builder_childof_superset_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), it.entity(i).id());
+                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1081,7 +1099,7 @@ fn query_builder_childof_self_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .src()
         .self_()
         .up()
@@ -1091,11 +1109,11 @@ fn query_builder_childof_self_superset_term() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 20 });
     e.set(SelfRef { value: e.id() });
@@ -1119,7 +1137,7 @@ fn query_builder_childof_self_superset_term() {
             }
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), it.entity(i).id());
+                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1135,7 +1153,7 @@ fn query_builder_isa_superset_term_w_each() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1147,11 +1165,11 @@ fn query_builder_isa_superset_term_w_each() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -1171,7 +1189,7 @@ fn query_builder_isa_self_superset_term_w_each() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1184,11 +1202,11 @@ fn query_builder_isa_self_superset_term_w_each() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((*flecs::IsA, base));
+    let e = world.entity().add((*flecs::IsA, base));
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 10 });
     e.set(SelfRef { value: e.id() });
@@ -1220,11 +1238,11 @@ fn query_builder_childof_superset_term_w_each() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -1253,11 +1271,11 @@ fn query_builder_childof_self_superset_term_w_each() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 10 });
     e.set(SelfRef { value: e.id() });
@@ -1281,7 +1299,7 @@ fn query_builder_isa_superset_shortcut() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1292,11 +1310,11 @@ fn query_builder_isa_superset_shortcut() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -1316,7 +1334,7 @@ fn query_builder_isa_superset_shortcut_w_self() {
 
     world
         .component::<Other>()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let q = world
         .query::<(&SelfRef, &Other)>()
@@ -1328,11 +1346,11 @@ fn query_builder_isa_superset_shortcut_w_self() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().is_a_id(base);
+    let e = world.entity().is_a(base);
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 10 });
     e.set(SelfRef { value: e.id() });
@@ -1363,11 +1381,11 @@ fn query_builder_childof_superset_shortcut() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
 
     let mut count = 0;
@@ -1395,11 +1413,11 @@ fn query_builder_childof_superset_shortcut_w_self() {
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().child_of_id(base);
+    let e = world.entity().child_of(base);
     e.set(SelfRef { value: e.id() });
     let e = world.entity().set(Other { value: 10 });
     e.set(SelfRef { value: e.id() });
@@ -1427,18 +1445,18 @@ fn query_builder_relation() {
 
     let q = world
         .query::<&SelfRef>()
-        .with_id((likes, bob))
+        .with((likes, bob))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add_id((likes, bob));
+    let e = world.entity().add((likes, bob));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((likes, bob));
+    let e = world.entity().add((likes, bob));
     e.set(SelfRef { value: e.id() });
 
-    let e = world.entity().add_id((likes, alice));
+    let e = world.entity().add((likes, alice));
     e.set(SelfRef { value: Entity(0) });
-    let e = world.entity().add_id((likes, alice));
+    let e = world.entity().add((likes, alice));
     e.set(SelfRef { value: Entity(0) });
 
     let mut count = 0;
@@ -1461,18 +1479,18 @@ fn query_builder_relation_w_object_wildcard() {
 
     let q = world
         .query::<&SelfRef>()
-        .with_id((likes, *flecs::Wildcard))
+        .with((likes, *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add_id((likes, bob));
+    let e = world.entity().add((likes, bob));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((likes, bob));
+    let e = world.entity().add((likes, bob));
     e.set(SelfRef { value: e.id() });
 
-    let e = world.entity().add_id((likes, alice));
+    let e = world.entity().add((likes, alice));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((likes, alice));
+    let e = world.entity().add((likes, alice));
     e.set(SelfRef { value: e.id() });
 
     let e = world.entity();
@@ -1501,18 +1519,18 @@ fn query_builder_relation_w_predicate_wildcard() {
 
     let q = world
         .query::<&SelfRef>()
-        .with_id((*flecs::Wildcard, alice))
+        .with((*flecs::Wildcard, alice))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add_id((likes, alice));
+    let e = world.entity().add((likes, alice));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((dislikes, alice));
+    let e = world.entity().add((dislikes, alice));
     e.set(SelfRef { value: e.id() });
 
-    let e = world.entity().add_id((likes, bob));
+    let e = world.entity().add((likes, bob));
     e.set(SelfRef { value: Entity(0) });
-    let e = world.entity().add_id((dislikes, bob));
+    let e = world.entity().add((dislikes, bob));
     e.set(SelfRef { value: Entity(0) });
 
     let mut count = 0;
@@ -1535,18 +1553,18 @@ fn query_builder_add_pair_w_rel_type() {
 
     let q = world
         .query::<&SelfRef>()
-        .with_first::<&Likes>(*flecs::Wildcard)
+        .with((id::<&Likes>(), *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add_first::<Likes>(alice);
+    let e = world.entity().add((id::<Likes>(), alice));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((dislikes, alice));
+    let e = world.entity().add((dislikes, alice));
     e.set(SelfRef { value: Entity(0) });
 
-    let e = world.entity().add_first::<Likes>(bob);
+    let e = world.entity().add((id::<Likes>(), bob));
     e.set(SelfRef { value: e.id() });
-    let e = world.entity().add_id((dislikes, bob));
+    let e = world.entity().add((dislikes, bob));
     e.set(SelfRef { value: Entity(0) });
 
     let mut count = 0;
@@ -1565,7 +1583,7 @@ fn query_builder_template_term() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Template<u32>>()
+        .with(id::<&Template<u32>>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1590,7 +1608,7 @@ fn query_builder_explicit_subject_w_id() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_id(*flecs::This_)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -1618,8 +1636,8 @@ fn query_builder_explicit_subject_w_type() {
 
     let q = world
         .query::<&Position>()
-        .with::<&Position>()
-        .set_src::<Position>()
+        .with(id::<&Position>())
+        .set_src(id::<Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1644,13 +1662,13 @@ fn query_builder_explicit_object_w_id() {
 
     let q = world
         .query::<()>()
-        .with_id(likes)
-        .set_second_id(alice)
+        .with(likes)
+        .set_second(alice)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world.entity().add_id((likes, alice));
-    world.entity().add_id((likes, bob));
+    let e1 = world.entity().add((likes, alice));
+    world.entity().add((likes, bob));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -1670,15 +1688,15 @@ fn query_builder_explicit_object_w_type() {
 
     let q = world
         .query::<()>()
-        .with_id(likes)
-        .set_second::<Alice>()
+        .with(likes)
+        .set_second(id::<Alice>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
-        .add_id((likes, *world.id_from::<Alice>().id()));
-    world.entity().add_id((likes, bob));
+        .add((likes, *world.id_view_from(id::<Alice>()).id()));
+    world.entity().add((likes, bob));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -1696,7 +1714,7 @@ fn query_builder_explicit_term() {
 
     // let q = world
     //     .query::<()>()
-    //     .with(world.term(world.id_from::<Position>()))
+    //     .with(world.term(world.id_view_from(id::<Position>())))
     //     .set_cache_kind(QueryCacheKind::Auto)
     //     .build();
 
@@ -1740,12 +1758,12 @@ fn query_builder_explicit_term_w_pair_type() {
     //     let world = create_world();
 
     //     let q = world.query::<()>()
-    //         .with_id((world.term<Likes, alice>()))
+    //         .with((world.term<Likes, alice>()))
     //         .set_cache_kind(QueryCacheKind::Auto)
     //         .build();
 
-    //     let e1 = world.entity().add::<(Likes, alice)>();
-    //     world.entity().add::<(Likes, bob)>();
+    //     let e1 = world.entity().add((id::<Likes>(), id::<alice>()));
+    //     world.entity().add((id::<Likes>(), id::<bob>()));
 
     //    let mut count = 0;
     //     q.each_entity(|e, _| {
@@ -1769,8 +1787,8 @@ fn query_builder_explicit_term_w_id() {
     //         .set_cache_kind(QueryCacheKind::Auto)
     //         .build();
 
-    //     let e1 = world.entity().add_id(apples);
-    //     world.entity().add_id(pears);
+    //     let e1 = world.entity().add(apples);
+    //     world.entity().add(pears);
 
     //    let mut count = 0;
     //     q.each_entity(|e, _| {
@@ -1794,8 +1812,8 @@ fn query_builder_explicit_term_w_pair_id() {
     //         .set_cache_kind(QueryCacheKind::Auto)
     //         .build();
 
-    //     let e1 = world.entity().add_id((likes,apples));
-    //     world.entity().add_id((likes,pears));
+    //     let e1 = world.entity().add((likes,apples));
+    //     world.entity().add((likes,pears));
 
     //    let mut count = 0;
     //     q.each_entity(|e, _| {
@@ -1814,14 +1832,15 @@ fn query_builder_1_term_to_empty() {
     let apples = world.entity();
 
     let mut q = world.query::<()>();
-    q.with::<&Position>().set_cache_kind(QueryCacheKind::Auto);
-    q.with_id((likes, apples));
+    q.with(id::<&Position>())
+        .set_cache_kind(QueryCacheKind::Auto);
+    q.with((likes, apples));
 
     let q = q.build();
 
     assert_eq!(q.field_count(), 2);
-    assert_eq!(q.term(0).id(), world.id_from::<Position>());
-    assert_eq!(q.term(1).id(), world.id_from_id((likes, apples)));
+    assert_eq!(q.term(0).id(), world.id_view_from(id::<Position>()));
+    assert_eq!(q.term(1).id(), world.id_view_from((likes, apples)));
 }
 
 #[test]
@@ -1857,14 +1876,14 @@ fn query_builder_optional_tag_is_set() {
 
     let q = world
         .query::<()>()
-        .with::<&TagA>()
-        .with::<&TagB>()
+        .with(id::<&TagA>())
+        .with(id::<&TagB>())
         .set_oper(OperKind::Optional)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e_1 = world.entity().add::<TagA>().add::<TagB>();
-    let e_2 = world.entity().add::<TagA>();
+    let e_1 = world.entity().add(id::<TagA>()).add(id::<TagB>());
+    let e_2 = world.entity().add(id::<TagA>());
 
     let mut count = 0;
 
@@ -1874,11 +1893,11 @@ fn query_builder_optional_tag_is_set() {
 
             count += it.count();
 
-            if it.entity(0) == e_1 {
+            if it.entity(0).unwrap() == e_1 {
                 assert!(it.is_set(0));
                 assert!(it.is_set(1));
             } else {
-                assert_eq!(it.entity(0), e_2);
+                assert_eq!(it.entity(0).unwrap(), e_2);
                 assert!(it.is_set(0));
                 assert!(!it.is_set(1));
             }
@@ -1894,16 +1913,16 @@ fn query_builder_10_terms() {
 
     let f = world
         .query::<()>()
-        .with::<&TagA>()
-        .with::<&TagB>()
-        .with::<&TagC>()
-        .with::<&TagD>()
-        .with::<&TagE>()
-        .with::<&TagF>()
-        .with::<&TagG>()
-        .with::<&TagH>()
-        .with::<&TagI>()
-        .with::<&TagJ>()
+        .with(id::<&TagA>())
+        .with(id::<&TagB>())
+        .with(id::<&TagC>())
+        .with(id::<&TagD>())
+        .with(id::<&TagE>())
+        .with(id::<&TagF>())
+        .with(id::<&TagG>())
+        .with(id::<&TagH>())
+        .with(id::<&TagI>())
+        .with(id::<&TagJ>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1911,23 +1930,23 @@ fn query_builder_10_terms() {
 
     let e = world
         .entity()
-        .add::<TagA>()
-        .add::<TagB>()
-        .add::<TagC>()
-        .add::<TagD>()
-        .add::<TagE>()
-        .add::<TagF>()
-        .add::<TagG>()
-        .add::<TagH>()
-        .add::<TagI>()
-        .add::<TagJ>();
+        .add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>())
+        .add(id::<TagD>())
+        .add(id::<TagE>())
+        .add(id::<TagF>())
+        .add(id::<TagG>())
+        .add(id::<TagH>())
+        .add(id::<TagI>())
+        .add(id::<TagJ>());
 
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
-            assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
             assert_eq!(it.field_count(), 10);
+            assert_eq!(it.entity(0).unwrap(), e);
+            assert_eq!(it.count(), 1);
             count += 1;
         }
     });
@@ -1941,22 +1960,22 @@ fn query_builder_16_terms() {
 
     let f = world
         .query::<()>()
-        .with::<&TagA>()
-        .with::<&TagB>()
-        .with::<&TagC>()
-        .with::<&TagD>()
-        .with::<&TagE>()
-        .with::<&TagF>()
-        .with::<&TagG>()
-        .with::<&TagH>()
-        .with::<&TagI>()
-        .with::<&TagJ>()
-        .with::<&TagK>()
-        .with::<&TagL>()
-        .with::<&TagM>()
-        .with::<&TagN>()
-        .with::<&TagO>()
-        .with::<&TagP>()
+        .with(id::<&TagA>())
+        .with(id::<&TagB>())
+        .with(id::<&TagC>())
+        .with(id::<&TagD>())
+        .with(id::<&TagE>())
+        .with(id::<&TagF>())
+        .with(id::<&TagG>())
+        .with(id::<&TagH>())
+        .with(id::<&TagI>())
+        .with(id::<&TagJ>())
+        .with(id::<&TagK>())
+        .with(id::<&TagL>())
+        .with(id::<&TagM>())
+        .with(id::<&TagN>())
+        .with(id::<&TagO>())
+        .with(id::<&TagP>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1964,32 +1983,32 @@ fn query_builder_16_terms() {
 
     let e = world
         .entity()
-        .add::<TagA>()
-        .add::<TagB>()
-        .add::<TagC>()
-        .add::<TagD>()
-        .add::<TagE>()
-        .add::<TagF>()
-        .add::<TagG>()
-        .add::<TagH>()
-        .add::<TagI>()
-        .add::<TagJ>()
-        .add::<TagK>()
-        .add::<TagL>()
-        .add::<TagM>()
-        .add::<TagN>()
-        .add::<TagO>()
-        .add::<TagP>()
-        .add::<TagQ>()
-        .add::<TagR>()
-        .add::<TagS>()
-        .add::<TagT>();
+        .add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>())
+        .add(id::<TagD>())
+        .add(id::<TagE>())
+        .add(id::<TagF>())
+        .add(id::<TagG>())
+        .add(id::<TagH>())
+        .add(id::<TagI>())
+        .add(id::<TagJ>())
+        .add(id::<TagK>())
+        .add(id::<TagL>())
+        .add(id::<TagM>())
+        .add(id::<TagN>())
+        .add(id::<TagO>())
+        .add(id::<TagP>())
+        .add(id::<TagQ>())
+        .add(id::<TagR>())
+        .add(id::<TagS>())
+        .add(id::<TagT>());
 
     let mut count = 0;
     f.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
+            assert_eq!(it.entity(0).unwrap(), e);
             assert_eq!(it.field_count(), 16);
             count += 1;
         }
@@ -2030,19 +2049,19 @@ fn query_builder_group_by_raw() {
 
     let q = world
         .query::<()>()
-        .with::<&TagX>()
-        .group_by_id_fn(world.entity_from::<TagX>(), Some(group_by_first_id))
+        .with(id::<&TagX>())
+        .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id))
         .build();
 
     let q_reverse = world
         .query::<()>()
-        .with::<&TagX>()
-        .group_by_id_fn(world.entity_from::<TagX>(), Some(group_by_first_id_negated))
+        .with(id::<&TagX>())
+        .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id_negated))
         .build();
 
-    let e3 = world.entity().add::<TagX>().add::<TagC>();
-    let e2 = world.entity().add::<TagX>().add::<TagB>();
-    let e1 = world.entity().add::<TagX>().add::<TagA>();
+    let e3 = world.entity().add(id::<TagX>()).add(id::<TagC>());
+    let e2 = world.entity().add(id::<TagX>()).add(id::<TagB>());
+    let e1 = world.entity().add(id::<TagX>()).add(id::<TagA>());
 
     let mut count = 0;
 
@@ -2050,11 +2069,11 @@ fn query_builder_group_by_raw() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0) == e1);
+                assert!(it.entity(0).unwrap() == e1);
             } else if count == 1 {
-                assert!(it.entity(0) == e2);
+                assert!(it.entity(0).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0) == e3);
+                assert!(it.entity(0).unwrap() == e3);
             } else {
                 panic!();
             }
@@ -2068,11 +2087,11 @@ fn query_builder_group_by_raw() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0) == e3);
+                assert!(it.entity(0).unwrap() == e3);
             } else if count == 1 {
-                assert!(it.entity(0) == e2);
+                assert!(it.entity(0).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0) == e1);
+                assert!(it.entity(0).unwrap() == e1);
             } else {
                 panic!();
             }
@@ -2093,19 +2112,19 @@ fn query_builder_group_by_template() {
 
     let q = world
         .query::<()>()
-        .with::<&TagX>()
-        .group_by_fn::<TagX>(Some(group_by_first_id))
+        .with(id::<&TagX>())
+        .group_by_fn(id::<TagX>(), Some(group_by_first_id))
         .build();
 
     let q_reverse = world
         .query::<()>()
-        .with::<&TagX>()
-        .group_by_fn::<TagX>(Some(group_by_first_id_negated))
+        .with(id::<&TagX>())
+        .group_by_fn(id::<TagX>(), Some(group_by_first_id_negated))
         .build();
 
-    let e3 = world.entity().add::<TagX>().add::<TagC>();
-    let e2 = world.entity().add::<TagX>().add::<TagB>();
-    let e1 = world.entity().add::<TagX>().add::<TagA>();
+    let e3 = world.entity().add(id::<TagX>()).add(id::<TagC>());
+    let e2 = world.entity().add(id::<TagX>()).add(id::<TagB>());
+    let e1 = world.entity().add(id::<TagX>()).add(id::<TagA>());
 
     let mut count = 0;
 
@@ -2113,11 +2132,11 @@ fn query_builder_group_by_template() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0) == e1);
+                assert!(it.entity(0).unwrap() == e1);
             } else if count == 1 {
-                assert!(it.entity(0) == e2);
+                assert!(it.entity(0).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0) == e3);
+                assert!(it.entity(0).unwrap() == e3);
             } else {
                 panic!();
             }
@@ -2131,11 +2150,11 @@ fn query_builder_group_by_template() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0) == e3);
+                assert!(it.entity(0).unwrap() == e3);
             } else if count == 1 {
-                assert!(it.entity(0) == e2);
+                assert!(it.entity(0).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0) == e1);
+                assert!(it.entity(0).unwrap() == e1);
             } else {
                 panic!();
             }
@@ -2155,7 +2174,7 @@ unsafe extern "C-unwind" fn group_by_rel(
         let mut id_matched: u64 = 0;
         let ref_id = &mut id_matched;
         if sys::ecs_search(world, table, ecs_pair(id, *flecs::Wildcard), ref_id) != -1 {
-            return *ecs_second(id_matched);
+            return *ecs_second(id_matched, world);
         }
         0
     }
@@ -2171,26 +2190,26 @@ fn query_builder_group_by_iter_one() {
     let tgt_c = world.entity();
     let tag = world.entity();
 
-    world.entity().add_id((rel, tgt_a));
-    let e2 = world.entity().add_id((rel, tgt_b));
-    world.entity().add_id((rel, tgt_c));
+    world.entity().add((rel, tgt_a));
+    let e2 = world.entity().add((rel, tgt_b));
+    world.entity().add((rel, tgt_c));
 
-    world.entity().add_id((rel, tgt_a)).add_id(tag);
-    let e5 = world.entity().add_id((rel, tgt_b)).add_id(tag);
-    world.entity().add_id((rel, tgt_c)).add_id(tag);
+    world.entity().add((rel, tgt_a)).add(tag);
+    let e5 = world.entity().add((rel, tgt_b)).add(tag);
+    world.entity().add((rel, tgt_c)).add(tag);
 
     let q = world
         .query::<()>()
-        .with_id((rel, *flecs::Wildcard))
-        .group_by_id_fn(rel, Some(group_by_rel))
+        .with((rel, *flecs::Wildcard))
+        .group_by_fn(rel, Some(group_by_rel))
         .build();
 
     let mut e2_found = false;
     let mut e5_found = false;
     let mut count = 0;
 
-    q.iterable().set_group_id(tgt_b).each_iter(|it, size, ()| {
-        let e = it.entity(size);
+    q.iterable().set_group(tgt_b).each_iter(|it, size, ()| {
+        let e = it.entity(size).unwrap();
         assert_eq!(it.group_id(), tgt_b);
 
         if e == e2 {
@@ -2211,36 +2230,47 @@ fn query_builder_group_by_iter_one() {
 fn query_builder_group_by_iter_one_template() {
     let world = World::new();
 
-    world.entity().add::<(Rel, TagA)>();
-    let e2 = world.entity().add::<(Rel, TagB)>();
-    world.entity().add::<(Rel, TagC)>();
+    world.entity().add((id::<Rel>(), id::<TagA>()));
+    let e2 = world.entity().add((id::<Rel>(), id::<TagB>()));
+    world.entity().add((id::<Rel>(), id::<TagC>()));
 
-    world.entity().add::<(Rel, TagA)>().add::<Tag>();
-    let e5 = world.entity().add::<(Rel, TagB)>().add::<Tag>();
-    world.entity().add::<(Rel, TagC)>().add::<Tag>();
+    world
+        .entity()
+        .add((id::<Rel>(), id::<TagA>()))
+        .add(id::<Tag>());
+    let e5 = world
+        .entity()
+        .add((id::<Rel>(), id::<TagB>()))
+        .add(id::<Tag>());
+    world
+        .entity()
+        .add((id::<Rel>(), id::<TagC>()))
+        .add(id::<Tag>());
 
     let q = world
         .query::<()>()
-        .with_first::<&Rel>(*flecs::Wildcard)
-        .group_by_fn::<Rel>(Some(group_by_rel))
+        .with((id::<&Rel>(), *flecs::Wildcard))
+        .group_by_fn(id::<Rel>(), Some(group_by_rel))
         .build();
 
     let mut e2_found = false;
     let mut e5_found = false;
     let mut count = 0;
 
-    q.iterable().set_group::<TagB>().each_iter(|it, size, ()| {
-        let e = it.entity(size);
-        assert_eq!(it.group_id(), world.id_from::<TagB>());
+    q.iterable()
+        .set_group(id::<TagB>())
+        .each_iter(|it, size, ()| {
+            let e = it.entity(size).unwrap();
+            assert_eq!(it.group_id(), world.id_view_from(id::<TagB>()));
 
-        if e == e2 {
-            e2_found = true;
-        }
-        if e == e5 {
-            e5_found = true;
-        }
-        count += 1;
-    });
+            if e == e2 {
+                e2_found = true;
+            }
+            if e == e5 {
+                e5_found = true;
+            }
+            count += 1;
+        });
 
     assert_eq!(2, count);
     assert!(e2_found);
@@ -2257,18 +2287,18 @@ fn query_builder_group_by_iter_one_all_groups() {
     let tgt_c = world.entity();
     let tag = world.entity();
 
-    let e1 = world.entity().add_id((rel, tgt_a));
-    let e2 = world.entity().add_id((rel, tgt_b));
-    let e3 = world.entity().add_id((rel, tgt_c));
+    let e1 = world.entity().add((rel, tgt_a));
+    let e2 = world.entity().add((rel, tgt_b));
+    let e3 = world.entity().add((rel, tgt_c));
 
-    let e4 = world.entity().add_id((rel, tgt_a)).add_id(tag);
-    let e5 = world.entity().add_id((rel, tgt_b)).add_id(tag);
-    let e6 = world.entity().add_id((rel, tgt_c)).add_id(tag);
+    let e4 = world.entity().add((rel, tgt_a)).add(tag);
+    let e5 = world.entity().add((rel, tgt_b)).add(tag);
+    let e6 = world.entity().add((rel, tgt_c)).add(tag);
 
     let q = world
         .query::<()>()
-        .with_id((rel, *flecs::Wildcard))
-        .group_by_id_fn(rel, Some(group_by_rel))
+        .with((rel, *flecs::Wildcard))
+        .group_by_fn(rel, Some(group_by_rel))
         .build();
 
     let group_id = Cell::new(0u64);
@@ -2281,7 +2311,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let e6_found = Cell::new(false);
 
     let func = |it: TableIter<false>, size: usize, ()| {
-        let e = it.entity(size);
+        let e = it.entity(size).unwrap();
         if it.group_id() == group_id.get() {
             if e == e1 {
                 e1_found.set(true);
@@ -2306,19 +2336,19 @@ fn query_builder_group_by_iter_one_all_groups() {
     };
 
     group_id.set(*tgt_b.id());
-    q.iterable().set_group_id(tgt_b).each_iter(func);
+    q.iterable().set_group(tgt_b).each_iter(func);
     assert_eq!(2, count.get());
     assert!(e2_found.get());
     assert!(e5_found.get());
 
     group_id.set(*tgt_a.id());
-    q.iterable().set_group_id(tgt_a).each_iter(func);
+    q.iterable().set_group(tgt_a).each_iter(func);
     assert_eq!(4, count.get());
     assert!(e1_found.get());
     assert!(e4_found.get());
 
     group_id.set(*tgt_c.id());
-    q.iterable().set_group_id(tgt_c).each_iter(func);
+    q.iterable().set_group(tgt_c).each_iter(func);
     assert_eq!(6, count.get());
     assert!(e3_found.get());
     assert!(e6_found.get());
@@ -2333,14 +2363,14 @@ fn query_builder_group_by_default_func_w_id() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add_id((rel, tgt_c));
-    let e2 = world.entity().add_id((rel, tgt_b));
-    let e3 = world.entity().add_id((rel, tgt_a));
+    let e1 = world.entity().add((rel, tgt_c));
+    let e2 = world.entity().add((rel, tgt_b));
+    let e3 = world.entity().add((rel, tgt_a));
 
     let q = world
         .query::<()>()
-        .with_id((rel, *flecs::Wildcard))
-        .group_by_id(rel)
+        .with((rel, *flecs::Wildcard))
+        .group_by(rel)
         .build();
 
     let mut e1_found = false;
@@ -2349,7 +2379,7 @@ fn query_builder_group_by_default_func_w_id() {
     let mut count = 0;
 
     q.each_iter(|it: TableIter<false>, size: usize, ()| {
-        let e = it.entity(size);
+        let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
             assert!(!e1_found);
@@ -2388,14 +2418,14 @@ fn query_builder_group_by_default_func_w_type() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add_first::<Rel>(tgt_c);
-    let e2 = world.entity().add_first::<Rel>(tgt_b);
-    let e3 = world.entity().add_first::<Rel>(tgt_a);
+    let e1 = world.entity().add((id::<Rel>(), tgt_c));
+    let e2 = world.entity().add((id::<Rel>(), tgt_b));
+    let e3 = world.entity().add((id::<Rel>(), tgt_a));
 
     let q = world
         .query::<()>()
-        .with_first::<&Rel>(*flecs::Wildcard)
-        .group_by::<Rel>()
+        .with((id::<Rel>(), id::<flecs::Wildcard>()))
+        .group_by(id::<Rel>())
         .build();
 
     let mut e1_found = false;
@@ -2404,7 +2434,7 @@ fn query_builder_group_by_default_func_w_type() {
     let mut count = 0;
 
     q.each_iter(|it: TableIter<false>, size: usize, ()| {
-        let e = it.entity(size);
+        let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
             assert!(!e1_found);
@@ -2474,14 +2504,14 @@ fn query_builder_group_by_callbacks() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add_first::<Rel>(tgt_c);
-    let e2 = world.entity().add_first::<Rel>(tgt_b);
-    let e3 = world.entity().add_first::<Rel>(tgt_a);
+    let e1 = world.entity().add((id::<Rel>(), tgt_c));
+    let e2 = world.entity().add((id::<Rel>(), tgt_b));
+    let e3 = world.entity().add((id::<Rel>(), tgt_a));
 
     let q = world
         .query::<()>()
-        .with_first::<&Rel>(*flecs::Wildcard)
-        .group_by::<Rel>()
+        .with((id::<&Rel>(), *flecs::Wildcard))
+        .group_by(id::<Rel>())
         .group_by_ctx(cell_count_group_ctx.as_ptr() as *mut c_void, None)
         .on_group_create(Some(callback_group_create))
         .on_group_delete(Some(callback_group_delete))
@@ -2493,7 +2523,7 @@ fn query_builder_group_by_callbacks() {
     let mut count = 0;
 
     q.each_iter(|it: TableIter<false>, size: usize, ()| {
-        let e = it.entity(size);
+        let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
             assert!(!e1_found);
@@ -2536,7 +2566,7 @@ fn query_builder_create_w_no_template_args() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2559,11 +2589,11 @@ fn query_builder_any_wildcard() {
     let apple = world.entity();
     let mango = world.entity();
 
-    let e1 = world.entity().add_id((likes, apple)).add_id((likes, mango));
+    let e1 = world.entity().add((likes, apple)).add((likes, mango));
 
     let q = world
         .query::<()>()
-        .with_id((likes, *flecs::Any))
+        .with((likes, *flecs::Any))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2582,25 +2612,25 @@ fn query_builder_cascade() {
 
     let tag = world
         .entity()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let foo_ = world.entity();
     let bar = world.entity();
 
-    let e0 = world.entity().add_id(tag);
-    let e1 = world.entity().is_a_id(e0);
-    let e2 = world.entity().is_a_id(e1);
-    let e3 = world.entity().is_a_id(e2);
+    let e0 = world.entity().add(tag);
+    let e1 = world.entity().is_a(e0);
+    let e2 = world.entity().is_a(e1);
+    let e3 = world.entity().is_a(e2);
 
     let q = world
         .query::<()>()
-        .with_id(tag)
+        .with(tag)
         .cascade_id(*flecs::IsA)
         .set_cached()
         .build();
 
-    e1.add_id(bar);
-    e2.add_id(foo_);
+    e1.add(bar);
+    e2.add(foo_);
 
     let mut e1_found = false;
     let mut e2_found = false;
@@ -2642,26 +2672,26 @@ fn query_builder_cascade_desc() {
 
     let tag = world
         .entity()
-        .add_id((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
 
     let foo_ = world.entity();
     let bar = world.entity();
 
-    let e0 = world.entity().add_id(tag);
-    let e1 = world.entity().is_a_id(e0);
-    let e2 = world.entity().is_a_id(e1);
-    let e3 = world.entity().is_a_id(e2);
+    let e0 = world.entity().add(tag);
+    let e1 = world.entity().is_a(e0);
+    let e2 = world.entity().is_a(e1);
+    let e3 = world.entity().is_a(e2);
 
     let q = world
         .query::<()>()
-        .with_id(tag)
+        .with(tag)
         .cascade_id(*flecs::IsA)
         .desc()
         .set_cached()
         .build();
 
-    e1.add_id(bar);
-    e2.add_id(foo_);
+    e1.add(bar);
+    e2.add(foo_);
 
     let mut e1_found = false;
     let mut e2_found = false;
@@ -2705,20 +2735,20 @@ fn query_builder_cascade_w_relationship() {
     let foo_ = world.entity();
     let bar = world.entity();
 
-    let e0 = world.entity().add_id(tag);
-    let e1 = world.entity().child_of_id(e0);
-    let e2 = world.entity().child_of_id(e1);
-    let e3 = world.entity().child_of_id(e2);
+    let e0 = world.entity().add(tag);
+    let e1 = world.entity().child_of(e0);
+    let e2 = world.entity().child_of(e1);
+    let e3 = world.entity().child_of(e2);
 
     let q = world
         .query::<()>()
-        .with_id(tag)
+        .with(tag)
         .cascade_id(*flecs::ChildOf)
         .set_cached()
         .build();
 
-    e1.add_id(bar);
-    e2.add_id(foo_);
+    e1.add(bar);
+    e2.add(foo_);
 
     let mut e1_found = false;
     let mut e2_found = false;
@@ -2758,24 +2788,24 @@ fn query_builder_cascade_w_relationship() {
 fn query_builder_up_w_type() {
     let world = World::new();
 
-    world.component::<Rel>().add_id(*flecs::Traversable);
+    world.component::<Rel>().add(*flecs::Traversable);
 
     let q = world
         .query::<&SelfRef2>()
-        .with::<&Other>()
+        .with(id::<&Other>())
         .src()
-        .up_type::<Rel>()
+        .up_id(id::<Rel>())
         .set_in()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let base = world.entity().set(Other { value: 10 });
 
-    let e = world.entity().add_first::<Rel>(base);
+    let e = world.entity().add((id::<Rel>(), base));
     e.set(SelfRef2 { value: e.id() });
-    let e = world.entity().add_first::<Rel>(base);
+    let e = world.entity().add((id::<Rel>(), base));
     e.set(SelfRef2 { value: e.id() });
-    let e = world.entity().add_first::<Rel>(base);
+    let e = world.entity().add((id::<Rel>(), base));
     e.set(SelfRef2 { value: e.id() });
 
     let mut count = 0;
@@ -2788,7 +2818,7 @@ fn query_builder_up_w_type() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i), s[i].value);
+                assert_eq!(it.entity(i).unwrap(), s[i].value);
                 count += 1;
             }
         }
@@ -2801,26 +2831,26 @@ fn query_builder_up_w_type() {
 fn query_builder_cascade_w_type() {
     let world = World::new();
 
-    world.component::<Rel>().add_id(*flecs::Traversable);
+    world.component::<Rel>().add(*flecs::Traversable);
 
     let tag = world.entity();
     let foo_ = world.entity();
     let bar = world.entity();
 
-    let e0 = world.entity().add_id(tag);
-    let e1 = world.entity().add_first::<Rel>(e0);
-    let e2 = world.entity().add_first::<Rel>(e1);
-    let e3 = world.entity().add_first::<Rel>(e2);
+    let e0 = world.entity().add(tag);
+    let e1 = world.entity().add((id::<Rel>(), e0));
+    let e2 = world.entity().add((id::<Rel>(), e1));
+    let e3 = world.entity().add((id::<Rel>(), e2));
 
     let q = world
         .query::<()>()
-        .with_id(tag)
-        .cascade_type::<Rel>()
+        .with(tag)
+        .cascade_id(id::<Rel>())
         .set_cached()
         .build();
 
-    e1.add_id(bar);
-    e2.add_id(foo_);
+    e1.add(bar);
+    e2.add(foo_);
 
     let mut e1_found = false;
     let mut e2_found = false;
@@ -2865,7 +2895,7 @@ fn query_builder_named_query() {
 
     let q = world
         .query_named::<()>("my_query")
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2887,10 +2917,10 @@ fn query_builder_term_w_write() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<&Position>()
+        .with(id::<&Position>())
+        .with(id::<&Position>())
         .write_curr()
-        .with::<&mut Position>()
+        .with(id::<&mut Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2908,8 +2938,8 @@ fn query_builder_term_w_read() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<&Position>()
+        .with(id::<&Position>())
+        .with(id::<&Position>())
         .read_curr()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -2935,7 +2965,7 @@ fn query_builder_iter_w_stage() {
     //    let mut count = 0;
     //     q.each(stage, [&](flecs::iter& it, size_t i, Position&) {
     //         assert_eq!(it.world(), stage);
-    //         assert_eq!(it.entity(i), e1);
+    //         assert_eq!(it.entity(i).unwrap(), e1);
     //         count += 1;
     //     });
 
@@ -2958,7 +2988,7 @@ fn query_builder_builder_force_assign_operator() {
 
     // let q = world
     //     .query::<()>()
-    //     .with::<&Position>()
+    //     .with(id::<&Position>())
     //     .set_cache_kind(QueryCacheKind::Auto)
     //     .build();
     // let entity_query = q.entity().id();
@@ -3209,15 +3239,19 @@ fn query_builder_world_each_query_2_components_no_entity() {
 fn query_builder_term_after_arg() {
     let world = World::new();
 
-    let e_1 = world.entity().add::<TagA>().add::<TagB>().add::<TagC>();
+    let e_1 = world
+        .entity()
+        .add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>());
 
-    world.entity().add::<TagA>().add::<TagB>();
+    world.entity().add(id::<TagA>()).add(id::<TagB>());
 
     let f = world
         .query::<(&TagA, &TagB)>()
         .term_at(0)
-        .set_src_id(*flecs::This_) // dummy
-        .with::<&TagC>()
+        .set_src(*flecs::This_) // dummy
+        .with(id::<&TagC>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3227,7 +3261,7 @@ fn query_builder_term_after_arg() {
     f.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                assert_eq!(it.entity(i), e_1);
+                assert_eq!(it.entity(i).unwrap(), e_1);
                 count += 1;
             }
         }
@@ -3273,7 +3307,7 @@ fn query_builder_const_in_term() {
 
     let f = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3297,8 +3331,11 @@ fn query_builder_const_in_term() {
 fn query_builder_const_optional() {
     let world = World::new();
 
-    world.entity().set(Position { x: 10, y: 20 }).add::<TagD>();
-    world.entity().add::<TagD>();
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add(id::<TagD>());
+    world.entity().add(id::<TagD>());
 
     let f = world
         .query::<(&TagD, Option<&Position>)>()
@@ -3332,7 +3369,7 @@ fn query_builder_2_terms_w_expr() {
     let a = world.entity_named("A");
     let b = world.entity_named("B");
 
-    let e1 = world.entity().add_id(a).add_id(b);
+    let e1 = world.entity().add(a).add(b);
 
     let f = world
         .query::<()>()
@@ -3344,7 +3381,7 @@ fn query_builder_2_terms_w_expr() {
 
     let mut count = 0;
     f.each_iter(|it, index, ()| {
-        if it.entity(index) == e1 {
+        if it.entity(index).unwrap() == e1 {
             assert_eq!(it.id(0), a);
             assert_eq!(it.id(1), b);
             count += 1;
@@ -3386,20 +3423,20 @@ fn query_builder_operator_shortcuts() {
 
     let query = world
         .query::<()>()
-        .with_id(a)
+        .with(a)
         .and()
-        .with_id(b)
+        .with(b)
         .or()
-        .with_id(c)
-        .with_id(d)
+        .with(c)
+        .with(d)
         .not()
-        .with_id(e)
+        .with(e)
         .optional()
-        .with_id(f)
+        .with(f)
         .and_from()
-        .with_id(g)
+        .with(g)
         .or_from()
-        .with_id(h)
+        .with(h)
         .not_from()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3448,13 +3485,13 @@ fn query_builder_inout_shortcuts() {
 
     let query = world
         .query::<()>()
-        .with_id(a)
+        .with(a)
         .set_in()
-        .with_id(b)
+        .with(b)
         .set_out()
-        .with_id(c)
+        .with(c)
         .set_inout()
-        .with_id(d)
+        .with(d)
         .set_inout_none()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3524,8 +3561,8 @@ fn query_builder_iter_column_w_const_as_ptr() {
         .build();
 
     let base = world.prefab().set(Position { x: 10, y: 20 });
-    world.entity().is_a_id(base);
-    world.entity().is_a_id(base);
+    world.entity().is_a(base);
+    world.entity().is_a(base);
 
     let mut count = 0;
     f.run(|mut it| {
@@ -3543,13 +3580,13 @@ fn query_builder_iter_column_w_const_as_ptr() {
 }
 
 #[test]
-fn query_builder_with_id() {
+fn query_builder_with() {
     let world = World::new();
 
     let q = world
         .query::<()>()
-        .with_id(world.id_from::<Position>())
-        .with_id(world.id_from::<Velocity>())
+        .with(world.id_view_from(id::<Position>()))
+        .with(world.id_view_from(id::<Velocity>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3576,8 +3613,8 @@ fn query_builder_with_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with_name("flecs.common_test.Velocity")
+        .with(id::<&Position>())
+        .with("flecs.common_test.Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3602,8 +3639,8 @@ fn query_builder_with_component() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<&Velocity>()
+        .with(id::<&Position>())
+        .with(id::<&Velocity>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3632,19 +3669,19 @@ fn query_builder_with_pair_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with_id((likes, apples))
+        .with(id::<&Position>())
+        .with((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3665,19 +3702,19 @@ fn query_builder_with_pair_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with_names("likes", "Apples")
+        .with(id::<&Position>())
+        .with(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3694,19 +3731,19 @@ fn query_builder_with_pair_components() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with::<(Likes, Apples)>()
+        .with(id::<&Position>())
+        .with((id::<Likes>(), id::<Apples>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add::<(Likes, Apples)>();
+        .add((id::<Likes>(), id::<Apples>()));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add::<(Likes, Pears)>();
+        .add((id::<Likes>(), id::<Pears>()));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3726,19 +3763,19 @@ fn query_builder_with_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with_first::<&Likes>(apples)
+        .with(id::<&Position>())
+        .with((id::<&Likes>(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(apples);
+        .add((id::<Likes>(), apples));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(pears);
+        .add((id::<Likes>(), pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3759,19 +3796,19 @@ fn query_builder_with_pair_name_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<Position>()
-        .with_second_id("Likes", apples)
+        .with(id::<Position>())
+        .with(("Likes", apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3791,19 +3828,19 @@ fn query_builder_with_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .with_first_name::<&Likes>("Apples")
+        .with(id::<&Position>())
+        .with((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let e1 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(apples);
+        .add((id::<Likes>(), apples));
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(pears);
+        .add((id::<Likes>(), pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3828,7 +3865,7 @@ fn query_builder_with_enum() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .with_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3852,13 +3889,13 @@ fn query_builder_with_enum() {
 }
 
 #[test]
-fn query_builder_without_id() {
+fn query_builder_without() {
     let world = World::new();
 
     let q = world
         .query::<()>()
-        .with_id(world.id_from::<Position>())
-        .without_id(world.id_from::<Velocity>())
+        .with(world.id_view_from(id::<Position>()))
+        .without(world.id_view_from(id::<Velocity>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3885,8 +3922,8 @@ fn query_builder_without_name() {
 
     let q = world
         .query::<()>()
-        .with_id(world.id_from::<Position>())
-        .without_name("flecs.common_test.Velocity")
+        .with(world.id_view_from(id::<Position>()))
+        .without("flecs.common_test.Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3911,8 +3948,8 @@ fn query_builder_without_component() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without::<&Velocity>()
+        .with(id::<&Position>())
+        .without(id::<Velocity>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3941,19 +3978,19 @@ fn query_builder_without_pair_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without_id((likes, apples))
+        .with(id::<&Position>())
+        .without((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -3974,19 +4011,19 @@ fn query_builder_without_pair_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without_names("likes", "Apples")
+        .with(id::<&Position>())
+        .without(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4003,19 +4040,19 @@ fn query_builder_without_pair_components() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without::<(Likes, Apples)>()
+        .with(id::<&Position>())
+        .without((id::<Likes>(), id::<Apples>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add::<(Likes, Apples)>();
+        .add((id::<Likes>(), id::<Apples>()));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add::<(Likes, Pears)>();
+        .add((id::<Likes>(), id::<Pears>()));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4035,19 +4072,19 @@ fn query_builder_without_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without_first::<&Likes>(apples)
+        .with(id::<&Position>())
+        .without((id::<&Likes>(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(apples);
+        .add((id::<Likes>(), apples));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(pears);
+        .add((id::<Likes>(), pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4067,19 +4104,19 @@ fn query_builder_without_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without_first_name::<&Likes>("Apples")
+        .with(id::<&Position>())
+        .without((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(apples);
+        .add((id::<Likes>(), apples));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_first::<Likes>(pears);
+        .add((id::<Likes>(), pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4100,19 +4137,19 @@ fn query_builder_without_pair_name_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .without_second_id("Likes", apples)
+        .with(id::<&Position>())
+        .without(("Likes", apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, apples));
+        .add((likes, apples));
     let e2 = world
         .entity()
         .set(Position { x: 0, y: 0 })
-        .add_id((likes, pears));
+        .add((likes, pears));
 
     let mut count = 0;
     q.each_entity(|e, _| {
@@ -4137,7 +4174,7 @@ fn query_builder_without_enum() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .without_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4161,18 +4198,18 @@ fn query_builder_without_enum() {
 }
 
 #[test]
-fn query_builder_write_id() {
+fn query_builder_write() {
     let world = World::new();
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_id(world.id_from::<Position>())
+        .with(id::<&Position>())
+        .write(world.id_view_from(id::<Position>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4184,13 +4221,13 @@ fn query_builder_write_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_name("flecs.common_test.Position")
+        .with(id::<&Position>())
+        .write("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4202,13 +4239,13 @@ fn query_builder_write_component() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write::<Position>()
+        .with(id::<&Position>())
+        .write(id::<Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4221,8 +4258,8 @@ fn query_builder_write_pair_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_id((likes, apples))
+        .with(id::<&Position>())
+        .write((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4241,8 +4278,8 @@ fn query_builder_write_pair_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_names("likes", "Apples")
+        .with(id::<&Position>())
+        .write(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4258,14 +4295,14 @@ fn query_builder_write_pair_components() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write::<(Likes, Apples)>()
+        .with(id::<&Position>())
+        .write((id::<Likes>(), id::<Apples>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
-    assert_eq!(q.term(1).second_id(), world.id_from::<Apples>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
+    assert_eq!(q.term(1).second_id(), world.id_view_from(id::<Apples>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4277,13 +4314,13 @@ fn query_builder_write_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_first::<&Likes>(apples)
+        .with(id::<&Position>())
+        .write((id::<&Likes>(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
     assert_eq!(q.term(1).second_id(), apples);
     assert_eq!(q.term(1).src_id(), 0);
 }
@@ -4296,13 +4333,13 @@ fn query_builder_write_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .write_first_name::<&Likes>("Apples")
+        .with(id::<&Position>())
+        .write((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
     assert_eq!(q.term(1).second_id(), apples);
     assert_eq!(q.term(1).src_id(), 0);
 }
@@ -4321,30 +4358,30 @@ fn query_builder_write_enum() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .write_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::Out);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Color>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Color>()));
     assert_eq!(q.term(1).second_id(), world.entity_from_enum(Color::Green));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
 #[test]
-fn query_builder_read_id() {
+fn query_builder_read() {
     let world = World::new();
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_id(world.id_from::<Position>())
+        .with(id::<&Position>())
+        .read(world.id_view_from(id::<Position>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4356,13 +4393,13 @@ fn query_builder_read_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_name("flecs.common_test.Position")
+        .with(id::<&Position>())
+        .read("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4374,13 +4411,13 @@ fn query_builder_read_component() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read::<&Position>()
+        .with(id::<&Position>())
+        .read(id::<Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Position>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Position>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4393,8 +4430,8 @@ fn query_builder_read_pair_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_id((likes, apples))
+        .with(id::<&Position>())
+        .read((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4413,8 +4450,8 @@ fn query_builder_read_pair_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_names("likes", "Apples")
+        .with(id::<&Position>())
+        .read(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4430,14 +4467,14 @@ fn query_builder_read_pair_components() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read::<(Likes, Apples)>()
+        .with(id::<&Position>())
+        .read((id::<Likes>(), id::<Apples>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
-    assert_eq!(q.term(1).second_id(), world.id_from::<Apples>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
+    assert_eq!(q.term(1).second_id(), world.id_view_from(id::<Apples>()));
     assert_eq!(q.term(1).src_id(), 0);
 }
 
@@ -4449,13 +4486,13 @@ fn query_builder_read_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_first::<&Likes>(apples)
+        .with(id::<&Position>())
+        .read((id::<Likes>(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
     assert_eq!(q.term(1).second_id(), apples);
     assert_eq!(q.term(1).src_id(), 0);
 }
@@ -4468,13 +4505,13 @@ fn query_builder_read_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
-        .read_first_name::<&Likes>("Apples")
+        .with(id::<&Position>())
+        .read((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Likes>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Likes>()));
     assert_eq!(q.term(1).second_id(), apples);
 
     assert_eq!(q.term(1).src_id(), 0);
@@ -4494,13 +4531,13 @@ fn query_builder_read_enum() {
 
     let q = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .read_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     assert_eq!(q.term(1).inout(), InOutKind::In);
-    assert_eq!(q.term(1).first_id(), world.id_from::<Color>());
+    assert_eq!(q.term(1).first_id(), world.id_view_from(id::<Color>()));
     assert_eq!(q.term(1).second_id(), world.entity_from_enum(Color::Green));
     assert_eq!(q.term(1).src_id(), 0);
 }
@@ -4512,7 +4549,7 @@ fn query_builder_assign_after_init() {
     #[allow(unused_assignments)]
     let mut f: Query<()> = world.new_query::<()>();
     let mut fb = world.query::<()>();
-    fb.with::<&Position>();
+    fb.with(id::<&Position>());
     fb.set_cache_kind(QueryCacheKind::Auto);
     f = fb.build();
 
@@ -4533,7 +4570,7 @@ fn query_builder_with_t_inout() {
 
     let f = world
         .query::<()>()
-        .with_id(world.id_from::<Position>())
+        .with(world.id_view_from(id::<Position>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4546,7 +4583,7 @@ fn query_builder_with_t_inout_1() {
 
     let f = world
         .query::<()>()
-        .with::<&Position>()
+        .with(id::<&Position>())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4559,7 +4596,7 @@ fn query_builder_with_r_t_inout_2() {
 
     let f = world
         .query::<()>()
-        .with::<(Position, Velocity)>()
+        .with((id::<Position>(), id::<Velocity>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4572,7 +4609,7 @@ fn query_builder_with_r_t_inout_3() {
 
     let f = world
         .query::<()>()
-        .with_first::<&Position>(world.entity_from::<Velocity>())
+        .with((id::<Position>(), world.entity_from::<Velocity>()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4585,7 +4622,7 @@ fn query_builder_with_r_t_inout() {
 
     let f = world
         .query::<()>()
-        .with_id((
+        .with((
             world.entity_from::<Position>(),
             world.entity_from::<Velocity>(),
         ))
@@ -4805,12 +4842,12 @@ fn query_builder_var_src_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with::<&Foo>()
-        .set_src_name("$Var")
+        .with(id::<&Foo>())
+        .set_src("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add::<Foo>();
+    let e = world.entity().add(id::<Foo>());
 
     let mut count = 0;
     r.run(|mut it| {
@@ -4829,20 +4866,20 @@ fn query_builder_var_first_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with::<&Foo>()
+        .with(id::<&Foo>())
         .term()
-        .set_first_name("$Var")
+        .set_first("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e = world.entity().add::<Foo>();
+    let e = world.entity().add(id::<Foo>());
 
     let mut count = 0;
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
-            assert_eq!(it.get_var_by_name("Var"), world.id_from::<Foo>());
+            assert_eq!(it.entity(0).unwrap(), e);
+            assert_eq!(it.get_var_by_name("Var"), world.id_view_from(id::<Foo>()));
             count += 1;
         }
     });
@@ -4856,19 +4893,19 @@ fn query_builder_var_second_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with::<&Foo>()
-        .set_second_name("$Var")
+        .with(id::<&Foo>())
+        .set_second("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let t = world.entity();
-    let e = world.entity().add_first::<Foo>(t);
+    let e = world.entity().add((id::<Foo>(), t));
 
     let mut count = 0;
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
+            assert_eq!(it.entity(0).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }
@@ -4885,18 +4922,18 @@ fn query_builder_term_w_second_var_string() {
 
     let r = world
         .query::<()>()
-        .with_first_id(foo_, "$Var")
+        .with((foo_, "$Var"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let t = world.entity();
-    let e = world.entity().add_id((foo_, t));
+    let e = world.entity().add((foo_, t));
 
     let mut count = 0;
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
+            assert_eq!(it.entity(0).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }
@@ -4911,18 +4948,18 @@ fn query_builder_term_type_w_second_var_string() {
 
     let r = world
         .query::<()>()
-        .with_first_name::<&Foo>("$Var")
+        .with((id::<Foo>(), "$Var"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
     let t = world.entity();
-    let e = world.entity().add_first::<Foo>(t);
+    let e = world.entity().add((id::<Foo>(), t));
 
     let mut count = 0;
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0), e);
+            assert_eq!(it.entity(0).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }
@@ -5022,21 +5059,21 @@ fn query_builder_scope() {
     let tag_a = world.entity();
     let tag_b = world.entity();
 
-    world.entity().add_id(root).add_id(tag_a).add_id(tag_b);
+    world.entity().add(root).add(tag_a).add(tag_b);
 
-    let e2 = world.entity().add_id(root).add_id(tag_a);
+    let e2 = world.entity().add(root).add(tag_a);
 
-    world.entity().add_id(root).add_id(tag_b);
+    world.entity().add(root).add(tag_b);
 
-    world.entity().add_id(root);
+    world.entity().add(root);
 
     let r = world
         .query::<()>()
-        .with_id(root)
+        .with(root)
         .scope_open()
         .not()
-        .with_id(tag_a)
-        .without_id(tag_b)
+        .with(tag_a)
+        .without(tag_b)
         .scope_close()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();

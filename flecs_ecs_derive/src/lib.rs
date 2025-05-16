@@ -148,7 +148,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
 
                     if let Some(field_name) = field_name {
                         meta_fields_impl.push(quote! {
-                            .member_id(id!(world, #field_type), (stringify!(#field_name), flecs_ecs::addons::meta::Count(1), core::mem::offset_of!(#struct_name, #field_name)))
+                            .member(id!(world, #field_type), (stringify!(#field_name), flecs_ecs::addons::meta::Count(1), core::mem::offset_of!(#struct_name, #field_name)))
                         });
                     } else {
                         meta_fields_impl.push( quote! {
@@ -865,6 +865,24 @@ fn impl_cached_component_data_enum(
         }
     };
 
+    let into_entity = quote! {
+        impl #impl_generics flecs_ecs::core::IntoEntity for #name #type_generics #where_clause {
+            const IS_TYPED_PAIR: bool = false;
+            const IS_TYPED: bool = true;
+            const IF_ID_IS_DEFAULT: bool = <Self as flecs_ecs::core::ComponentInfo>::IMPLS_DEFAULT;
+            const IS_TYPED_SECOND: bool = true;
+            const IF_ID_IS_DEFAULT_SECOND: bool = false;
+            const IS_ENUM: bool = true;
+            const IS_TYPE_TAG: bool = true;
+            const IS_TYPED_REF: bool = false;
+            const IS_TYPED_MUT_REF: bool = false;
+            fn into_entity<'a>(self, world: impl flecs_ecs::core::WorldProvider<'a>) -> flecs_ecs::core::Entity {
+                let world = world.world();
+                *<Self as flecs_ecs::core::EnumComponentInfo>::id_variant(&self, world)
+            }
+        }
+    };
+
     quote! {
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Enum> for #name #type_generics #where_clause {}
         impl #impl_generics flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause {}
@@ -878,6 +896,8 @@ fn impl_cached_component_data_enum(
         #cached_enum_data
 
         #on_component_registration
+
+        #into_entity
     }
 }
 
@@ -1224,6 +1244,7 @@ impl Parse for TermId {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum TermType {
     Pair(TermId, TermId),
     Component(TermId),
@@ -1379,7 +1400,7 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
         match &term.up_ident {
             Some(ident) => match ident {
                 TermIdent::Local(ident) => ops.push(quote! { .up_id(#ident) }),
-                TermIdent::Type(ty) => ops.push(quote! { .up_type::<#ty>() }),
+                TermIdent::Type(ty) => ops.push(quote! { .up_id(id::<#ty>()) }),
                 _ => ops
                     .push(quote_spanned!(term.span => ; compile_error!("Invalid up traversal.") )),
             },
@@ -1390,7 +1411,7 @@ fn expand_trav(term: &TermId) -> Vec<TokenStream> {
         match &term.cascade_ident {
             Some(ident) => match ident {
                 TermIdent::Local(ident) => ops.push(quote! { .cascade_id(#ident) }),
-                TermIdent::Type(ty) => ops.push(quote! { .cascade_type::<#ty>() }),
+                TermIdent::Type(ty) => ops.push(quote! { .cascade_id(id::<#ty>()) }),
                 _ => ops.push(
                     quote_spanned!(term.span => ; compile_error!("Invalid cascade traversal.") ),
                 ),
@@ -1513,7 +1534,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::Singleton => ops.push(quote_spanned!{ second.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
-                                ops.push(quote! { .set_second::<#second_ty>() });
+                                ops.push(quote! { .set_second(id::<#second_ty>()) });
                             }
                         }
                     };
@@ -1551,7 +1572,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         },
                         _ => {
                             if !iter_term {
-                                term_accessor = quote! { .with::<#ty>() };
+                                term_accessor = quote! { .with(id::<#ty>()) };
                                 needs_accessor = true;
                             }
                         },
@@ -1577,7 +1598,7 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
                     TermIdent::Singleton => ops.push(quote! { .singleton() }),
-                    _ => ops.push(quote! { .set_src::<#ty>() }),
+                    _ => ops.push(quote! { .set_src(id::<#ty>()) }),
                 };
             }
 
@@ -1698,17 +1719,17 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// let mut world = World::new();
 ///
 /// // Basic
-/// let builder = world.query::<(&Foo, &mut Bar)>().with::<Bazz>().build();
+/// let builder = world.query::<(&Foo, &mut Bar)>().with(id::<Bazz>()).build();
 /// let dsl = query!(&mut world, &Foo, &mut Bar, Bazz).build();
 /// assert_eq!(builder.to_string(), dsl.to_string());
 ///
 /// // Logical modifiers
 /// let builder = world
 ///     .query::<()>()
-///     .with::<Foo>()
+///     .with(id::<Foo>())
 ///     .or()
-///     .with::<Bar>()
-///     .without::<Bazz>()
+///     .with(id::<Bar>())
+///     .without(id::<Bazz>())
 ///     .build();
 ///
 /// let dsl = query!(&mut world, Foo || Bar, !Bazz).build();
@@ -1922,14 +1943,14 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// world.entity_named("square").set(Square { side: 5.0 });
 /// world.entity_named("triangle").set(Triangle { side: 5.0 });
 ///
-/// let query = world.query::<()>().with::<ShapesTrait>().build();
+/// let query = world.query::<()>().with(id::<ShapesTrait>()).build();
 ///
 /// query.run(|mut it| {
 ///     it.next();
 ///     while it.next() {
 ///         let world = it.world();
 ///         for i in it.iter() {
-///             let e = it.entity(i);
+///             let e = it.entity(i).unwrap();
 ///             let id = it.id(0);
 ///             let shape = ShapesTrait::cast(e, id);
 ///             let calc = shape.calculate();
@@ -1974,7 +1995,7 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj_ptr) };
                 let id = world.component::<T>();
                 let id_self = world.component::<Self>();
-                id.is_a_id(id_self);
+                id.is_a(id_self);
                 id.set_id(Self::new(vtable), (id_self,id_self));
                 vtable
             }
@@ -1983,7 +2004,7 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 let data_ptr = entity.get_untyped(derived_id) as usize;
                 let vtable_ptr = entity
                     .world()
-                    .component_untyped_from_id(*derived_id)
+                    .component_untyped_from(*derived_id)
                     .cloned::<&(Self,Self)>()
                     .vtable;
 

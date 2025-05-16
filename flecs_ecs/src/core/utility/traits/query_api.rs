@@ -196,14 +196,14 @@ where
     /// world
     ///     .entity_named("adam")
     ///     .set(Position { x: 10, y: 20 })
-    ///     .add_first::<Likes>(eva);
+    ///     .add((id::<Likes>(), eva));
     ///
     /// world
     ///     .query::<&Position>()
-    ///     .with::<(Likes, flecs::Wildcard)>()
+    ///     .with((id::<Likes>(), id::<flecs::Wildcard>()))
     ///     .build()
     ///     .each_iter(|it, index, p| {
-    ///         let e = it.entity(index);
+    ///         let e = it.entity(index).unwrap();
     ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
     ///     });
     ///
@@ -461,13 +461,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
     /// let query = world.new_query::<(&Tag, &Position)>();
     ///
@@ -481,7 +481,7 @@ where
     ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             count_entities += 1;
-    ///             let entity = it.entity(i);
+    ///             let entity = it.entity(i).unwrap();
     ///             println!("{:?}: {:?}", entity, pos[i]);
     ///         }
     ///     }
@@ -555,15 +555,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
-    /// let query = world.query::<(&Position)>().with::<Tag>().build();
+    /// let query = world.query::<(&Position)>().with(id::<Tag>()).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -644,15 +644,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
-    /// let query = world.query::<(&Position)>().with::<Tag>().build();
+    /// let query = world.query::<(&Position)>().with(id::<Tag>()).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -1208,20 +1208,9 @@ where
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-    fn set_group_id(&self, group_id: impl Into<Entity>) -> QueryIter<P, T> {
+    fn set_group(&self, group_id: impl IntoEntity) -> QueryIter<P, T> {
         let mut iter = self.iterable();
-        QueryIter::<P, T>::set_group_id(&mut iter, group_id);
-        iter
-    }
-
-    /// Limit results to tables with specified group id (grouped queries only)
-    ///
-    /// # Type parameters
-    ///
-    /// * `Group`: the group to set
-    fn set_group<Group: ComponentId>(&self) -> QueryIter<P, T> {
-        let mut iter = self.iterable();
-        QueryIter::<P, T>::set_group::<Group>(&mut iter);
+        QueryIter::<P, T>::set_group(&mut iter, group_id);
         iter
     }
 

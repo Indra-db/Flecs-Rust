@@ -56,8 +56,8 @@ impl<'a> MetricBuilder<'a> {
     /// # Arguments
     ///
     /// * `e` - The entity representing the member.
-    pub fn member_id(&mut self, e: impl Into<Entity>) -> &mut Self {
-        self.desc.member = *e.into();
+    pub fn member(&mut self, e: impl IntoEntity) -> &mut Self {
+        self.desc.member = *e.into_entity(self.world);
         self
     }
 
@@ -97,7 +97,7 @@ impl<'a> MetricBuilder<'a> {
             //eprintln!("member '{}' not found", name);
         }
 
-        self.member_id(member_id)
+        self.member(member_id)
     }
 
     /// Set the member for the metric using a component type and member name.
@@ -109,7 +109,7 @@ impl<'a> MetricBuilder<'a> {
     /// # Arguments
     ///
     /// * `name` - The name of the member within the component.
-    pub fn member<T>(&mut self, name: &str) -> &mut Self
+    pub fn member_named_type<T>(&mut self, name: &str) -> &mut Self
     where
         T: ComponentId,
     {
@@ -135,7 +135,7 @@ impl<'a> MetricBuilder<'a> {
             return self;
         }
 
-        self.member_id(m.unwrap())
+        self.member(m.unwrap())
     }
 
     /// Set the `dotmember` expression for the metric.
@@ -176,64 +176,9 @@ impl<'a> MetricBuilder<'a> {
     /// # Arguments
     ///
     /// * `the_id` - The ID to set.
-    pub fn id(&mut self, the_id: impl Into<Id>) -> &mut Self {
-        self.desc.id = *the_id.into();
+    pub fn id(&mut self, the_id: impl IntoId) -> &mut Self {
+        self.desc.id = *the_id.into_id(self.world);
         self
-    }
-
-    /// Set the ID for the metric using a pair of entities.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first entity in the pair.
-    /// * `second` - The second entity in the pair.
-    pub fn id_pair(&mut self, first: impl Into<Entity>, second: impl Into<Entity>) -> &mut Self {
-        self.desc.id = ecs_pair(*first.into(), *second.into());
-        self
-    }
-
-    /// Set the ID for the metric using a component type.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component type.
-    pub fn id_type<T>(&mut self) -> &mut Self
-    where
-        T: ComponentOrPairId,
-    {
-        self.id(T::get_id(self.world()))
-    }
-
-    /// Set the ID for the metric using a component type as the first element and an entity as the second.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The component type for the first element.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The second entity in the pair.
-    pub fn id_first<First>(&mut self, second: impl Into<Entity>) -> &mut Self
-    where
-        First: ComponentId,
-    {
-        self.id_pair(First::id(self.world()), second)
-    }
-
-    /// Set the ID for the metric using an entity as the first element and a component type as the second.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The component type for the second element.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The first entity in the pair.
-    pub fn id_second<Second>(&mut self, first: impl Into<Entity>) -> &mut Self
-    where
-        Second: ComponentId,
-    {
-        self.id_pair(first, Second::id(self.world()))
     }
 
     /// Specify whether the metric should include targets.
@@ -251,21 +196,9 @@ impl<'a> MetricBuilder<'a> {
     /// # Arguments
     ///
     /// * `the_kind` - The entity representing the kind.
-    pub fn kind_id(&mut self, the_kind: impl Into<Entity>) -> &mut Self {
-        self.desc.kind = *the_kind.into();
+    pub fn kind(&mut self, the_kind: impl IntoEntity) -> &mut Self {
+        self.desc.kind = *the_kind.into_entity(self.world);
         self
-    }
-
-    /// Set the kind of the metric using a component type.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Kind` - The component type representing the kind.
-    pub fn kind<Kind>(&mut self) -> &mut Self
-    where
-        Kind: ComponentId,
-    {
-        self.kind_id(Kind::id(self.world()))
     }
 
     /// Set a brief description for the metric.

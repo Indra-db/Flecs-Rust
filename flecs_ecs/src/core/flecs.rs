@@ -13,7 +13,7 @@ macro_rules! create_pre_registered_component {
         create_pre_registered_component!($struct_name, $const_name, "");
     };
     ($struct_name:ident, $const_name:ident, $doc:tt) => {
-        #[derive(Debug, Default)]
+        #[derive(Debug, Default, Clone)]
         #[allow(clippy::empty_docs)]
         #[doc = $doc]
         pub struct $struct_name;
@@ -57,8 +57,8 @@ macro_rules! create_pre_registered_component {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = true;
-            const IMPLS_CLONE: bool = false;
-            const IMPLS_DEFAULT: bool = false;
+            const IMPLS_CLONE: bool = true;
+            const IMPLS_DEFAULT: bool = true;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =

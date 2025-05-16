@@ -55,14 +55,14 @@ impl<'a> UntypedComponent<'a> {
         if let Some(parent) = parent {
             let component_name = unsafe { e.get_name_cstr() };
             if let Some(metric_name) = metric_name {
-                world.run_in_scope_with_id(parent, || {
+                world.run_in_scope_with(parent, || {
                     metric_entity = world.entity_named(metric_name);
                 });
             } else {
                 let member_name = unsafe { core::ffi::CStr::from_ptr((*member).name) };
                 let member_name_str = member_name.to_str().expect("non valid Utf8 conversion");
                 if member_name_str == "value" || component_name.is_none() {
-                    world.run_in_scope_with_id(parent, || {
+                    world.run_in_scope_with(parent, || {
                         metric_entity = world.entity_named(member_name_str);
                     });
                 } else {
@@ -75,7 +75,7 @@ impl<'a> UntypedComponent<'a> {
                                 .to_str()
                                 .expect("non valid Utf8 conversion")
                         };
-                        world.run_in_scope_with_id(parent, || {
+                        world.run_in_scope_with(parent, || {
                             metric_entity = world.entity_named(snake_name_str);
                         });
                         unsafe {
@@ -89,7 +89,7 @@ impl<'a> UntypedComponent<'a> {
         }
 
         let mut metric = world.metric(metric_entity);
-        metric.member_id(me).kind::<Kind>();
+        metric.member(me).kind(id::<Kind>());
         if let Some(brief) = brief {
             metric.brief(brief);
         }

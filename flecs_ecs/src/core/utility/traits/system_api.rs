@@ -87,13 +87,13 @@ where
     /// world
     ///     .entity_named("adam")
     ///     .set(Position { x: 10, y: 20 })
-    ///     .add_first::<Likes>(eva);
+    ///     .add((id::<Likes>(), eva));
     ///
     /// world
     ///     .system::<&Position>()
-    ///     .with::<(Likes, flecs::Wildcard)>()
+    ///     .with((id::<Likes>(), id::<flecs::Wildcard>()))
     ///     .each_iter(|it, index, p| {
-    ///         let e = it.entity(index);
+    ///         let e = it.entity(index).unwrap();
     ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
     ///     })
     ///     .run();
@@ -158,13 +158,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
     /// let count_entities = Rc::new(RefCell::new(0));
     /// let count_tables = Rc::new(RefCell::new(0));
@@ -179,7 +179,7 @@ where
     ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
-    ///             let entity = it.entity(i);
+    ///             let entity = it.entity(i).unwrap();
     ///             println!("{:?}: {:?}", entity, pos[i]);
     ///         }
     ///     }
@@ -248,13 +248,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
     ///
     ///
@@ -264,7 +264,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// let system = world.system::<(&Position)>().with(id::<Tag>())
     /// .run_each(
     ///     move |mut it| {
     ///         println!("start operations");
@@ -358,13 +358,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add::<Tag>().add::<Position>();
-    /// world.entity().add::<Tag>().add::<Position>();
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(id::<Tag>()).add(id::<Position>());
     /// world
     ///     .entity()
-    ///     .add::<Tag>()
-    ///     .add::<Position>()
-    ///     .add::<Velocity>();
+    ///     .add(id::<Tag>())
+    ///     .add(id::<Position>())
+    ///     .add(id::<Velocity>());
     ///
     ///
     ///
@@ -374,7 +374,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with::<Tag>()
+    /// let system = world.system::<(&Position)>().with(id::<Tag>())
     /// .run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");

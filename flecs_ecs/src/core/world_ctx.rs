@@ -96,7 +96,7 @@ fn query_ref_count() {
     struct Tag;
 
     let world = World::new();
-    let query = world.query::<()>().with::<&Tag>().build();
+    let query = world.query::<()>().with(id::<Tag>()).build();
 
     assert_eq!(world.world_ctx().query_ref_count(), 1);
     assert_eq!(query.reference_count(), 1);

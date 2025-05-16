@@ -522,9 +522,6 @@ pub struct FieldUntyped {
 /// * `size`: size of the component type.
 /// * `count`: number of elements in the array.
 /// * `is_shared`: whether the component is shared.
-///
-/// # See also
-///
 impl FieldUntyped {
     pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {

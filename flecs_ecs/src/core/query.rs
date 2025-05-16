@@ -311,9 +311,6 @@ where
     /// # Arguments
     ///
     /// * `world` - The world to get the iterator for
-    ///
-    /// # See also
-    ///
     unsafe fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }

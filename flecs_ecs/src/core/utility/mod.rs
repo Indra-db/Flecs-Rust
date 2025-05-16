@@ -3,6 +3,7 @@
 
 mod errors;
 mod functions;
+pub mod id;
 pub(crate) mod id_map;
 mod log;
 pub mod traits;
@@ -10,6 +11,7 @@ pub mod types;
 
 pub use errors::*;
 pub use functions::*;
+pub use id::id;
 pub(crate) use id_map::*;
 pub use log::*;
 

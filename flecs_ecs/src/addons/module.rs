@@ -3,6 +3,7 @@
 //! * To define a module, see [`Module`].
 //! * To import a module, see [`World::import()`].
 //! * To override the name of a module, see [`World::module()`].
+use crate::core::utility::id;
 use crate::core::{
     ComponentId, EntityView, FlecsConstantId, IdOperations, SEPARATOR, World, WorldProvider,
     ecs_pair, flecs, register_componment_data_explicit,
@@ -74,7 +75,7 @@ impl World {
     /// * [`World::module()`]
     pub fn import<T: Module>(&self) -> EntityView {
         // Reset scope
-        let prev_scope = self.set_scope_id(0);
+        let prev_scope = self.set_scope(0);
 
         let module = if T::is_registered_with_world(self) {
             self.component::<T>().entity
@@ -96,7 +97,7 @@ impl World {
         };
 
         // If we have already registered this type don't re-create the module
-        if module.has::<flecs::Module>() {
+        if module.has(id::<flecs::Module>()) {
             return module;
         }
 
@@ -106,16 +107,16 @@ impl World {
         module.add_trait::<flecs::Sparse>();
 
         // Set scope to our module
-        self.set_scope_id(module);
+        self.set_scope(module);
 
         // Build the module
         T::module(self);
 
         // Return out scope to the previous scope
-        self.set_scope_id(prev_scope);
+        self.set_scope(prev_scope);
 
         // Initialise component for the module and add Module tag
-        module.add::<flecs::Module>();
+        module.add(flecs::Module::ID);
 
         module
     }
@@ -147,7 +148,7 @@ impl World {
         let id = comp.id();
 
         if let Some(existing) = self.try_lookup_recursive(name) {
-            self.set_scope_id(existing);
+            self.set_scope(existing);
             return existing;
         }
 

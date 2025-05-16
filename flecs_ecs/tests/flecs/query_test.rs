@@ -169,15 +169,18 @@ fn query_iter_targets() {
     let likes = world.entity();
     let pizza = world.entity();
     let salad = world.entity();
-    let alice = world.entity().add_id((likes, pizza)).add_id((likes, salad));
+    let alice = world.entity().add((likes, pizza)).add((likes, salad));
 
-    let q = world.query::<()>().with_second::<flecs::Any>(likes).build();
+    let q = world
+        .query::<()>()
+        .with((likes, id::<flecs::Any>()))
+        .build();
 
     let mut count = 0;
     let mut tgt_count = 0;
 
     q.each_iter(|mut it, row, _| {
-        let e = it.entity(row);
+        let e = it.entity(row).unwrap();
         assert_eq!(e, alice);
 
         it.targets(0, |tgt| {
@@ -206,20 +209,20 @@ fn query_iter_targets_second_field() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add::<Position>()
-        .add_id((likes, pizza))
-        .add_id((likes, salad));
+        .add(id::<Position>())
+        .add((likes, pizza))
+        .add((likes, salad));
 
     let q = world
         .query::<&Position>()
-        .with_second::<flecs::Any>(likes)
+        .with((likes, id::<flecs::Any>()))
         .build();
 
     let mut count = 0;
     let mut tgt_count = 0;
 
     q.each_iter(|mut it, row, _| {
-        let e = it.entity(row);
+        let e = it.entity(row).unwrap();
         assert_eq!(e, alice);
 
         it.targets(1, |tgt| {
@@ -248,12 +251,15 @@ fn query_iter_targets_field_out_of_range() {
     let likes = world.entity();
     let pizza = world.entity();
     let salad = world.entity();
-    let alice = world.entity().add_id((likes, pizza)).add_id((likes, salad));
+    let alice = world.entity().add((likes, pizza)).add((likes, salad));
 
-    let q = world.query::<()>().with_second::<flecs::Any>(likes).build();
+    let q = world
+        .query::<()>()
+        .with((likes, id::<flecs::Any>()))
+        .build();
 
     q.each_iter(|mut it, row, _| {
-        let e = it.entity(row);
+        let e = it.entity(row).unwrap();
         assert_eq!(e, alice);
 
         it.targets(1, |_| {});
@@ -271,14 +277,14 @@ fn query_iter_targets_field_not_a_pair() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add::<Position>()
-        .add_id((likes, pizza))
-        .add_id((likes, salad));
+        .add(id::<Position>())
+        .add((likes, pizza))
+        .add((likes, salad));
 
     let q = world.query::<&Position>().build();
 
     q.each_iter(|mut it, row, _| {
-        let e = it.entity(row);
+        let e = it.entity(row).unwrap();
         assert_eq!(e, alice);
 
         it.targets(1, |_| {});
@@ -292,16 +298,16 @@ fn query_iter_targets_field_not_set() {
     let world = World::new();
 
     let likes = world.entity();
-    let alice = world.entity().add::<Position>();
+    let alice = world.entity().add(id::<Position>());
 
     let q = world
         .query::<&Position>()
-        .with_second::<flecs::Any>(likes)
+        .with((likes, id::<flecs::Any>()))
         .optional()
         .build();
 
     q.each_iter(|mut it, row, _| {
-        let e = it.entity(row);
+        let e = it.entity(row).unwrap();
         assert_eq!(e, alice);
         assert!(!it.is_set(1));
 

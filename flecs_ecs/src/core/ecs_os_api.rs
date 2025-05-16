@@ -4,7 +4,6 @@
 //! This module provides a basic structure for hooking into the initialization
 //! of that API, which allows, for example, customizing how Flecs sends log
 //! messages.
-//!
 #[cfg(feature = "std")]
 extern crate std;
 

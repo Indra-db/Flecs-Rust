@@ -110,8 +110,12 @@ where
     /// # Arguments
     ///
     /// * `row` - Row being iterated over
-    pub fn entity(&self, row: usize) -> EntityView<'a> {
-        unsafe { EntityView::new_from(self.real_world(), *self.iter.entities.add(row)) }
+    pub fn entity(&self, row: usize) -> Option<EntityView<'a>> {
+        let ptr = unsafe { self.iter.entities.add(row) };
+        if ptr.is_null() {
+            return None;
+        }
+        Some(unsafe { EntityView::new_from(self.real_world(), *ptr) })
     }
 
     /// Return a mut reference to the raw iterator object.
@@ -154,20 +158,14 @@ where
         self.table().map(|t| t.archetype())
     }
 
-    /// # See also
-    ///
     pub fn table(&self) -> Option<Table<'a>> {
         NonNull::new(self.iter.table).map(|ptr| Table::new(self.real_world(), ptr))
     }
 
-    /// # See also
-    ///
     pub fn other_table(&self) -> Option<Table<'a>> {
         NonNull::new(self.iter.other_table).map(|ptr| Table::new(self.real_world(), ptr))
     }
 
-    /// # See also
-    ///
     pub fn range(&self) -> Option<TableRange<'a>> {
         self.table()
             .map(|t| TableRange::new(t, self.iter.offset, self.iter.count))
@@ -635,10 +633,6 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `iter::field`
     pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType, true>> {
         ecs_assert!(
             (self.iter.flags & sys::EcsIterCppEach == 0)
@@ -977,8 +971,8 @@ where
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add::<DerivedAction>()
-    ///     .add::<DerivedAction2>();
+    ///     .add(id::<DerivedAction>())
+    ///     .add(id::<DerivedAction2>());
     ///
     /// world.new_query::<&Action>().run(|mut it| {
     ///     let mut vec = vec![];
@@ -1000,7 +994,7 @@ where
         );
 
         let id = unsafe { self.iter.ids.add(index as usize).read() };
-        Id::new(id)
+        crate::core::Id::new(id)
     }
 
     /// Get readonly access to entity ids of the sources.
@@ -1529,15 +1523,18 @@ where
     /// let likes = world.entity();
     /// let pizza = world.entity();
     /// let salad = world.entity();
-    /// let alice = world.entity().add_id((likes, pizza)).add_id((likes, salad));
+    /// let alice = world.entity().add((likes, pizza)).add((likes, salad));
     ///
-    /// let q = world.query::<()>().with_second::<flecs::Any>(likes).build();
+    /// let q = world
+    ///     .query::<()>()
+    ///     .with((likes, id::<flecs::Any>()))
+    ///     .build();
     ///
     /// let mut count = 0;
     /// let mut tgt_count = 0;
     ///
     /// q.each_iter(|mut it, row, _| {
-    ///     let e = it.entity(row);
+    ///     let e = it.entity(row).unwrap();
     ///     assert_eq!(e, alice);
     ///
     ///     it.targets(0, |tgt| {
@@ -1577,7 +1574,10 @@ where
                 FlecsErrorCode::InvalidParameter,
                 "field does not match a pair"
             );
-            let target = EntityView::new_from(self.world(), ecs_second(id));
+            let target = EntityView::new_from(
+                self.world(),
+                ecs_second(id, unsafe { WorldRef::from_ptr(self.iter.world) }),
+            );
             func(target);
             i += 1;
         }

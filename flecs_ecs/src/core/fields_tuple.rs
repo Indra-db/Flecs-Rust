@@ -4,47 +4,33 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-// Not sure if this has any value, but keeping it here for food for thought.
-// pub struct ArrayElement {
-//     pub ptr: *mut u8,
-//     pub index: i8,
-//     pub is_ref: bool,
-// }
-
 #[doc(hidden)]
 pub struct IsAnyArray {
     pub a_ref: bool, //e.g. singleton
     pub a_row: bool, //e.g. sparse
 }
 
-pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
+pub struct ComponentsFieldData<T: FieldsTuple, const LEN: usize> {
     pub array_components: [*mut u8; LEN],
     pub is_ref_array_components: [bool; LEN],
     pub is_row_array_components: [bool; LEN],
     pub index_array_components: [i8; LEN],
     pub is_any_array: IsAnyArray,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    pub ids: [ReadWriteId; LEN],
     _marker: PhantomData<T>,
 }
 
-pub trait ComponentPointers<T: QueryTuple> {
+pub trait ComponentFieldPointers<T: FieldsTuple> {
     fn new(iter: &sys::ecs_iter_t) -> Self;
 
     fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_>;
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    fn ids(&self) -> &[ReadWriteId];
 }
 
-impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
+impl<T: FieldsTuple, const LEN: usize> ComponentFieldPointers<T> for ComponentsFieldData<T, LEN> {
     fn new(iter: &sys::ecs_iter_t) -> Self {
         let mut array_components = [core::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
         let mut is_row_array_components = [false; LEN];
         let mut index_array_components = [0; LEN];
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        let mut ids = [ReadWriteId::Read(0); LEN];
 
         let is_any_array = if (iter.ref_fields | iter.up_fields) != 0 {
             T::populate_array_ptrs(
@@ -53,18 +39,11 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 &mut is_ref_array_components[..],
                 &mut is_row_array_components[..],
                 &mut index_array_components[..],
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                &mut ids[..],
             )
         } else {
             // TODO since we know there is no is_ref and this always return false, we could mitigate a branch if we
             // split up the functions
-            T::populate_self_array_ptrs(
-                iter,
-                &mut array_components[..],
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
-                &mut ids[..],
-            );
+            T::populate_self_array_ptrs(iter, &mut array_components[..]);
             IsAnyArray {
                 a_ref: false,
                 a_row: false,
@@ -77,8 +56,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             is_row_array_components,
             index_array_components,
             is_any_array,
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
-            ids,
             _marker: PhantomData::<T>,
         }
     }
@@ -103,24 +80,15 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             T::create_tuple(&self.array_components[..], index)
         }
     }
-
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
-    fn ids(&self) -> &[ReadWriteId] {
-        &self.ids[..]
-    }
 }
 
-struct Singleton<T>(T);
-
-pub trait IterableTypeOperation {
+pub trait IterableTypeFieldOperation {
     type CastType;
     type ActualType<'w>;
     type SliceType<'w>;
     type OnlyType: ComponentOrPairId;
     type OnlyPairType: ComponentId;
     const IS_IMMUTABLE: bool;
-
-    fn populate_term(term: &mut sys::ecs_term_t);
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a>;
 
@@ -131,7 +99,7 @@ pub trait IterableTypeOperation {
     ) -> Self::ActualType<'a>;
 }
 
-impl<T> IterableTypeOperation for &T
+impl<T> IterableTypeFieldOperation for &T
 where
     T: ComponentOrPairId,
 {
@@ -141,10 +109,6 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = true;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
-    }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -167,7 +131,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for &mut T
+impl<T> IterableTypeFieldOperation for &mut T
 where
     T: ComponentOrPairId,
 {
@@ -177,10 +141,6 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = false;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as i16;
-    }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -203,7 +163,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for Option<&T>
+impl<T> IterableTypeFieldOperation for Option<&T>
 where
     T: ComponentOrPairId,
 {
@@ -213,11 +173,6 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = true;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
-        term.oper = OperKind::Optional as i16;
-    }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -244,7 +199,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for Option<&mut T>
+impl<T> IterableTypeFieldOperation for Option<&mut T>
 where
     T: ComponentOrPairId,
 {
@@ -254,11 +209,6 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = false;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as i16;
-        term.oper = OperKind::Optional as i16;
-    }
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -285,8 +235,8 @@ where
     }
 }
 
-pub trait QueryTuple: Sized {
-    type Pointers: ComponentPointers<Self>;
+pub trait FieldsTuple: Sized {
+    type Pointers: ComponentFieldPointers<Self>;
     type TupleType<'a>;
     const CONTAINS_ANY_TAG_TERM: bool;
     const COUNT: i32;
@@ -297,30 +247,15 @@ pub trait QueryTuple: Sized {
 
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>);
 
-    fn register_ids_descriptor(world: *mut sys::ecs_world_t, desc: &mut sys::ecs_query_desc_t) {
-        Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
-    }
-
-    fn register_ids_descriptor_at(
-        world: *mut sys::ecs_world_t,
-        terms: &mut [sys::ecs_term_t],
-        index: &mut usize,
-    );
-
     fn populate_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         is_ref: &mut [bool],
         is_row: &mut [bool],
         indexes: &mut [i8],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
     ) -> IsAnyArray;
 
-    fn populate_self_array_ptrs(
-        it: &sys::ecs_iter_t,
-        components: &mut [*mut u8],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
-    );
+    fn populate_self_array_ptrs(it: &sys::ecs_iter_t, components: &mut [*mut u8]);
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_>;
 
@@ -345,11 +280,11 @@ pub trait QueryTuple: Sized {
 /////////////////////
 
 #[rustfmt::skip]
-impl<A> QueryTuple for A
+impl<A> FieldsTuple for A
 where
-    A: IterableTypeOperation,
+    A: IterableTypeFieldOperation,
 { 
-    type Pointers = ComponentsData<A, 1>;
+    type Pointers = ComponentsFieldData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
     const COUNT : i32 = 1;
@@ -385,22 +320,9 @@ where
             } else { true }
         }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
-        query.with(id);
+        query.with_id(id);
         let term = query.current_term_mut();
-        A::populate_term(term);
 
-    }
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn register_ids_descriptor_at(
-        world: *mut sys::ecs_world_t,
-        terms: &mut [sys::ecs_term_t],
-        index: &mut usize,
-    ) {
-        let world = unsafe { WorldRef::from_ptr(world) };
-        terms[*index].id = <A::OnlyType as ComponentOrPairId>::get_id(world);
-        A::populate_term(&mut terms[*index]);
-        *index += 1;
     }
 
     fn populate_array_ptrs(
@@ -409,7 +331,6 @@ where
         is_ref: &mut [bool],
         is_row: &mut [bool],
         indexes: &mut [i8],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
     ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
             // Need to fetch the value with ecs_field_at()
@@ -420,14 +341,7 @@ where
             components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        {
-            if A::IS_IMMUTABLE {
-                ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
-            } else {
-                ids[0] = ReadWriteId::Write(unsafe { *it.ids.add(0) });
-            }
-        }
+
         IsAnyArray {
             a_ref: is_ref[0],
             a_row: is_row[0],
@@ -437,17 +351,9 @@ where
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
-        {
-            if A::IS_IMMUTABLE {
-                ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
-            } else {
-                ids[0] = ReadWriteId::Write(unsafe { *it.ids.add(0) });
-            }
-        }
+
         components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
     }
 
@@ -564,14 +470,14 @@ macro_rules! tuple_count {
 
 macro_rules! impl_iterable {
     ($($t:ident),*) => {
-        impl<$($t: IterableTypeOperation),*> QueryTuple for ($($t,)*) {
+        impl<$($t: IterableTypeFieldOperation),*> FieldsTuple for ($($t,)*) {
             type TupleType<'w> = ($(
                 $t::ActualType<'w>,
             )*);
 
             const CONTAINS_ANY_TAG_TERM: bool = $(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG ||)* false;
 
-            type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
+            type Pointers = ComponentsFieldData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
 
             fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
@@ -607,16 +513,10 @@ macro_rules! impl_iterable {
                         } else { true }
                     }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
 
-                    query.with(id);
+                    query.with_id(id);
                     let term = query.current_term_mut();
-                    $t::populate_term(term);
 
                 )*
-            }
-
-            #[allow(unused)]
-            fn register_ids_descriptor_at(world: *mut sys::ecs_world_t, terms: &mut [sys::ecs_term_t], index: &mut usize) {
-                $( $t::register_ids_descriptor_at(world, terms, index); )*
             }
 
             #[allow(unused)]
@@ -626,7 +526,6 @@ macro_rules! impl_iterable {
                 is_ref: &mut [bool],
                 is_row: &mut [bool],
                 indexes: &mut [i8],
-                #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
             ) -> IsAnyArray {
                 let mut index = 0;
                 let mut any_ref = false;
@@ -642,14 +541,7 @@ macro_rules! impl_iterable {
                             unsafe { ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8 };
                         is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
                     }
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        if $t::IS_IMMUTABLE {
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index as usize) });
-                        } else {
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index as usize) });
-                        }
-                    }
+
                     any_ref |= is_ref[index as usize];
                     any_row |= is_row[index as usize];
                     index += 1;
@@ -664,21 +556,13 @@ macro_rules! impl_iterable {
             fn populate_self_array_ptrs(
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
-                #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
             ) {
                 let mut index = 0;
                 $(
                     ecs_assert!(unsafe { *it.sources.add(index as usize) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index as usize] =
                         unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
-                    {
-                        if $t::IS_IMMUTABLE {
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index as usize) });
-                        } else {
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index as usize) });
-                        }
-                    }
+
                     index += 1;
                 )*
 

@@ -12,12 +12,13 @@ impl<'a> Cursor<'a> {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn new(
         world: impl WorldProvider<'a>,
-        type_id: impl Into<Entity>,
+        type_id: impl IntoEntity,
         ptr: *mut core::ffi::c_void,
     ) -> Self {
-        let world = world.world_ptr();
-        let type_id = *type_id.into();
-        let cursor = unsafe { sys::ecs_meta_cursor(world, type_id, ptr) };
+        let world = world.world();
+        let world_ptr = world.world_ptr();
+        let type_id = *type_id.into_entity(world);
+        let cursor = unsafe { sys::ecs_meta_cursor(world_ptr, type_id, ptr) };
         Self {
             cursor,
             phantom: core::marker::PhantomData,
@@ -134,7 +135,14 @@ impl<'a> Cursor<'a> {
 
     /// Set (component) id value
     pub fn set_id(&mut self, value: impl IntoId) -> i32 {
-        unsafe { sys::ecs_meta_set_id(&mut self.cursor, *value.into()) }
+        unsafe {
+            sys::ecs_meta_set_id(
+                &mut self.cursor,
+                *value.into_id(WorldRef::from_ptr(
+                    self.cursor.world as *mut sys::ecs_world_t,
+                )),
+            )
+        }
     }
 
     /// Set null value

@@ -5,7 +5,6 @@ use crate::core::*;
 use crate::sys;
 
 use super::Alert;
-use super::SeverityAlert;
 
 use core::mem::ManuallyDrop;
 
@@ -173,25 +172,9 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity`
-    pub fn severity_id(&mut self, severity: impl Into<Entity>) -> &mut Self {
-        self.desc.severity = *severity.into();
+    pub fn severity(&mut self, severity: impl IntoEntity) -> &mut Self {
+        self.desc.severity = *severity.into_entity(self.world);
         self
-    }
-
-    /// Set severity of alert (default is Error).
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Severity` - The severity component.
-    ///
-    /// # See also
-    ///
-    /// * `ecs_alert_desc_t::severity`
-    pub fn severity<Severity>(&mut self) -> &mut Self
-    where
-        Severity: ComponentId + SeverityAlert,
-    {
-        self.severity_id(Severity::id(self.world()))
     }
 
     /// Set retain period of alert.
@@ -219,10 +202,10 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::severity_filters`
-    pub fn severity_filter_id(
+    pub fn severity_filter(
         &mut self,
-        severity: impl Into<Entity>,
-        with: impl Into<Id>,
+        severity: impl IntoEntity,
+        with: impl IntoId,
         var: Option<&str>,
     ) -> &mut Self {
         ecs_assert!(
@@ -232,36 +215,14 @@ where
 
         let filter = &mut self.desc.severity_filters[self.severity_filter_count as usize];
         self.severity_filter_count += 1;
-        filter.severity = *severity.into();
-        filter.with = *with.into();
+        filter.severity = *severity.into_entity(self.world);
+        filter.with = *with.into_id(self.world);
         if let Some(var) = var {
             let var = ManuallyDrop::new(format!("{}\0", var));
             filter.var = var.as_ptr() as *const _;
             self.str_ptrs_to_free.push(var);
         }
         self
-    }
-
-    /// Add severity filter.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Severity` - Severity component.
-    ///
-    /// # Arguments
-    ///
-    /// * `with` - Filter with this id.
-    /// * `var` - Variable name (optional).
-    ///
-    /// # See also
-    ///
-    /// * `ecs_alert_desc_t::severity_filters`
-    pub fn severity_filter<Severity>(&mut self, with: impl Into<Id>, var: Option<&str>) -> &mut Self
-    where
-        Severity: ComponentId,
-    {
-        let severity_id = Severity::id(self.world());
-        self.severity_filter_id(severity_id, with, var)
     }
 
     /// Add severity filter for non-enum components.
@@ -285,7 +246,7 @@ where
     {
         let severity_id = Severity::id(self.world());
         let with_id = With::id(self.world());
-        self.severity_filter_id(severity_id, with_id, var)
+        self.severity_filter(severity_id, with_id, var)
     }
 
     /// Add severity filter for enum components.
@@ -317,7 +278,7 @@ where
         let with_id = With::id(world);
         let constant_id = with.id_variant(world);
         let pair_id = ecs_pair(with_id, *constant_id.id());
-        self.severity_filter_id(severity_id, pair_id, var)
+        self.severity_filter(severity_id, pair_id, var)
     }
 
     /// Set member to create an alert for out of range values.
@@ -329,8 +290,8 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::member`
-    pub fn member_id(&mut self, member: impl Into<Entity>) -> &mut Self {
-        self.desc.member = *member.into();
+    pub fn member(&mut self, member: impl IntoEntity) -> &mut Self {
+        self.desc.member = *member.into_entity(self.world);
         self
     }
 
@@ -344,8 +305,8 @@ where
     /// # See also
     ///
     /// * `ecs_alert_desc_t::id`
-    pub fn id(&mut self, id: impl Into<Id>) -> &mut Self {
-        self.desc.id = *id.into();
+    pub fn id(&mut self, id: impl IntoId) -> &mut Self {
+        self.desc.id = *id.into_id(self.world);
         self
     }
 
@@ -395,7 +356,7 @@ where
             self.str_ptrs_to_free.push(var);
         }
 
-        self.member_id(member_id)
+        self.member(member_id)
     }
 
     /// Set source variable for member (optional, defaults to `$this`).
@@ -453,9 +414,6 @@ where
     type BuiltType = Alert<'a>;
 
     /// Build the `AlertBuilder` into an Alert
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let alert = Alert::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

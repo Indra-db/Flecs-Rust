@@ -16,8 +16,8 @@ fn observer_2_terms_on_add() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
-        .with::<Velocity>()
+        .with(id::<Position>())
+        .with(id::<Velocity>())
         .each_entity(|e, _| {
             let world = e.world();
             world.get::<&mut Count>(|count| {
@@ -70,11 +70,11 @@ fn observer_2_terms_on_remove() {
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
     });
-    e.remove::<Velocity>();
+    e.remove(id::<Velocity>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
-    e.remove::<Position>();
+    e.remove(id::<Position>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
@@ -124,36 +124,36 @@ fn observer_10_terms() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
-        .with::<TagB>()
-        .with::<TagC>()
-        .with::<TagD>()
-        .with::<TagE>()
-        .with::<TagF>()
-        .with::<TagG>()
-        .with::<TagH>()
-        .with::<TagI>()
-        .with::<TagJ>()
+        .with(id::<TagA>())
+        .with(id::<TagB>())
+        .with(id::<TagC>())
+        .with(id::<TagD>())
+        .with(id::<TagE>())
+        .with(id::<TagF>())
+        .with(id::<TagG>())
+        .with(id::<TagH>())
+        .with(id::<TagI>())
+        .with(id::<TagJ>())
         .each_iter(move |it, _i, _| {
             let world = it.world();
             assert_eq!(it.count(), 1);
-            assert!(it.entity(0) == e_id);
+            assert!(it.entity(0).unwrap() == e_id);
             assert_eq!(it.field_count(), 10);
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
 
-    e.add::<TagA>()
-        .add::<TagB>()
-        .add::<TagC>()
-        .add::<TagD>()
-        .add::<TagE>()
-        .add::<TagF>()
-        .add::<TagG>()
-        .add::<TagH>()
-        .add::<TagI>()
-        .add::<TagJ>();
+    e.add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>())
+        .add(id::<TagD>())
+        .add(id::<TagE>())
+        .add(id::<TagF>())
+        .add(id::<TagG>())
+        .add(id::<TagH>())
+        .add(id::<TagI>())
+        .add(id::<TagJ>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -171,52 +171,52 @@ fn observer_16_terms() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
-        .with::<TagB>()
-        .with::<TagC>()
-        .with::<TagD>()
-        .with::<TagE>()
-        .with::<TagF>()
-        .with::<TagG>()
-        .with::<TagH>()
-        .with::<TagI>()
-        .with::<TagJ>()
-        .with::<TagK>()
-        .with::<TagL>()
-        .with::<TagM>()
-        .with::<TagN>()
-        .with::<TagO>()
-        .with::<TagP>()
+        .with(id::<TagA>())
+        .with(id::<TagB>())
+        .with(id::<TagC>())
+        .with(id::<TagD>())
+        .with(id::<TagE>())
+        .with(id::<TagF>())
+        .with(id::<TagG>())
+        .with(id::<TagH>())
+        .with(id::<TagI>())
+        .with(id::<TagJ>())
+        .with(id::<TagK>())
+        .with(id::<TagL>())
+        .with(id::<TagM>())
+        .with(id::<TagN>())
+        .with(id::<TagO>())
+        .with(id::<TagP>())
         .each_iter(move |it, _i, _| {
             let world = it.world();
             assert_eq!(it.count(), 1);
-            assert!(it.entity(0) == e_id);
+            assert!(it.entity(0).unwrap() == e_id);
             assert_eq!(it.field_count(), 16);
             world.get::<&mut Count>(|count| {
                 count.0 += 1;
             });
         });
 
-    e.add::<TagA>()
-        .add::<TagB>()
-        .add::<TagC>()
-        .add::<TagD>()
-        .add::<TagE>()
-        .add::<TagF>()
-        .add::<TagG>()
-        .add::<TagH>()
-        .add::<TagI>()
-        .add::<TagJ>()
-        .add::<TagK>()
-        .add::<TagL>()
-        .add::<TagM>()
-        .add::<TagN>()
-        .add::<TagO>()
-        .add::<TagP>()
-        .add::<TagQ>()
-        .add::<TagR>()
-        .add::<TagS>()
-        .add::<TagT>();
+    e.add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>())
+        .add(id::<TagD>())
+        .add(id::<TagE>())
+        .add(id::<TagF>())
+        .add(id::<TagG>())
+        .add(id::<TagH>())
+        .add(id::<TagI>())
+        .add(id::<TagJ>())
+        .add(id::<TagK>())
+        .add(id::<TagL>())
+        .add(id::<TagM>())
+        .add(id::<TagN>())
+        .add(id::<TagO>())
+        .add(id::<TagP>())
+        .add(id::<TagQ>())
+        .add(id::<TagR>())
+        .add(id::<TagS>())
+        .add(id::<TagT>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -247,10 +247,10 @@ fn observer_2_entities_iter() {
                     world.get::<&mut Count>(|count| {
                         count.0 += 1;
                     });
-                    if it.entity(i) == e1_id {
+                    if it.entity(i).unwrap() == e1_id {
                         assert_eq!(p[i].x, 10);
                         assert_eq!(p[i].y, 20);
-                    } else if it.entity(i) == e2_id {
+                    } else if it.entity(i).unwrap() == e2_id {
                         assert_eq!(p[i].x, 30);
                         assert_eq!(p[i].y, 40);
                     } else {
@@ -258,7 +258,7 @@ fn observer_2_entities_iter() {
                     }
 
                     world.get::<&mut LastEntity>(|last| {
-                        last.0 = it.entity(i).id();
+                        last.0 = it.entity(i).unwrap().id();
                     });
                 }
             }
@@ -299,17 +299,17 @@ fn observer_2_entities_table_column() {
         .run(move |mut it| {
             let world = it.world();
             while it.next() {
-                let table_range = it.range().unwrap();
+                let mut table_range = it.range().unwrap();
                 let p = table_range.get_mut::<Position>().unwrap();
 
                 for i in it.iter() {
                     world.get::<&mut Count>(|count| {
                         count.0 += 1;
                     });
-                    if it.entity(i) == e1_id {
+                    if it.entity(i).unwrap() == e1_id {
                         assert_eq!(p[i].x, 10);
                         assert_eq!(p[i].y, 20);
-                    } else if it.entity(i) == e2_id {
+                    } else if it.entity(i).unwrap() == e2_id {
                         assert_eq!(p[i].x, 30);
                         assert_eq!(p[i].y, 40);
                     } else {
@@ -317,7 +317,7 @@ fn observer_2_entities_table_column() {
                     }
 
                     world.get::<&mut LastEntity>(|last| {
-                        last.0 = it.entity(i).id();
+                        last.0 = it.entity(i).unwrap().id();
                     });
                 }
             }
@@ -402,7 +402,7 @@ fn observer_create_w_no_template_args() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
+        .with(id::<Position>())
         .each_entity(move |e, _| {
             let world = e.world();
             assert!(e == e1_id);
@@ -422,9 +422,9 @@ fn observer_create_w_no_template_args() {
 fn observer_yield_existing() {
     let world = World::new();
 
-    let e1 = world.entity().add::<TagA>();
-    let e2 = world.entity().add::<TagA>();
-    let e3 = world.entity().add::<TagA>().add::<TagB>();
+    let e1 = world.entity().add(id::<TagA>());
+    let e2 = world.entity().add(id::<TagA>());
+    let e3 = world.entity().add(id::<TagA>()).add(id::<TagB>());
 
     let e1_id = e1.id();
     let e2_id = e2.id();
@@ -433,12 +433,12 @@ fn observer_yield_existing() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
+        .with(id::<TagA>())
         .yield_existing()
         .run(move |mut it| {
             while it.next() {
                 for i in it.iter() {
-                    let e = it.entity(i);
+                    let e = it.entity(i).unwrap();
                     let world = e.world();
                     world.get::<&mut Count>(|count| {
                         if e == e1_id {
@@ -462,22 +462,26 @@ fn observer_yield_existing() {
 fn observer_yield_existing_2_terms() {
     let world = World::new();
 
-    let e1 = world.entity().add::<TagA>().add::<TagB>();
-    let e2 = world.entity().add::<TagA>().add::<TagB>();
-    let e3 = world.entity().add::<TagA>().add::<TagB>().add::<TagC>();
+    let e1 = world.entity().add(id::<TagA>()).add(id::<TagB>());
+    let e2 = world.entity().add(id::<TagA>()).add(id::<TagB>());
+    let e3 = world
+        .entity()
+        .add(id::<TagA>())
+        .add(id::<TagB>())
+        .add(id::<TagC>());
 
     let e1_id = e1.id();
     let e2_id = e2.id();
     let e3_id = e3.id();
 
-    world.entity().add::<TagA>();
-    world.entity().add::<TagB>();
+    world.entity().add(id::<TagA>());
+    world.entity().add(id::<TagB>());
 
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
-        .with::<TagB>()
+        .with(id::<TagA>())
+        .with(id::<TagB>())
         .yield_existing()
         .each_entity(move |e, _| {
             let world = e.world();
@@ -503,7 +507,7 @@ fn observer_on_add() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
+        .with(id::<Position>())
         .each_entity(|e, _| {
             let world = e.world();
             world.get::<&mut Count>(|count| {
@@ -511,7 +515,7 @@ fn observer_on_add() {
             });
         });
 
-    world.entity().add::<Position>();
+    world.entity().add(id::<Position>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -529,13 +533,13 @@ fn observer_on_remove() {
                 count.0 += 1;
             });
         });
-    let e = world.entity().add::<Position>();
+    let e = world.entity().add(id::<Position>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
     });
 
-    e.remove::<Position>();
+    e.remove(id::<Position>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -548,7 +552,7 @@ fn observer_on_add_tag_action() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
+        .with(id::<TagA>())
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -557,7 +561,7 @@ fn observer_on_add_tag_action() {
                 });
             }
         });
-    world.entity().add::<TagA>();
+    world.entity().add(id::<TagA>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -570,7 +574,7 @@ fn observer_on_add_tag_iter() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
+        .with(id::<TagA>())
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -579,7 +583,7 @@ fn observer_on_add_tag_iter() {
                 });
             }
         });
-    world.entity().add::<TagA>();
+    world.entity().add(id::<TagA>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
@@ -591,7 +595,7 @@ fn observer_on_add_tag_each() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<TagA>()
+        .with(id::<TagA>())
         .run(|mut it| {
             while it.next() {
                 for _ in it.iter() {
@@ -601,7 +605,7 @@ fn observer_on_add_tag_each() {
                 }
             }
         });
-    world.entity().add::<TagA>();
+    world.entity().add(id::<TagA>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
@@ -620,11 +624,11 @@ fn observer_on_add_expr() {
                 count.0 += 1;
             });
         });
-    let e = world.entity().add::<Tag>();
+    let e = world.entity().add(id::<Tag>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
-    e.remove::<Tag>();
+    e.remove(id::<Tag>());
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
@@ -638,8 +642,8 @@ fn observer_observer_w_filter_term() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with_id(tag_a)
-        .with_id(tag_b)
+        .with(tag_a)
+        .with(tag_b)
         .filter()
         .each_entity(|e, _| {
             e.world().get::<&mut Count>(|count| {
@@ -652,25 +656,25 @@ fn observer_observer_w_filter_term() {
         assert_eq!(count, 0);
     });
 
-    e.add_id(tag_b);
+    e.add(tag_b);
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 0);
     });
 
-    e.add_id(tag_a);
+    e.add(tag_a);
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 
-    e.remove_id(tag_b);
+    e.remove(tag_b);
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
 
-    e.add_id(tag_b);
+    e.add(tag_b);
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -682,7 +686,7 @@ fn observer_observer_w_filter_term() {
         assert_eq!(count, 1);
     });
 
-    e.add_id(tag_a);
+    e.add(tag_a);
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -696,7 +700,7 @@ fn observer_run_callback() {
     world.set(Count(0));
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
+        .with(id::<Position>())
         .run_each_entity(
             |mut it| {
                 while it.next() {
@@ -714,7 +718,7 @@ fn observer_run_callback() {
         assert_eq!(count, 0);
     });
 
-    e.add::<Position>();
+    e.add(id::<Position>());
 
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
@@ -869,7 +873,7 @@ fn observer_on_add_pair_singleton() {
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
-        .with_first::<Position>(tgt)
+        .with((id::<Position>(), tgt))
         .singleton()
         .run(|mut it| {
             let world = it.world();
@@ -928,7 +932,7 @@ fn observer_on_add_with_pair_singleton() {
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
-        .with_first::<Position>(tgt)
+        .with((id::<Position>(), tgt))
         .singleton()
         .each_iter(|it, _, _| {
             it.world().get::<&mut Count>(|count| {
@@ -949,18 +953,18 @@ fn observer_add_in_yield_existing() {
     let e3 = world.entity().set(Position::default());
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
+        .with(id::<Position>())
         .yield_existing()
         .each_entity(|e, _| {
-            e.add::<Velocity>();
+            e.add(id::<Velocity>());
         });
 
-    assert!(e1.has::<Position>());
-    assert!(e1.has::<Velocity>());
-    assert!(e2.has::<Position>());
-    assert!(e2.has::<Velocity>());
-    assert!(e3.has::<Position>());
-    assert!(e3.has::<Velocity>());
+    assert!(e1.has(id::<Position>()));
+    assert!(e1.has(id::<Velocity>()));
+    assert!(e2.has(id::<Position>()));
+    assert!(e2.has(id::<Velocity>()));
+    assert!(e3.has(id::<Position>()));
+    assert!(e3.has(id::<Velocity>()));
 }
 
 #[test]
@@ -971,21 +975,21 @@ fn observer_add_in_yield_existing_multi() {
     let e3 = world.entity().set(Position::default()).set(Mass::default());
     world
         .observer::<flecs::OnAdd, ()>()
-        .with::<Position>()
-        .with::<Mass>()
+        .with(id::<Position>())
+        .with(id::<Mass>())
         .yield_existing()
         .each_entity(|e, _| {
-            e.add::<Velocity>();
+            e.add(id::<Velocity>());
         });
-    assert!(e1.has::<Position>());
-    assert!(e1.has::<Mass>());
-    assert!(e1.has::<Velocity>());
-    assert!(e2.has::<Position>());
-    assert!(e2.has::<Mass>());
-    assert!(e2.has::<Velocity>());
-    assert!(e3.has::<Position>());
-    assert!(e3.has::<Mass>());
-    assert!(e3.has::<Velocity>());
+    assert!(e1.has(id::<Position>()));
+    assert!(e1.has(id::<Mass>()));
+    assert!(e1.has(id::<Velocity>()));
+    assert!(e2.has(id::<Position>()));
+    assert!(e2.has(id::<Mass>()));
+    assert!(e2.has(id::<Velocity>()));
+    assert!(e3.has(id::<Position>()));
+    assert!(e3.has(id::<Mass>()));
+    assert!(e3.has(id::<Velocity>()));
 }
 
 #[test]
@@ -1007,8 +1011,8 @@ fn observer_name_from_root() {
 //     struct Tag;
 
 //     let world = World::new();
-//     world.observer::<flecs::OnAdd, ()>().with::<Tag>().run(|_| panic!());
-//     world.add::<Tag>();
+//     world.observer::<flecs::OnAdd, ()>().with(id::<Tag>()).run(|_| panic!());
+//     world.add(id::<Tag>());
 // }
 
 #[test]

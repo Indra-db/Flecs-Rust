@@ -162,91 +162,15 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the id in the table type, or `None` if the id is not found
-    fn find_type_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
+    fn find_type_index(&self, id: impl IntoId) -> Option<i32> {
         let index = unsafe {
-            sys::ecs_table_get_type_index(self.world().world_ptr(), self.table_ptr_mut(), id)
+            sys::ecs_table_get_type_index(
+                self.world().world_ptr(),
+                self.table_ptr_mut(),
+                *id.into_id(self.world()),
+            )
         };
         if index == -1 { None } else { Some(index) }
-    }
-
-    /// Find type index for component type
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the component
-    ///
-    /// # Returns
-    ///
-    /// The index of the component in the table type, or `None` if the component is not in the table
-    fn find_type_index<T: ComponentId>(&self) -> Option<i32> {
-        self.find_type_index_id(T::id(self.world()))
-    }
-
-    /// Find type index for pair of component types
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - First element of the pair
-    /// * `second` - Second element of the pair
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table type, or `None` if the pair is not in the table
-    fn find_type_index_pair_ids(
-        &self,
-        first: impl Into<Entity>,
-        second: impl Into<Entity>,
-    ) -> Option<i32> {
-        self.find_type_index_id(ecs_pair(*first.into(), *second.into()))
-    }
-
-    /// Find type index for pair of component types
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The type of the first component
-    /// * `Second` - The type of the second component
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table type, or `None` if the pair is not in the table
-    fn find_type_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
-        let world = self.world();
-        self.find_type_index_pair_ids(First::id(world), Second::id(world))
-    }
-
-    /// Find type index for pair of component types
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The type of the first component
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The id of the second component
-    ///
-    /// # Returns
-    ///
-    /// The index of  the pair in the table type, or `None` if the pair is not in the table
-    fn find_type_index_first<First: ComponentId>(&self, second: impl Into<Entity>) -> Option<i32> {
-        self.find_type_index_pair_ids(First::id(self.world()), second)
-    }
-
-    /// Find type index for pair of component types
-    ///
-    /// # Type parameters
-    ///
-    /// * `Second` - The type of the second component
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The id of the first component
-    ///
-    /// # Returns
-    ///
-    /// The index of  the pair in the table type, or `None` if the pair is not in the table
-    fn find_type_index_second<Second: ComponentId>(&self, first: impl Into<Entity>) -> Option<i32> {
-        self.find_type_index_pair_ids(first, Second::id(self.world()))
     }
 
     /// Find index for (component) id in table type
@@ -263,124 +187,15 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The index of the id in the table, or `None` if the id is not in the table
-    fn find_column_index_id(&self, id: sys::ecs_id_t) -> Option<i32> {
+    fn find_column_index(&self, id: impl IntoId) -> Option<i32> {
         let index = unsafe {
-            sys::ecs_table_get_column_index(self.world().world_ptr(), self.table_ptr_mut(), id)
+            sys::ecs_table_get_column_index(
+                self.world().world_ptr(),
+                self.table_ptr_mut(),
+                *id.into_id(self.world()),
+            )
         };
         if index == -1 { None } else { Some(index) }
-    }
-
-    /// Find column index for component type in table
-    ///
-    /// This operation returns the index of first occurrence of the type in the table type.
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the component
-    ///
-    /// # Returns
-    ///
-    /// The index of the component in the table, or `None` if the component is not in the table
-    fn find_column_index<T: ComponentId>(&self) -> Option<i32> {
-        self.find_column_index_id(T::id(self.world()))
-    }
-
-    /// Find index for pair of component types in table
-    ///
-    /// This operation returns the index of first occurrence of the pair in the table type.
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The type of the first component
-    /// * `Second` - The type of the second component
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table, or `None` if the pair is not in the table
-    fn find_column_index_pair<First: ComponentId, Second: ComponentId>(&self) -> Option<i32> {
-        let world = self.world();
-        self.find_column_index_id(ecs_pair(First::id(world), Second::id(world)))
-    }
-
-    /// Find index for pair of component ids in table type
-    ///
-    /// This operation returns the index of first occurrence of the pair in the table type.
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The id of the first component
-    /// * `second` - The id of the second component
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table, or `None` if the pair is not in the table
-    fn find_column_index_pair_ids(
-        &self,
-        first: impl Into<Entity>,
-        second: impl Into<Entity>,
-    ) -> Option<i32> {
-        self.find_column_index_id(ecs_pair(*first.into(), *second.into()))
-    }
-
-    /// Find index for pair of component types in table type
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The type of the first component
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The id of the second component
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table, or `None` if the pair is not in the table
-    fn find_column_index_first<First: ComponentId>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> Option<i32> {
-        self.find_column_index_pair_ids(First::id(self.world()), second)
-    }
-
-    /// Find index for pair of component types in table type
-    ///
-    /// # Type parameters
-    ///
-    /// * `Second` - The type of the second component
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The id of the first component
-    ///
-    /// # Returns
-    ///
-    /// The index of the pair in the table, or `None` if the pair is not in the table
-    fn find_column_index_second<Second: ComponentId>(
-        &self,
-        first: impl Into<Entity>,
-    ) -> Option<i32> {
-        self.find_column_index_pair_ids(first, Second::id(self.world()))
-    }
-
-    /// Test if table has component type
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the component
-    ///
-    /// # Returns
-    ///
-    /// True if the table has the component type, false otherwise
-    fn has_type<T: ComponentId>(&self) -> bool {
-        self.find_type_index::<T>().is_some()
     }
 
     /// Test if table has (component) id
@@ -394,40 +209,8 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// True if the table has the component id, false otherwise
-    fn has_type_id(&self, id: sys::ecs_id_t) -> bool {
-        self.find_type_index_id(id).is_some()
-    }
-
-    /// Test if table has pair of component types
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The type of the first component
-    /// * `Second` - The type of the second component
-    ///
-    /// # Returns
-    ///
-    /// True if the table has the pair of component types, false otherwise
-    fn has_pair<First: ComponentId, Second: ComponentId>(&self) -> bool {
-        self.find_type_index_pair::<First, Second>().is_some()
-    }
-
-    /// Test if table has pair of component ids
-    ///
-    /// This is a constant time operation.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The id of the first component
-    /// * `second` - The id of the second component
-    ///
-    /// # Returns
-    ///
-    /// True if the table has the pair of component ids, false otherwise
-    fn has_pair_ids(&self, first: impl Into<Entity>, second: impl Into<Entity>) -> bool {
-        self.find_type_index_pair_ids(first, second).is_some()
+    fn has(&self, id: impl IntoId) -> bool {
+        self.find_type_index(id).is_some()
     }
 
     /// Get column, components array ptr from table by column index.
@@ -453,7 +236,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
-    fn get_mut<T: ComponentId>(&self) -> Option<&mut [T]> {
+    fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
         self.get_mut_untyped(T::id(self.world())).map(|ptr| unsafe {
             core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
         })
@@ -469,7 +252,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// Some(Pointer) to the column, or `None` if not found
     fn get_mut_untyped(&self, id: sys::ecs_id_t) -> Option<*mut c_void> {
-        if let Some(index) = self.find_column_index_id(id) {
+        if let Some(index) = self.find_column_index(id) {
             self.column_untyped(index)
         } else {
             None
@@ -526,21 +309,6 @@ pub trait TableOperations<'a>: IntoTable {
     /// Depth is determined by counting the number of targets encountered while traversing up the
     /// relationship tree for rel. Only acyclic relationships are supported.
     ///
-    /// # Type parameters
-    ///
-    /// * `Rel` - The type of the relationship
-    ///
-    /// # Returns
-    ///
-    /// The depth of the relationship
-    fn depth<Rel: ComponentId>(&self) -> i32 {
-        self.depth_id(Rel::id(self.world()))
-    }
-
-    /// Return depth for table in tree for relationship type.
-    /// Depth is determined by counting the number of targets encountered while traversing up the
-    /// relationship tree for rel. Only acyclic relationships are supported.
-    ///
     /// # Arguments
     ///
     /// * `rel` - The id of the relationship
@@ -548,12 +316,13 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// The depth of the relationship
-    fn depth_id(&self, rel: impl Into<Entity>) -> i32 {
+    fn depth(&self, rel: impl IntoEntity) -> i32 {
+        let world = self.world();
         unsafe {
             sys::ecs_table_get_depth(
-                self.world().world_ptr_mut(),
+                world.world_ptr_mut(),
                 self.table_ptr_mut(),
-                *rel.into(),
+                *rel.into_entity(world),
             )
         }
     }
@@ -592,8 +361,6 @@ impl<'a> TableOperations<'a> for TableRange<'a> {
     }
 
     /// Returns the table range count
-    ///
-    /// # See also
     fn count(&self) -> i32 {
         self.count
     }

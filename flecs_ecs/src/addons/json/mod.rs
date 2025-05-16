@@ -24,8 +24,8 @@ pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 
 impl EntityView<'_> {
     /// Set component or pair id from JSON.
-    pub fn set_json_id(self, comp: impl IntoId, json: &str, desc: Option<&FromJsonDesc>) -> Self {
-        let comp: u64 = *comp.into();
+    pub fn set_json(self, comp: impl IntoId, json: &str, desc: Option<&FromJsonDesc>) -> Self {
+        let comp: u64 = *comp.into_id(self.world);
         let world = self.world_ptr_mut();
         let id = *self.id;
         unsafe {
@@ -57,31 +57,6 @@ impl EntityView<'_> {
             sys::ecs_modified_id(world, id, comp);
         }
         self
-    }
-
-    /// Set component or pair from JSON.
-    pub fn set_json<T: ComponentOrPairId>(self, json: &str, desc: Option<&FromJsonDesc>) -> Self {
-        self.set_json_id(T::get_id(self.world), json, desc)
-    }
-
-    /// Set pair from JSON where First is a type and Second is an entity id.
-    pub fn set_json_first<Rel: ComponentId>(
-        self,
-        target: impl Into<Entity> + Copy,
-        json: &str,
-        desc: Option<&FromJsonDesc>,
-    ) -> Self {
-        self.set_json_id((Rel::get_id(self.world), target), json, desc)
-    }
-
-    /// Set pair from JSON where First is an entity id and Second is a type.
-    pub fn set_json_second<Second: ComponentId>(
-        self,
-        rel: impl Into<Entity> + Copy,
-        json: &str,
-        desc: Option<&FromJsonDesc>,
-    ) -> Self {
-        self.set_json_id((rel, Second::get_id(self.world)), json, desc)
     }
 
     /// Serialize entity to JSON.
@@ -120,7 +95,7 @@ impl World {
     /// Serialize untyped value to JSON.
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn to_json_id(&self, tid: impl IntoId, value: *const core::ffi::c_void) -> String {
-        let tid: u64 = *tid.into();
+        let tid: u64 = *tid.into_id(self);
         let world = self.world_ptr();
         unsafe {
             let json_ptr = sys::ecs_ptr_to_json(world, tid, value);
@@ -172,7 +147,7 @@ impl World {
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) {
-        let tid: u64 = *tid.into();
+        let tid: u64 = *tid.into_id(self);
         let world = self.ptr_mut();
         let desc_ptr = desc
             .map(|d| d as *const FromJsonDesc)

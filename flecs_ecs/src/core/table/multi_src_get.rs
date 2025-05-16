@@ -357,15 +357,15 @@ mod tests {
         let world = World::new();
 
         let parent = world.entity().set(TP { x: 1 });
-        parent.add_first::<Relx>(parent);
+        parent.add((id::<Relx>(), parent));
 
-        world.entity().set(TP { x: 4 }).add_first::<Relx>(parent);
+        world.entity().set(TP { x: 4 }).add((id::<Relx>(), parent));
 
         world
             .query::<(&mut TP, &TP)>()
-            .with_first_name::<Relx>("$parent")
+            .with((id::<Relx>(), "$parent"))
             .term_at(1)
-            .set_src_name("$parent")
+            .set_src("$parent")
             .build()
             .run(|mut it| {
                 while it.next() {
@@ -387,7 +387,7 @@ mod tests {
         let world = World::new();
 
         let parent = world.entity().set(TP { x: 1 });
-        world.entity().set(TP { x: 4 }).child_of_id(parent);
+        world.entity().set(TP { x: 4 }).child_of(parent);
 
         let mut ok = false;
 

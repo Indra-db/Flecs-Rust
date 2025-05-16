@@ -11,23 +11,23 @@ struct Healthy;
 fn main() {
     let world = World::new();
 
-    let apples = world.entity_named("Apples").add::<Healthy>();
-    let salad = world.entity_named("Salad").add::<Healthy>();
+    let apples = world.entity_named("Apples").add(id::<Healthy>());
+    let salad = world.entity_named("Salad").add(id::<Healthy>());
     let burgers = world.entity_named("Burgers");
     let pizza = world.entity_named("Pizza");
     let chocolate = world.entity_named("Chocolate");
 
     world
         .entity_named("Bob")
-        .add_first::<Eats>(apples)
-        .add_first::<Eats>(burgers)
-        .add_first::<Eats>(pizza);
+        .add((id::<Eats>(), apples))
+        .add((id::<Eats>(), burgers))
+        .add((id::<Eats>(), pizza));
 
     world
         .entity_named("Alice")
-        .add_first::<Eats>(salad)
-        .add_first::<Eats>(chocolate)
-        .add_first::<Eats>(apples);
+        .add((id::<Eats>(), salad))
+        .add((id::<Eats>(), chocolate))
+        .add((id::<Eats>(), apples));
 
     // Here we're creating a rule that in the query DSL would look like this:
     //   Eats($This, $Food), Healthy($Food)
@@ -46,9 +46,9 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with_first_name::<&Eats>("$food")
-        .with::<&Healthy>()
-        .set_src_name("$food")
+        .with((id::<Eats>(), "$food"))
+        .with(id::<&Healthy>())
+        .set_src("$food")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
@@ -59,7 +59,7 @@ fn main() {
     rule.each_iter(|it, index, ()| {
         println!(
             "{} eats {}",
-            it.entity(index).name(),
+            it.entity(index).unwrap().name(),
             it.get_var(food_var.unwrap()).name()
         );
     });

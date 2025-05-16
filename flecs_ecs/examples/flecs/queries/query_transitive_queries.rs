@@ -39,80 +39,82 @@ fn main() {
     let world = World::new();
 
     // Register the LocatedIn relationship as transitive
-    world.component::<LocatedIn>().add::<flecs::Transitive>();
+    world
+        .component::<LocatedIn>()
+        .add(id::<flecs::Transitive>());
 
     // Populate the store with locations
-    let earth = world.entity_named("Earth").add::<Planet>();
+    let earth = world.entity_named("Earth").add(id::<Planet>());
 
     // Continents
     let north_america = world
         .entity_named("NorthAmerica")
-        .add::<Continent>()
-        .add_first::<LocatedIn>(earth);
+        .add(id::<Continent>())
+        .add((id::<LocatedIn>(), earth));
 
     let europe = world
         .entity_named("Europe")
-        .add::<Continent>()
-        .add_first::<LocatedIn>(earth);
+        .add(id::<Continent>())
+        .add((id::<LocatedIn>(), earth));
 
     // Countries
     let united_states = world
         .entity_named("UnitedStates")
-        .add::<Country>()
-        .add_first::<LocatedIn>(north_america);
+        .add(id::<Country>())
+        .add((id::<LocatedIn>(), north_america));
 
     let netherlands = world
         .entity_named("Netherlands")
-        .add::<Country>()
-        .add_first::<LocatedIn>(europe);
+        .add(id::<Country>())
+        .add((id::<LocatedIn>(), europe));
 
     // States
     let california = world
         .entity_named("California")
-        .add::<State>()
-        .add_first::<LocatedIn>(united_states);
+        .add(id::<State>())
+        .add((id::<LocatedIn>(), united_states));
 
     let washington = world
         .entity_named("Washington")
-        .add::<State>()
-        .add_first::<LocatedIn>(united_states);
+        .add(id::<State>())
+        .add((id::<LocatedIn>(), united_states));
 
     let noord_holland = world
         .entity_named("NoordHolland")
-        .add::<State>()
-        .add_first::<LocatedIn>(netherlands);
+        .add(id::<State>())
+        .add((id::<LocatedIn>(), netherlands));
 
     // Cities
     let san_francisco = world
         .entity_named("SanFrancisco")
-        .add::<City>()
-        .add_first::<LocatedIn>(california);
+        .add(id::<City>())
+        .add((id::<LocatedIn>(), california));
 
     let seattle = world
         .entity_named("Seattle")
-        .add::<City>()
-        .add_first::<LocatedIn>(washington);
+        .add(id::<City>())
+        .add((id::<LocatedIn>(), washington));
 
     let amsterdam = world
         .entity_named("Amsterdam")
-        .add::<City>()
-        .add_first::<LocatedIn>(noord_holland);
+        .add(id::<City>())
+        .add((id::<LocatedIn>(), noord_holland));
 
     // Inhabitants
     world
         .entity_named("Bob")
-        .add::<Person>()
-        .add_first::<LocatedIn>(san_francisco);
+        .add(id::<Person>())
+        .add((id::<LocatedIn>(), san_francisco));
 
     world
         .entity_named("Alice")
-        .add::<Person>()
-        .add_first::<LocatedIn>(seattle);
+        .add(id::<Person>())
+        .add((id::<LocatedIn>(), seattle));
 
     world
         .entity_named("Job")
-        .add::<Person>()
-        .add_first::<LocatedIn>(amsterdam);
+        .add(id::<Person>())
+        .add((id::<LocatedIn>(), amsterdam));
 
     // Create a query that finds the countries persons live in. Note that these
     // have not been explicitly added to the Person entities, but because the
@@ -124,10 +126,10 @@ fn main() {
 
     let query = world
         .query::<()>()
-        .with::<&Person>()
-        .with_first_name::<&LocatedIn>("$Location")
-        .with::<&Country>()
-        .set_src_name("$Location")
+        .with(id::<&Person>())
+        .with((id::<LocatedIn>(), "$Location"))
+        .with(id::<&Country>())
+        .set_src("$Location")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its
@@ -136,7 +138,11 @@ fn main() {
 
     // Iterate the query
     query.each_iter(|it, index, _| {
-        println!("{} lives in {}", it.entity(index), it.get_var(location_var));
+        println!(
+            "{} lives in {}",
+            it.entity(index).unwrap(),
+            it.get_var(location_var)
+        );
     });
 
     // Output:

@@ -42,7 +42,7 @@ fn main() {
     let query_write = world
         .query::<(&Dirty, &mut Position)>()
         .term_at(0)
-        .up_type::<flecs::IsA>() // Only match Dirty from prefab
+        .up_id(id::<flecs::IsA>()) // Only match Dirty from prefab
         .build();
 
     // Create two prefabs with a Dirty component. We can use this to share a
@@ -59,22 +59,22 @@ fn main() {
     // prefabs, they end up in different tables.
     world
         .entity_named("e1_dirty_false")
-        .is_a_id(prefab_dirty_false)
+        .is_a(prefab_dirty_false)
         .set(Position { x: 10.0, y: 20.0 });
 
     world
         .entity_named("e2_dirty_false")
-        .is_a_id(prefab_dirty_false)
+        .is_a(prefab_dirty_false)
         .set(Position { x: 30.0, y: 40.0 });
 
     world
         .entity_named("e3_dirty_true")
-        .is_a_id(prefab_dirty_true)
+        .is_a(prefab_dirty_true)
         .set(Position { x: 40.0, y: 50.0 });
 
     world
         .entity_named("e4_dirty_true")
-        .is_a_id(prefab_dirty_true)
+        .is_a(prefab_dirty_true)
         .set(Position { x: 50.0, y: 60.0 });
 
     // We can use the changed() function on the query to check if any of the

@@ -276,15 +276,15 @@ where
             );
             assert!(
                 {
-                    let first = ecs_first(id); 
+                    let first = ecs_first(id,world); 
                     first != flecs::Wildcard::ID && first != flecs::Any::ID
                 }, "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
             );
 
             #[cfg(feature = "flecs_safety_readwrite_locks")]
             { 
-                let first_id = *ecs_first(id);
-                let second_id = *ecs_second(id);
+                let first_id = *ecs_first(id,world);
+                let second_id = *ecs_second(id,world);
                 if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
                     let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
                     if A::IS_IMMUTABLE {
@@ -471,7 +471,7 @@ macro_rules! impl_get_tuple {
 
                         assert!(
                             {
-                                let first = ecs_first(id);
+                                let first = ecs_first(id,world_ref);
                                 first != flecs::Wildcard::ID && first != flecs::Any::ID
                             },
                             "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
@@ -479,8 +479,8 @@ macro_rules! impl_get_tuple {
 
                         #[cfg(feature = "flecs_safety_readwrite_locks")]
                         {
-                            let first_id = *ecs_first(id);
-                            let second_id = *ecs_second(id);
+                            let first_id = *ecs_first(id, world_ref);
+                            let second_id = *ecs_second(id,world_ref);
                             if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
                                 let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
                                 if $t::IS_IMMUTABLE {

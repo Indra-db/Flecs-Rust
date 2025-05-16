@@ -723,10 +723,14 @@ mod observer_in_observer {
                 iter.fini();
             });
             observer!(world, EventB, &mut Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -736,9 +740,14 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &Foo).each_entity(|_, _| {});
             observer!(world, EventB, &mut Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
+                entity
+                    .world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -748,9 +757,13 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &Foo).each_iter(|_, _, _| {});
             observer!(world, EventB, &mut Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
     }
 
@@ -765,10 +778,14 @@ mod observer_in_observer {
                 iter.fini();
             });
             observer!(world, EventB, &Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -778,9 +795,14 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).each_entity(|_, _| {});
             observer!(world, EventB, &Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
+                entity
+                    .world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -790,9 +812,13 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).each_iter(|_, _, _| {});
             observer!(world, EventB, &Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
     }
 
@@ -807,10 +833,14 @@ mod observer_in_observer {
                 iter.fini();
             });
             observer!(world, EventB, &mut Foo).run(move |iter| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
                 iter.fini();
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -820,9 +850,14 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).each_entity(|_, _| {});
             observer!(world, EventB, &mut Foo).each_entity(move |entity, _| {
-                entity.world().event().add::<Foo>().entity(e).emit(&EventA);
+                entity
+                    .world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
 
         #[test]
@@ -832,9 +867,13 @@ mod observer_in_observer {
             let e = world.entity().set(Foo(0)).id();
             observer!(world, EventA, &mut Foo).each_iter(|_, _, _| {});
             observer!(world, EventB, &mut Foo).each_iter(move |iter, _, _| {
-                iter.world().event().add::<Foo>().entity(e).emit(&EventA);
+                iter.world()
+                    .event()
+                    .add(id::<Foo>())
+                    .entity(e)
+                    .emit(&EventA);
             });
-            world.event().add::<Foo>().entity(e).emit(&EventB);
+            world.event().add(id::<Foo>()).entity(e).emit(&EventB);
         }
     }
 }
@@ -1172,7 +1211,7 @@ mod observer_in_system {
             observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &Foo).run(move |mut iter| {
                 iter.next();
-                iter.entity(0).emit(&EventA);
+                iter.entity(0).unwrap().emit(&EventA);
                 iter.fini();
             });
             world.progress();
@@ -1189,7 +1228,7 @@ mod observer_in_system {
                 .each_entity(move |entity, _| {
                     let world = entity.world();
                     world.defer_suspend();
-                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.event().add(id::<Foo>()).entity(entity).emit(&EventA);
                     world.defer_resume();
                 });
             world.progress();
@@ -1208,8 +1247,8 @@ mod observer_in_system {
                     world.defer_suspend();
                     world
                         .event()
-                        .add::<Foo>()
-                        .entity(iter.entity(0))
+                        .add(id::<Foo>())
+                        .entity(iter.entity(0).unwrap())
                         .emit(&EventA);
                     world.defer_resume();
                 });
@@ -1229,7 +1268,7 @@ mod observer_in_system {
                 .immediate(true)
                 .run(move |mut iter| {
                     iter.next();
-                    iter.entity(0).emit(&EventA);
+                    iter.entity(0).unwrap().emit(&EventA);
                     iter.fini();
                 });
             world.progress();
@@ -1246,7 +1285,7 @@ mod observer_in_system {
                 .each_entity(move |entity, _| {
                     let world = entity.world();
                     world.defer_suspend();
-                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.event().add(id::<Foo>()).entity(entity).emit(&EventA);
                     world.defer_resume();
                 });
             world.progress();
@@ -1265,8 +1304,8 @@ mod observer_in_system {
                     world.defer_suspend();
                     world
                         .event()
-                        .add::<Foo>()
-                        .entity(iter.entity(0))
+                        .add(id::<Foo>())
+                        .entity(iter.entity(0).unwrap())
                         .emit(&EventA);
                     world.defer_resume();
                 });
@@ -1284,7 +1323,7 @@ mod observer_in_system {
             observer!(world, EventA, &mut Foo).each(|_| {});
             system!(world, &mut Foo).run(move |mut iter| {
                 iter.next();
-                iter.entity(0).emit(&EventA);
+                iter.entity(0).unwrap().emit(&EventA);
                 iter.fini();
             });
             world.progress();
@@ -1301,7 +1340,7 @@ mod observer_in_system {
                 .each_entity(move |entity, _| {
                     let world = entity.world();
                     world.defer_suspend();
-                    world.event().add::<Foo>().entity(entity).emit(&EventA);
+                    world.event().add(id::<Foo>()).entity(entity).emit(&EventA);
                     world.defer_resume();
                 });
             world.progress();
@@ -1320,8 +1359,8 @@ mod observer_in_system {
                     world.defer_suspend();
                     world
                         .event()
-                        .add::<Foo>()
-                        .entity(iter.entity(0))
+                        .add(id::<Foo>())
+                        .entity(iter.entity(0).unwrap())
                         .emit(&EventA);
                     world.defer_resume();
                 });

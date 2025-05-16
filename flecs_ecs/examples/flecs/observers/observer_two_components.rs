@@ -29,7 +29,7 @@ fn main() {
                 " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
-                it.entity(index).name(),
+                it.entity(index).unwrap().name(),
                 pos.x,
                 pos.y,
                 vel.x,

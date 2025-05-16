@@ -39,7 +39,7 @@ fn main() {
             });
 
         if i % 2 == 0 {
-            creature.add::<Enchanted>();
+            creature.add(id::<Enchanted>());
         }
     }
 
@@ -54,7 +54,7 @@ fn main() {
 
         if i % 2 != 0 {
             // Differentiate enchantment condition to diversify
-            artifact.add::<Enchanted>();
+            artifact.add(id::<Enchanted>());
         }
     }
 
@@ -62,7 +62,7 @@ fn main() {
     let query_creatures = forest.query::<(&Location, &Ability)>().set_cached().build();
 
     // Filter specifically for enchanted things in the world
-    let mut query_enchanted = forest.query::<()>().with::<&Enchanted>().build();
+    let mut query_enchanted = forest.query::<()>().with(id::<&Enchanted>()).build();
 
     // Iterate over creatures to find the enchanted ones
     query_creatures.run(|mut iter| {
@@ -77,7 +77,7 @@ fn main() {
             .each_iter( |it, index ,_| {
                 let pos = &loc[index];
                 let abil_power = ability[index].power;
-                let entity = it.entity(index);
+                let entity = it.entity(index).unwrap();
                 println!(
                     "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
                     , pos.x, pos.y, abil_power

@@ -24,25 +24,25 @@ fn main() {
 
     world
         .entity_named("Mercury")
-        .child_of_id(sun)
+        .child_of(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named("Venus")
-        .child_of_id(sun)
+        .child_of(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 2.0, y: 2.0 });
 
     let earth = world
         .entity_named("Earth")
-        .child_of_id(sun)
+        .child_of(sun)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 3.0, y: 3.0 });
 
     world
         .entity_named("Moon")
-        .child_of_id(earth)
+        .child_of(earth)
         .set_pair::<Position, WorldX>(Position::default())
         .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });
 

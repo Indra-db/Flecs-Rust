@@ -20,28 +20,28 @@ fn main() {
     // to discover which systems it should run.
     let physics = world
         .entity()
-        .add::<flecs::pipeline::Phase>()
-        .depends_on::<flecs::pipeline::OnUpdate>();
+        .add(id::<flecs::pipeline::Phase>())
+        .depends_on(id::<flecs::pipeline::OnUpdate>());
 
     let collisions = world
         .entity()
-        .add::<flecs::pipeline::Phase>()
-        .depends_on_id(physics);
+        .add(id::<flecs::pipeline::Phase>())
+        .depends_on(physics);
 
     // Create 3 dummy systems.
     world
         .system_named::<()>("CollisionSystem")
-        .kind_id(collisions)
+        .kind(collisions)
         .run(sys);
 
     world
         .system_named::<()>("PhysicsSystem")
-        .kind_id(physics)
+        .kind(physics)
         .run(sys);
 
     world
         .system_named::<()>("GameSystem")
-        .kind::<flecs::pipeline::OnUpdate>()
+        .kind(id::<flecs::pipeline::OnUpdate>())
         .run(sys);
 
     // Run pipeline

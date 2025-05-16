@@ -16,8 +16,8 @@ fn bulk_entity_builder_simple_add() {
 
     for entity in entities {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
-        assert!(entity.has::<Velocity>());
+        assert!(entity.has(id::<Position>()));
+        assert!(entity.has(id::<Velocity>()));
     }
 }
 
@@ -42,8 +42,8 @@ fn bulk_entity_builder_simple_set() {
     assert_eq!(entities.len(), 10);
     for (index, entity) in entities.into_iter().enumerate() {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
-        assert!(entity.has::<Velocity>());
+        assert!(entity.has(id::<Position>()));
+        assert!(entity.has(id::<Velocity>()));
         let position = entity.cloned::<&Position>();
         let velocity = entity.cloned::<&Velocity>();
         assert_eq!(position.x, velocity.x / 2);
@@ -61,9 +61,9 @@ fn bulk_entity_builder_table() {
 
     let ent = world
         .entity()
-        .add::<Position>()
-        .add::<Velocity>()
-        .add_id(ent_id);
+        .add(id::<Position>())
+        .add(id::<Velocity>())
+        .add(ent_id);
 
     let mut table = ent.table().unwrap();
 
@@ -90,12 +90,12 @@ fn bulk_entity_builder_table() {
 
     for (index, entity) in entities.into_iter().enumerate() {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
-        assert!(entity.has::<Velocity>());
-        assert!(entity.has_id(ent_id));
+        assert!(entity.has(id::<Position>()));
+        assert!(entity.has(id::<Velocity>()));
+        assert!(entity.has(ent_id));
 
-        assert!(!entity.has::<Mass>());
-        assert!(!entity.has_id(random_ent_id));
+        assert!(!entity.has(id::<Mass>()));
+        assert!(!entity.has(random_ent_id));
 
         let position = entity.cloned::<&Position>();
         let velocity = entity.cloned::<&Velocity>();
@@ -179,7 +179,7 @@ fn bulk_entity_builder_with_entity_ids() {
 
     for (index, entity) in new_entities.into_iter().enumerate() {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
+        assert!(entity.has(id::<Position>()));
 
         assert_eq!(entity.id(), entities[index]);
     }
@@ -203,8 +203,8 @@ fn bulk_entity_builder_add_and_set() {
 
     for entity in entities {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
-        assert!(entity.has::<Velocity>());
+        assert!(entity.has(id::<Position>()));
+        assert!(entity.has(id::<Velocity>()));
         let position = entity.cloned::<&Position>();
         assert_eq!(position.x, position.y);
     }
@@ -222,7 +222,7 @@ fn bulk_entity_builder_build_to_table_missing_default() {
 
     let ent = world
         .entity()
-        .add::<Position>()
+        .add(id::<Position>())
         .set(NonDefaultComponent { value: 5 });
 
     let mut table = ent.table().unwrap();
@@ -249,7 +249,7 @@ fn bulk_entity_builder_duplicate_add() {
 
     for entity in entities {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
+        assert!(entity.has(id::<Position>()));
     }
 }
 
@@ -271,7 +271,7 @@ fn bulk_entity_builder_set_after_add() {
 
     for entity in entities {
         let entity = world.entity_from_id(entity);
-        assert!(entity.has::<Position>());
+        assert!(entity.has(id::<Position>()));
         let position = entity.cloned::<&Position>();
         assert_eq!(position.x, position.y);
     }
@@ -287,7 +287,7 @@ fn bulk_entity_builder_no_components() {
 
     for entity in entities {
         let entity = world.entity_from_id(entity);
-        assert!(!entity.has::<Position>());
+        assert!(!entity.has(id::<Position>()));
     }
 }
 

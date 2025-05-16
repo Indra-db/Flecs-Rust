@@ -89,14 +89,14 @@ fn main() {
         .entity_named("child")
         .set(Position { x: 10.0, y: 20.0 })
         .set(WorldPosition { x: 0.0, y: 0.0 })
-        .child_of_id(parent);
+        .child_of(parent);
 
     let independent = world
         .entity_named("independent")
         .set(Position { x: 50.0, y: 30.0 })
         .set(WorldPosition { x: 0.0, y: 0.0 })
         // this is to make sure independent entity is in a different archetype
-        .add::<DummyTag>();
+        .add(id::<DummyTag>());
 
     // Since this is the first time the query is iterated, all tables
     // will show up as changed and not skipped

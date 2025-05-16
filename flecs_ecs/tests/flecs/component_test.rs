@@ -66,7 +66,7 @@ fn temp_test_hook() {
             });
         });
 
-        entity.remove::<Position>();
+        entity.remove(id::<Position>());
         assert_eq!(unsafe { COUNT_ADD_POS }, 1);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
 
@@ -79,10 +79,10 @@ fn temp_test_hook() {
 
         assert_eq!(unsafe { COUNT_SET_VEL }, 1);
 
-        entity.remove::<Position>();
+        entity.remove(id::<Position>());
         assert_eq!(unsafe { COUNT_ADD_POS }, 1);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
-        entity2.remove::<Position>();
+        entity2.remove(id::<Position>());
         assert_eq!(unsafe { COUNT_ADD_POS }, 0);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
     }
@@ -103,7 +103,7 @@ fn on_component_registration() {
             });
 
             world
-                .component_untyped_from_id(component_id)
+                .component_untyped_from(component_id)
                 .add_trait::<flecs::Prefab>();
         }
     }
@@ -137,7 +137,11 @@ fn on_component_registration() {
         assert_eq!(count.0, 1);
     });
 
-    assert!(world.component::<OnRegistration>().has::<flecs::Prefab>());
+    assert!(
+        world
+            .component::<OnRegistration>()
+            .has(id::<flecs::Prefab>())
+    );
 
     world.component::<OnRegistrationTag>();
 
@@ -167,7 +171,7 @@ fn on_component_registration_named() {
             });
 
             world
-                .component_untyped_from_id(component_id)
+                .component_untyped_from(component_id)
                 .add_trait::<flecs::Prefab>();
         }
     }
@@ -201,7 +205,11 @@ fn on_component_registration_named() {
         assert_eq!(count.0, 1);
     });
 
-    assert!(world.component::<OnRegistration>().has::<flecs::Prefab>());
+    assert!(
+        world
+            .component::<OnRegistration>()
+            .has(id::<flecs::Prefab>())
+    );
 
     world.component::<OnRegistrationTag>();
 
