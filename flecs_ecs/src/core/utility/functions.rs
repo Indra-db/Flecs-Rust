@@ -125,8 +125,8 @@ pub fn ecs_add_pair(
 #[inline(always)]
 pub fn ecs_first<'a>(e: impl IntoId, world: impl WorldProvider<'a>) -> Entity {
     let world = world.world();
-    let id = e.into_id(world) & RUST_ECS_COMPONENT_MASK;
-    Entity(ecs_entity_id_high(id, world))
+    let id = (*e.into_id(world)) & RUST_ECS_COMPONENT_MASK;
+    Entity(ecs_entity_id_high(id))
 }
 
 /// Get the second entity from a pair.
@@ -141,7 +141,7 @@ pub fn ecs_first<'a>(e: impl IntoId, world: impl WorldProvider<'a>) -> Entity {
 #[inline(always)]
 pub fn ecs_second<'a>(e: impl IntoId, world: impl WorldProvider<'a>) -> Entity {
     let world = world.world();
-    Entity(ecs_entity_id_low(e.into_id(world), world))
+    Entity(ecs_entity_id_low(Entity(*e.into_id(world))))
 }
 
 /// Get the lower 32 bits of an entity id.
@@ -154,8 +154,8 @@ pub fn ecs_second<'a>(e: impl IntoId, world: impl WorldProvider<'a>) -> Entity {
 ///
 /// The lower 32 bits of the entity id.
 #[inline(always)]
-pub fn ecs_entity_id_low<'a>(value: impl IntoId, world: impl WorldProvider<'a>) -> u64 {
-    *value.into_id(world) as u32 as u64
+pub fn ecs_entity_id_low(value: impl Into<Entity>) -> u64 {
+    *value.into() as u32 as u64
 }
 
 /// Get the higher 32 bits of an entity id.
@@ -168,8 +168,8 @@ pub fn ecs_entity_id_low<'a>(value: impl IntoId, world: impl WorldProvider<'a>) 
 ///
 /// The higher 32 bits of the entity id.
 #[inline(always)]
-pub fn ecs_entity_id_high<'a>(value: impl IntoId, world: impl WorldProvider<'a>) -> u64 {
-    *value.into_id(world) >> 32
+pub fn ecs_entity_id_high(value: impl Into<Entity>) -> u64 {
+    *value.into() >> 32
 }
 
 #[inline(never)]
