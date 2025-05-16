@@ -124,8 +124,8 @@ where
     const IF_ID_IS_DEFAULT_SECOND: bool = U::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
     const IS_ENUM: bool = false;
     const IS_TYPE_TAG: bool = T::IS_TYPE_TAG & U::IS_TYPE_TAG;
-    const IS_TYPED_REF: bool = T::IS_TYPED_REF || U::IS_TYPED_REF;
-    const IS_TYPED_MUT_REF: bool = T::IS_TYPED_MUT_REF || U::IS_TYPED_MUT_REF;
+    const IS_TYPED_REF: bool = false;
+    const IS_TYPED_MUT_REF: bool = false;
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         let world = world.world();
         Entity(crate::core::ecs_pair(
@@ -134,3 +134,51 @@ where
         ))
     }
 }
+
+// #[doc(hidden)]
+// impl<T, U> InternalIntoEntity for &(T, U)
+// where
+//     T: InternalIntoEntity + Copy,
+//     U: InternalIntoEntity + Copy,
+// {
+//     const IS_TYPED_PAIR: bool = true;
+//     const IS_TYPED: bool = T::IS_TYPED;
+//     const IF_ID_IS_DEFAULT: bool = T::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
+//     const IS_TYPED_SECOND: bool = U::IS_TYPED;
+//     const IF_ID_IS_DEFAULT_SECOND: bool = U::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
+//     const IS_ENUM: bool = false;
+//     const IS_TYPE_TAG: bool = T::IS_TYPE_TAG & U::IS_TYPE_TAG;
+//     const IS_TYPED_REF: bool = true;
+//     const IS_TYPED_MUT_REF: bool = false;
+//     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+//         let world = world.world();
+//         Entity(crate::core::ecs_pair(
+//             *(self.0.into_entity(world)),
+//             *(self.1.into_entity(world)),
+//         ))
+//     }
+// }
+
+// #[doc(hidden)]
+// impl<T, U> InternalIntoEntity for &mut (T, U)
+// where
+//     T: InternalIntoEntity + Copy,
+//     U: InternalIntoEntity + Copy,
+// {
+//     const IS_TYPED_PAIR: bool = true;
+//     const IS_TYPED: bool = T::IS_TYPED;
+//     const IF_ID_IS_DEFAULT: bool = T::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
+//     const IS_TYPED_SECOND: bool = U::IS_TYPED;
+//     const IF_ID_IS_DEFAULT_SECOND: bool = U::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
+//     const IS_ENUM: bool = false;
+//     const IS_TYPE_TAG: bool = T::IS_TYPE_TAG & U::IS_TYPE_TAG;
+//     const IS_TYPED_REF: bool = false;
+//     const IS_TYPED_MUT_REF: bool = true;
+//     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
+//         let world = world.world();
+//         Entity(crate::core::ecs_pair(
+//             *(self.0.into_entity(world)),
+//             *(self.1.into_entity(world)),
+//         ))
+//     }
+// }

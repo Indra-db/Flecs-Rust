@@ -322,14 +322,47 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// set term with Id
-    fn with<T: IntoId>(&mut self, id: T) -> &mut Self {
+    fn with<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        let access = <Access as FromAccessArg<T>>::from_access_arg(id, self.world());
         self.term();
-        self.init_current_term(id);
-        if <T as IntoId>::IS_TYPED_REF {
-            self.current_term_mut().inout = InOutKind::In as i16;
-        } else if <T as IntoId>::IS_TYPED_MUT_REF {
-            self.current_term_mut().inout = InOutKind::InOut as i16;
+
+        match access.target {
+            AccessTarget::Entity(entity) => {
+                self.init_current_term(entity);
+            }
+            AccessTarget::Pair(rel, target) => {
+                self.init_current_term(ecs_pair(*rel, *target));
+            }
+            AccessTarget::Name(name) => {
+                self.set_first(name);
+            }
+            AccessTarget::PairName(rel, target) => {
+                self.set_first(rel).set_second(target);
+            }
+            AccessTarget::PairEntityName(rel, target) => {
+                self.init_current_term(rel);
+                self.set_second(target);
+            }
+            AccessTarget::PairNameEntity(rel, target) => {
+                self.set_first(rel);
+                self.set_second(target);
+            }
+        }
+
+        match access.mode {
+            AccessMode::Read => {
+                self.current_term_mut().inout = InOutKind::In as i16;
+            }
+            AccessMode::ReadWrite => {
+                self.current_term_mut().inout = InOutKind::InOut as i16;
+            }
+            AccessMode::Write => {
+                self.current_term_mut().inout = InOutKind::Out as i16;
+            }
+            _ => {}
         }
         self
     }
@@ -349,41 +382,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.with((id::<T>(), flecs::Wildcard::ID))
     }
 
-    /// set term with Name
-    fn with_name(&mut self, name: &'a str) -> &mut Self {
-        self.term();
-        self.set_first_name(name);
-        self
-    }
-
-    /// set term with pair names
-    fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.term();
-        self.set_first_name(first).set_second_name(second);
-        self
-    }
-
-    /// set term with first id and second name
-    fn with_name_second(&mut self, first: impl IntoEntity, second: &'a str) -> &mut Self {
-        self.term();
-        let first = first.into_entity(self.world());
-        self.init_current_term(first);
-        self.set_second_name(second);
-        self
-    }
-
-    /// set term with second id and first name
-    fn with_name_first(&mut self, first: &'a str, second: impl IntoEntity) -> &mut Self {
-        self.term();
-        let second = second.into_entity(self.world());
-        self.set_first_name(first).set_second(second);
-        self
-    }
-
     /* Without methods, shorthand for .with(...).not() */
 
     /// set term without Id
-    fn without(&mut self, id: impl IntoId) -> &mut Self {
+    fn without<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
         self.with(id).not()
     }
 
@@ -400,26 +405,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
-    }
-
-    /// set term without Name
-    fn without_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name).not()
-    }
-
-    /// set term without pair names
-    fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second).not()
-    }
-
-    /// set term without first id and second name
-    fn without_name_second(&mut self, first: impl IntoEntity, second: &'a str) -> &mut Self {
-        self.with_name_second(first, second).not()
-    }
-
-    /// set term without second id and first name
-    fn without_name_first(&mut self, first: &'a str, second: impl IntoEntity) -> &mut Self {
-        self.with_name_first(first, second).not()
     }
 
     /// Term notation for more complex query features
@@ -470,20 +455,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the id as current term and in mode out
-    fn write(&mut self, id: impl IntoId) -> &mut Self {
+    fn write<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
         self.with(id);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the name as current term and in mode out
-    fn write_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the names as current term and in mode out
-    fn write_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second);
         TermBuilderImpl::write_curr(self)
     }
 
@@ -496,33 +472,12 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode out
-    fn write_name_second(&mut self, first: impl IntoEntity, second: &'a str) -> &mut Self {
-        self.with_name_second(first, second);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode out
-    fn write_name_first(&mut self, first: &'a str, second: impl IntoEntity) -> &mut Self {
-        self.with_name_first(first, second);
-        TermBuilderImpl::write_curr(self)
-    }
-
     /// Set the id as current term and in mode in
-    fn read(&mut self, id: impl IntoId) -> &mut Self {
+    fn read<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
         self.with(id);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the name as current term and in mode in
-    fn read_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the names as current term and in mode in
-    fn read_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second);
         TermBuilderImpl::read_curr(self)
     }
 
@@ -532,18 +487,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         value: T,
     ) -> &mut Self {
         self.with_enum(value);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode in
-    fn read_name_second(&mut self, first: impl IntoEntity, second: &'a str) -> &mut Self {
-        self.with_name_second(first, second);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode in
-    fn read_name_first(&mut self, first: &'a str, second: impl IntoEntity) -> &mut Self {
-        self.with_name_first(first, second);
         TermBuilderImpl::read_curr(self)
     }
 

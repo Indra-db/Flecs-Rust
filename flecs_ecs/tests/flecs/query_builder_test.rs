@@ -3614,7 +3614,7 @@ fn query_builder_with_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .with_name("flecs.common_test.Velocity")
+        .with("flecs.common_test.Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3703,7 +3703,7 @@ fn query_builder_with_pair_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .with_names("likes", "Apples")
+        .with(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3797,7 +3797,7 @@ fn query_builder_with_pair_name_component_id() {
     let q = world
         .query::<()>()
         .with(id::<Position>())
-        .with_name_first("Likes", apples)
+        .with(("Likes", apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3829,7 +3829,7 @@ fn query_builder_with_pair_component_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .with_name_second(id::<Likes>(), "Apples")
+        .with((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3923,7 +3923,7 @@ fn query_builder_without_name() {
     let q = world
         .query::<()>()
         .with(world.id_view_from(id::<Position>()))
-        .without_name("flecs.common_test.Velocity")
+        .without("flecs.common_test.Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4012,7 +4012,7 @@ fn query_builder_without_pair_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .without_names("likes", "Apples")
+        .without(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4105,7 +4105,7 @@ fn query_builder_without_pair_component_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .without_name_second(id::<Likes>(), "Apples")
+        .without((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4138,7 +4138,7 @@ fn query_builder_without_pair_name_component_id() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .without_name_first("Likes", apples)
+        .without(("Likes", apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4222,7 +4222,7 @@ fn query_builder_write_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .write_name("flecs.common_test.Position")
+        .write("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4279,7 +4279,7 @@ fn query_builder_write_pair_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .write_names("likes", "Apples")
+        .write(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4334,7 +4334,7 @@ fn query_builder_write_pair_component_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .write_name_second(id::<Likes>(), "Apples")
+        .write((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4394,7 +4394,7 @@ fn query_builder_read_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .read_name("flecs.common_test.Position")
+        .read("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4451,7 +4451,7 @@ fn query_builder_read_pair_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .read_names("likes", "Apples")
+        .read(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4506,7 +4506,7 @@ fn query_builder_read_pair_component_name() {
     let q = world
         .query::<()>()
         .with(id::<&Position>())
-        .read_name_second(id::<Likes>(), "Apples")
+        .read((id::<Likes>(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4922,7 +4922,7 @@ fn query_builder_term_w_second_var_string() {
 
     let r = world
         .query::<()>()
-        .with_name_second(foo_, "$Var")
+        .with((foo_, "$Var"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4948,7 +4948,7 @@ fn query_builder_term_type_w_second_var_string() {
 
     let r = world
         .query::<()>()
-        .with_name_second(id::<Foo>(), "$Var")
+        .with((id::<Foo>(), "$Var"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 

@@ -382,107 +382,107 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         self
     }
 
-    /// Select src identifier, initialize it with entity id
+    /// Select src identifier
     ///
-    /// # Arguments
     ///
-    /// * `id` - The id to set.
-    fn set_src(&mut self, id: impl IntoEntity) -> &mut Self {
-        self.src().set_id(id)
-    }
-
-    /// Select src identifier, initialize it with name. If name starts with a $
+    /// * initialize it with entity id or
+    /// * initialize it with name. If name starts with a $
     /// the name is interpreted as a variable.
     ///
     /// # Arguments
     ///
-    /// * `name` - The name to set.
-    fn set_src_name(&mut self, name: &'a str) -> &mut Self {
-        ecs_assert!(
-            !name.is_empty(),
-            FlecsErrorCode::InvalidParameter,
-            "name is empty"
-        );
+    /// * `id` - The id to set.
+    fn set_src<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        let access = Access::from_access_arg(id, self.world());
 
-        self.src();
-        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
-            self.set_var(stripped_name)
-        } else {
-            self.name(name)
+        match access.target {
+            AccessTarget::Entity(entity) => self.src().set_id(entity),
+            AccessTarget::Name(name) => {
+                ecs_assert!(
+                    !name.is_empty(),
+                    FlecsErrorCode::InvalidParameter,
+                    "name is empty"
+                );
+                self.src();
+                if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
+                    self.set_var(stripped_name)
+                } else {
+                    self.name(name)
+                }
+            }
+            _ => panic!("Invalid access target, only single targets allowed"),
         }
     }
 
-    /// Select first identifier, initialize it with entity id
+    /// Select first identifier
     ///
-    /// # Arguments
-    ///
-    /// * `id` - The id to set.
-    fn set_first(&mut self, id: impl IntoEntity) -> &mut Self {
-        check_term_access_validity(self);
-        let id = id.into_entity(self.world());
-        self.first().set_id(id);
-        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
-        self.set_term_ref_mode(TermRefMode::Src);
-        self
-    }
-
-    /// Select first identifier, initialize it with name. If name starts with a $
+    /// * initialize with id or
+    /// * initialize it with name. If name starts with a $
     /// the name is interpreted as a variable.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name to set.
-    fn set_first_name(&mut self, name: &'a str) -> &mut Self {
+    fn set_first<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
         check_term_access_validity(self);
-        ecs_assert!(
-            !name.is_empty(),
-            FlecsErrorCode::InvalidParameter,
-            "name is empty"
-        );
+        let access = Access::from_access_arg(id, self.world());
+        match access.target {
+            AccessTarget::Entity(entity) => {
+                self.first().set_id(entity);
+            }
+            AccessTarget::Name(name) => {
+                ecs_assert!(
+                    !name.is_empty(),
+                    FlecsErrorCode::InvalidParameter,
+                    "name is empty"
+                );
 
-        self.first();
-        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
-            self.set_var(stripped_name);
-        } else {
-            self.name(name);
+                self.first();
+                if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
+                    self.set_var(stripped_name);
+                } else {
+                    self.name(name);
+                }
+            }
+            _ => panic!("Invalid access target, only single targets allowed"),
         }
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
         self.set_term_ref_mode(TermRefMode::Src);
         self
     }
 
-    /// Select second identifier, initialize it with entity id
+    /// Select second identifier
     ///
-    /// # Arguments
-    ///
-    /// * `id` - The id to set.
-    fn set_second(&mut self, id: impl IntoEntity) -> &mut Self {
-        check_term_access_validity(self);
-        let id = id.into_entity(self.world());
-        self.second().set_id(id);
-        // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
-        self.set_term_ref_mode(TermRefMode::Src);
-        self
-    }
-
-    /// Select second identifier, initialize it with name. If name starts with a $
+    /// * initialize with id or
+    /// * initialize it with name. If name starts with a $
     /// the name is interpreted as a variable.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name to set.
-    fn set_second_name(&mut self, name: &'a str) -> &mut Self {
-        ecs_assert!(
-            !name.is_empty(),
-            FlecsErrorCode::InvalidParameter,
-            "name is empty"
-        );
+    fn set_second<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        check_term_access_validity(self);
+        let access = Access::from_access_arg(id, self.world());
+        match access.target {
+            AccessTarget::Entity(entity) => {
+                self.second().set_id(entity);
+            }
+            AccessTarget::Name(name) => {
+                ecs_assert!(
+                    !name.is_empty(),
+                    FlecsErrorCode::InvalidParameter,
+                    "name is empty"
+                );
 
-        self.second();
-        if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
-            self.set_var(stripped_name);
-        } else {
-            self.name(name);
+                self.second();
+                if let Some(stripped_name) = strip_prefix_str_raw(name, "$") {
+                    self.set_var(stripped_name);
+                } else {
+                    self.name(name);
+                }
+            }
+            _ => panic!("Invalid access target, only single targets allowed"),
         }
         // reset term ref mode to src, otherwise it stays on second and makes other actions potentially invalid
         self.set_term_ref_mode(TermRefMode::Src);

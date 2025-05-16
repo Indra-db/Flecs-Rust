@@ -1,7 +1,7 @@
 use crate::core::*;
 
-/// Extracts the Ecs ID from a type.
-/// Extension trait from [`Into<Entity>`] for tuples that implement `Into<Entity>`.
+/// Extracts the Ecs ID from_access_arg a type.
+/// Extension trait from_access_arg [`Into<Entity>`] for tuples that implement `Into<Entity>`.
 /// These types can be [`Id`], [`IdView`], [`Entity`], [`EntityView`], [`Component`], [`UntypedComponent`].
 pub trait IntoId: InternalIntoEntity
 where
@@ -40,46 +40,6 @@ where
     }
 }
 
-// impl<T, U> From<(T, U)> for Id
-// where
-//     T: IntoEntity,
-//     U: IntoEntity,
-// {
-//     fn from(pair: (T, U)) -> Self {
-//         ecs_pair(*pair.0.into_entity(), *pair.1.into()).into()
-//     }
-// }
-
-// impl<T, U> IntoId for (T, U)
-// where
-//     T: IntoEntity + Copy,
-//     U: IntoEntity + Copy,
-// {
-//     const IS_PAIR: bool = true;
-
-//     #[doc(hidden)] // not meant to be used by the use
-//     #[inline]
-//     fn into_id<'a>(self, world: impl WorldProvider<'a>) -> Id {
-//         let world = world.world();
-//         Id(ecs_pair(
-//             *(self.0.into_entity(world)),
-//             *(self.1.into_entity(world)),
-//         ))
-//     }
-
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         self.0.into_entity(world)
-//     }
-
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         self.1.into_entity(world)
-//     }
-// }
-
 impl<T: InternalIntoEntity> IntoId for T {
     const IS_PAIR: bool = T::IS_TYPED_PAIR;
     const IS_ENUM: bool = <T as InternalIntoEntity>::IS_ENUM;
@@ -105,63 +65,196 @@ impl<T: InternalIntoEntity> IntoId for T {
     }
 }
 
-// impl IntoId for Entity {
-//     const IS_PAIR: bool = false;
-// }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AccessMode {
+    None,
+    Read,
+    Write,
+    ReadWrite,
+}
 
-// impl IntoId for Id {
-//     const IS_PAIR: bool = false;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AccessSingleTarget {
+    /// A single `Entity`
+    Entity(Entity),
+    /// A single name
+    Name(&'static str),
+}
 
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn into_id<'a>(self, _world: impl WorldProvider<'a>) -> Id {
-//         self
-//     }
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         ecs_first(*self, world)
-//     }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AccessTarget {
+    /// A single `Entity`
+    Entity(Entity),
+    /// A single name
+    Name(&'static str),
+    /// Two Entities
+    Pair(Entity, Entity),
+    /// Two names
+    PairName(&'static str, &'static str),
+    /// Name + Entity
+    PairNameEntity(&'static str, Entity),
+    /// Entity + Name
+    PairEntityName(Entity, &'static str),
+}
 
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         ecs_second(*self, world)
-//     }
-// }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Access {
+    pub mode: AccessMode,
+    pub target: AccessTarget,
+}
 
-// impl IntoId for IdView<'_> {
-//     const IS_PAIR: bool = false;
+impl From<Access> for Id {
+    fn from(access: Access) -> Id {
+        match access.target {
+            AccessTarget::Entity(entity) => entity.into(),
+            AccessTarget::Pair(first, second) => Id(ecs_pair(*first, *second)),
+            _ => panic!("AccessTarget {:?} not convertible to Id", access.target),
+        }
+    }
+}
 
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn into_id<'a>(self, _world: impl WorldProvider<'a>) -> Id {
-//         self.id
-//     }
+pub trait FromAccessArg<T> {
+    fn from_access_arg<'a>(value: T, world: impl WorldProvider<'a>) -> Access;
+}
 
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_first<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         ecs_first(self.id, world)
-//     }
-//     #[doc(hidden)] // not meant to be used by the user
-//     #[inline]
-//     fn get_id_second<'a>(self, world: impl WorldProvider<'a>) -> Entity {
-//         ecs_second(self.id, world)
-//     }
-// }
+/// “Only single‐target inputs” (Entity, &str, Id<T>, …)
+pub trait SingleAccessArg: Sized
+where
+    Access: FromAccessArg<Self>,
+{
+}
 
-// impl IntoId for EntityView<'_> {
-//     const IS_PAIR: bool = false;
-// }
+/// for single or pair inputs
+pub trait AccessArg: Sized
+where
+    Access: FromAccessArg<Self>,
+{
+}
 
-// impl<T> IntoId for Component<'_, T>
-// where
-//     T: ComponentId,
-// {
-//     const IS_PAIR: bool = false;
-// }
+// impl<T: ComponentId> SingleAccessArg for &crate::core::utility::id::Id<T> {}
+// impl<T: ComponentId> SingleAccessArg for &mut crate::core::utility::id::Id<T> {}
+impl SingleAccessArg for &'static str {}
+//impl<T: IntoEntity> SingleAccessArg for T where Access: FromAccessArg<T> {}
 
-// impl IntoId for UntypedComponent<'_> {
-//     const IS_PAIR: bool = false;
-// }
+impl<T: ComponentId> AccessArg for &crate::core::utility::id::Id<T> {}
+impl<T: ComponentId> AccessArg for &mut crate::core::utility::id::Id<T> {}
+impl AccessArg for &'static str {}
+impl<T: IntoId> AccessArg for T where Access: FromAccessArg<T> {}
+impl AccessArg for (&'static str, &'static str) {}
+impl<T: IntoId> AccessArg for (&'static str, T) {}
+impl<T: IntoId> AccessArg for (T, &'static str) {}
+
+impl<T: ComponentId> FromAccessArg<&crate::core::utility::id::Id<T>> for Access {
+    fn from_access_arg<'a>(
+        id: &crate::core::utility::id::Id<T>,
+        world: impl WorldProvider<'a>,
+    ) -> Access {
+        let entity = IntoId::into_id(*id, world);
+        Access {
+            mode: AccessMode::Read,
+            target: AccessTarget::Entity(Entity(*entity)),
+        }
+    }
+}
+
+impl<T: ComponentId> FromAccessArg<&mut crate::core::utility::id::Id<T>> for Access {
+    fn from_access_arg<'a>(
+        id: &mut crate::core::utility::id::Id<T>,
+        world: impl WorldProvider<'a>,
+    ) -> Access {
+        let entity = IntoId::into_id(*id, world);
+        Access {
+            mode: AccessMode::ReadWrite,
+            target: AccessTarget::Entity(Entity(*entity)),
+        }
+    }
+}
+
+impl FromAccessArg<&'static str> for Access {
+    fn from_access_arg<'a>(name: &'static str, _world: impl WorldProvider<'a>) -> Access {
+        Access {
+            mode: AccessMode::Read,
+            target: AccessTarget::Name(name),
+        }
+    }
+}
+
+impl FromAccessArg<(&'static str, &'static str)> for Access {
+    fn from_access_arg<'a>(
+        names: (&'static str, &'static str),
+        _world: impl WorldProvider<'a>,
+    ) -> Access {
+        Access {
+            mode: AccessMode::Read,
+            target: AccessTarget::PairName(names.0, names.1),
+        }
+    }
+}
+
+impl<T> FromAccessArg<(&'static str, T)> for Access
+where
+    T: IntoId,
+{
+    fn from_access_arg<'a>(names: (&'static str, T), world: impl WorldProvider<'a>) -> Access {
+        let id = names.1.into_id(world);
+        Access {
+            mode: AccessMode::Read,
+            target: AccessTarget::PairNameEntity(names.0, Entity(*id)),
+        }
+    }
+}
+
+impl<T> FromAccessArg<(T, &'static str)> for Access
+where
+    T: IntoId,
+{
+    fn from_access_arg<'a>(names: (T, &'static str), world: impl WorldProvider<'a>) -> Access {
+        let id = names.0.into_id(world);
+        Access {
+            mode: AccessMode::Read,
+            target: AccessTarget::PairEntityName(Entity(*id), names.1),
+        }
+    }
+}
+
+impl<T: IntoId> FromAccessArg<T> for Access {
+    fn from_access_arg<'a>(id: T, world: impl WorldProvider<'a>) -> Access {
+        let world = world.world();
+        let id = id.into_id(world);
+        if T::IS_PAIR {
+            let first = id.get_id_first(world);
+            let second = id.get_id_second(world);
+            if <T as IntoId>::IS_TYPED_REF {
+                Access {
+                    mode: AccessMode::Read,
+                    target: AccessTarget::Pair(first, second),
+                }
+            } else if <T as IntoId>::IS_TYPED_MUT_REF {
+                Access {
+                    mode: AccessMode::ReadWrite,
+                    target: AccessTarget::Pair(first, second),
+                }
+            } else {
+                Access {
+                    mode: AccessMode::None,
+                    target: AccessTarget::Pair(first, second),
+                }
+            }
+        } else if <T as IntoId>::IS_TYPED_REF {
+            Access {
+                mode: AccessMode::Read,
+                target: AccessTarget::Entity(Entity(*id)),
+            }
+        } else if <T as IntoId>::IS_TYPED_MUT_REF {
+            Access {
+                mode: AccessMode::ReadWrite,
+                target: AccessTarget::Entity(Entity(*id)),
+            }
+        } else {
+            Access {
+                mode: AccessMode::None,
+                target: AccessTarget::Entity(Entity(*id)),
+            }
+        }
+    }
+}

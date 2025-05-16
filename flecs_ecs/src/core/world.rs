@@ -2588,7 +2588,7 @@ impl World {
         EntityView::new_null(self)
     }
 
-    /// Create a new entity with the provided id.
+    /// wraps an [`EntityView`] with the provided id.
     ///
     /// # Arguments
     ///

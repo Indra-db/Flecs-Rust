@@ -46,7 +46,7 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with_name_second(id::<Eats>(), "$food")
+        .with((id::<Eats>(), "$food"))
         .with(id::<&Healthy>())
         .set_src_name("$food")
         .build();

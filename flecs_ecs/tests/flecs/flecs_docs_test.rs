@@ -546,8 +546,8 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<(&Position, &Npc)>()
-        .with_name("npc")
-        .with_name("Position")
+        .with("npc")
+        .with("Position")
         .build();
 
     let e = world.entity().add(id::<Position>()).add(id::<Velocity>());

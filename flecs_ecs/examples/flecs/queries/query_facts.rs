@@ -49,9 +49,9 @@ fn main() {
 
     let mut friends = world
         .query::<()>()
-        .with_name_second(id::<Likes>(), "$Y")
+        .with((id::<Likes>(), "$Y"))
         .set_src_name("$X")
-        .with_name_second(id::<Likes>(), "$X")
+        .with((id::<Likes>(), "$X"))
         .set_src_name("$Y")
         .build();
 

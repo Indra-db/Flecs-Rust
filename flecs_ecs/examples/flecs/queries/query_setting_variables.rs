@@ -99,7 +99,7 @@ fn main() {
         .with(id::<RangedUnit>())
         .with(id::<&Platoon>())
         .set_second_name("$platoon")
-        .with_name_second(id::<Player>(), "$player")
+        .with((id::<Player>(), "$player"))
         .set_src_name("$platoon")
         .build();
 
