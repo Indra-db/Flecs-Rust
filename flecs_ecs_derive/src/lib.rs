@@ -1510,15 +1510,15 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     match first_id {
                         TermIdent::Variable(var) => {
                             let var_name = format!("${}", var.value());
-                            ops.push(quote! { .set_first_name(#var_name) });
+                            ops.push(quote! { .set_first(#var_name) });
                         }
-                        TermIdent::SelfVar => ops.push(quote! { .set_first_id(self) }),
-                        TermIdent::Local(ident) => ops.push(quote! { .set_first_id(#ident) }),
-                        TermIdent::Literal(lit) => ops.push(quote! { .set_first_name(#lit) }),
+                        TermIdent::SelfVar => ops.push(quote! { .set_first(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_first(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .set_first(#lit) }),
                         TermIdent::Singleton => ops.push(quote_spanned!{ first.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
-                                ops.push(quote! { .set_first::<#first_ty>() });
+                                ops.push(quote! { .set_first(id::<#first_ty>()) });
                             }
                         }
                     };
@@ -1526,11 +1526,11 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     match second_id {
                         TermIdent::Variable(var) => {
                             let var_name = format!("${}", var.value());
-                            ops.push(quote! { .set_second_name(#var_name) });
+                            ops.push(quote! { .set_second(#var_name) });
                         }
-                        TermIdent::SelfVar => ops.push(quote! { .set_second_id(self) }),
-                        TermIdent::Local(ident) => ops.push(quote! { .set_second_id(#ident) }),
-                        TermIdent::Literal(lit) => ops.push(quote! { .set_second_name(#lit) }),
+                        TermIdent::SelfVar => ops.push(quote! { .set_second(self) }),
+                        TermIdent::Local(ident) => ops.push(quote! { .set_second(#ident) }),
+                        TermIdent::Literal(lit) => ops.push(quote! { .set_second(#lit) }),
                         TermIdent::Singleton => ops.push(quote_spanned!{ second.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
@@ -1592,11 +1592,11 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                 match source {
                     TermIdent::Variable(var) => {
                         let var_name = format!("${}", var.value());
-                        ops.push(quote! { .set_src_name(#var_name) });
+                        ops.push(quote! { .set_src(#var_name) });
                     }
-                    TermIdent::SelfVar => ops.push(quote! { .set_src_id(self) }),
-                    TermIdent::Local(ident) => ops.push(quote! { .set_src_id(#ident) }),
-                    TermIdent::Literal(lit) => ops.push(quote! { .set_src_name(#lit) }),
+                    TermIdent::SelfVar => ops.push(quote! { .set_src(self) }),
+                    TermIdent::Local(ident) => ops.push(quote! { .set_src(#ident) }),
+                    TermIdent::Literal(lit) => ops.push(quote! { .set_src(#lit) }),
                     TermIdent::Singleton => ops.push(quote! { .singleton() }),
                     _ => ops.push(quote! { .set_src(id::<#ty>()) }),
                 };
