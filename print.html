@@ -216,7 +216,7 @@ struct Velocity { x: f32, y: f32 }
 // Add a component. This creates the component in the ECS storage, but does not
 // assign it with a value. To add a component, it needs to be derived with the
 // Default trait otherwise it will panic at compile time.
-e.add::&lt;Velocity&gt;();
+e.add(id::&lt;Velocity&gt;());
 
 // Set the value for the Position &amp; Velocity components. A component will be
 // added if the entity doesn't have it yet.
@@ -229,7 +229,7 @@ e.get::&lt;&amp;Position&gt;(|p| {
 });
 
 // Remove component
-e.remove::&lt;Position&gt;();
+e.remove(id::&lt;Position&gt;());
 <span class="boring">}</span></code></pre>
 <p>Each component is associated by a unique entity identifier by Flecs. This makes it possible to inspect component data, or attach your own data to components.</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -247,7 +247,7 @@ e.remove::&lt;Position&gt;();
 println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
 
 // It's possible to add components like you would for any entity
-pos_e.add::&lt;Serializable&gt;();
+pos_e.add(id::&lt;Serializable&gt;());
 <span class="boring">}</span></code></pre>
 <p>The thing that makes an ordinary entity a component is the <code>Component</code> trait. This tells Flecs how much space is needed to store a component, and can be inspected by applications:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -277,21 +277,21 @@ pos_e.get::&lt;&amp;flecs::Component&gt;(|c| {
 struct Enemy;
 
 // Create entity, add Enemy tag
-let e = world.entity().add::&lt;Enemy&gt;();
-e.has::&lt;Enemy&gt;(); // true!
+let e = world.entity().add(id::&lt;Enemy&gt;());
+e.has(id::&lt;Enemy&gt;()); // true!
 
-e.remove::&lt;Enemy&gt;();
-e.has::&lt;Enemy&gt;(); // false!
+e.remove(id::&lt;Enemy&gt;());
+e.has(id::&lt;Enemy&gt;()); // false!
 
 // Option 2: create Tag as entity
 let enemy = world.entity();
 
 // Create entity, add Enemy tag
-let e = world.entity().add_id(enemy);
-e.has_id(enemy); // true!
+let e = world.entity().add(enemy);
+e.has(enemy); // true!
 
-e.remove_id(enemy);
-e.has_id(enemy); // false!
+e.remove(enemy);
+e.has(enemy); // false!
 <span class="boring">}</span></code></pre>
 <p>Note that both options achieve the same effect. The only difference is that in option 1 the tag is fixed at compile time, whereas in option 2 the tag can be created dynamically at runtime.</p>
 <p>When a tag is deleted, the same rules apply as for components (see <a href="Relationships.html#cleanup-properties">Relationship cleanup properties</a>).</p>
@@ -310,12 +310,12 @@ struct Likes;
 let bob = world.entity();
 let alice = world.entity();
 
-bob.add_first::&lt;Likes&gt;(alice); // bob likes alice
-alice.add_first::&lt;Likes&gt;(bob); // alice likes bob
-bob.has_first::&lt;Likes&gt;(alice); // true!
+bob.add((id::&lt;Likes&gt;(), alice)); // bob likes alice
+alice.add((id::&lt;Likes&gt;(), bob)); // alice likes bob
+bob.has((id::&lt;Likes&gt;(), alice)); // true!
 
-bob.remove_first::&lt;Likes&gt;(alice);
-bob.has_first::&lt;Likes&gt;(alice); // false!
+bob.remove((id::&lt;Likes&gt;(), alice));
+bob.has((id::&lt;Likes&gt;(), alice)); // false!
 <span class="boring">}</span></code></pre>
 <p>A pair can be encoded in a single 64 bit identifier using the <code>world.id_first</code> function:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -327,7 +327,7 @@ bob.has_first::&lt;Likes&gt;(alice); // false!
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span><span class="boring">let bob = world.entity();
-</span>let id = world.id_first::&lt;Likes&gt;(bob);
+</span>let id = world.id_view_from(id::&lt;Likes&gt;(),bob);
 <span class="boring">}</span></code></pre>
 <p>The following examples show how to get back the elements from a pair:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -340,7 +340,7 @@ bob.has_first::&lt;Likes&gt;(alice); // false!
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span>let id = world.id_from::&lt;(Likes, Apples)&gt;();
+</span>let id = world.id_view_from((id::&lt;Likes&gt;(), id::&lt;Apples&gt;()));
 if id.is_pair() {
     let relationship = id.first_id();
     let target = id.second_id();
@@ -357,13 +357,13 @@ if id.is_pair() {
 </span><span class="boring">let apples = world.entity();
 </span><span class="boring">let pears = world.entity();
 </span>let bob = world.entity();
-bob.add_id((eats, apples));
-bob.add_id((eats, pears));
-bob.add_id((grows, pears));
+bob.add((eats, apples));
+bob.add((eats, pears));
+bob.add((grows, pears));
 
-bob.has_id((eats, apples)); // true!
-bob.has_id((eats, pears)); // true!
-bob.has_id((grows, pears)); // true!
+bob.has((eats, apples)); // true!
+bob.has((eats, pears)); // true!
+bob.has((grows, pears)); // true!
 <span class="boring">}</span></code></pre>
 <p>The <code>target</code> function can be used to get the object for a relationship:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -375,19 +375,19 @@ bob.has_id((grows, pears)); // true!
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span><span class="boring">let bob = world.entity();
-</span>let alice = world.entity().add_first::&lt;Likes&gt;(bob);
-let o = alice.target::&lt;Likes&gt;(0); // Returns bob
+</span>let alice = world.entity().add((id::&lt;Likes&gt;(), bob));
+let o = alice.target(id::&lt;Likes&gt;(),0); // Returns bob
 <span class="boring">}</span></code></pre>
 <p>Entity relationships enable lots of interesting patterns and possibilities. Make sure to check out the <a href="Relationships.html">Relationships manual</a>.</p>
 <h3 id="hierarchies"><a class="header" href="#hierarchies">Hierarchies</a></h3>
-<p>Flecs has builtin support for hierarchies with the builtin <code>ChildOf</code> relationship. A hierarchy can be created with the regular relationship API or with the <code>child_of_id</code> function:</p>
+<p>Flecs has builtin support for hierarchies with the builtin <code>ChildOf</code> relationship. A hierarchy can be created with the regular relationship API or with the .child_of` function:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
 </span><span class="boring">use flecs_ecs::prelude::*;
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span>let parent = world.entity();
-let child = world.entity().child_of_id(parent);
+let child = world.entity().child_of(parent);
 
 // Deleting the parent also deletes its children
 parent.destruct();
@@ -399,7 +399,7 @@ parent.destruct();
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span>let parent = world.entity_named("parent");
-let child = world.entity_named("child").child_of_id(parent);
+let child = world.entity_named("child").child_of(parent);
 
 println!("Child path: {}", child.path().unwrap()); // output: 'parent::child'
 
@@ -440,7 +440,7 @@ q.each(|(p, p_parent)| {
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span>let e = world.entity().add::&lt;Position&gt;().add::&lt;Velocity&gt;();
+</span>let e = world.entity().add(id::&lt;Position&gt;()).add(id::&lt;Velocity&gt;());
 
 println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
 <span class="boring">}</span></code></pre>
@@ -453,7 +453,7 @@ println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Posi
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span><span class="boring">let e = world.entity().add::&lt;Position&gt;();
+</span><span class="boring">let e = world.entity().add(id::&lt;Position&gt;());
 </span>e.each_component(|id| {
     if id == world.component_id::&lt;Position&gt;() {
         // Found Position component!
@@ -553,7 +553,7 @@ q.run(|mut it| {
         let p = it.field::&lt;Position&gt;(0).unwrap();
 
         for i in it.iter() {
-            println!("{}: ({}, {})", it.entity(i).name(), p[i].x, p[i].y);
+            println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
         }
     }
 });
@@ -571,7 +571,7 @@ q.run(|mut it| {
 </span>let q = world
     .query::&lt;()&gt;()
     .with::&lt;(flecs::ChildOf, flecs::Wildcard)&gt;()
-    .with::&lt;Position&gt;()
+    .with(id::&lt;Position&gt;())
     .set_oper(OperKind::Not)
     .build();
 
@@ -621,7 +621,7 @@ move_sys.run();
 </span><span class="boring">       p.y += v.y * it.delta_time();
 </span><span class="boring">   });
 </span>println!("System: {}", move_sys.name());
-move_sys.add::&lt;flecs::pipeline::OnUpdate&gt;();
+move_sys.add(id::&lt;flecs::pipeline::OnUpdate&gt;());
 move_sys.destruct();
 <span class="boring">}</span></code></pre>
 <h3 id="pipeline"><a class="header" href="#pipeline">Pipeline</a></h3>
@@ -657,17 +657,17 @@ flecs::pipeline::OnStore;
 </span><span class="boring">let world = World::new();
 </span>world
     .system_named::&lt;(&amp;mut Position, &amp;Velocity)&gt;("Move")
-    .kind::&lt;flecs::pipeline::OnUpdate&gt;()
+    .has(id::&lt;flecs::pipeline::OnUpdate&gt;())
     .each(|(p, v)| {});
 
 world
     .system_named::&lt;(&amp;mut Position, &amp;Transform)&gt;("Transform")
-    .kind::&lt;flecs::pipeline::PostUpdate&gt;()
+    .has(id::&lt;flecs::pipeline::PostUpdate&gt;())
     .each(|(p, t)| {});
     
 world
     .system_named::&lt;(&amp;Transform, &amp;mut Mesh)&gt;("Render")
-    .kind::&lt;flecs::pipeline::OnStore&gt;()
+    .has(id::&lt;flecs::pipeline::OnStore&gt;())
     .each(|(t, m)| {});
 
 world.progress();
@@ -689,8 +689,8 @@ world.progress();
 </span><span class="boring">       p.x += v.x * it.delta_time();
 </span><span class="boring">       p.y += v.y * it.delta_time();
 </span><span class="boring">   });
-</span>move_sys.add::&lt;flecs::pipeline::OnUpdate&gt;();
-move_sys.remove::&lt;flecs::pipeline::PostUpdate&gt;();
+</span>move_sys.add(id::&lt;flecs::pipeline::OnUpdate&gt;());
+move_sys.remove(id::&lt;flecs::pipeline::PostUpdate&gt;());
 <span class="boring">}</span></code></pre>
 <p>Inside a phase, systems are guaranteed to be ran in their declaration order.</p>
 <h3 id="observer"><a class="header" href="#observer">Observer</a></h3>
