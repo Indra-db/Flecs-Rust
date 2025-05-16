@@ -87,8 +87,8 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `id` - The id of the component to add to the event
-    pub fn add_id(&mut self, id: impl IntoId) -> &mut Self {
-        let id = *id.into();
+    pub fn add(&mut self, id: impl IntoId) -> &mut Self {
+        let id = *id.into_id(self.world);
         let ids = &mut self.ids;
         let ids_array = &mut self.ids_array;
         ids.array = ids_array.as_mut_ptr();
@@ -97,19 +97,6 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         }
         ids.count += 1;
         self
-    }
-
-    /// Add component to emit for the event.
-    ///
-    /// # Type parameters
-    ///
-    /// * `C` - The component to add to the event
-    pub fn add<C>(&mut self) -> &mut Self
-    where
-        C: ComponentOrPairId,
-    {
-        let world = self.world;
-        self.add_id(C::get_id(world))
     }
 
     pub fn add_enum<C: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
@@ -125,32 +112,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Component was not found in reflection data."
         );
-        self.add_id((rel, target))
-    }
-
-    /// Add a pair of components to emit for the event.
-    ///
-    /// # Type parameters
-    ///
-    /// * `First` - The first component to add to the event
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The id of the second component to add to the event
-    fn add_first<First>(&mut self, second: impl Into<Entity>) -> &mut Self
-    where
-        First: ComponentId,
-    {
-        let world = self.world;
-        self.add_id(ecs_pair(First::id(world), *second.into()))
-    }
-
-    fn add_second<Second>(&mut self, first: impl Into<Entity>) -> &mut Self
-    where
-        Second: ComponentId,
-    {
-        let world = self.world;
-        self.add_id(ecs_pair(*first.into(), Second::id(world)))
+        self.add((rel, target))
     }
 
     /// Set the target entity to emit for the event.

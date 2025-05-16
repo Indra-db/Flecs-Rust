@@ -24,7 +24,7 @@ fn main() {
     world.component::<Line>().meta();
 
     // Create entity, set value of Line using reflection API
-    let e = world.entity().add::<Line>();
+    let e = world.entity().add(id::<Line>());
 
     e.get::<&mut Line>(|line| {
         let mut cur = world.cursor(line);

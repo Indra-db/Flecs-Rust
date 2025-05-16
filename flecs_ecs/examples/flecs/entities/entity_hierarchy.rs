@@ -51,32 +51,32 @@ fn main() {
     world
         .entity_named("Mercury")
         .set(Position { x: 1.0, y: 1.0 })
-        .add::<Planet>()
-        .child_of_id(sun); // Shortcut for add(flecs::ChildOf, sun)
+        .add(id::<Planet>())
+        .child_of(sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
         .entity_named("Venus")
         .set(Position { x: 2.0, y: 2.0 })
-        .add::<Planet>()
-        .child_of_id(sun);
+        .add(id::<Planet>())
+        .child_of(sun);
 
     let earth = world
         .entity_named("Earth")
         .set(Position { x: 3.0, y: 3.0 })
-        .add::<Planet>()
-        .child_of_id(sun);
+        .add(id::<Planet>())
+        .child_of(sun);
 
     let moon = world
         .entity_named("Moon")
         .set(Position { x: 0.1, y: 0.1 })
-        .add::<Moon>()
-        .child_of_id(earth);
+        .add(id::<Moon>())
+        .child_of(earth);
 
     // Is the Moon a child of the Earth?
     println!(
         "Is the Moon a child of the Earth? {} / {}",
-        moon.has_id((flecs::ChildOf::ID, earth)), //or you can do
-        moon.has_first::<flecs::ChildOf>(earth)
+        moon.has((flecs::ChildOf::ID, earth)), //or you can do
+        moon.has((id::<flecs::ChildOf>(), earth))
     );
 
     println!();

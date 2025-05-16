@@ -84,7 +84,7 @@ fn meta_struct() {
 
     let a = c.lookup("a");
     assert_ne!(a.id(), 0);
-    assert!(a.has::<flecs::meta::Member>());
+    assert!(a.has(id::<flecs::meta::Member>()));
 
     a.get::<&flecs::meta::Member>(|mem| {
         assert_eq!(mem.type_, flecs::meta::I32);
@@ -92,7 +92,7 @@ fn meta_struct() {
 
     let b = c.lookup("b");
     assert_ne!(b.id(), 0);
-    assert!(b.has::<flecs::meta::Member>());
+    assert!(b.has(id::<flecs::meta::Member>()));
 
     b.get::<&flecs::meta::Member>(|mem| {
         assert_eq!(mem.type_, flecs::meta::F32);
@@ -121,7 +121,7 @@ fn meta_nested_struct() {
 
     let a = n.lookup("a");
     assert_ne!(a.id(), 0);
-    assert!(a.has::<flecs::meta::Member>());
+    assert!(a.has(id::<flecs::meta::Member>()));
 
     a.get::<&flecs::meta::Member>(|mem| {
         assert_eq!(mem.type_, t.id());
@@ -154,7 +154,7 @@ fn meta_struct_w_portable_type() {
 
     let a = t.lookup("a");
     assert_ne!(a.id(), 0);
-    assert!(a.has::<flecs::meta::Member>());
+    assert!(a.has(id::<flecs::meta::Member>()));
 
     a.get::<&flecs::meta::Member>(|mem| {
         assert_eq!(mem.type_, flecs::meta::UPtr);
@@ -162,7 +162,7 @@ fn meta_struct_w_portable_type() {
 
     let b = t.lookup("b");
     assert_ne!(b.id(), 0);
-    assert!(b.has::<flecs::meta::Member>());
+    assert!(b.has(id::<flecs::meta::Member>()));
 
     // b.get::<&flecs::meta::Member>(|mem| {
     //     assert_eq!(mem.type_, flecs::meta::UPtr);
@@ -170,7 +170,7 @@ fn meta_struct_w_portable_type() {
 
     // let c = t.lookup("c");
     // assert_ne!(c.id(), 0);
-    // assert!(c.has::<flecs::meta::Member>());
+    // assert!(c.has(id::<flecs::meta::Member>()));
 
     // c.get::<&flecs::meta::Member>(|mem| {
     //     assert_eq!(mem.type_, flecs::meta::Entity);
@@ -178,7 +178,7 @@ fn meta_struct_w_portable_type() {
 
     // let d = t.lookup("d");
     // assert_!(d.id(), 0);
-    // assert!(d.has::<flecs::meta::Member>());
+    // assert!(d.has(id::<flecs::meta::Member>()));
 
     // d.get::<&flecs::meta::Member>(|mem| {
     //     assert_eq!(mem.type_, flecs::meta::Entity);
@@ -210,7 +210,7 @@ fn meta_partial_struct() {
 
     let xe = c.lookup("x");
     assert_ne!(xe.id(), 0);
-    assert!(xe.has::<flecs::meta::Member>());
+    assert!(xe.has(id::<flecs::meta::Member>()));
     xe.get::<&flecs::meta::Member>(|x| {
         assert_eq!(x.type_, flecs::meta::F32);
         assert_eq!(x.offset, 0);
@@ -238,7 +238,7 @@ fn meta_partial_struct_custom_offset() {
 
     let xe = c.lookup("y");
     assert_ne!(xe.id(), 0);
-    assert!(xe.has::<flecs::meta::Member>());
+    assert!(xe.has(id::<flecs::meta::Member>()));
     xe.get::<&flecs::meta::Member>(|x| {
         assert_eq!(x.type_, flecs::meta::F32);
         assert_eq!(x.offset, 4);
@@ -509,7 +509,7 @@ fn meta_struct_member_ptr() {
 
     let x = t.lookup("x");
     assert_ne!(x.id(), 0);
-    assert!(x.has::<flecs::meta::Member>());
+    assert!(x.has(id::<flecs::meta::Member>()));
     x.get::<&flecs::meta::Member>(|xm| {
         assert_eq!(xm.type_, flecs::meta::I32);
         assert_eq!(xm.offset, offset_of!(Test, x) as i32);
@@ -520,7 +520,7 @@ fn meta_struct_member_ptr() {
 
     let y = t2.lookup("y");
     assert_ne!(y.id(), 0);
-    assert!(y.has::<flecs::meta::Member>());
+    assert!(y.has(id::<flecs::meta::Member>()));
     y.get::<&flecs::meta::Member>(|ym| {
         assert_eq!(ym.type_, flecs::meta::F64);
         assert_eq!(ym.offset, offset_of!(Test2, y) as i32);
@@ -531,7 +531,7 @@ fn meta_struct_member_ptr() {
 
     let a = n.lookup("a");
     assert_ne!(a.id(), 0);
-    assert!(a.has::<flecs::meta::Member>());
+    assert!(a.has(id::<flecs::meta::Member>()));
     a.get::<&flecs::meta::Member>(|am| {
         assert_eq!(am.type_, t.id());
         let offset = offset_of!(Nested, a) as i32;
@@ -540,7 +540,7 @@ fn meta_struct_member_ptr() {
 
     let b = n.lookup("b");
     assert_ne!(b.id(), 0);
-    assert!(b.has::<flecs::meta::Member>());
+    assert!(b.has(id::<flecs::meta::Member>()));
     b.get::<&flecs::meta::Member>(|bm| {
         assert_eq!(bm.type_, t2.id());
         assert_eq!(bm.offset, offset_of!(Nested, b) as i32);
@@ -563,7 +563,7 @@ fn meta_struct_field_order() {
     assert_ne!(t.id(), 0);
     let a = t.lookup("a");
     assert_ne!(a.id(), 0);
-    assert!(a.has::<flecs::meta::Member>());
+    assert!(a.has(id::<flecs::meta::Member>()));
     a.get::<&flecs::meta::Member>(|am| {
         assert_eq!(am.type_, flecs::meta::U32);
         assert_eq!(am.offset, offset_of!(Test, a) as i32);
@@ -572,7 +572,7 @@ fn meta_struct_field_order() {
     assert_ne!(t.id(), 0);
     let b = t.lookup("b");
     assert_ne!(b.id(), 0);
-    assert!(b.has::<flecs::meta::Member>());
+    assert!(b.has(id::<flecs::meta::Member>()));
     b.get::<&flecs::meta::Member>(|bm| {
         assert_eq!(bm.type_, flecs::meta::I32);
         assert_eq!(bm.offset, offset_of!(Test, b) as i32);

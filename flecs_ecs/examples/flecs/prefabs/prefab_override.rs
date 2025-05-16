@@ -54,7 +54,7 @@ fn main() {
         .set(Damage { value: 50.0 });
 
     // Create a prefab instance.
-    let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named("my_spaceship").is_a(spaceship);
 
     // The entity will now have a private copy of the Damage component, but not
     // of the Attack and Defense components. We can see this when we look at the

@@ -61,7 +61,7 @@ fn world_finis_reentrancy() {
         // therefore, world destroy will be called again wreaking havoc.
     });
 
-    world.entity().add::<A>();
+    world.entity().add(id::<A>());
 
     // world will be destroyed here, and hook above will be called.
 }

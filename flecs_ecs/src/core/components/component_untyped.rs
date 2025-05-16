@@ -62,7 +62,7 @@ impl<'a> UntypedComponent<'a> {
     ///
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
-    pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl Into<Entity>) -> Self {
+    pub(crate) fn new_from(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
         UntypedComponent {
             entity: EntityView::new_from(world, id),
         }

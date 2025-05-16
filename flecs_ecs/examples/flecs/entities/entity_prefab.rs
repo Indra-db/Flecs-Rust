@@ -61,25 +61,25 @@ fn main() {
         // By default components in an inheritance hierarchy are shared between
         // entities. The override function ensures that instances have a private
         // copy of the component.
-        .auto_override::<Position>();
+        .auto_override(id::<Position>());
 
     let freighter = world
         .prefab_named("Freighter")
-        .is_a_id(spaceship)
+        .is_a(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
-        .add::<HasFlt>();
+        .add(id::<HasFlt>());
 
     let mammoth_freighter = world
         .prefab_named("MammothFreighter")
-        .is_a_id(freighter)
+        .is_a(freighter)
         .set(FreightCapacity { value: 500.0 })
         .set(Defence { value: 300.0 });
 
     world
         .prefab_named("Frigate")
-        .is_a_id(spaceship)
-        .add::<HasFlt>()
+        .is_a(spaceship)
+        .add(id::<HasFlt>())
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
         .set(ImpulseSpeed { value: 125.0 });
@@ -89,7 +89,7 @@ fn main() {
     // of the override in the spaceship entity. All other components are shared.
     let inst = world
         .entity_named("my_mammoth_freighter")
-        .is_a_id(mammoth_freighter);
+        .is_a(mammoth_freighter);
 
     // Inspect the type of the entity. This outputs:
     //    Position,(Identifier,Name),(IsA,MammothFreighter)

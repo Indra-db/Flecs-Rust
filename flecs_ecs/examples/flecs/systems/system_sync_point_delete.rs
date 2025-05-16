@@ -43,7 +43,7 @@ fn main() {
     // const, since inside the system we're only reading it.
     world
         .system_named::<&Position>("DeleteEntity")
-        .write::<flecs::Wildcard>()
+        .with(id::<&mut flecs::Wildcard>())
         .each_entity(|e, p| {
             if p.x >= 3.0 {
                 println!("Delete entity {}", e.name());
@@ -77,7 +77,7 @@ fn main() {
     set_log_level(1);
 
     while world.progress() {
-        if world.count::<Position>() == 0 {
+        if world.count(id::<Position>()) == 0 {
             break; // No more entities left with Position
         }
     }

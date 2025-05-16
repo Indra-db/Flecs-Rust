@@ -22,7 +22,7 @@ impl<'a> IdOperations<'a> for EntityView<'a> {
     fn new_from_id(world: impl WorldProvider<'a>, id: impl IntoId) -> Self {
         Self {
             world: world.world(),
-            id: Entity::from(*id.into()),
+            id: Entity::from(*id.into_id(world)),
         }
     }
 

@@ -112,8 +112,8 @@ where
     /// # Arguments
     ///
     /// * `phase` - the phase
-    pub fn kind_id(&mut self, phase: impl Into<Entity>) -> &mut Self {
-        let phase = *phase.into();
+    pub fn kind(&mut self, phase: impl IntoEntity) -> &mut Self {
+        let phase = *phase.into_entity(self.world);
         let current_phase: sys::ecs_entity_t = unsafe {
             sys::ecs_get_target(self.world_ptr_mut(), self.desc.entity, ECS_DEPENDS_ON, 0)
         };
@@ -134,18 +134,6 @@ where
         self
     }
 
-    /// Specify in which phase the system should run
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Phase` - the phase
-    pub fn kind<Phase>(&mut self) -> &mut Self
-    where
-        Phase: ComponentId + ComponentType<Struct>,
-    {
-        self.kind_id(Phase::id(self.world()))
-    }
-
     /// Specify in which enum phase the system should run
     ///
     /// # Arguments
@@ -156,7 +144,7 @@ where
         Phase: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         let enum_id = phase.id_variant(self.world());
-        self.kind_id(enum_id)
+        self.kind(enum_id)
     }
 
     /// Specify whether system can run on multiple threads.
@@ -223,9 +211,6 @@ where
     type BuiltType = System<'a>;
 
     /// Build the `system_builder` into an system
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let system = System::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

@@ -32,30 +32,30 @@ fn main() {
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
-    world.component::<CombatUnit>().is_a::<Unit>();
-    world.component::<MeleeUnit>().is_a::<CombatUnit>();
-    world.component::<RangedUnit>().is_a::<CombatUnit>();
+    world.component::<CombatUnit>().is_a(id::<Unit>());
+    world.component::<MeleeUnit>().is_a(id::<CombatUnit>());
+    world.component::<RangedUnit>().is_a(id::<CombatUnit>());
 
-    world.component::<Warrior>().is_a::<MeleeUnit>();
-    world.component::<Wizard>().is_a::<RangedUnit>();
-    world.component::<Marksman>().is_a::<RangedUnit>();
-    world.component::<BuilderX>().is_a::<Unit>();
+    world.component::<Warrior>().is_a(id::<MeleeUnit>());
+    world.component::<Wizard>().is_a(id::<RangedUnit>());
+    world.component::<Marksman>().is_a(id::<RangedUnit>());
+    world.component::<BuilderX>().is_a(id::<Unit>());
 
     // Create a few units
-    world.entity_named("warrior_1").add::<Warrior>();
-    world.entity_named("warrior_2").add::<Warrior>();
+    world.entity_named("warrior_1").add(id::<Warrior>());
+    world.entity_named("warrior_2").add(id::<Warrior>());
 
-    world.entity_named("marksman_1").add::<Marksman>();
-    world.entity_named("marksman_2").add::<Marksman>();
+    world.entity_named("marksman_1").add(id::<Marksman>());
+    world.entity_named("marksman_2").add(id::<Marksman>());
 
-    world.entity_named("wizard_1").add::<Wizard>();
-    world.entity_named("wizard_2").add::<Wizard>();
+    world.entity_named("wizard_1").add(id::<Wizard>());
+    world.entity_named("wizard_2").add(id::<Wizard>());
 
-    world.entity_named("builder_1").add::<BuilderX>();
-    world.entity_named("builder_2").add::<BuilderX>();
+    world.entity_named("builder_1").add(id::<BuilderX>());
+    world.entity_named("builder_2").add(id::<BuilderX>());
 
     // Create a rule to find all ranged units
-    let r = world.query::<()>().with::<RangedUnit>().build();
+    let r = world.query::<()>().with(id::<RangedUnit>()).build();
 
     // Iterate the rule
     r.each_entity(|e, rangedunit| {

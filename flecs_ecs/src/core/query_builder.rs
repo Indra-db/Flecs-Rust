@@ -80,9 +80,6 @@ where
     /// # Arguments
     ///
     /// * `world` - The world to create the observer in
-    ///
-    /// See also
-    ///
     pub fn new(world: &'a World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -102,9 +99,6 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `name` - The name of the observer
-    ///
-    /// See also
-    ///
     pub fn new_named(world: &'a World, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -136,21 +130,16 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
-        let obj = Self {
+        Self {
             desc: *desc,
             term_builder: Default::default(),
             world: world.world(),
             _phantom: core::marker::PhantomData,
-        };
-
-        obj
+        }
     }
 
     /// Create a new query builder from an existing descriptor with a term index
@@ -160,9 +149,6 @@ where
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
     /// * `term_index` - The index of the term to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
@@ -311,7 +297,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `expr` - the expression to set
     fn expr(&mut self, expr: &'a str) -> &mut Self {
-        let expr = ManuallyDrop::new(format!("{}\0", expr));
+        let expr = ManuallyDrop::new(format!("{expr}\0"));
         ecs_assert!(
             *self.expr_count_mut() == 0,
             FlecsErrorCode::InvalidOperation,
@@ -324,57 +310,48 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// set term with Id
-    fn with_id(&mut self, id: impl IntoId) -> &mut Self {
+    fn with<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        let access = <Access as FromAccessArg<T>>::from_access_arg(id, self.world());
         self.term();
-        self.init_current_term(id);
-        self
-    }
 
-    /// set term with type
-    ///
-    /// if T is passed along, inout is set to `inout_none` which indicates
-    /// that you are not planning on fetching the component data
-    /// for reading or writing purposes use &T or &mut T instead.
-    /// you can alternatively use `.set_in()` and `.set_inout()` to set the
-    /// inout mode explicitly.
-    ///
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component)]
-    /// struct Position;
-    ///
-    /// #[derive(Component)]
-    /// struct Velocity;
-    ///
-    /// #[derive(Component)]
-    /// struct Mass;
-    ///
-    /// let world = World::new();
-    ///
-    /// world
-    ///     .query::<()>()
-    ///     //this can be retrieved from it.field if desired
-    ///     .with::<Position>()
-    ///     .set_inout() //equivalent to .with::<&mut Position>()
-    ///     .with::<&Velocity>() //equivalent to .with::<Velocity>().set_in()
-    ///     .with::<&mut Mass>() //equivalent to .with::<Mass>().set_inout()
-    ///     .build();
-    /// ```
-    fn with<T: ComponentOrPairId>(&mut self) -> &mut Self {
-        if <T as ComponentOrPairId>::IS_PAIR {
-            self.with_id(<T as ComponentOrPairId>::get_id(self.world()));
-        } else {
-            self.term();
-            let world = self.world();
-            let id = T::get_id(world);
-            self.init_current_term(id);
-            if T::First::IS_REF {
+        match access.target {
+            AccessTarget::Entity(entity) => {
+                self.init_current_term(entity);
+            }
+            AccessTarget::Pair(rel, target) => {
+                self.init_current_term(ecs_pair(*rel, *target));
+            }
+            AccessTarget::Name(name) => {
+                self.set_first::<&'static str>(name);
+            }
+            AccessTarget::PairName(rel, target) => {
+                self.set_first::<&'static str>(rel)
+                    .set_second::<&'static str>(target);
+            }
+            AccessTarget::PairEntityName(rel, target) => {
+                self.init_current_term(rel);
+                self.set_second::<&'static str>(target);
+            }
+            AccessTarget::PairNameEntity(rel, target) => {
+                self.set_first::<&'static str>(rel);
+                self.set_second::<Entity>(target);
+            }
+        }
+
+        match access.mode {
+            AccessMode::Read => {
                 self.current_term_mut().inout = InOutKind::In as i16;
-            } else if T::First::IS_MUT {
+            }
+            AccessMode::ReadWrite => {
                 self.current_term_mut().inout = InOutKind::InOut as i16;
             }
+            AccessMode::Write => {
+                self.current_term_mut().inout = InOutKind::Out as i16;
+            }
+            _ => {}
         }
         self
     }
@@ -386,73 +363,22 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ) -> &mut Self {
         let enum_id = T::id(self.world());
         let enum_field_id = value.id_variant(self.world());
-        self.with_id((enum_id, enum_field_id))
+        self.with((enum_id, enum_field_id))
     }
 
     /// set term with enum wildcard
     fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
-        self.with_first::<T>(flecs::Wildcard::ID)
-    }
-
-    /// set term with pairs
-    fn with_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((First::id(self.world()), second))
-    }
-
-    /// set term with pairs
-    fn with_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_id(First::id(self.world()), second)
-    }
-
-    /// set term with pairs
-    fn with_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_id((first, Second::id(self.world())))
-    }
-
-    /// set term with pairs
-    fn with_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_id(first, Second::id(self.world()))
-    }
-
-    /// set term with Name
-    fn with_name(&mut self, name: &'a str) -> &mut Self {
-        self.term();
-        self.set_first_name(name);
-        self
-    }
-
-    /// set term with pair names
-    fn with_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.term();
-        self.set_first_name(first).set_second_name(second);
-        self
-    }
-
-    /// set term with first id and second name
-    fn with_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
-        self.term();
-        self.init_current_term(first.into());
-        self.set_second_name(second);
-        self
-    }
-
-    /// set term with second id and first name
-    fn with_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
-        self.term();
-        self.set_first_name(first).set_second_id(second.into());
-        self
+        self.with((id::<T>(), flecs::Wildcard::ID))
     }
 
     /* Without methods, shorthand for .with(...).not() */
 
     /// set term without Id
-    fn without_id(&mut self, id: impl IntoId) -> &mut Self {
-        self.with_id(id).not()
-    }
-
-    /// set term without type
-    fn without<T: ComponentOrPairId>(&mut self) -> &mut Self {
-        self.with::<T>().not()
+    fn without<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        self.with(id).not()
     }
 
     /// set term without enum
@@ -468,49 +394,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         &mut self,
     ) -> &mut Self {
         self.with_enum_wildcard::<T>().not()
-    }
-
-    /// set term without pairs
-    fn without_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_first::<First>(second).not()
-    }
-
-    /// set term without pairs
-    fn without_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_name::<First>(second).not()
-    }
-
-    /// set term without pairs
-    fn without_second<Second: ComponentId>(
-        &mut self,
-        first: impl Into<Entity> + Copy,
-    ) -> &mut Self {
-        self.with_second::<Second>(first).not()
-    }
-
-    /// set term without pairs
-    fn without_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_name::<Second>(first).not()
-    }
-
-    /// set term without Name
-    fn without_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name).not()
-    }
-
-    /// set term without pair names
-    fn without_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second).not()
-    }
-
-    /// set term without first id and second name
-    fn without_first_id(&mut self, first: impl Into<Entity>, second: &'a str) -> &mut Self {
-        self.with_first_id(first, second).not()
-    }
-
-    /// set term without second id and first name
-    fn without_second_id(&mut self, first: &'a str, second: impl Into<Entity>) -> &mut Self {
-        self.with_second_id(first, second).not()
     }
 
     /// Term notation for more complex query features
@@ -560,27 +443,12 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// Set the type as current term and in mode out
-    fn write<T: ComponentOrPairId>(&mut self) -> &mut Self {
-        self.with::<T>();
-        TermBuilderImpl::write_curr(self)
-    }
-
     /// Set the id as current term and in mode out
-    fn write_id(&mut self, id: impl IntoId) -> &mut Self {
-        self.with_id(id);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the name as current term and in mode out
-    fn write_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the names as current term and in mode out
-    fn write_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second);
+    fn write<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        self.with(id);
         TermBuilderImpl::write_curr(self)
     }
 
@@ -593,51 +461,12 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         TermBuilderImpl::write_curr(self)
     }
 
-    /// Set the relationship as current term and in mode out
-    fn write_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_first::<First>(second);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode out
-    fn write_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_name::<First>(second);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode out
-    fn write_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_second::<Second>(first);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode out
-    fn write_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_name::<Second>(first);
-        TermBuilderImpl::write_curr(self)
-    }
-
-    /// Set the type as current term and in mode in
-    fn read<T: ComponentOrPairId>(&mut self) -> &mut Self {
-        self.with::<T>();
-        TermBuilderImpl::read_curr(self)
-    }
-
     /// Set the id as current term and in mode in
-    fn read_id(&mut self, id: impl IntoId) -> &mut Self {
-        self.with_id(id);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the name as current term and in mode in
-    fn read_name(&mut self, name: &'a str) -> &mut Self {
-        self.with_name(name);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the names as current term and in mode in
-    fn read_names(&mut self, first: &'a str, second: &'a str) -> &mut Self {
-        self.with_names(first, second);
+    fn read<T>(&mut self, id: T) -> &mut Self
+    where
+        Access: FromAccessArg<T>,
+    {
+        self.with(id);
         TermBuilderImpl::read_curr(self)
     }
 
@@ -650,40 +479,16 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         TermBuilderImpl::read_curr(self)
     }
 
-    /// Set the relationship as current term and in mode in
-    fn read_first<First: ComponentId>(&mut self, second: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_first::<First>(second);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode in
-    fn read_first_name<First: ComponentId>(&mut self, second: &'a str) -> &mut Self {
-        self.with_first_name::<First>(second);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode in
-    fn read_second<Second: ComponentId>(&mut self, first: impl Into<Entity> + Copy) -> &mut Self {
-        self.with_second::<Second>(first);
-        TermBuilderImpl::read_curr(self)
-    }
-
-    /// Set the relationship as current term and in mode in
-    fn read_second_name<Second: ComponentId>(&mut self, first: &'a str) -> &mut Self {
-        self.with_second_name::<Second>(first);
-        TermBuilderImpl::read_curr(self)
-    }
-
     /* scope_open/scope_close shorthand notation. */
 
     /// Open a scope for the query
     fn scope_open(&mut self) -> &mut Self {
-        self.with_id(flecs::ScopeOpen::ID).entity(0)
+        self.with(flecs::ScopeOpen::ID).entity(0)
     }
 
     /// Close a scope for the query
     fn scope_close(&mut self) -> &mut Self {
-        self.with_id(flecs::ScopeClose::ID).entity(0)
+        self.with(flecs::ScopeClose::ID).entity(0)
     }
 
     /// Sorts the output of a query.
@@ -750,8 +555,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `component`: The component used to sort.
     /// * `compare`: The compare function used to sort the components.
-    /// # See also
-    ///
     fn order_by_id(
         &mut self,
         component: impl Into<Entity>,
@@ -776,20 +579,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
     /// Group and sort matched tables.
     ///
-    /// This function is similar to `group_by<T>`, but uses a default `group_by` action.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component used to determine the group rank.
-    fn group_by<T>(&mut self) -> &mut Self
-    where
-        T: ComponentId,
-    {
-        self.group_by_id_fn(T::id(self.world()), None)
-    }
-
-    /// Group and sort matched tables.
-    ///
     /// This function is similar to `order_by`, but instead of sorting individual entities,
     /// it only sorts matched tables. This can be useful if a query needs to enforce a
     /// certain iteration order upon the tables it is iterating, for example by giving
@@ -803,37 +592,19 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// with entity sorting, table sorting takes precedence, and entities will be sorted
     /// within each set of tables that are assigned the same rank.
     ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The component used to determine the group rank.
-    ///
-    /// # Arguments
-    ///
-    /// * `group_by_action`: Callback that determines group id for table.
-    fn group_by_fn<T>(&mut self, group_by_action: sys::ecs_group_by_action_t) -> &mut Self
-    where
-        T: ComponentId,
-    {
-        self.group_by_id_fn(T::id(self.world()), group_by_action);
-        self
-    }
-
-    /// Group and sort matched tables.
-    ///
-    /// This is similar to `group_by<T>`, but uses a component identifier instead.
-    ///
     /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
     /// * `group_by_action`: Callback that determines group id for table.
-    fn group_by_id_fn(
+    fn group_by_fn(
         &mut self,
-        component: impl Into<Entity>,
+        component: impl IntoEntity,
         group_by_action: sys::ecs_group_by_action_t,
     ) -> &mut Self {
+        let world = self.world();
         let desc = self.query_desc_mut();
         desc.group_by_callback = group_by_action;
-        desc.group_by = *component.into();
+        desc.group_by = *component.into_entity(world);
         self
     }
 
@@ -844,8 +615,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `component`: The component used to determine the group rank.
-    fn group_by_id(&mut self, component: impl Into<Entity>) -> &mut Self {
-        self.group_by_id_fn(component, None)
+    fn group_by(&mut self, component: impl IntoEntity) -> &mut Self {
+        self.group_by_fn(component, None)
     }
 
     /// Specify context to be passed to the `group_by` function.

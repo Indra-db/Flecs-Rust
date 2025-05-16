@@ -27,9 +27,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     /// # Arguments
     ///
     /// * `world` - The world to create the observer in
-    ///
-    /// See also
-    ///
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let desc = Default::default();
         let mut obj = Self {
@@ -54,9 +51,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * `world` - The world to create the observer in
     /// * `name` - The name of the observer
-    ///
-    /// See also
-    ///
     pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -107,9 +101,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: sys::ecs_observer_desc_t,
@@ -148,25 +139,9 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `event` - The event to add
-    pub fn add_event_id(&mut self, event: impl Into<Entity>) -> &mut ObserverBuilder<(), T> {
-        let event = *event.into();
+    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<(), T> {
+        let event = *event.into_entity(self.world);
         self.desc.events[self.event_count] = event;
-        self.event_count += 1;
-        // SAFETY: Same layout
-        unsafe { core::mem::transmute(self) }
-    }
-
-    /// Specify the event(s) for when the observer should run.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of the event
-    pub fn add_event<E>(&mut self) -> &mut ObserverBuilder<(), T>
-    where
-        E: ComponentId,
-    {
-        let id = E::id(self.world());
-        self.desc.events[self.event_count] = id;
         self.event_count += 1;
         // SAFETY: Same layout
         unsafe { core::mem::transmute(self) }
@@ -221,9 +196,6 @@ where
     type BuiltType = Observer<'a>;
 
     /// Build the `observer_builder` into an `observer`
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let observer = Observer::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

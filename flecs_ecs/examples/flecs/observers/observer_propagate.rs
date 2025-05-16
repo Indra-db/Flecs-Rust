@@ -32,7 +32,7 @@ fn main() {
                 " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
                 it.event().name(),
                 it.event_id().to_str(),
-                it.entity(index).name(),
+                it.entity(index).unwrap().name(),
                 pos_self.x,
                 pos_self.y,
                 pos_parent.x,
@@ -42,7 +42,7 @@ fn main() {
 
     // Create entity and parent
     let parent = world.entity_named("p");
-    let entity = world.entity_named("e").child_of_id(parent);
+    let entity = world.entity_named("e").child_of(parent);
 
     // Set Position on entity. This doesn't trigger the observer yet, since the
     // parent doesn't have Position yet.

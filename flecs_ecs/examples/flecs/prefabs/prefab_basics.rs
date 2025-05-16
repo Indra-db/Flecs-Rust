@@ -37,7 +37,7 @@ fn main() {
     let spaceship = world.prefab_named("Prefab").set(Defence { value: 50.0 });
 
     // Create a prefab instance
-    let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named("my_spaceship").is_a(spaceship);
 
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:

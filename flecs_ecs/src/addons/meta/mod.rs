@@ -60,18 +60,18 @@ impl World {
     }
 
     /// Return meta cursor to value
-    pub fn cursor_id(&self, type_id: impl Into<Entity>, ptr: *mut c_void) -> Cursor {
+    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
+        let type_id = T::get_id(self.world());
+        Cursor::new(self, type_id, data as *mut T as *mut c_void)
+    }
+
+    /// Return meta cursor to value
+    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor {
         if ptr.is_null() {
             panic!("ptr is null");
         }
 
         Cursor::new(self, type_id, ptr)
-    }
-
-    /// Return meta cursor to value
-    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
-        let type_id = T::get_id(self.world());
-        Cursor::new(self, type_id, data as *mut T as *mut c_void)
     }
 
     /// Create primitive type
@@ -91,9 +91,9 @@ impl World {
     }
 
     /// Create array type
-    pub fn array_id(&self, elem_id: impl Into<Entity>, array_count: i32) -> EntityView {
+    pub fn array(&self, elem_id: impl IntoEntity, array_count: i32) -> EntityView {
         let desc = sys::ecs_array_desc_t {
-            type_: *elem_id.into(),
+            type_: *elem_id.into_entity(self),
             count: array_count,
             entity: 0u64,
         };
@@ -105,11 +105,6 @@ impl World {
             "failed to create array type"
         );
         EntityView::new_from(self, eid)
-    }
-
-    /// Create array type
-    pub fn array<T: ComponentId>(&self, array_count: i32) -> EntityView {
-        self.array_id(T::get_id(self.world()), array_count)
     }
 
     /// Create vector type
@@ -165,9 +160,15 @@ pub trait EcsSerializer {
 
 impl EcsSerializer for sys::ecs_serializer_t {
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn value_id(&self, type_id: impl Into<Entity>, value: *const c_void) -> i32 {
+    fn value_id(&self, type_id: impl IntoEntity, value: *const c_void) -> i32 {
         if let Some(value_func) = self.value {
-            unsafe { value_func(self, *type_id.into(), value) }
+            unsafe {
+                value_func(
+                    self,
+                    *type_id.into_entity(WorldRef::from_ptr(self.world as *mut _)),
+                    value,
+                )
+            }
         } else {
             0
         }
@@ -192,8 +193,6 @@ impl EcsSerializer for sys::ecs_serializer_t {
 
 /// Register opaque type interface
 impl<'a, T: 'static> Component<'a, T> {
-    /// # See also
-    ///
     pub fn opaque_func<Func>(&self, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T>,
@@ -204,8 +203,6 @@ impl<'a, T: 'static> Component<'a, T> {
         self
     }
 
-    /// # See also
-    ///
     pub fn opaque_func_id<Func, Elem>(&self, id: impl Into<Entity>, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T, Elem>,
@@ -216,8 +213,6 @@ impl<'a, T: 'static> Component<'a, T> {
         self
     }
 
-    /// # See also
-    ///
     pub fn opaque<Type: 'static>(&self) -> Opaque<'a, T> {
         let id = self.world().component_id_map::<Type>();
         let mut opaque = Opaque::<T>::new(self.world());
@@ -225,17 +220,13 @@ impl<'a, T: 'static> Component<'a, T> {
         opaque
     }
 
-    /// # See also
-    ///
-    pub fn opaque_id(&self, id: impl Into<Entity>) -> Opaque<'a, T> {
-        let id = id.into();
+    pub fn opaque_id(&self, id: impl IntoEntity) -> Opaque<'a, T> {
+        let id = id.into_entity(self.world());
         let mut opaque = Opaque::<T>::new(self.world());
         opaque.as_type(id);
         opaque
     }
 
-    /// # See also
-    ///
     pub fn opaque_dyn_id<E>(&self, id_type: E, id_field: E) -> Opaque<'a, T>
     where
         E: Into<Entity> + Copy,
@@ -367,17 +358,17 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    pub fn member_id_unit<Meta: MetaMember>(
+    pub fn member_unit<Meta: MetaMember>(
         self,
-        type_id: impl Into<Entity>,
-        unit: impl Into<Entity>,
+        type_id: impl IntoEntity,
+        unit: impl IntoEntity,
         data: Meta,
     ) -> Self {
         let name = compact_str::format_compact!("{}\0", data.name());
         let world = self.world_ptr_mut();
         let id = *self.id;
-        let type_id = *type_id.into();
-        let unit = *unit.into();
+        let type_id = *type_id.into_entity(world);
+        let unit = *unit.into_entity(world);
 
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr() as *const _,
@@ -411,32 +402,8 @@ impl UntypedComponent<'_> {
     /// (name : &'static str,),
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
-    pub fn member_id(self, type_id: impl Into<Entity>, data: impl MetaMember) -> Self {
-        self.member_id_unit(type_id, 0, data)
-    }
-
-    /// Add member.
-    ///
-    /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name : &'static str,),
-    /// (name: &'static str, count: i32),
-    /// (name: &'static str, count: i32, offset: i32)
-    pub fn member<T: ComponentId>(self, data: impl MetaMember) -> Self {
-        self.member_id(T::get_id(self.world()), data)
-    }
-
-    /// Add member with unit.
-    ///
-    /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name : &'static str,),
-    /// (name: &'static str, count: i32),
-    /// (name: &'static str, count: i32, offset: i32)
-    pub fn member_unit<T: ComponentId>(
-        self,
-        unit: impl Into<Entity>,
-        data: impl MetaMember,
-    ) -> Self {
-        self.member_id_unit(T::get_id(self.world()), unit, data)
+    pub fn member(self, type_id: impl IntoEntity, data: impl MetaMember) -> Self {
+        self.member_unit(type_id, 0, data)
     }
 
     /// Add member with unit typed.
@@ -446,7 +413,7 @@ impl UntypedComponent<'_> {
     /// (name: &'static str, count: i32),
     /// (name: &'static str, count: i32, offset: i32)
     pub fn member_unit_type<T: ComponentId, U: ComponentId>(self, data: impl MetaMember) -> Self {
-        self.member_id_unit(T::get_id(self.world()), U::get_id(self.world()), data)
+        self.member_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
 
     //TODO
@@ -541,7 +508,7 @@ impl UntypedComponent<'_> {
 
         mr.value.min = min;
         mr.value.max = max;
-        me.modified::<flecs::meta::MemberRanges>();
+        me.modified(flecs::meta::MemberRanges::ID);
         self
     }
 
@@ -563,7 +530,7 @@ impl UntypedComponent<'_> {
 
         mr.warning.min = min;
         mr.warning.max = max;
-        me.modified::<flecs::meta::MemberRanges>();
+        me.modified(flecs::meta::MemberRanges::ID);
         self
     }
 
@@ -585,7 +552,7 @@ impl UntypedComponent<'_> {
 
         mr.error.min = min;
         mr.error.max = max;
-        me.modified::<flecs::meta::MemberRanges>();
+        me.modified(flecs::meta::MemberRanges::ID);
         self
     }
 }

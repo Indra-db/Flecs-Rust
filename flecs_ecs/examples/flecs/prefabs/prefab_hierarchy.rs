@@ -9,12 +9,12 @@ fn main() {
 
     // Create a prefab hierarchy.
     let spaceship = world.prefab_named("SpaceShip");
-    world.prefab_named("Engine").child_of_id(spaceship);
-    world.prefab_named("Cockpit").child_of_id(spaceship);
+    world.prefab_named("Engine").child_of(spaceship);
+    world.prefab_named("Cockpit").child_of(spaceship);
 
     // Instantiate the prefab. This also creates an Engine and Cockpit child
     // for the instance.
-    let inst = world.entity_named("my_spaceship").is_a_id(spaceship);
+    let inst = world.entity_named("my_spaceship").is_a(spaceship);
 
     // Because of the IsA relationship, the instance now has the Engine and Cockpit
     // children of the prefab. This means that the instance can look up the Engine

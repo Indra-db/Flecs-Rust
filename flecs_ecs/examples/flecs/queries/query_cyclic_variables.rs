@@ -15,11 +15,11 @@ fn main() {
     let john = world.entity_named("John");
     let jane = world.entity_named("Jane");
 
-    bob.add_first::<Likes>(alice);
-    alice.add_first::<Likes>(bob);
-    john.add_first::<Likes>(jane);
-    jane.add_first::<Likes>(john);
-    bob.add_first::<Likes>(jane); // inserting a bit of drama
+    bob.add((id::<Likes>(), alice));
+    alice.add((id::<Likes>(), bob));
+    john.add((id::<Likes>(), jane));
+    jane.add((id::<Likes>(), john));
+    bob.add((id::<Likes>(), jane)); // inserting a bit of drama
 
     // The following rule will only return entities that have a cyclic Likes
     // relationship- that is they must both like each other.
@@ -37,10 +37,10 @@ fn main() {
 
     let rule = world
         .query::<()>()
-        .with_first_name::<&Likes>("$Y")
-        .set_src_name("$X")
-        .with_first_name::<&Likes>("$X")
-        .set_src_name("$Y")
+        .with((id::<Likes>(), "$Y"))
+        .set_src("$X")
+        .with((id::<Likes>(), "$X"))
+        .set_src("$Y")
         .build();
 
     // Lookup the index of the variables. This will let us quickly lookup their

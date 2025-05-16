@@ -97,7 +97,11 @@ fn test_enum() {
     // Register the TypeWithEnum component
     world.component::<TypeWithEnum>().meta();
 
-    assert!(world.component::<TypeWithEnum>().has::<flecs::meta::Type>());
+    assert!(
+        world
+            .component::<TypeWithEnum>()
+            .has(id::<flecs::meta::Type>())
+    );
 
     // Create a new entity
     let e = world
@@ -134,7 +138,7 @@ fn test_type_w_string() {
     assert!(
         world
             .component::<TypeWithString>()
-            .has::<flecs::meta::Type>()
+            .has(id::<flecs::meta::Type>())
     );
 
     // Create a new entity
@@ -167,7 +171,7 @@ fn test_type_w_vec_string() {
     assert!(
         world
             .component::<TypeWithVecString>()
-            .has::<flecs::meta::Type>()
+            .has(id::<flecs::meta::Type>())
     );
 
     // Create a new entity

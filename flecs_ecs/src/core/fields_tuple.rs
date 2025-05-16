@@ -4,20 +4,13 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-// Not sure if this has any value, but keeping it here for food for thought.
-// pub struct ArrayElement {
-//     pub ptr: *mut u8,
-//     pub index: i8,
-//     pub is_ref: bool,
-// }
-
 #[doc(hidden)]
 pub struct IsAnyArray {
     pub a_ref: bool, //e.g. singleton
     pub a_row: bool, //e.g. sparse
 }
 
-pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
+pub struct ComponentsFieldData<T: FieldsTuple, const LEN: usize> {
     pub array_components: [*mut u8; LEN],
     pub is_ref_array_components: [bool; LEN],
     pub is_row_array_components: [bool; LEN],
@@ -26,13 +19,13 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     _marker: PhantomData<T>,
 }
 
-pub trait ComponentPointers<T: QueryTuple> {
+pub trait ComponentFieldPointers<T: FieldsTuple> {
     fn new(iter: &sys::ecs_iter_t) -> Self;
 
     fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_>;
 }
 
-impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
+impl<T: FieldsTuple, const LEN: usize> ComponentFieldPointers<T> for ComponentsFieldData<T, LEN> {
     fn new(iter: &sys::ecs_iter_t) -> Self {
         let mut array_components = [core::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
@@ -89,17 +82,13 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     }
 }
 
-struct Singleton<T>(T);
-
-pub trait IterableTypeOperation {
+pub trait IterableTypeFieldOperation {
     type CastType;
     type ActualType<'w>;
     type SliceType<'w>;
     type OnlyType: ComponentOrPairId;
     type OnlyPairType: ComponentId;
-    const ONE: i32 = 1;
-
-    fn populate_term(term: &mut sys::ecs_term_t);
+    const IS_IMMUTABLE: bool;
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a>;
 
@@ -110,7 +99,7 @@ pub trait IterableTypeOperation {
     ) -> Self::ActualType<'a>;
 }
 
-impl<T> IterableTypeOperation for &T
+impl<T> IterableTypeFieldOperation for &T
 where
     T: ComponentOrPairId,
 {
@@ -119,10 +108,7 @@ where
     type SliceType<'w> = &'w [<T as ComponentOrPairId>::CastType];
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
-    }
+    const IS_IMMUTABLE: bool = true;
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -145,7 +131,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for &mut T
+impl<T> IterableTypeFieldOperation for &mut T
 where
     T: ComponentOrPairId,
 {
@@ -154,10 +140,7 @@ where
     type SliceType<'w> = &'w mut [<T as ComponentOrPairId>::CastType];
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as i16;
-    }
+    const IS_IMMUTABLE: bool = false;
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -180,7 +163,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for Option<&T>
+impl<T> IterableTypeFieldOperation for Option<&T>
 where
     T: ComponentOrPairId,
 {
@@ -189,11 +172,7 @@ where
     type SliceType<'w> = Option<&'w [<T as ComponentOrPairId>::CastType]>;
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
-        term.oper = OperKind::Optional as i16;
-    }
+    const IS_IMMUTABLE: bool = true;
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -220,7 +199,7 @@ where
     }
 }
 
-impl<T> IterableTypeOperation for Option<&mut T>
+impl<T> IterableTypeFieldOperation for Option<&mut T>
 where
     T: ComponentOrPairId,
 {
@@ -229,11 +208,7 @@ where
     type SliceType<'w> = Option<&'w mut [<T as ComponentOrPairId>::CastType]>;
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
-
-    fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::InOut as i16;
-        term.oper = OperKind::Optional as i16;
-    }
+    const IS_IMMUTABLE: bool = false;
 
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
@@ -260,8 +235,8 @@ where
     }
 }
 
-pub trait QueryTuple: Sized {
-    type Pointers: ComponentPointers<Self>;
+pub trait FieldsTuple: Sized {
+    type Pointers: ComponentFieldPointers<Self>;
     type TupleType<'a>;
     const CONTAINS_ANY_TAG_TERM: bool;
     const COUNT: i32;
@@ -271,16 +246,6 @@ pub trait QueryTuple: Sized {
     }
 
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>);
-
-    fn register_ids_descriptor(world: *mut sys::ecs_world_t, desc: &mut sys::ecs_query_desc_t) {
-        Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
-    }
-
-    fn register_ids_descriptor_at(
-        world: *mut sys::ecs_world_t,
-        terms: &mut [sys::ecs_term_t],
-        index: &mut usize,
-    );
 
     fn populate_array_ptrs(
         it: &sys::ecs_iter_t,
@@ -315,11 +280,11 @@ pub trait QueryTuple: Sized {
 /////////////////////
 
 #[rustfmt::skip]
-impl<A> QueryTuple for A
+impl<A> FieldsTuple for A
 where
-    A: IterableTypeOperation,
+    A: IterableTypeFieldOperation,
 { 
-    type Pointers = ComponentsData<A, 1>;
+    type Pointers = ComponentsFieldData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
     const COUNT : i32 = 1;
@@ -355,22 +320,9 @@ where
             } else { true }
         }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
-        query.with(id);
+        query.with_id(id);
         let term = query.current_term_mut();
-        A::populate_term(term);
 
-    }
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn register_ids_descriptor_at(
-        world: *mut sys::ecs_world_t,
-        terms: &mut [sys::ecs_term_t],
-        index: &mut usize,
-    ) {
-        let world = unsafe { WorldRef::from_ptr(world) };
-        terms[*index].id = <A::OnlyType as ComponentOrPairId>::get_id(world);
-        A::populate_term(&mut terms[*index]);
-        *index += 1;
     }
 
     fn populate_array_ptrs(
@@ -389,6 +341,7 @@ where
             components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
+
         IsAnyArray {
             a_ref: is_ref[0],
             a_row: is_row[0],
@@ -400,6 +353,7 @@ where
         components: &mut [*mut u8],
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
+
         components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
     }
 
@@ -516,14 +470,14 @@ macro_rules! tuple_count {
 
 macro_rules! impl_iterable {
     ($($t:ident),*) => {
-        impl<$($t: IterableTypeOperation),*> QueryTuple for ($($t,)*) {
+        impl<$($t: IterableTypeFieldOperation),*> FieldsTuple for ($($t,)*) {
             type TupleType<'w> = ($(
                 $t::ActualType<'w>,
             )*);
 
             const CONTAINS_ANY_TAG_TERM: bool = $(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG ||)* false;
 
-            type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
+            type Pointers = ComponentsFieldData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
 
             fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
@@ -559,16 +513,10 @@ macro_rules! impl_iterable {
                         } else { true }
                     }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
 
-                    query.with(id);
+                    query.with_id(id);
                     let term = query.current_term_mut();
-                    $t::populate_term(term);
 
                 )*
-            }
-
-            #[allow(unused)]
-            fn register_ids_descriptor_at(world: *mut sys::ecs_world_t, terms: &mut [sys::ecs_term_t], index: &mut usize) {
-                $( $t::register_ids_descriptor_at(world, terms, index); )*
             }
 
             #[allow(unused)]
@@ -593,6 +541,7 @@ macro_rules! impl_iterable {
                             unsafe { ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8 };
                         is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
                     }
+
                     any_ref |= is_ref[index as usize];
                     any_row |= is_row[index as usize];
                     index += 1;
@@ -613,6 +562,7 @@ macro_rules! impl_iterable {
                     ecs_assert!(unsafe { *it.sources.add(index as usize) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index as usize] =
                         unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
+
                     index += 1;
                 )*
 

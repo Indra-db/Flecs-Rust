@@ -1,6 +1,7 @@
 mod id_operations;
 mod inout_oper;
 mod into_component_id;
+mod into_entity;
 mod into_id;
 mod into_table;
 mod query_api;
@@ -10,6 +11,7 @@ mod world_provider;
 pub use id_operations::*;
 pub use inout_oper::*;
 pub use into_component_id::*;
+pub use into_entity::*;
 pub use into_id::*;
 pub use into_table::*;
 pub use query_api::*;
@@ -70,7 +72,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
@@ -120,7 +121,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
@@ -182,7 +182,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
@@ -227,7 +226,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),

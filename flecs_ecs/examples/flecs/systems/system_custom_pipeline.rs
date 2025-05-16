@@ -20,15 +20,15 @@ fn main() {
     // DependsOn relationship.
     let pipeline = world
         .pipeline()
-        .with_id(flecs::system::System::ID)
-        .with::<&Physics>()
+        .with(flecs::system::System::ID)
+        .with(id::<&Physics>())
         .build();
 
     // Configure the world to use the custom pipeline
-    world.set_pipeline_id(pipeline.entity());
+    world.set_pipeline(pipeline.entity());
 
     // Create system with Physics tag
-    world.system::<()>().kind::<Physics>().run(|mut it| {
+    world.system::<()>().kind(id::<Physics>()).run(|mut it| {
         while it.next() {
             println!("System with Physics ran!");
         }

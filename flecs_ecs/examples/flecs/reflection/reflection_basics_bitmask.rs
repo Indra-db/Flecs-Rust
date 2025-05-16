@@ -63,7 +63,9 @@ fn main() {
         .bit("lettuce", Toppings::LETTUCE)
         .bit("tomato", Toppings::TOMATO);
 
-    world.component::<Sandwich>().member::<Toppings>("toppings");
+    world
+        .component::<Sandwich>()
+        .member(id::<Toppings>(), "toppings");
 
     // Create entity with Sandwich
     let e = world.entity().set(Sandwich {
