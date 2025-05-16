@@ -117,7 +117,7 @@ pub trait FromAccessArg<T> {
     fn from_access_arg<'a>(value: T, world: impl WorldProvider<'a>) -> Access;
 }
 
-/// “Only single‐target inputs” (Entity, &str, Id<T>, …)
+/// “Only single‐target inputs” (Entity, &str, `Id<T>`, …)
 pub trait SingleAccessArg: Sized
 where
     Access: FromAccessArg<Self>,

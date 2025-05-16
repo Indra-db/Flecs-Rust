@@ -80,9 +80,6 @@ where
     /// # Arguments
     ///
     /// * `world` - The world to create the observer in
-    ///
-    /// See also
-    ///
     pub fn new(world: &'a World) -> Self {
         let mut obj = Self {
             desc: Default::default(),
@@ -102,9 +99,6 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `name` - The name of the observer
-    ///
-    /// See also
-    ///
     pub fn new_named(world: &'a World, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -136,9 +130,6 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
@@ -158,9 +149,6 @@ where
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
     /// * `term_index` - The index of the term to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
@@ -567,8 +555,6 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `component`: The component used to sort.
     /// * `compare`: The compare function used to sort the components.
-    /// # See also
-    ///
     fn order_by_id(
         &mut self,
         component: impl Into<Entity>,

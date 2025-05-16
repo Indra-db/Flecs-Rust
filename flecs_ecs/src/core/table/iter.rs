@@ -375,9 +375,6 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
-    ///
-    /// # See also
-    ///
     // TODO? in C++ API there is a mutable and immutable version of this function
     // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
     pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
@@ -847,7 +844,10 @@ where
     /// let salad = world.entity();
     /// let alice = world.entity().add((likes, pizza)).add((likes, salad));
     ///
-    /// let q = world.query::<()>().with((likes,id::<flecs::Any>())).build();
+    /// let q = world
+    ///     .query::<()>()
+    ///     .with((likes, id::<flecs::Any>()))
+    ///     .build();
     ///
     /// let mut count = 0;
     /// let mut tgt_count = 0;

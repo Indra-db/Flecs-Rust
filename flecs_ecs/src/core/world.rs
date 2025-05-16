@@ -998,8 +998,6 @@ impl World {
     ///
     /// assert!(e.has(id::<Position>()));
     /// ```
-    /// # See also
-    ///
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
     }
@@ -1818,7 +1816,6 @@ impl World {
     /// Returns: The reference singleton component.
     ///
     /// # See also
-    ///
     // #[doc(alias = "world::get_ref")]
     // #[inline(always)]
     pub fn get_ref<T>(&self) -> CachedRef<T::CastType>

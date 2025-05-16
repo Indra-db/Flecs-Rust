@@ -414,9 +414,6 @@ where
     type BuiltType = Alert<'a>;
 
     /// Build the `AlertBuilder` into an Alert
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let alert = Alert::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

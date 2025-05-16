@@ -72,7 +72,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
@@ -122,7 +121,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
@@ -184,7 +182,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
@@ -229,7 +226,6 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        ///
         unsafe extern "C-unwind" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),

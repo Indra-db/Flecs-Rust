@@ -951,7 +951,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity.add((likes,apple)).add((likes,banana));
+    /// entity.add((likes, apple)).add((likes, banana));
     ///
     /// assert_eq!(entity.target_id_count(likes), Some(2));
     /// ```
@@ -992,7 +992,9 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity.add((id::<Likes>(), apple)).add((id::<Likes>(), banana));
+    /// entity
+    ///     .add((id::<Likes>(), apple))
+    ///     .add((id::<Likes>(), banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```
@@ -1737,7 +1739,6 @@ impl<'a> EntityView<'a> {
     /// * The entity for which the target has been found.
     ///
     /// # See also
-    ///
     // TODO needs to be made safe
     pub(crate) fn target_for_first<First: ComponentId + DataComponent>(
         &self,

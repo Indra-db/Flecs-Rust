@@ -354,8 +354,6 @@ impl<'a> TableOperations<'a> for TableRange<'a> {
     }
 
     /// Returns the table range count
-    ///
-    /// # See also
     fn count(&self) -> i32 {
         self.count
     }

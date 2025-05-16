@@ -193,8 +193,6 @@ impl EcsSerializer for sys::ecs_serializer_t {
 
 /// Register opaque type interface
 impl<'a, T: 'static> Component<'a, T> {
-    /// # See also
-    ///
     pub fn opaque_func<Func>(&self, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T>,
@@ -205,8 +203,6 @@ impl<'a, T: 'static> Component<'a, T> {
         self
     }
 
-    /// # See also
-    ///
     pub fn opaque_func_id<Func, Elem>(&self, id: impl Into<Entity>, func: Func) -> &Self
     where
         Func: FnOnce(WorldRef<'a>) -> Opaque<'a, T, Elem>,
@@ -217,8 +213,6 @@ impl<'a, T: 'static> Component<'a, T> {
         self
     }
 
-    /// # See also
-    ///
     pub fn opaque<Type: 'static>(&self) -> Opaque<'a, T> {
         let id = self.world().component_id_map::<Type>();
         let mut opaque = Opaque::<T>::new(self.world());
@@ -226,8 +220,6 @@ impl<'a, T: 'static> Component<'a, T> {
         opaque
     }
 
-    /// # See also
-    ///
     pub fn opaque_id(&self, id: impl IntoEntity) -> Opaque<'a, T> {
         let id = id.into_entity(self.world());
         let mut opaque = Opaque::<T>::new(self.world());
@@ -235,8 +227,6 @@ impl<'a, T: 'static> Component<'a, T> {
         opaque
     }
 
-    /// # See also
-    ///
     pub fn opaque_dyn_id<E>(&self, id_type: E, id_field: E) -> Opaque<'a, T>
     where
         E: Into<Entity> + Copy,

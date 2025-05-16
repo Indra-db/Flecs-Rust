@@ -161,9 +161,6 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the binding context.
-    ///
-    /// # See also
-    ///
     unsafe extern "C-unwind" fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {

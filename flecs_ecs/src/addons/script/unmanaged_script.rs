@@ -151,8 +151,6 @@ impl<'a> Script<'a> {
     /// # Returns
     ///
     /// True if success, false if failed.
-    ///
-    /// # See also
     pub fn run_file(world: impl WorldProvider<'a>, filename: &str) -> bool {
         let filename = compact_str::format_compact!("{}\0", filename);
         let world_ptr = world.world_ptr_mut();

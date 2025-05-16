@@ -409,7 +409,6 @@ pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row:
 /// * `T`: The type to get the `OperKind` for.
 ///
 /// # See also
-///
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }

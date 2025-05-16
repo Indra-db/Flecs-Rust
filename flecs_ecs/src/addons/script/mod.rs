@@ -71,8 +71,6 @@ impl World {
     /// # Returns
     ///
     /// True if success, false if failed.
-    ///
-    /// # See also
     pub fn run_file(&self, filename: &str) -> bool {
         Script::run_file(self, filename)
     }

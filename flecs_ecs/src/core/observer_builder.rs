@@ -27,9 +27,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     /// # Arguments
     ///
     /// * `world` - The world to create the observer in
-    ///
-    /// See also
-    ///
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let desc = Default::default();
         let mut obj = Self {
@@ -54,9 +51,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * `world` - The world to create the observer in
     /// * `name` - The name of the observer
-    ///
-    /// See also
-    ///
     pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -107,9 +101,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
-    ///
-    /// See also
-    ///
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: sys::ecs_observer_desc_t,
@@ -205,9 +196,6 @@ where
     type BuiltType = Observer<'a>;
 
     /// Build the `observer_builder` into an `observer`
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let observer = Observer::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

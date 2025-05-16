@@ -275,8 +275,6 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     }
 
     /// The self flag indicates the term identifier itself is used
-    /// # See also
-    ///
     fn self_(&mut self) -> &mut Self {
         self.term_ref_mut().id |= ECS_SELF;
         self

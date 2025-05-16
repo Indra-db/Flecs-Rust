@@ -211,9 +211,6 @@ where
     type BuiltType = System<'a>;
 
     /// Build the `system_builder` into an system
-    ///
-    /// See also
-    ///
     fn build(&mut self) -> Self::BuiltType {
         let system = System::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {

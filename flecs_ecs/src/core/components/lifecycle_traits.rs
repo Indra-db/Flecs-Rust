@@ -104,9 +104,6 @@ pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_ho
 /// * `ptr` - pointer to the memory to be initialized
 /// * `count` - number of elements to be initialized
 /// * `_type_info` - type info for the type to be initialized
-///
-/// # See also
-///
 extern "C-unwind" fn ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
@@ -133,9 +130,6 @@ extern "C-unwind" fn ctor<T: Default>(
 /// * `ptr` - pointer to the memory to be destructed
 /// * `count` - number of elements to be destructed
 /// * `_type_info` - type info for the type to be destructed
-///
-/// # See also
-///
 extern "C-unwind" fn dtor<T>(
     ptr: *mut c_void,
     count: i32,
@@ -156,9 +150,6 @@ extern "C-unwind" fn dtor<T>(
 
 /// This is the generic copy for trivial types
 /// It will copy the memory
-///
-/// # See also
-///
 extern "C-unwind" fn copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -184,9 +175,6 @@ extern "C-unwind" fn copy<T: Clone>(
 
 /// This is the generic copy for trivial types
 /// It will copy the memory
-///
-/// # See also
-///
 extern "C-unwind" fn copy_ctor<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
@@ -234,9 +222,6 @@ extern "C-unwind" fn panic_copy<T>(
 
 /// This is the generic move for non-trivial types
 /// It will move the memory
-///
-/// # See also
-///
 extern "C-unwind" fn move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
@@ -265,9 +250,6 @@ extern "C-unwind" fn move_dtor<T>(
 }
 
 /// a move to from src to dest where src will not be used anymore and dest is in control of the drop.
-///
-/// # See also
-///
 extern "C-unwind" fn move_ctor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,

@@ -492,8 +492,6 @@ impl<'a> EntityView<'a> {
     ///     // ...
     /// });
     /// ```
-    /// # See also
-    ///
     pub fn set_pair<First, Second>(
         self,
         data: <(First, Second) as ComponentOrPairId>::CastType,
@@ -772,8 +770,6 @@ impl<'a> EntityView<'a> {
     ///
     /// - `first`: The first element of the pair.
     /// - `func`: The function to call.///
-    /// # See also
-    ///
     pub fn with_first(self, first: impl IntoEntity, func: impl FnOnce()) -> Self {
         unsafe {
             let prev = sys::ecs_set_with(
