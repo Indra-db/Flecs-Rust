@@ -98,9 +98,9 @@ fn main() {
         .query::<()>()
         .with(id::<RangedUnit>())
         .with(id::<&Platoon>())
-        .set_second_name("$platoon")
+        .set_second("$platoon")
         .with((id::<Player>(), "$player"))
-        .set_src_name("$platoon")
+        .set_src("$platoon")
         .build();
 
     // If we would iterate this query it would return all ranged units for all

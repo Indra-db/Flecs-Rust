@@ -594,8 +594,8 @@ fn flecs_query_docs_compile_test() {
     let q = world
         .query::<()>()
         .term()
-        .set_first_name("Eats")
-        .set_second_name("Apples")
+        .set_first("Eats")
+        .set_second("Apples")
         .build();
 
     let q = world
@@ -776,11 +776,11 @@ fn flecs_query_docs_compile_test() {
         .without((id::<flecs::PredEq>(), id::<Bar>()))
         // $this == "Foo"
         .with(id::<flecs::PredEq>())
-        .set_second_name("Foo")
+        .set_second("Foo")
         .flags(sys::EcsIsName)
         // $this ~= "Fo"
         .with(id::<flecs::PredMatch>())
-        .set_second_name("Fo")
+        .set_second("Fo")
         .flags(sys::EcsIsName)
         .build();
 
@@ -890,9 +890,9 @@ fn flecs_query_docs_compile_test() {
     let q = world
         .query::<(&SimConfig, &SimTime)>()
         .term_at(0)
-        .set_src_name("cfg")
+        .set_src("cfg")
         .term_at(1)
-        .set_src_name("game")
+        .set_src("game")
         .build();
 
     let q = world
@@ -1038,9 +1038,9 @@ fn flecs_query_docs_compile_test() {
         .query::<()>()
         .with(id::<SpaceShip>())
         .with(id::<DockedTo>())
-        .set_second_name("$Location")
+        .set_second("$Location")
         .with(id::<Planet>())
-        .set_src_name("$Location")
+        .set_src("$Location")
         .build();
 
     let q = world
@@ -1208,7 +1208,7 @@ fn flecs_query_docs_compile_test() {
     let q = world
         .query::<()>()
         .with(id::<LocatedIn>())
-        .set_second_name("$Place")
+        .set_second("$Place")
         .build();
 
     #[derive(Component)]
@@ -1225,9 +1225,9 @@ fn flecs_query_docs_compile_test() {
     let q = world
         .query::<()>()
         .with(id::<LocatedIn>())
-        .set_second_name("$Place")
+        .set_second("$Place")
         .with(id::<City>())
-        .set_src_name("$Place")
+        .set_src("$Place")
         .build();
 
     let tree = world.entity();

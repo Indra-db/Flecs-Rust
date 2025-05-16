@@ -387,7 +387,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * initialize it with entity id or
     /// * initialize it with name. If name starts with a $
-    /// the name is interpreted as a variable.
+    ///   the name is interpreted as a variable.
     ///
     /// # Arguments
     ///
@@ -421,10 +421,10 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * initialize with id or
     /// * initialize it with name. If name starts with a $
-    /// the name is interpreted as a variable.
-    fn set_first<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    ///   the name is interpreted as a variable.
+    fn set_first<Q: SingleAccessArg>(&mut self, id: Q) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access: FromAccessArg<Q>,
     {
         check_term_access_validity(self);
         let access = Access::from_access_arg(id, self.world());
@@ -457,7 +457,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * initialize with id or
     /// * initialize it with name. If name starts with a $
-    /// the name is interpreted as a variable.
+    ///   the name is interpreted as a variable.
     fn set_second<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
     where
         Access: FromAccessArg<T>,

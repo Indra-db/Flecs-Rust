@@ -1,7 +1,7 @@
 use crate::core::*;
 
-/// Extracts the Ecs ID from_access_arg a type.
-/// Extension trait from_access_arg [`Into<Entity>`] for tuples that implement `Into<Entity>`.
+/// Extracts the Ecs ID a type.
+/// Extension trait [`Into<Entity>`] for tuples that implement `Into<Entity>`.
 /// These types can be [`Id`], [`IdView`], [`Entity`], [`EntityView`], [`Component`], [`UntypedComponent`].
 pub trait IntoId: InternalIntoEntity
 where
@@ -131,13 +131,9 @@ where
 {
 }
 
-// impl<T: ComponentId> SingleAccessArg for &crate::core::utility::id::Id<T> {}
-// impl<T: ComponentId> SingleAccessArg for &mut crate::core::utility::id::Id<T> {}
 impl SingleAccessArg for &'static str {}
-//impl<T: IntoEntity> SingleAccessArg for T where Access: FromAccessArg<T> {}
+impl<T: IntoEntity> SingleAccessArg for T where Access: FromAccessArg<T> {}
 
-impl<T: ComponentId> AccessArg for &crate::core::utility::id::Id<T> {}
-impl<T: ComponentId> AccessArg for &mut crate::core::utility::id::Id<T> {}
 impl AccessArg for &'static str {}
 impl<T: IntoId> AccessArg for T where Access: FromAccessArg<T> {}
 impl AccessArg for (&'static str, &'static str) {}

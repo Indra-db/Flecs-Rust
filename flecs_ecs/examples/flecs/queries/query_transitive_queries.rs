@@ -129,7 +129,7 @@ fn main() {
         .with(id::<&Person>())
         .with((id::<LocatedIn>(), "$Location"))
         .with(id::<&Country>())
-        .set_src_name("$Location")
+        .set_src("$Location")
         .build();
 
     // Lookup the index of the variable. This will let us quickly lookup its

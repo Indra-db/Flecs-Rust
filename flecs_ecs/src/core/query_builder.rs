@@ -337,18 +337,19 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
                 self.init_current_term(ecs_pair(*rel, *target));
             }
             AccessTarget::Name(name) => {
-                self.set_first(name);
+                self.set_first::<&'static str>(name);
             }
             AccessTarget::PairName(rel, target) => {
-                self.set_first(rel).set_second(target);
+                self.set_first::<&'static str>(rel)
+                    .set_second::<&'static str>(target);
             }
             AccessTarget::PairEntityName(rel, target) => {
                 self.init_current_term(rel);
-                self.set_second(target);
+                self.set_second::<&'static str>(target);
             }
             AccessTarget::PairNameEntity(rel, target) => {
-                self.set_first(rel);
-                self.set_second(target);
+                self.set_first::<&'static str>(rel);
+                self.set_second::<Entity>(target);
             }
         }
 

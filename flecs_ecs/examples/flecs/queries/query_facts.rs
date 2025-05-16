@@ -50,9 +50,9 @@ fn main() {
     let mut friends = world
         .query::<()>()
         .with((id::<Likes>(), "$Y"))
-        .set_src_name("$X")
+        .set_src("$X")
         .with((id::<Likes>(), "$X"))
-        .set_src_name("$Y")
+        .set_src("$Y")
         .build();
 
     let x_var = friends.find_var("X").unwrap();

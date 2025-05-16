@@ -4843,7 +4843,7 @@ fn query_builder_var_src_w_prefixed_name() {
     let r = world
         .query::<()>()
         .with(id::<&Foo>())
-        .set_src_name("$Var")
+        .set_src("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4868,7 +4868,7 @@ fn query_builder_var_first_w_prefixed_name() {
         .query::<()>()
         .with(id::<&Foo>())
         .term()
-        .set_first_name("$Var")
+        .set_first("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4894,7 +4894,7 @@ fn query_builder_var_second_w_prefixed_name() {
     let r = world
         .query::<()>()
         .with(id::<&Foo>())
-        .set_second_name("$Var")
+        .set_second("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
