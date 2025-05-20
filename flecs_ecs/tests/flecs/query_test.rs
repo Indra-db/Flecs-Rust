@@ -43,12 +43,9 @@ fn query_iter_stage() {
         world.entity().set(Comp(i));
     }
 
-    world
-        .system::<&Comp>()
-        .multi_threaded()
-        .each_entity(move |e, _| {
-            query.iter_stage(e).each(|_vel| {});
-        });
+    world.system::<&Comp>().par_each_entity(move |e, _| {
+        query.iter_stage(e).each(|_vel| {});
+    });
 
     world.progress();
 }
