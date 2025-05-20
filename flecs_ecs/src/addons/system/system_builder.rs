@@ -2,7 +2,7 @@
 
 use crate::addons::system::*;
 use crate::core::internals::*;
-use crate::core::private::internal_SystemAPI;
+use crate::core::private::{internal_ParSystemAPI, internal_SystemAPI};
 use crate::core::*;
 
 /// `SystemBuilder` is a builder pattern for creating systems.
@@ -147,21 +147,6 @@ where
         self.kind(enum_id)
     }
 
-    /// Specify whether system can run on multiple threads.
-    pub fn multi_threaded(&mut self) -> &mut Self {
-        self.desc.multi_threaded = true;
-        self
-    }
-
-    /// Set the system to not run on multiple threads.
-    ///
-    /// This is the default behavior. If not previously set through [`SystemBuilder::multi_threaded()`],
-    /// then there is no need to call this method.
-    pub fn disable_multi_threaded(&mut self) -> &mut Self {
-        self.desc.multi_threaded = false;
-        self
-    }
-
     /// Specify whether system should be ran in staged context.
     ///
     /// # Arguments
@@ -228,3 +213,4 @@ impl<'a, T: QueryTuple> WorldProvider<'a> for SystemBuilder<'a, T> {
 }
 
 implement_reactor_api!((), SystemBuilder<'a, T>);
+implement_reactor_par_api!((), SystemBuilder<'a, T>);

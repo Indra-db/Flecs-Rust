@@ -1775,8 +1775,7 @@ fn system_multithread_system_w_query_each() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_entity(move |e, p| {
+        .par_each_entity(move |e, p| {
             let world = e.world();
             q.iter_stage(world).each(|v| {
                 p.x += v.x;
@@ -1807,8 +1806,7 @@ fn system_multithread_system_w_query_each_w_iter() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_iter(move |it, _i, p| {
+        .par_each_iter(move |it, _i, p| {
             q.iter_stage(it.world()).each(|v| {
                 p.x += v.x;
                 p.y += v.y;
@@ -1837,8 +1835,7 @@ fn system_multithread_system_w_query_each_w_world() {
     let q = world.new_query::<&Velocity>();
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_iter(move |it, _i, p| {
+        .par_each_iter(move |it, _i, p| {
             let world = it.world();
             q.iter_stage(world).each(|v| {
                 p.x += v.x;
@@ -1869,8 +1866,7 @@ fn system_multithread_system_w_query_iter() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_entity(move |e, p| {
+        .par_each_entity(move |e, p| {
             q.iter_stage(e).run(|mut it| {
                 while it.next() {
                     let v = it.field::<Velocity>(0).unwrap();
@@ -1906,8 +1902,7 @@ fn system_multithread_system_w_query_iter_w_iter() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_iter(move |it, _i, p| {
+        .par_each_iter(move |it, _i, p| {
             q.iter_stage(it.world()).run(|mut it| {
                 while it.next() {
                     let v = it.field::<Velocity>(0).unwrap();
@@ -1942,8 +1937,7 @@ fn system_multithread_system_w_query_iter_w_world() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_iter(move |it, _i, p| {
+        .par_each_iter(move |it, _i, p| {
             q.iter_stage(it.world()).run(|mut it| {
                 while it.next() {
                     let v = it.field::<Velocity>(0).unwrap();
