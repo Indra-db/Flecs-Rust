@@ -2607,7 +2607,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab(&self) -> EntityView {
         let result = EntityView::new(self);
-        result.add(flecs::Prefab::ID);
+        result.add(id::<flecs::Prefab>());
         result
     }
 
@@ -2628,7 +2628,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
-        result.add(ECS_PREFAB);
+        unsafe { result.add_id_unchecked(ECS_PREFAB) };
         result
     }
 

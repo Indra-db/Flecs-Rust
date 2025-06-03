@@ -116,7 +116,7 @@ impl World {
         self.set_scope(prev_scope);
 
         // Initialise component for the module and add Module tag
-        module.add(flecs::Module::ID);
+        unsafe { module.add_id_unchecked(flecs::Module::ID) };
 
         module
     }
