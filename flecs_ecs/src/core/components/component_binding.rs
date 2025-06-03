@@ -1,7 +1,7 @@
 #![doc(hidden)]
 use core::ffi::c_void;
 
-type EcsCtxFreeT = unsafe extern "C-unwind" fn(*mut c_void);
+type EcsCtxFreeT = unsafe extern "C" fn(*mut c_void);
 
 pub(crate) struct ComponentBindingCtx {
     pub(crate) on_add: Option<*mut c_void>,

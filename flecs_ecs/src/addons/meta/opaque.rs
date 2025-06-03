@@ -61,8 +61,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn serialize(&mut self, func: impl SerializeFn<T>) -> &mut Self {
         self.desc.type_.serialize = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&flecs_ecs_sys::ecs_serializer_t, &T) -> i32,
-                unsafe extern "C-unwind" fn(
+                extern "C" fn(&flecs_ecs_sys::ecs_serializer_t, &T) -> i32,
+                unsafe extern "C" fn(
                     *const flecs_ecs_sys::ecs_serializer_t,
                     *const core::ffi::c_void,
                 ) -> i32,
@@ -75,8 +75,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_bool(&mut self, func: impl AssignBoolFn<T>) -> &mut Self {
         self.desc.type_.assign_bool = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, bool),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, bool),
+                extern "C" fn(&mut T, bool),
+                unsafe extern "C" fn(*mut core::ffi::c_void, bool),
             >(func.to_extern_fn())
         });
         self
@@ -86,8 +86,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_char(&mut self, func: impl AssignCharFn<T>) -> &mut Self {
         self.desc.type_.assign_char = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, core::ffi::c_char),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, core::ffi::c_char),
+                extern "C" fn(&mut T, core::ffi::c_char),
+                unsafe extern "C" fn(*mut core::ffi::c_void, core::ffi::c_char),
             >(func.to_extern_fn())
         });
         self
@@ -97,8 +97,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_int(&mut self, func: impl AssignIntFn<T>) -> &mut Self {
         self.desc.type_.assign_int = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, i64),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, i64),
+                extern "C" fn(&mut T, i64),
+                unsafe extern "C" fn(*mut core::ffi::c_void, i64),
             >(func.to_extern_fn())
         });
         self
@@ -108,8 +108,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_uint(&mut self, func: impl AssignUIntFn<T>) -> &mut Self {
         self.desc.type_.assign_uint = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, u64),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, u64),
+                extern "C" fn(&mut T, u64),
+                unsafe extern "C" fn(*mut core::ffi::c_void, u64),
             >(func.to_extern_fn())
         });
         self
@@ -119,8 +119,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_float(&mut self, func: impl AssignFloatFn<T>) -> &mut Self {
         self.desc.type_.assign_float = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, f32),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, f64),
+                extern "C" fn(&mut T, f32),
+                unsafe extern "C" fn(*mut core::ffi::c_void, f64),
             >(func.to_extern_fn())
         });
         self
@@ -130,8 +130,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_string(&mut self, func: impl AssignStringFn<T>) -> &mut Self {
         self.desc.type_.assign_string = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, *const core::ffi::c_char),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, *const core::ffi::c_char),
+                extern "C" fn(&mut T, *const core::ffi::c_char),
+                unsafe extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_char),
             >(func.to_extern_fn())
         });
         self
@@ -141,12 +141,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_entity(&mut self, func: impl AssignEntityFn<'a, T>) -> &mut Self {
         self.desc.type_.assign_entity = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&'a mut T, WorldRef<'a>, Entity),
-                unsafe extern "C-unwind" fn(
-                    *mut core::ffi::c_void,
-                    *mut flecs_ecs_sys::ecs_world_t,
-                    u64,
-                ),
+                extern "C" fn(&'a mut T, WorldRef<'a>, Entity),
+                unsafe extern "C" fn(*mut core::ffi::c_void, *mut flecs_ecs_sys::ecs_world_t, u64),
             >(func.to_extern_fn())
         });
         self
@@ -156,8 +152,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn assign_null(&mut self, func: impl AssignNullFn<T>) -> &mut Self {
         self.desc.type_.assign_null = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void),
+                extern "C" fn(&mut T),
+                unsafe extern "C" fn(*mut core::ffi::c_void),
             >(func.to_extern_fn())
         });
         self
@@ -167,8 +163,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn clear(&mut self, func: impl ClearFn<T>) -> &mut Self {
         self.desc.type_.clear = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void),
+                extern "C" fn(&mut T),
+                unsafe extern "C" fn(*mut core::ffi::c_void),
             >(func.to_extern_fn())
         });
         self
@@ -178,11 +174,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn ensure_element(&mut self, func: impl EnsureElementFn<T, ElemType>) -> &mut Self {
         self.desc.type_.ensure_element = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, usize) -> &mut ElemType,
-                unsafe extern "C-unwind" fn(
-                    *mut core::ffi::c_void,
-                    usize,
-                ) -> *mut core::ffi::c_void,
+                extern "C" fn(&mut T, usize) -> &mut ElemType,
+                unsafe extern "C" fn(*mut core::ffi::c_void, usize) -> *mut core::ffi::c_void,
             >(func.to_extern_fn())
         });
         self
@@ -192,8 +185,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn ensure_member(&mut self, func: impl EnsureMemberFn<T>) -> &mut Self {
         self.desc.type_.ensure_member = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, *const core::ffi::c_char) -> *mut core::ffi::c_void,
-                unsafe extern "C-unwind" fn(
+                extern "C" fn(&mut T, *const core::ffi::c_char) -> *mut core::ffi::c_void,
+                unsafe extern "C" fn(
                     *mut core::ffi::c_void,
                     *const core::ffi::c_char,
                 ) -> *mut core::ffi::c_void,
@@ -206,8 +199,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn count(&mut self, func: impl CountFn<T>) -> &mut Self {
         self.desc.type_.count = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T) -> usize,
-                unsafe extern "C-unwind" fn(*const core::ffi::c_void) -> usize,
+                extern "C" fn(&mut T) -> usize,
+                unsafe extern "C" fn(*const core::ffi::c_void) -> usize,
             >(func.to_extern_fn())
         });
         self
@@ -217,8 +210,8 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     pub fn resize(&mut self, func: impl ResizeFn<T>) -> &mut Self {
         self.desc.type_.resize = Some(unsafe {
             core::mem::transmute::<
-                extern "C-unwind" fn(&mut T, usize),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, usize),
+                extern "C" fn(&mut T, usize),
+                unsafe extern "C" fn(*mut core::ffi::c_void, usize),
             >(func.to_extern_fn())
         });
         self

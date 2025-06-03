@@ -127,7 +127,7 @@ where
         self.query.as_ptr()
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         sys::ecs_query_next
     }
 }

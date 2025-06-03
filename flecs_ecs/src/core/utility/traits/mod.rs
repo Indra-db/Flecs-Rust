@@ -57,13 +57,10 @@ pub mod private {
 
         fn set_desc_callback(
             &mut self,
-            callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+            callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
         );
 
-        fn set_desc_run(
-            &mut self,
-            callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
-        );
+        fn set_desc_run(&mut self, callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>);
 
         /// Callback of the each functionality
         ///
@@ -72,7 +69,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
+        unsafe extern "C" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
             Func: FnMut(T::TupleType<'_>),
@@ -121,7 +118,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
+        unsafe extern "C" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
             iter: *mut sys::ecs_iter_t,
         ) where
             Func: FnMut(EntityView, T::TupleType<'_>),
@@ -182,7 +179,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        unsafe extern "C" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
         {
@@ -226,7 +223,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
+        unsafe extern "C" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),
         {
@@ -244,7 +241,7 @@ pub mod private {
             }
         }
 
-        extern "C-unwind" fn free_callback<Func>(ptr: *mut c_void) {
+        extern "C" fn free_callback<Func>(ptr: *mut c_void) {
             unsafe {
                 drop(Box::from_raw(ptr as *mut Func));
             };
@@ -270,7 +267,7 @@ pub mod private {
         // }
 
         // /// drop the binding context
-        // extern "C-unwind" fn binding_ctx_drop(ptr: *mut c_void) {
+        // extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
         //     let ptr_struct: *mut ReactorBindingType = ptr as *mut ReactorBindingType;
         //     unsafe {
         //         ptr::drop_in_place(ptr_struct);
