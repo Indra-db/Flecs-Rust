@@ -29,22 +29,31 @@ impl<'a> EntityView<'a> {
         let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
+        const {
+            if T::IS_PAIR
+                && T::IS_TYPED
+                && !T::IF_ID_IS_DEFAULT
+                && T::IS_TYPED_SECOND
+                && !T::IF_ID_IS_DEFAULT_SECOND
+                && !<T as IntoId>::IS_TYPE_TAG
+            {
+                panic!("none implement default, use `set_pair` instead to ensure valid data");
+            }
+        }
+
+        const {
+            if !T::IS_PAIR && T::IS_TYPED && !T::IF_ID_IS_DEFAULT && !<T as IntoId>::IS_TYPE_TAG {
+                panic!("Default hook not implemented for non ZST type");
+            }
+        }
+
         if !T::IS_PAIR {
             if !T::IS_TYPED {
                 check_add_id_validity(world, id);
-            } else if !T::IF_ID_IS_DEFAULT && !<T as IntoId>::IS_TYPE_TAG {
-                panic!("Default hook not implemented for non ZST type");
             }
         } else if T::IS_TYPED {
             if !T::IF_ID_IS_DEFAULT {
-                if T::IS_TYPED_SECOND {
-                    if !T::IF_ID_IS_DEFAULT_SECOND && !<T as IntoId>::IS_TYPE_TAG {
-                        //for some reason const panic doesn't work here
-                        panic!(
-                            "none implement default, use `set_pair` instead to ensure valid data"
-                        )
-                    }
-                } else {
+                if !T::IS_TYPED_SECOND {
                     check_add_id_validity(world, id);
                 }
             }
