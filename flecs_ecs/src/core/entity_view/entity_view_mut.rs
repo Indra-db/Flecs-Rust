@@ -52,10 +52,8 @@ impl<'a> EntityView<'a> {
                 check_add_id_validity(world, id);
             }
         } else if T::IS_TYPED {
-            if !T::IF_ID_IS_DEFAULT {
-                if !T::IS_TYPED_SECOND {
-                    check_add_id_validity(world, id);
-                }
+            if !T::IF_ID_IS_DEFAULT && !T::IS_TYPED_SECOND {
+                check_add_id_validity(world, id);
             }
         } else if T::IS_TYPED_SECOND {
             if !T::IF_ID_IS_DEFAULT_SECOND {
