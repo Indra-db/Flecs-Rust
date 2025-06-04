@@ -209,6 +209,10 @@ where
     let only_type_name = crate::core::get_only_type_name::<T>();
     let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
 
+    // TODO it feels like this should be investigated with the get only type name approach
+    // TODO if it's valid. When two components with the same name, but different module get registered
+    // this still gives id 0, so what's the point of this check?
+
     // If no name was provided first check if a type with the provided
     // symbol was already registered.
     let id = if name.is_null() {
