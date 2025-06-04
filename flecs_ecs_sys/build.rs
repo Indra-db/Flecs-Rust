@@ -72,6 +72,16 @@ fn generate_bindings() {
         .clang_arg("-DFLECS_CUSTOM_BUILD")
         .clang_arg("-DFLECS_CPP");
 
+    #[cfg(feature = "flecs_default_to_uncached_queries")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_DEFAULT_TO_UNCACHED_QUERIES");
+    }
+
+    #[cfg(feature = "flecs_script_math")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_SCRIPT_MATH");
+    }
+
     #[cfg(feature = "flecs_perf_trace")]
     {
         bindings = bindings.clang_arg("-DFLECS_PERF_TRACE");
