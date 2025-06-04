@@ -479,6 +479,55 @@ where
         self.set_multi_threaded(false);
         built
     }
+
+    /// Variant of [`SystemAPI::run`] which allows the system to run in multiple threads
+    fn par_run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run(func);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::run_each`] which allows the system to run in multiple threads
+    fn par_run_each<Func, FuncEach>(
+        &mut self,
+        func: Func,
+        func_each: FuncEach,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        FuncEach: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run_each(func, func_each);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::run_each_entity`] which allows the system to run in multiple threads
+    fn par_run_each_entity<Func, FuncEachEntity>(
+        &mut self,
+        func: Func,
+        func_each_entity: FuncEachEntity,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        FuncEachEntity: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run_each_entity(func, func_each_entity);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
 }
 
 macro_rules! implement_reactor_api {
