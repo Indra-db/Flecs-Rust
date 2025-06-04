@@ -9,7 +9,7 @@ where
     T: QueryTuple,
 {
     iter: sys::ecs_iter_t,
-    iter_next: unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool,
+    iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
     _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -19,7 +19,7 @@ where
 {
     pub fn new(
         iter: sys::ecs_iter_t,
-        iter_next: unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool,
+        iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
     ) -> Self {
         Self {
             iter,
@@ -128,7 +128,7 @@ where
         self.iter.query
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         self.iter_next
     }
 }

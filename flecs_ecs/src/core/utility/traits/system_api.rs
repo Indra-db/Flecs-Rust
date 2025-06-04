@@ -33,7 +33,7 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
         self.set_desc_callback(Some(
-            Self::execute_each::<false, Func> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -56,7 +56,7 @@ where
         self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
         self.set_desc_callback(Some(
-            Self::execute_each_entity::<false, Func> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -119,7 +119,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
 
         self.set_desc_callback(Some(
-            Self::execute_each_iter::<Func> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each_iter::<Func> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -208,9 +208,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
         self.build()
     }
 
@@ -307,9 +305,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
 
         let each_func = Box::new(func_each);
         let each_static_ref = Box::leak(each_func);
@@ -318,7 +314,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
         self.set_desc_callback(Some(
-            Self::execute_each::<true, FuncEach> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -417,9 +413,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
 
         let each_entity_func = Box::new(func_each_entity);
         let each_entity_static_ref = Box::leak(each_entity_func);
@@ -428,7 +422,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
         self.set_desc_callback(Some(
-            Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -473,14 +467,14 @@ macro_rules! implement_reactor_api {
 
             fn set_desc_callback(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
             ) {
                 self.desc.callback = callback;
             }
 
             fn set_desc_run(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
             ) {
                 self.desc.run = callback;
             }
@@ -534,14 +528,14 @@ macro_rules! implement_reactor_api {
 
             fn set_desc_callback(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
             ) {
                 self.desc.callback = callback;
             }
 
             fn set_desc_run(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
             ) {
                 self.desc.run = callback;
             }
