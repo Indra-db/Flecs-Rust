@@ -241,6 +241,11 @@ create_pre_registered_component!(Prefab, ECS_PREFAB);
 create_pre_registered_component!(Disabled, ECS_DISABLED);
 create_pre_registered_component!(NotQueryable, ECS_NOT_QUERYABLE);
 create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
+create_pre_registered_component!(
+    OrderedChildren,
+    ECS_ORDERED_CHILDREN,
+    "Tag that when added to a parent ensures stable order of ecs_children result."
+);
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
 create_pre_registered_component!(Empty, ECS_EMPTY);
@@ -272,6 +277,15 @@ create_pre_registered_component!(
     ECS_FINAL,
     "Component trait. This component cannot be used in an [`IsA`] relationship."
 );
+create_pre_registered_component!(
+    Inheritable,
+    ECS_INHERITABLE,
+    "Component trait. Mark component as inheritable.
+    This is the opposite of Final. This trait can be used to enforce that queries
+    take into account component inheritance before inheritance (IsA) 
+    relationships are added with the component as target."
+);
+
 create_pre_registered_component!(
     PairIsTag,
     ECS_PAIR_IS_TAG,
@@ -433,6 +447,11 @@ create_pre_registered_component!(
     Sparse,
     ECS_SPARSE,
     "Component trait. Configures a component to use sparse storage."
+);
+create_pre_registered_component!(
+    DontFragment,
+    ECS_DONT_FRAGMENT,
+    "Component trait. Mark component as non-fragmenting"
 );
 create_pre_registered_component!(
     Union,
@@ -791,6 +810,7 @@ mod tests {
             assert_eq!(flecs::Reflexive, sys::EcsReflexive);
             assert_eq!(flecs::Symmetric, sys::EcsSymmetric);
             assert_eq!(flecs::Final, sys::EcsFinal);
+            assert_eq!(flecs::Inheritable, sys::EcsInheritable);
             assert_eq!(flecs::PairIsTag, sys::EcsPairIsTag);
             assert_eq!(flecs::Exclusive, sys::EcsExclusive);
             assert_eq!(flecs::Acyclic, sys::EcsAcyclic);

@@ -645,7 +645,7 @@ where
         );
         let query = unsafe { &*query };
         for i in 0..query.term_count {
-            let term = TermRef::new(&query.terms[i as usize]);
+            let term = TermRef::new(unsafe { &*(query.terms.add(i as usize) as *const _) });
             func(&term);
         }
     }
@@ -669,7 +669,7 @@ where
             "query filter is null"
         );
         let query = unsafe { &*query };
-        TermRef::new(&query.terms[index])
+        TermRef::new(unsafe { &*(query.terms.add(index) as *const _) })
     }
 
     /// Get the field count of the current query

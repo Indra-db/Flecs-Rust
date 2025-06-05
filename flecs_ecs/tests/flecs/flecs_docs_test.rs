@@ -425,10 +425,8 @@ fn flecs_query_docs_compile_test() {
 
     // Delete empty archetypes that have been empty for 10 calls to this function.
     world.delete_empty_tables(sys::ecs_delete_empty_tables_desc_t {
-        id: 0,
         clear_generation: 10,
         delete_generation: 0,
-        min_id_count: 0,
         time_budget_seconds: 0.0,
     });
 

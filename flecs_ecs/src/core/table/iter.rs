@@ -184,7 +184,7 @@ where
         let name = compact_str::format_compact!("{}\0", name);
 
         let world = self.world();
-        let rule_query = unsafe { self.iter.priv_.iter.query.query };
+        let rule_query = self.iter.query;
         let var_id = unsafe { sys::ecs_query_find_var(rule_query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
@@ -360,8 +360,8 @@ where
     /// The user to pass the correct index + the index being within bounds + optional data
     /// to be valid.
     ///
-    /// This function should not be used in `each_iter()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// This function should not be used in `each()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each()`, use
     /// `field_at`.
     ///
     /// # Type parameters
@@ -419,8 +419,8 @@ where
     ///
     /// Caller must ensure that the field at `index` is accessible as `T`
     ///
-    /// This function should not be used in `each_iter()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// This function should not be used in `each()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each()`, use
     /// `field_at`.
     ///
     /// # Type parameters
@@ -451,8 +451,8 @@ where
     ///
     /// # Safety
     ///
-    /// This function should not be used in `each_iter()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each_iter()`, use
+    /// This function should not be used in `each()` callbacks, unless it is to
+    /// access a shared field. For access to non-shared fields in `each()`, use
     /// `field_at`.
     ///
     /// # Arguments
@@ -464,7 +464,8 @@ where
     /// Returns an `FieldUntyped` object that can be used to access the field data.
     pub fn field_untyped(&self, index: i8) -> FieldUntyped {
         ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0),
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, index) } != 0,
             FlecsErrorCode::InvalidOperation,
             "cannot .field from .each, use .field_at instead",
         );
@@ -476,7 +477,7 @@ where
         self.field_untyped_internal(index)
     }
 
-    /// Get field data for the specified index.
+    /// Get pointer to field data for the specified index.
     /// Unchecked access is required when a system does not know the type of a field at compile time.
     /// This function may be used to access shared fields when row is set to 0.
     ///
@@ -720,8 +721,9 @@ where
     /// # Safety
     ///
     /// grouped queries only
-    pub fn group_id(&self) -> sys::ecs_id_t {
-        self.iter.group_id
+    // TODO: this should be &self after I upgrade flecs
+    pub fn group_id(&mut self) -> sys::ecs_id_t {
+        unsafe { sys::ecs_iter_get_group(self.iter) }
     }
 
     unsafe fn field_internal<T>(&self, index: i8) -> Option<Field<T>> {

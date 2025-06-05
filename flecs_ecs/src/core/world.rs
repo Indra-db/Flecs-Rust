@@ -1158,6 +1158,22 @@ impl World {
         unsafe { sys::ecs_dim(self.raw_world.as_ptr(), entity_count) };
     }
 
+    /// Free unused memory.
+    ///
+    /// This operation frees allocated memory that is no longer in use by the world.
+    /// Examples of allocations that get cleaned up are:
+    /// - Unused pages in the entity index
+    /// - Component columns
+    /// - Empty tables
+    ///
+    /// Flecs uses allocators internally for speeding up allocations. Allocators are
+    /// not evaluated by this function, which means that the memory reported by the
+    /// OS may not go down. For this reason, this function is most effective when
+    /// combined with FLECS_USE_OS_ALLOC, which disables internal allocators.
+    pub fn shrink_memory(&self) {
+        unsafe { sys::ecs_shrink(self.raw_world.as_ptr()) };
+    }
+
     /// Set the entity range.
     ///
     /// This function limits the range of issued entity IDs between `min` and `max`.
@@ -3572,5 +3588,73 @@ impl World {
     #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }
+    }
+
+    /// Begin exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation ensures that only the thread from which this operation is
+    /// called can access the world. Attempts to access the world from other threads
+    /// will panic.
+    ///
+    /// `exclusive_access_begin()` must be called in pairs with
+    /// `exclusive_access_end()`. Calling `exclusive_access_begin()` from another
+    /// thread without first calling `exclusive_access_end()` will panic.
+    ///
+    /// This operation should only be called once per thread. Calling it multiple
+    /// times for the same thread will cause a panic.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API thread_self_ callback to be set.
+    ///
+    /// # Arguments
+    ///
+    /// * `thread_name` - Name of the thread obtaining exclusive access. Use `c"thread_name"` to pass a C-style string.
+    ///   Required to be a static string for safety reasons.
+    pub fn exclusive_access_begin(&self, thread_name: Option<&'static CStr>) {
+        let name_ptr = thread_name.map_or(std::ptr::null(), |name| name.as_ptr()) as *const i8;
+
+        unsafe {
+            sys::ecs_exclusive_access_begin(self.raw_world.as_ptr(), name_ptr);
+        }
+    }
+
+    /// End exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation must be called from the same thread that called
+    /// `exclusive_access_begin()`. Calling it from a different thread will cause
+    /// a panic.
+    ///
+    /// This operation should be called after `exclusive_access_begin()`. After
+    /// calling this operation, other threads are no longer prevented from mutating
+    /// the world.
+    ///
+    /// When `lock_world` is set to true, no thread will be able to mutate the world
+    /// until `exclusive_access_begin()` is called again. While the world is locked,
+    /// only read-only operations are allowed. For example, `get` without mutable access is allowed,
+    /// but `get` with mutable access is not allowed.
+    ///
+    /// A locked world can be unlocked by calling `exclusive_access_end()` again with
+    /// `lock_world` set to false. Note that this only works for locked worlds; if
+    /// `exclusive_access_end()` is called on a world that has exclusive thread
+    /// access from a different thread, a panic will occur.
+    ///
+    /// # Arguments
+    ///
+    /// * `lock_world` - When true, any mutations on the world will be blocked.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API thread_self_ callback to be set.
+    pub fn exclusive_access_end(&self, lock_world: bool) {
+        unsafe {
+            sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);
+        }
     }
 }
