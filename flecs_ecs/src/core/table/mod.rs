@@ -124,9 +124,12 @@ pub trait TableOperations<'a>: IntoTable {
     /// Get array with entity ids
     fn entities(&self) -> &[Entity] {
         let table = self.table_ptr_mut();
-        let count = self.count();
         let entities = unsafe { sys::ecs_table_entities(table) };
-        todo!("into slice");
+        if entities.is_null() {
+            return &[];
+        }
+        let count = self.count();
+        unsafe { core::slice::from_raw_parts(entities as *const Entity, count as usize) }
     }
 
     fn clear_entities(&self) {
@@ -346,10 +349,10 @@ pub trait TableOperations<'a>: IntoTable {
     }
 
     /// get table records array
-    fn records(&self) -> sys::ecs_table_records_t {
-        todo!("custom datatype rerturn");
+    fn records(&self) -> &[sys::ecs_table_record_t] {
+        let records = unsafe { sys::flecs_table_records(self.table_ptr_mut()) };
 
-        unsafe { sys::flecs_table_records(self.table_ptr_mut()) }
+        unsafe { core::slice::from_raw_parts(records.array, records.count as usize) }
     }
 
     /// get table id
