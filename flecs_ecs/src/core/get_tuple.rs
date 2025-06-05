@@ -243,12 +243,12 @@ where
                }
             } else {
                 // if there is no matching pair for (r,*), try just r
-                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
             }
         } else if A::IS_IMMUTABLE { 
-            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
          } else {
-           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
          };
          
         
@@ -402,12 +402,12 @@ macro_rules! impl_get_tuple {
                            }
                         } else {
                             // if there is no matching pair for (r,*), try just r
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
                         }
                     } else if $t::IS_IMMUTABLE {
-                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
                      } else {
-                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
                      };
 
 

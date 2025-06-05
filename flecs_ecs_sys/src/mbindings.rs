@@ -10,7 +10,6 @@ unsafe extern "C" {
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         record: *const ecs_record_t,
-        table: *mut ecs_table_t,
         id: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }
@@ -19,7 +18,6 @@ unsafe extern "C" {
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         record: *const ecs_record_t,
-        table: *mut ecs_table_t,
         id: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }

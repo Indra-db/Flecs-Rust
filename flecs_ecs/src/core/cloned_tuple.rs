@@ -150,7 +150,7 @@ where
         let entity = *entity;
         let mut has_all_components = true;
 
-        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,<A::OnlyType as ComponentOrPairId>::get_id(world)) };
+        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,<A::OnlyType as ComponentOrPairId>::get_id(world)) };
 
             if component_ptr.is_null() {
                 components[0] = core::ptr::null_mut();
@@ -248,7 +248,7 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, table, id) };
+                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
