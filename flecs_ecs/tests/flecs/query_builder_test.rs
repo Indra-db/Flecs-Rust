@@ -2208,7 +2208,7 @@ fn query_builder_group_by_iter_one() {
     let mut e5_found = false;
     let mut count = 0;
 
-    q.iterable().set_group(tgt_b).each_iter(|it, size, ()| {
+    q.iterable().set_group(tgt_b).each_iter(|mut it, size, ()| {
         let e = it.entity(size).unwrap();
         assert_eq!(it.group_id(), tgt_b);
 
@@ -2259,7 +2259,7 @@ fn query_builder_group_by_iter_one_template() {
 
     q.iterable()
         .set_group(id::<TagB>())
-        .each_iter(|it, size, ()| {
+        .each_iter(|mut it, size, ()| {
             let e = it.entity(size).unwrap();
             assert_eq!(it.group_id(), world.id_view_from(id::<TagB>()));
 
@@ -2310,7 +2310,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let e5_found = Cell::new(false);
     let e6_found = Cell::new(false);
 
-    let func = |it: TableIter<false>, size: usize, ()| {
+    let func = |mut it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size).unwrap();
         if it.group_id() == group_id.get() {
             if e == e1 {
@@ -2378,7 +2378,7 @@ fn query_builder_group_by_default_func_w_id() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: TableIter<false>, size: usize, ()| {
+    q.each_iter(|mut it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2433,7 +2433,7 @@ fn query_builder_group_by_default_func_w_type() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: TableIter<false>, size: usize, ()| {
+    q.each_iter(|mut it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);
@@ -2522,7 +2522,7 @@ fn query_builder_group_by_callbacks() {
     let mut e3_found = false;
     let mut count = 0;
 
-    q.each_iter(|it: TableIter<false>, size: usize, ()| {
+    q.each_iter(|mut it: TableIter<false>, size: usize, ()| {
         let e = it.entity(size).unwrap();
         if e == e1 {
             assert_eq!(it.group_id(), tgt_c);

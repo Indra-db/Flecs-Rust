@@ -1,9 +1,11 @@
 //! Table is a wrapper class that gives direct access to the component arrays of a table, the table data
 
 mod field;
+mod flags;
 mod iter;
 
 pub use field::{Field, FieldUntyped};
+pub use flags::TableFlags;
 pub use iter::{TableIter, TableRowIter};
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
@@ -108,7 +110,30 @@ pub trait TableOperations<'a>: IntoTable {
     fn world(&self) -> WorldRef<'a>;
 
     /// Returns the table count
-    fn count(&self) -> i32;
+    fn count(&self) -> i32 {
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_count(table) }
+    }
+
+    /// Get number of allocated elements in table
+    fn size(&self) -> i32 {
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_size(table) }
+    }
+
+    /// Get array with entity ids
+    fn entities(&self) -> &[Entity] {
+        let table = self.table_ptr_mut();
+        let count = self.count();
+        let entities = unsafe { sys::ecs_table_entities(table) };
+        todo!("into slice");
+    }
+
+    fn clear_entities(&self) {
+        let world = self.world().world_ptr_mut();
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_clear_entities(world, table) };
+    }
 
     /// Converts table type to string
     fn to_string(&self) -> Option<String> {
@@ -318,6 +343,32 @@ pub trait TableOperations<'a>: IntoTable {
                 *rel.into_entity(world),
             )
         }
+    }
+
+    /// get table records array
+    fn records(&self) -> sys::ecs_table_records_t {
+        todo!("custom datatype rerturn");
+
+        unsafe { sys::flecs_table_records(self.table_ptr_mut()) }
+    }
+
+    /// get table id
+    fn id(&self) -> u64 {
+        unsafe { sys::flecs_table_id(self.table_ptr_mut()) }
+    }
+
+    /// lock table
+    fn lock(&self) {
+        unsafe { sys::ecs_table_lock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
+    }
+
+    /// unlock table
+    fn unlock(&self) {
+        unsafe { sys::ecs_table_unlock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
+    }
+
+    fn has_flags(&self, flags: TableFlags) -> bool {
+        unsafe { sys::ecs_table_has_flags(self.table_ptr_mut(), flags.bits()) }
     }
 }
 
