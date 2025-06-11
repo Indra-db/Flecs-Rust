@@ -2544,6 +2544,35 @@ impl World {
         EntityView::new_named(self, name)
     }
 
+    /// Create an entity that's associated with a name with a custom sep and root sep.
+    /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
+    /// length of 24 bytes: `"hi this is 24 bytes long"`
+    ///
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by the sep you use.
+    /// For example: "`Foo-Bar`". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity_named_scoped("Foo-Bar", "-", "::");
+    /// assert_eq!(entity.get_name(), Some("Bar".to_string()));
+    /// assert_eq!(entity.path(), Some("::Foo-Bar".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity()`]
+    /// * [`World::entity_named_cstr()`]
+    pub fn entity_named_scoped(&self, name: &str, sep: &str, root_sep: &str) -> EntityView {
+        EntityView::new_named_scoped(self, name, sep, root_sep)
+    }
+
     /// Create an entity that's associated with a name.
     /// The name must be a valid C str. No extra allocation is done.
     ///

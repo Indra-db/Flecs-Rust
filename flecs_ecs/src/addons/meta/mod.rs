@@ -307,7 +307,7 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
             "failed to create entity"
         );
 
-        let pair = ecs_pair(flecs::meta::Constant::ID, *id.into());
+        let pair = ecs_pair(flecs::Constant::ID, *id.into());
 
         unsafe {
             let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut i32 as *mut T;
@@ -344,7 +344,7 @@ impl UntypedComponent<'_> {
             sys::ecs_set_id(
                 world,
                 eid,
-                ecs_pair(flecs::meta::Constant::ID, flecs::meta::I32::ID),
+                ecs_pair(flecs::Constant::ID, flecs::meta::I32::ID),
                 core::mem::size_of::<i32>(),
                 &value as *const i32 as *const c_void,
             );
@@ -470,7 +470,7 @@ impl UntypedComponent<'_> {
             sys::ecs_set_id(
                 world,
                 eid,
-                ecs_pair(flecs::meta::Constant::ID, flecs::meta::U32::ID),
+                ecs_pair(flecs::Constant::ID, flecs::meta::U32::ID),
                 core::mem::size_of::<u32>(),
                 &value as *const u32 as *const c_void,
             );

@@ -160,8 +160,12 @@ pub trait TableOperations<'a>: IntoTable {
     /// Returns the type of the table
     fn archetype(&self) -> Archetype<'a> {
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
-        let slice = unsafe {
-            core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+        let slice = if unsafe { !(*type_vec).array.is_null() && (*type_vec).count != 0 } {
+            unsafe {
+                core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+            }
+        } else {
+            &[]
         };
         let world = self.world();
         // Safety: we already know table_ptr is NonNull

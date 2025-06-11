@@ -111,6 +111,7 @@ macro_rules! create_pre_registered_extern_component {
         impl ComponentId for $struct_name {
             type UnderlyingType = $struct_name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl WorldProvider<'a>,

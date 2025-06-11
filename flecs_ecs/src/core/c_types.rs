@@ -531,6 +531,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
+type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -598,6 +599,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
+type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {

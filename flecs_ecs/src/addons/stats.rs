@@ -65,6 +65,8 @@ where
 {
     type UnderlyingType = sys::EcsWorldStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -126,6 +128,8 @@ where
 {
     type UnderlyingType = sys::EcsPipelineStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -187,6 +191,8 @@ where
 {
     type UnderlyingType = sys::EcsWorldSummary;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -248,6 +254,8 @@ where
 {
     type UnderlyingType = sys::EcsSystemStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -306,6 +314,8 @@ where
 {
     type UnderlyingType = Stats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);

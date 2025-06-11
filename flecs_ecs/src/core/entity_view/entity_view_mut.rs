@@ -907,7 +907,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::get_ref()`]
     /// * [`EntityView::get_ref_first()`]
     /// * [`EntityView::get_ref_second()`]
-    //TODO: can this be shrunk to just one function like with add,add_id
     pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -1020,5 +1019,64 @@ impl<'a> EntityView<'a> {
     /// entity object goes out of scope.
     pub fn destruct(self) {
         unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
+    }
+
+    /// Set child order.
+    /// Changes the order of children as returned by [`EntityView::each_child()`].
+    /// Only applicable to entities with the [`flecs::OrderedChildren`] trait.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Default)]
+    /// struct Position {
+    ///    x: f32,
+    ///    y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let parent = world.entity().add(flecs::OrderedChildren);
+    /// let child_a = world.entity().child_of(parent).add(id::<Position>());
+    /// let child_b = world.entity().child_of(parent).add(id::<Position>());
+    /// let child_c = world.entity().child_of(parent).add(id::<Position>());
+    ///
+    /// let mut vec : Vec<Entity> = vec![];
+    /// parent.each_child(|e| {
+    ///    vec.push(*e);
+    /// });
+    ///
+    /// assert!(vec[0] == child_a);
+    /// assert!(vec[1] == child_b);
+    /// assert!(vec[2] == child_c);
+    ///
+    /// let children = [*child_c, *child_a, *child_b];
+    /// parent.set_child_order(&children);
+    ///
+    /// vec.clear();
+    ///
+    /// parent.each_child(|e| {
+    ///    vec.push(*e);
+    /// });
+    ///
+    /// assert!(vec[0] == child_c);
+    /// assert!(vec[1] == child_a);
+    /// assert!(vec[2] == child_b);
+    ///
+    /// ```
+    pub fn set_child_order(self, children: &[Entity]) -> Self {
+        let world_ptr = self.world.world_ptr_mut();
+        let child_count = children.len() as i32;
+        let children_ptr = if child_count > 0 {
+            children.as_ptr() as *const sys::ecs_entity_t
+        } else {
+            core::ptr::null()
+        };
+
+        unsafe {
+            sys::ecs_set_child_order(world_ptr, *self.id, children_ptr, child_count);
+        }
+        self
     }
 }

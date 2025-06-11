@@ -72,6 +72,7 @@ macro_rules! create_pre_registered_component {
         impl ComponentId for $struct_name {
             type UnderlyingType = $struct_name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl WorldProvider<'a>,
@@ -249,6 +250,7 @@ create_pre_registered_component!(
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
 create_pre_registered_component!(Empty, ECS_EMPTY);
+create_pre_registered_component!(Constant, ECS_CONSTANT);
 
 // Component traits
 create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
@@ -509,7 +511,6 @@ pub mod meta {
     create_pre_registered_component!(F64, ECS_F64_T);
     create_pre_registered_component!(String, ECS_STRING_T);
     create_pre_registered_component!(Entity, ECS_ENTITY_T);
-    create_pre_registered_component!(Constant, ECS_CONSTANT);
     create_pre_registered_component!(Quantity, ECS_QUANTITY);
     create_pre_registered_component!(EcsOpaque, ECS_OPAQUE);
 
@@ -606,6 +607,7 @@ impl OnComponentRegistration for () {
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
     type UnderlyingType = ();
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
 
     #[inline(always)]
     fn index() -> u32 {
@@ -796,9 +798,11 @@ mod tests {
             assert_eq!(flecs::Disabled, sys::EcsDisabled);
             assert_eq!(flecs::NotQueryable, sys::EcsNotQueryable);
             assert_eq!(flecs::SlotOf, sys::EcsSlotOf);
+            assert_eq!(flecs::OrderedChildren, sys::EcsOrderedChildren);
             //assert_eq!(flecs::Flag, sys::EcsFlag);
             assert_eq!(flecs::Monitor, sys::EcsMonitor);
             assert_eq!(flecs::Empty, sys::EcsEmpty);
+            assert_eq!(flecs::Constant, sys::EcsConstant);
 
             // Component traits
             assert_eq!(flecs::Wildcard, sys::EcsWildcard);
@@ -881,6 +885,11 @@ mod tests {
                 sys::EcsSparse,
                 "EcsSparse (C) != Sparse (Rust)",
             );
+            assert_eq!(
+                flecs::DontFragment,
+                sys::EcsDontFragment,
+                "EcsDontFragment (C) != DontFragment (Rust)",
+            );
             assert_eq!(flecs::Union, sys::EcsUnion, "EcsUnion (C) != Union (Rust)");
 
             // Builtin predicate for comparing entity ids
@@ -928,7 +937,6 @@ mod tests {
                 assert_eq!(flecs::meta::F64, sys::FLECS_IDecs_f64_tID_);
                 assert_eq!(flecs::meta::String, sys::FLECS_IDecs_string_tID_);
                 assert_eq!(flecs::meta::Entity, sys::FLECS_IDecs_entity_tID_);
-                assert_eq!(flecs::meta::Constant, sys::EcsConstant);
                 assert_eq!(flecs::meta::Quantity, sys::EcsQuantity);
                 assert_eq!(flecs::meta::EcsOpaque, sys::FLECS_IDEcsOpaqueID_);
 
