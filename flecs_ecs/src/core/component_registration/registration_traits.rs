@@ -135,6 +135,8 @@ pub trait ComponentId:
     type UnderlyingType: ComponentId;
     #[doc(hidden)]
     type UnderlyingEnumType: ComponentId + EnumComponentInfo;
+    #[doc(hidden)]
+    type UnderlyingTypeOfEnum: ComponentId;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     #[doc(hidden)]
@@ -592,8 +594,8 @@ impl<T: ComponentId> ComponentId for &'static T {
     }
 
     type UnderlyingType = T::UnderlyingType;
-
     type UnderlyingEnumType = T::UnderlyingEnumType;
+    type UnderlyingTypeOfEnum = T::UnderlyingTypeOfEnum;
 }
 
 #[doc(hidden)]
@@ -604,8 +606,8 @@ impl<T: ComponentId> ComponentId for &'static mut T {
     }
 
     type UnderlyingType = T::UnderlyingType;
-
     type UnderlyingEnumType = T::UnderlyingEnumType;
+    type UnderlyingTypeOfEnum = T::UnderlyingTypeOfEnum;
 }
 
 #[doc(hidden)]

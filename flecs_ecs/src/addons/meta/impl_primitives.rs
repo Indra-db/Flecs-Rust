@@ -31,6 +31,7 @@ macro_rules! impl_component_traits_primitive_type {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -121,6 +122,7 @@ impl ComponentInfo for EntityView<'static> {
 impl ComponentId for EntityView<'static> {
     type UnderlyingType = EntityView<'static>;
     type UnderlyingEnumType = NoneEnum;
+    type UnderlyingTypeOfEnum = NoneEnum;
 
     fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
         register_lifecycle_actions::<EntityView<'static>>(type_hooks);
@@ -185,6 +187,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for String {
     type UnderlyingType = String;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
 
     #[inline(always)]
     fn index() -> u32 {

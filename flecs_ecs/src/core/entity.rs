@@ -76,6 +76,7 @@ impl Entity {
 // impl ComponentId for Entity {
 //     type UnderlyingType = Entity;
 //     type UnderlyingEnumType = NoneEnum;
+type UnderlyingTypeOfEnum = NoneEnum;
 
 //     #[inline(always)]
 //     fn index() -> u32 {

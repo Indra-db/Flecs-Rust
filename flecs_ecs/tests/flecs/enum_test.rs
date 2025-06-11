@@ -105,8 +105,11 @@ pub enum EnumClassWithLargeConstant {
 #[test]
 fn enum_standard_enum_reflection() {
     let world = World::new();
-    let entity = world.component::<StandardEnum>().as_entity();
-    assert_eq!(entity.path().unwrap(), "::flecs::enum_test::StandardEnum");
+    let entity = world.entity_from_enum(StandardEnum::Red);
+    assert_eq!(
+        entity.path().unwrap(),
+        "::flecs::enum_test::StandardEnum::Red"
+    );
 
     let entity2 = world.entity().set(StandardEnum::Blue);
 
@@ -118,10 +121,7 @@ fn enum_standard_enum_reflection() {
         assert_eq!(*enum_comp2, StandardEnum::Red);
     });
     //assert!(*enum_comp == StandardEnum::Red);
-    // assert_eq!(
-    //     *entity.to_constant::<StandardEnum>().unwrap(),
-    //     StandardEnum::Red
-    // );
+    assert_eq!(entity.to_constant::<StandardEnum>(), StandardEnum::Red);
 
     let redd = StandardEnum::Red;
 

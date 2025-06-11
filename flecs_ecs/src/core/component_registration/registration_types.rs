@@ -59,6 +59,7 @@ impl ComponentInfo for i32 {
 impl ComponentId for i32 {
     type UnderlyingType = i32;
     type UnderlyingEnumType = NoneEnum;
+type UnderlyingTypeOfEnum = NoneEnum;
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);

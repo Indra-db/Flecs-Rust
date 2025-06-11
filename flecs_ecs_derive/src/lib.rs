@@ -93,8 +93,8 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             ));
         }
         Data::Enum(_) => {
-            let is_tag = generate_tag_trait(!has_repr_c);
-            if !has_repr_c {
+            let is_tag = generate_tag_trait(!has_repr_c.0);
+            if !has_repr_c.0 {
                 generated_impls.push(impl_cached_component_data_struct(
                     &mut input,
                     true,
@@ -105,6 +105,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 generated_impls.push(impl_cached_component_data_enum(
                     &mut input,
                     has_on_registration,
+                    has_repr_c.1,
                 ));
             }
         }
@@ -113,7 +114,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     input.generics.make_where_clause();
 
-    let meta_impl = impl_meta(&input, has_repr_c, input.ident.clone());
+    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone());
 
     // Combine the generated code with the original struct definition
     let output = quote! {
@@ -578,7 +579,7 @@ fn impl_cached_component_data_struct(
         {
             type UnderlyingType = #name #type_generics;
             type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-
+            type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
             #component_info_impl
         }
     };
@@ -688,6 +689,7 @@ fn generate_variant_match_arm(
 fn impl_cached_component_data_enum(
     ast: &mut syn::DeriveInput,
     has_on_registration: bool,
+    underlying_enum_type: TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -738,7 +740,7 @@ fn impl_cached_component_data_enum(
         }
 
         fn enum_index(&self) -> usize {
-            const _: () = assert!(core::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
+            //const _: () = assert!(core::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
             match self {
                 #(#variant_index_arms),*
             }
@@ -805,6 +807,7 @@ fn impl_cached_component_data_enum(
             impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
                 type UnderlyingType = #name;
                 type UnderlyingEnumType = #name;
+                type UnderlyingTypeOfEnum = #underlying_enum_type;
 
                 #component_info_impl
             }
@@ -901,7 +904,9 @@ fn impl_cached_component_data_enum(
     }
 }
 
-fn check_repr_c(input: &syn::DeriveInput) -> bool {
+fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
+    let mut token_stream = TokenStream::new();
+
     for attr in &input.attrs {
         if attr.path().is_ident("repr") {
             let result = attr.parse_args_with(|input: ParseStream| {
@@ -909,8 +914,30 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
                 while !input.is_empty() {
                     let path = input.call(syn::Path::parse_mod_style)?;
 
-                    if path.is_ident("C") || path.is_ident("i32") || path.is_ident("u32") {
+                    if path.is_ident("C") {
                         found_repr_c = true;
+
+                        // get the underlying ident type as tokenstream
+                        token_stream = quote! {
+                            i32
+                        };
+                        break;
+                    } else if path.is_ident("i8")
+                        || path.is_ident("u8")
+                        || path.is_ident("i16")
+                        || path.is_ident("u16")
+                        || path.is_ident("i32")
+                        || path.is_ident("u32")
+                        || path.is_ident("i64")
+                        || path.is_ident("u64")
+                    {
+                        found_repr_c = true;
+
+                        // get the underlying ident type as tokenstream
+                        let ident = path.get_ident().cloned().unwrap();
+                        token_stream = quote! {
+                            #ident
+                        };
                         break;
                     }
                 }
@@ -919,13 +946,16 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
 
             if let Ok(found_repr_c) = result {
                 if found_repr_c {
-                    return true; // Return true immediately if `#[repr(C)]` is found
+                    return (true, token_stream); // Return true immediately if `#[repr(C)]` is found
                 }
             }
         }
     }
 
-    false // Return false if no `#[repr(C)]` is found
+    (
+        false,
+        quote! { flecs_ecs::core::component_registration::NoneEnum },
+    ) // Return false if no `#[repr(C)]` and variants is found
 }
 
 struct Tuples {

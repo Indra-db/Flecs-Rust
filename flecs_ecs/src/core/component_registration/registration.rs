@@ -28,8 +28,7 @@ where
     };
 
     if T::IS_ENUM {
-        //TODO no full enum support yet with different types
-        let underlying_enum_type_id = world.component_id::<i32>();
+        let underlying_enum_type_id = world.component_id::<T::UnderlyingTypeOfEnum>();
         register_enum_data::<T>(world_ptr, id, *underlying_enum_type_id);
     }
     id
@@ -92,8 +91,8 @@ pub(crate) fn register_enum_data<T>(
                 T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_item.enum_index()),
                 name.as_ptr(),
                 &mut index as *mut usize as *mut c_void,
-                underlying_type_id, //hardcoded
-                4,                  //hardcoded
+                underlying_type_id,
+                core::mem::size_of::<T::UnderlyingTypeOfEnum>(),
             )
         };
         if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
