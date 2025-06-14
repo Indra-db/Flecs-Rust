@@ -26,3 +26,4 @@ mod query_rust_test;
 mod query_test;
 mod system_test;
 mod world_test;
+//mod module_test;
