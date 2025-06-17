@@ -13,7 +13,7 @@ fn compare_position(_e1: Entity, p1: &Position, _e2: Entity, p2: &Position) -> i
 }
 
 fn print_query(query: &Query<&Position>) {
-    query.each_entity(|entity, pos| println!("{:?}", pos));
+    query.each_entity(|entity, pos| println!("{pos:?}"));
 }
 
 fn main() {
@@ -39,7 +39,7 @@ fn main() {
         .system::<&Position>()
         .order_by(compare_position)
         .each_entity(|entity, pos| {
-            println!("{:?}", pos);
+            println!("{pos:?}");
         });
 
     println!();

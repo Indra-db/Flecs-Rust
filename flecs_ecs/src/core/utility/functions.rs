@@ -478,7 +478,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
         // This can fail if the C string is not valid UTF-8, so handle errors appropriately
         #[allow(clippy::print_stdout)]
         match c_str.to_str() {
-            Ok(s) => println!("{}", s),
+            Ok(s) => println!("{s}"),
             Err(_) => println!("Failed to convert C string to Rust string"),
         }
     }
@@ -569,7 +569,7 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
             result.push(combined);
             skip_next = true; // Skip the next part since it's already used
         } else {
-            result.push(format!("{} : {}", part, id));
+            result.push(format!("{part} : {id}"));
         }
         i_ids += 1;
     }

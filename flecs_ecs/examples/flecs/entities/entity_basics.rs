@@ -35,7 +35,7 @@ fn main() {
     // - or use Option to handle the individual component missing.
     bob.get::<Option<&Position>>(|pos| {
         if let Some(pos) = pos {
-            println!("Bob's position: {:?}", pos);
+            println!("Bob's position: {pos:?}");
         }
     });
 

@@ -49,7 +49,7 @@ fn main() {
     query.each(|(pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("[{:?}]", pos);
+        println!("[{pos:?}]");
     });
 
     // Run is a bit more verbose, but allows for more control over how entities

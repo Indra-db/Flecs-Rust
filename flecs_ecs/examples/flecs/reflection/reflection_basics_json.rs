@@ -26,7 +26,7 @@ fn main() {
     // Convert position component to JSON string
     e.get::<&Position>(|p| {
         let expr: String = world.to_json::<Position>(p);
-        println!("Position: {}", expr);
+        println!("Position: {expr}");
     });
 
     // Output:
