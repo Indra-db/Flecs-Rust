@@ -42,12 +42,12 @@ fn main() {
     // Because of the IsA relationship, the instance now shares the Defense
     // component with the prefab, and can be retrieved as a regular component:
     inst.try_get::<&Defence>(|d_inst| {
-        println!("{:?}", d_inst);
+        println!("{d_inst:?}");
         // Because the component is shared, changing the value on the prefab will
         // also change the value for the instance:
         // this is safe during a table lock because it also has the component and won't cause the table to move.
         spaceship.set(Defence { value: 100.0 });
-        println!("after set: {:?}", d_inst);
+        println!("after set: {d_inst:?}");
     });
 
     // Prefab components can be iterated like regular components:

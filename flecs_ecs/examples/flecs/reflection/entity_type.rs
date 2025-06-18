@@ -27,7 +27,7 @@ fn main() {
     // Convert TypeWithEntity component to flecs expression string
     e.get::<&TypeWithEntity>(|p| {
         let expr: String = world.to_expr(p);
-        println!("TypeWithEntity: {}", expr);
+        println!("TypeWithEntity: {expr}");
     });
 
     // Output:

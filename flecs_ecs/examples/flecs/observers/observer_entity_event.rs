@@ -41,11 +41,11 @@ fn main() {
         .with(id::<flecs::Any>())
         .each_iter(|it, _index, _| {
             let reason = it.param().reason;
-            println!("Close request with reason: {:?}", reason);
+            println!("Close request with reason: {reason:?}");
         });
 
     let widget = world.entity_named("MyWidget");
-    println!("widget: {:?}", widget);
+    println!("widget: {widget:?}");
 
     // Observe the Click event on the widget entity.
     widget.observe::<Click>(|| {

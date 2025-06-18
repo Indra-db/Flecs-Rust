@@ -1913,7 +1913,7 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
+            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Test if an entity has an id.

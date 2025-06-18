@@ -32,7 +32,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
     });
 
     // Print the position
-    println!("{:?}", pos_actual);
+    println!("{pos_actual:?}");
 
     entity.each_child(|child| {
         iterate_tree(child, &pos_actual);

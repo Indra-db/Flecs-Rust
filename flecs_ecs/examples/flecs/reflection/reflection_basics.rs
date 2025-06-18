@@ -26,7 +26,7 @@ fn main() {
     // Convert position component to flecs expression string
     e.get::<&Position>(|p| {
         let expr: String = world.to_expr(p);
-        println!("Position: {}", expr);
+        println!("Position: {expr}");
     });
 
     // Output:

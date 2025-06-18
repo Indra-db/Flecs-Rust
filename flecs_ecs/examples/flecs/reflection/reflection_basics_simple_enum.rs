@@ -43,7 +43,7 @@ fn main() {
     // Convert TypeWithEnum component to flecs expression string
     e.get::<&TypeWithEnum>(|p| {
         let expr: String = world.to_expr(p);
-        println!("TypeWithEnum: {}", expr);
+        println!("TypeWithEnum: {expr}");
     });
 
     // Output:

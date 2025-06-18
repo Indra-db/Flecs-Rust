@@ -56,7 +56,7 @@ fn main() {
 
             // Print information about the components being matched
             for i in 0..it.field_count() {
-                println!(" - term {} : ", i);
+                println!(" - term {i} : ");
                 println!("   - component: {}", it.id(i).to_str());
                 println!("   - type size: {}", it.size(i));
             }

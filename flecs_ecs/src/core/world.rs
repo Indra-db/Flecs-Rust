@@ -1394,10 +1394,7 @@ impl World {
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!(
-                "Entity {} not found, when unsure, use try_lookup_recursive",
-                name
-            )
+            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
     }
 
@@ -1425,7 +1422,7 @@ impl World {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
+            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].

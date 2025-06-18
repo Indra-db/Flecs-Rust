@@ -70,7 +70,7 @@ fn main() {
                 let d_sqr = distance_sqr(p1, p2);
                 let r_sqr = sqr(r1.value + r2.value);
                 if r_sqr > d_sqr {
-                    println!("{} and {} collided!", e1, e2);
+                    println!("{e1} and {e2} collided!");
                 }
             });
         });

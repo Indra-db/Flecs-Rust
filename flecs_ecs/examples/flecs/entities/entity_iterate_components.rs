@@ -42,7 +42,7 @@ fn iterate_components(entity: EntityView) {
 
     entity.each_component(|id| {
         let mut string: String = String::new();
-        string.push_str(format!("{}: ", count_components).as_str());
+        string.push_str(format!("{count_components}: ").as_str());
 
         count_components += 1;
         if id.is_pair() {
@@ -56,7 +56,7 @@ fn iterate_components(entity: EntityView) {
             string.push_str(format!("entity: {}", comp.name()).as_str());
         }
 
-        println!("{}", string);
+        println!("{string}");
     });
 }
 

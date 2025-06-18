@@ -129,7 +129,7 @@ fn main() {
 
     // Serialize world to JSON
     let json = world_a.to_json_world(None);
-    println!("{}", json);
+    println!("{json}");
 
     // Output:
     // // component info is not included in the Output result, but it's there

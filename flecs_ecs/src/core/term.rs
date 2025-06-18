@@ -320,7 +320,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * `name` - The name to set.
     fn name(&mut self, name: &'a str) -> &mut Self {
-        let name = core::mem::ManuallyDrop::new(format!("{}\0", name));
+        let name = core::mem::ManuallyDrop::new(format!("{name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
         term_ref.id |= flecs::IsEntity::ID;
@@ -336,7 +336,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     fn set_var(&mut self, var_name: &'a str) -> &mut Self {
         check_term_access_validity(self);
 
-        let var_name = core::mem::ManuallyDrop::new(format!("{}\0", var_name));
+        let var_name = core::mem::ManuallyDrop::new(format!("{var_name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut _;

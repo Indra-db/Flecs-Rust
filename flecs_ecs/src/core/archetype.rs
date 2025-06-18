@@ -43,7 +43,7 @@ impl Display for Archetype<'_> {
 impl Debug for Archetype<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if let Some(s) = self.to_string() {
-            write!(f, "{}", s)
+            write!(f, "{s}")
         } else {
             write!(f, "empty archetype")
         }
