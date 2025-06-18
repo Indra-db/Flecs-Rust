@@ -10,7 +10,7 @@
             "args": [],
             "cwd": "${fileDirname}",
             "console": "externalTerminal"
-        },
+        }
         // {
         //     "type": "lldb",
         //     "request": "launch",
