@@ -2010,6 +2010,17 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
                 unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
             }
+
+            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
+                let data_ptr = entity.get_untyped_mut(derived_id) as usize;
+                let vtable_ptr = entity
+                    .world()
+                    .component_untyped_from(*derived_id)
+                    .cloned::<&(Self,Self)>()
+                    .vtable;
+
+                unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
+            }
         }
     };
 

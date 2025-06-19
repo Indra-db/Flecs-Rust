@@ -108,6 +108,7 @@ fn test_trait_query() {
                 let e = it.entity(i).unwrap();
                 let id = it.id(0);
                 // cast the component to the Shapes trait
+                let _test_compile: &mut dyn Shapes = ShapesTrait::cast_mut(e, id);
                 let shape: &dyn Shapes = ShapesTrait::cast(e, id);
                 // call the method on the trait
                 let calc = shape.calculate();
