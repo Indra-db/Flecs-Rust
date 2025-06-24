@@ -588,6 +588,9 @@ extern "C" {
 #elif defined(__EMSCRIPTEN__)
 #define ECS_TARGET_EM
 #define ECS_TARGET_POSIX
+#elif defined(__wasm32__)
+#define ECS_TARGET_WUU
+#define ECS_TARGET_POSIX
 #endif
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
