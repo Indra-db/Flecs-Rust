@@ -2008,25 +2008,6 @@ impl World {
         }
     }
 
-    /// Remove singleton pair with enum tag.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value` - The enum value to remove.
-    #[inline(always)]
-    pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
-    }
-
     /// Iterate entities in root of world
     ///
     /// # Arguments
