@@ -136,7 +136,7 @@ pub trait ComponentId:
     #[doc(hidden)]
     type UnderlyingEnumType: ComponentId + EnumComponentInfo;
     #[doc(hidden)]
-    type UnderlyingTypeOfEnum: ComponentId;
+    type UnderlyingTypeOfEnum: ComponentId + Copy;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     #[doc(hidden)]

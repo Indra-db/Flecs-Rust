@@ -1410,10 +1410,7 @@ impl World {
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!(
-                "Entity {} not found, when unsure, use try_lookup_recursive",
-                name
-            )
+            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
     }
 
@@ -1441,7 +1438,7 @@ impl World {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
+            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].
@@ -2009,25 +2006,6 @@ impl World {
         } else {
             EntityView::new_from(self, id).remove(id)
         }
-    }
-
-    /// Remove singleton pair with enum tag.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value` - The enum value to remove.
-    #[inline(always)]
-    pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
     }
 
     /// Iterate entities in root of world

@@ -180,7 +180,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
                     let variant_name = &variant.ident;
 
                     meta_fields_impl.push(quote! {
-                        .constant(stringify!(#variant_name), id, #struct_name::#variant_name)
+                        .constant(stringify!(#variant_name), #struct_name::#variant_name)
                     });
                 }
             }

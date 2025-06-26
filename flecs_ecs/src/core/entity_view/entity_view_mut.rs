@@ -239,26 +239,6 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Remove a pair.
-    /// This operation removes a pair to the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The type of the first element of the pair.
-    /// * `U`: The type of the second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value`: the enum constant.
-    pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        let world = self.world;
-        self.remove((First::id(world), enum_value.id_variant(world)))
-    }
-
     /// Shortcut for `add((flecs::IsA, id))`.
     ///
     /// # Arguments

@@ -7,89 +7,11 @@ extern crate std;
 extern crate alloc;
 use alloc::string::String;
 
-#[macro_export]
-macro_rules! impl_component_traits_primitive_type {
-    ($name:ident, $id:ident) => {
-        impl FlecsConstantId for $name {
-            const ID: u64 = $id;
-        }
-        impl DataComponent for $name {}
+use crate::impl_component_traits_primitive_type;
 
-        impl ComponentType<flecs_ecs::core::Struct> for $name {}
-
-        impl ComponentInfo for $name {
-            const IS_GENERIC: bool = false;
-            const IS_ENUM: bool = false;
-            const IS_TAG: bool = false;
-            type TagType = FlecsFirstIsNotATag;
-            const IMPLS_CLONE: bool = true;
-            const IMPLS_DEFAULT: bool = false;
-            const IS_REF: bool = false;
-            const IS_MUT: bool = false;
-        }
-
-        impl ComponentId for $name {
-            type UnderlyingType = $name;
-            type UnderlyingEnumType = NoneEnum;
-            type UnderlyingTypeOfEnum = NoneEnum;
-
-            #[inline(always)]
-            fn index() -> u32 {
-                static INDEX: core::sync::atomic::AtomicU32 =
-                    core::sync::atomic::AtomicU32::new(u32::MAX);
-                Self::get_or_init_index(&INDEX)
-            }
-
-            fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_lifecycle_actions::<$name>(type_hooks);
-            }
-            fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_ctor_lifecycle_actions::<$name>(type_hooks);
-            }
-            fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_copy_lifecycle_action::<$name>(type_hooks);
-            }
-
-            fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
-            ) -> sys::ecs_entity_t {
-                $id
-            }
-
-            fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
-                _name: &str,
-            ) -> sys::ecs_entity_t {
-                $id
-            }
-
-            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
-                true
-            }
-
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
-                $id
-            }
-        }
-
-        impl OnComponentRegistration for $name {
-            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
-    };
-}
-
+//uint and int types exposed in addons/mod.rs for enum registration
 impl_component_traits_primitive_type!(bool, ECS_BOOL_T);
 impl_component_traits_primitive_type!(char, ECS_CHAR_T);
-impl_component_traits_primitive_type!(u8, ECS_U8_T);
-impl_component_traits_primitive_type!(u16, ECS_U16_T);
-impl_component_traits_primitive_type!(u32, ECS_U32_T);
-impl_component_traits_primitive_type!(u64, ECS_U64_T);
-impl_component_traits_primitive_type!(usize, ECS_UPTR_T);
-impl_component_traits_primitive_type!(i8, ECS_I8_T);
-impl_component_traits_primitive_type!(i16, ECS_I16_T);
-//exposed in core, due to enum registration changes
-//impl_component_traits_primitive_type!(i32, ECS_I32_T);
-impl_component_traits_primitive_type!(i64, ECS_I64_T);
 impl_component_traits_primitive_type!(isize, ECS_IPTR_T);
 impl_component_traits_primitive_type!(f32, ECS_F32_T);
 impl_component_traits_primitive_type!(f64, ECS_F64_T);

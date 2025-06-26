@@ -490,6 +490,23 @@ pub mod pipeline {
     create_pre_registered_component!(Phase, ECS_PHASE);
 }
 
+#[cfg(all(
+    not(feature = "flecs_meta"),
+    not(feature = "flecs_rust_no_enum_reflection")
+))]
+pub mod meta {
+    use super::*;
+
+    create_pre_registered_component!(I8, ECS_I8_T);
+    create_pre_registered_component!(I16, ECS_I16_T);
+    create_pre_registered_component!(I32, ECS_I32_T);
+    create_pre_registered_component!(I64, ECS_I64_T);
+    create_pre_registered_component!(U8, ECS_U8_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
+    create_pre_registered_component!(U32, ECS_U32_T);
+    create_pre_registered_component!(U64, ECS_U64_T);
+}
+
 #[cfg(feature = "flecs_meta")]
 pub mod meta {
     use super::*;
@@ -497,16 +514,16 @@ pub mod meta {
     create_pre_registered_component!(Bool, ECS_BOOL_T);
     create_pre_registered_component!(Char, ECS_CHAR_T);
     create_pre_registered_component!(Byte, ECS_BYTE_T);
-    create_pre_registered_component!(U8, ECS_U8_T);
-    create_pre_registered_component!(U16, ECS_U16_T);
-    create_pre_registered_component!(U32, ECS_U32_T);
-    create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(UPtr, ECS_UPTR_T);
+    create_pre_registered_component!(IPtr, ECS_IPTR_T);
     create_pre_registered_component!(I8, ECS_I8_T);
     create_pre_registered_component!(I16, ECS_I16_T);
     create_pre_registered_component!(I32, ECS_I32_T);
     create_pre_registered_component!(I64, ECS_I64_T);
-    create_pre_registered_component!(IPtr, ECS_IPTR_T);
+    create_pre_registered_component!(U8, ECS_U8_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
+    create_pre_registered_component!(U32, ECS_U32_T);
+    create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(F32, ECS_F32_T);
     create_pre_registered_component!(F64, ECS_F64_T);
     create_pre_registered_component!(String, ECS_STRING_T);
