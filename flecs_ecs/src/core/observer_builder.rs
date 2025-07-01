@@ -42,6 +42,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
         T::populate(&mut obj);
+
         obj
     }
 
@@ -197,6 +198,19 @@ where
 
     /// Build the `observer_builder` into an `observer`
     fn build(&mut self) -> Self::BuiltType {
+        // ensure that the observer doesn't fetch components for OnAdd events, where data is not initialized
+        if self.desc.events[0] == flecs::OnAdd::ID {
+            for term in self.desc.query.terms.iter_mut() {
+                if (term.first.id | term.id | term.second.id | term.src.id) == 0 {
+                    break;
+                }
+
+                if term.inout == sys::ecs_inout_kind_t_EcsInOutDefault as i16 {
+                    term.inout = sys::ecs_inout_kind_t_EcsInOutNone as i16;
+                }
+            }
+        }
+
         let observer = Observer::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
             unsafe { core::mem::ManuallyDrop::drop(s) };

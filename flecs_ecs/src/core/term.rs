@@ -168,7 +168,8 @@ fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
         && term.current_term_ref_mode() != TermRefMode::Src
     {
         panic!(
-            "This function should only be used on terms that are not part of the generic type signature. "
+            "This function should only be used on terms that are not part of the generic type signature. Use `.with` instead. Term index: {}",
+            term.current_term_index()
         )
     }
 }
@@ -184,12 +185,14 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     where
         T: IntoId,
     {
-        let id = id.into_id(self.world());
+        let world = self.world();
+        let id = id.into_id(world);
         let term = self.current_term_mut();
 
         #[allow(clippy::collapsible_else_if)]
         if T::IS_PAIR {
-            term.id = *id;
+            term.first.id = *id.get_id_first(world);
+            term.second.id = *id.get_id_second(world);
         } else {
             if id & RUST_ecs_id_FLAGS_MASK != 0 {
                 term.id = *id;
