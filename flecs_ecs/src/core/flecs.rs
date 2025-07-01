@@ -59,6 +59,8 @@ macro_rules! create_pre_registered_component {
             const IS_TAG: bool = true;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = true;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =
@@ -612,6 +614,10 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_TAG: bool = true;
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<()>::IMPLS };
     const IMPLS_DEFAULT: bool = { flecs_ecs::core::utility::types::ImplementsDefault::<()>::IMPLS };
+    const IMPLS_PARTIAL_EQ: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialEq::<()>::IMPLS };
+    const IMPLS_PARTIAL_ORD: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialOrd::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;

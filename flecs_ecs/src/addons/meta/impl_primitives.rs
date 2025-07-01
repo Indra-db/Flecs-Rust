@@ -35,7 +35,12 @@ impl ComponentInfo for EntityView<'static> {
     const IS_TAG: bool = false;
     type TagType = FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = true;
+    const IMPLS_DEFAULT: bool =
+        { flecs_ecs::core::utility::types::ImplementsDefault::<EntityView<'static>>::IMPLS };
+    const IMPLS_PARTIAL_EQ: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialEq::<EntityView<'static>>::IMPLS };
+    const IMPLS_PARTIAL_ORD: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialOrd::<EntityView<'static>>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = false;
@@ -102,6 +107,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<String>::IMPLS };
     const IMPLS_DEFAULT: bool =
         { flecs_ecs::core::utility::types::ImplementsDefault::<String>::IMPLS };
+    const IMPLS_PARTIAL_EQ: bool = true;
+    const IMPLS_PARTIAL_ORD: bool = true;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = false;

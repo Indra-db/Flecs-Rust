@@ -55,6 +55,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -118,6 +120,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -181,6 +185,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -244,6 +250,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -305,6 +313,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }

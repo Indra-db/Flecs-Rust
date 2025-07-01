@@ -98,6 +98,8 @@ macro_rules! create_pre_registered_extern_component {
             const IS_TAG: bool = true;
             const IMPLS_CLONE: bool = false;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =
@@ -171,6 +173,8 @@ macro_rules! impl_component_traits_primitive_type {
             type TagType = FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = true;
+            const IMPLS_PARTIAL_EQ: bool = true;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -195,6 +199,12 @@ macro_rules! impl_component_traits_primitive_type {
             }
             fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
                 register_copy_lifecycle_action::<$name>(type_hooks);
+            }
+            fn __register_compare_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                register_partial_ord_lifecycle_action::<$name>(type_hooks);
+            }
+            fn __register_equals_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                register_partial_eq_lifecycle_action::<$name>(type_hooks);
             }
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(

@@ -27,6 +27,12 @@ pub struct FlecsNoneDefaultDummy;
 #[derive(Clone)]
 pub struct FlecsNoneCloneDummy;
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FlecsNonePartialOrdDummy;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct FlecsNonePartialEqDummy;
+
 pub struct ConditionalTypeSelector<const B: bool, T> {
     phantom: core::marker::PhantomData<T>,
 }

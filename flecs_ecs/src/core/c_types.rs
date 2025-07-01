@@ -524,6 +524,8 @@ macro_rules! impl_component_traits_binding_type_w_id {
             type TagType = FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -531,7 +533,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
-type UnderlyingTypeOfEnum = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -592,6 +594,8 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             type TagType = FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -599,7 +603,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
-type UnderlyingTypeOfEnum = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {

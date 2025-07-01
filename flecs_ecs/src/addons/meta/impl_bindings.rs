@@ -21,6 +21,8 @@ impl<T: ComponentId> ComponentInfo for Opaque<'static, T> {
     type TagType = FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
+    const IMPLS_PARTIAL_EQ: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = true;
@@ -29,7 +31,7 @@ impl<T: ComponentId> ComponentInfo for Opaque<'static, T> {
 impl<T: ComponentId> ComponentId for Opaque<'static, T> {
     type UnderlyingType = Opaque<'static, T>;
     type UnderlyingEnumType = NoneEnum;
-type UnderlyingTypeOfEnum = NoneEnum;
+    type UnderlyingTypeOfEnum = NoneEnum;
 
     fn __register_lifecycle_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
     fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}

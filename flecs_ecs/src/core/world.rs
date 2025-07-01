@@ -2525,7 +2525,7 @@ impl World {
         EntityView::new_named(self, name)
     }
 
-    /// Create an entity that's associated with a name with a custom sep and root sep.
+    /// Create an entity that's associated with a name within a scope, using a custom separator and root separator.
     /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
     /// length of 24 bytes: `"hi this is 24 bytes long"`
     ///
@@ -2533,6 +2533,7 @@ impl World {
     /// may be scoped, where each element in the name is separated by the sep you use.
     /// For example: "`Foo-Bar`". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
+    /// Note, this does still create the hierarchy as Foo::Bar.
     ///
     /// # Example
     ///
@@ -2543,7 +2544,7 @@ impl World {
     ///
     /// let entity = world.entity_named_scoped("Foo-Bar", "-", "::");
     /// assert_eq!(entity.get_name(), Some("Bar".to_string()));
-    /// assert_eq!(entity.path(), Some("::Foo-Bar".to_string()));
+    /// assert_eq!(entity.path(), Some("::Foo::Bar".to_string()));
     /// ```
     ///
     /// # See also
