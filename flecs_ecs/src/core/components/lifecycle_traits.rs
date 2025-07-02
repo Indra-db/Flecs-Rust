@@ -129,6 +129,12 @@ extern "C" fn ctor<T: Default>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
+    // tags and types with size 0 don't need to be initialized
+    let size = const { core::mem::size_of::<T>() };
+    if size == 0 {
+        return;
+    }
+
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -151,15 +157,27 @@ extern "C" fn ctor<T: Default>(
 /// * `count` - number of elements to be destructed
 /// * `_type_info` - type info for the type to be destructed
 extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
-    ecs_assert!(
-        check_type_info::<T>(_type_info),
-        FlecsErrorCode::InternalError
-    );
-    let arr = ptr as *mut T;
-    for i in 0..count as isize {
-        unsafe {
-            let item = arr.offset(i);
-            ptr::drop_in_place(item);
+    let size = const { core::mem::size_of::<T>() };
+    if size == 0 {
+        let arr = ptr as *mut u8; // tags with drop are (usually) modules with size 1 and alignment 1 
+        for i in 0..count as isize {
+            unsafe {
+                let item = arr.offset(i);
+                ptr::drop_in_place(item as *mut T);
+            }
+        }
+    } else {
+        ecs_assert!(
+            check_type_info::<T>(_type_info),
+            FlecsErrorCode::InternalError
+        );
+
+        let arr = ptr as *mut T;
+        for i in 0..count as isize {
+            unsafe {
+                let item = arr.offset(i);
+                ptr::drop_in_place(item);
+            }
         }
     }
 }

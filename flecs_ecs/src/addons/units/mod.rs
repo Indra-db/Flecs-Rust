@@ -10,7 +10,6 @@ pub struct Units;
 
 impl Module for Units {
     fn module(world: &World) {
-        world.module::<Units>("::flecs::units");
         unsafe { flecs_ecs_sys::FlecsUnitsImport(world.ptr_mut()) };
     }
 }

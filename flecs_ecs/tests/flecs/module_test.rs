@@ -16,14 +16,12 @@ struct ModuleInvoke;
 
 impl Drop for ModuleInvoke {
     fn drop(&mut self) {
-        println!("xxxxxxxxx");
         MODULE_DTOR_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     }
 }
 
 impl Module for ModuleInvoke {
     fn module(world: &World) {
-        world.module::<ModuleInvoke>("");
         world.get::<&mut ModuleInvokeCounter>(|invoker| {
             invoker.count += 1;
         });
@@ -36,21 +34,11 @@ pub(crate) mod ns {
     use super::*;
 
     #[derive(Component)]
-    pub struct NestedNameSpaceType;
-
-    impl Module for NestedNameSpaceType {
-        fn module(world: &World) {
-            world.module::<NestedNameSpaceType>("");
-            world.component_named::<Velocity>("Velocity");
-        }
-    }
-
-    #[derive(Component)]
     pub struct NestedModule;
 
     impl Module for NestedModule {
         fn module(world: &World) {
-            world.module::<NestedModule>("");
+            world.module::<NestedModule>("ns::NestedModule");
             world.component_named::<Velocity>("Velocity");
         }
     }
@@ -60,8 +48,8 @@ pub(crate) mod ns {
 
     impl Module for SimpleModule {
         fn module(world: &World) {
-            world.module::<SimpleModule>("");
-            world.import::<NestedNameSpaceType>();
+            world.module::<SimpleModule>("ns::SimpleModule");
+            world.import::<NestedModule>();
             world.component_named::<Position>("Position");
         }
     }
@@ -71,7 +59,7 @@ pub(crate) mod ns {
 
     impl Module for NamedModule {
         fn module(world: &World) {
-            world.module::<NamedModule>("::my_scope::NamedModule");
+            world.module::<NamedModule>("my_scope::NamedModule");
             world.component_named::<Position>("Position");
         }
     }
@@ -184,7 +172,7 @@ pub struct ModuleType;
 
 impl Module for ModuleType {
     fn module(world: &World) {
-        world.module::<ModuleType>("");
+        world.module::<ModuleType>("::ModuleType");
         world.component::<Position>();
     }
 }
@@ -198,6 +186,13 @@ fn module_import() {
     assert_eq!(m.path().unwrap(), "::flecs::module_test::ns::SimpleModule");
     assert!(m.has(flecs::Module));
 
+    let pos = world.component::<Position>();
+    assert!(pos.id() != 0);
+    assert_eq!(
+        pos.path().unwrap(),
+        "::flecs::module_test::ns::SimpleModule::Position"
+    );
+
     let e = world.entity().add(id::<Position>());
     assert!(e.id() != 0);
     assert!(e.has(id::<Position>()));
@@ -206,6 +201,7 @@ fn module_import() {
 #[test]
 fn module_lookup_from_scope() {
     let world = World::new();
+
     world.import::<ns::SimpleModule>();
 
     let ns_entity = world.lookup("flecs::module_test::ns");
@@ -232,11 +228,11 @@ fn module_nested_module() {
     let world = World::new();
     world.import::<ns::SimpleModule>();
 
-    let velocity = world.lookup("flecs::module_test::ns::NestedNameSpaceType::Velocity");
+    let velocity = world.lookup("flecs::module_test::ns::NestedModule::Velocity");
     assert!(velocity.id() != 0);
     assert_eq!(
         velocity.path().unwrap(),
-        "::flecs::module_test::ns::NestedNameSpaceType::Velocity"
+        "::flecs::module_test::ns::NestedModule::Velocity"
     );
 }
 
@@ -246,7 +242,7 @@ fn module_component_redefinition_outside_module() {
 
     world.import::<ns::SimpleModule>();
 
-    let pos_comp = world.lookup("flecs::module_test::ns::SimpleModule::Position");
+    let pos_comp = world.lookup("::flecs::module_test::ns::SimpleModule::Position");
     assert!(pos_comp.id() != 0);
 
     let pos = world.component::<Position>();
@@ -273,7 +269,6 @@ fn module_tag_on_namespace() {
 }
 
 #[test]
-#[ignore = "this is not calling drop, investigate why"]
 fn module_dtor_on_fini() {
     {
         let world = World::new();
@@ -308,6 +303,15 @@ fn module_register_w_root_name() {
     assert!(m.id() == m_lookup.id());
 
     assert!(world.try_lookup("::ns::NamedModule") == None);
+
+    let c_lookup = world.lookup("::my_scope::NamedModule::Position");
+    assert!(c_lookup.id() != 0);
+    assert!(c_lookup.id() == m.lookup("Position").id());
+    assert!(c_lookup.id() == world.component::<Position>().id());
+    assert_eq!(
+        c_lookup.path().unwrap(),
+        "::my_scope::NamedModule::Position"
+    );
 }
 
 #[test]
@@ -369,31 +373,13 @@ fn module_with_core_name() {
 
     let m = world.import::<ModuleType>();
     assert!(m.id() != 0);
-    assert_eq!(m.path().unwrap(), "::flecs::module_test::ModuleType");
+    assert_eq!(m.path().unwrap(), "::ModuleType");
 
     let pos = m.lookup("Position");
     assert!(pos.id() != 0);
-    assert_eq!(
-        pos.path().unwrap(),
-        "::flecs::module_test::ModuleType::Position"
-    );
+    assert_eq!(pos.path().unwrap(), "::ModuleType::Position");
     assert!(pos == world.entity_from::<Position>());
 }
-
-/*
-void Module_module_with_core_name(void) {
-    flecs::world world;
-
-    flecs::entity m = world.import<Module>();
-    test_assert(m != 0);
-    test_str(m.path().c_str(), "::Module");
-
-    flecs::entity pos = m.lookup("Position");
-    test_assert(pos != 0);
-    test_str(pos.path().c_str(), "::Module::Position");
-    test_assert(pos == world.id<Position>());
-}
-*/
 
 #[test]
 fn module_import_addons_two_worlds() {
@@ -414,18 +400,26 @@ fn module_lookup_module_after_reparent() {
     let world = World::new();
 
     let m = world.import::<ns::NestedModule>();
-    assert_eq!(m.path().unwrap(), "::ns::NestedModule");
-    assert!(world.try_lookup("::ns::NestedModule") == Some(m));
-    assert!(world.try_lookup("ns.NestedModule") == Some(m));
+    assert_eq!(m.path().unwrap(), "::flecs::module_test::ns::NestedModule");
+    assert!(world.try_lookup("::flecs::module_test::ns::NestedModule") == Some(m));
+    assert!(
+        unsafe {
+            flecs_ecs_sys::ecs_lookup(
+                world.ptr_mut(),
+                c"flecs.module_test.ns.NestedModule".as_ptr(),
+            )
+        } == m.id()
+    );
 
     let p = world.entity_named("p");
     m.child_of(p);
     assert_eq!(m.path().unwrap(), "::p::NestedModule");
     assert!(world.try_lookup("::p::NestedModule") == Some(m));
-    assert!(world.try_lookup("p.NestedModule") == Some(m));
+    assert!(
+        unsafe { flecs_ecs_sys::ecs_lookup(world.ptr_mut(), c"p.NestedModule".as_ptr()) } == m.id()
+    );
 
     assert!(world.try_lookup("::ns::NestedModule") == None);
-    assert!(world.try_lookup("ns.NestedModule") == None);
 
     let e = world.entity_named("::ns::NestedModule");
     assert!(e != m);
@@ -583,6 +577,7 @@ struct ModuleAComponent;
 
 impl Module for ModuleA {
     fn module(world: &World) {
+        world.module::<ModuleA>("::ModuleA");
         world.component::<ModuleAComponent>();
     }
 }

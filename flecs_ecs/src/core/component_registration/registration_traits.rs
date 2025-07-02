@@ -151,7 +151,8 @@ pub trait ComponentId:
             let len = components_array.len();
 
             if len > index {
-                if components_array[index] == 0 {
+                let component_id = components_array[index];
+                if component_id == 0 || !world.is_alive(component_id) {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -209,8 +210,34 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
 
-            *match components_map.entry(core::any::TypeId::of::<Self>()) {
-                Entry::Occupied(entry) => entry.into_mut(),
+            match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(mut entry) => {
+                    if !world.is_alive(*entry.get()) {
+                        if MANUAL_REGISTRATION_CHECK {
+                            #[cfg(feature = "flecs_manual_registration")]
+                            {
+                                ecs_assert!(
+                                    false,
+                                    FlecsErrorCode::InvalidOperation,
+                                    "Component {} is not registered with the world before usage",
+                                    Self::name()
+                                );
+                            }
+                        }
+
+                        let id = registration_traits::try_register_component::<
+                            MANUAL_REGISTRATION_CHECK,
+                            Self,
+                        >(world);
+
+                        let id = entry.insert(id);
+
+                        Self::on_component_registration(world, Entity::new(id));
+                        id
+                    } else {
+                        *entry.into_mut()
+                    }
+                }
                 Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -232,7 +259,7 @@ pub trait ComponentId:
                     let id = entry.insert(id);
 
                     Self::on_component_registration(world, Entity::new(*id));
-                    id
+                    *id
                 }
             }
         }
@@ -252,7 +279,8 @@ pub trait ComponentId:
             let len = components_array.len();
 
             if len > index {
-                if components_array[index] == 0 {
+                let component_id = components_array[index];
+                if components_array[index] == 0 || !world.is_alive(component_id) {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -310,8 +338,34 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
 
-            *match components_map.entry(core::any::TypeId::of::<Self>()) {
-                Entry::Occupied(entry) => entry.into_mut(),
+            match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(mut entry) => {
+                    if !world.is_alive(*entry.get()) {
+                        if MANUAL_REGISTRATION_CHECK {
+                            #[cfg(feature = "flecs_manual_registration")]
+                            {
+                                ecs_assert!(
+                                    false,
+                                    FlecsErrorCode::InvalidOperation,
+                                    "Component {} is not registered with the world before usage",
+                                    Self::name()
+                                );
+                            }
+                        }
+
+                        let id = registration_traits::try_register_component_named::<
+                            MANUAL_REGISTRATION_CHECK,
+                            Self,
+                        >(world, name);
+
+                        let id = entry.insert(id);
+
+                        Self::on_component_registration(world, Entity::new(id));
+                        id
+                    } else {
+                        *entry.into_mut()
+                    }
+                }
                 Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -333,7 +387,7 @@ pub trait ComponentId:
                     let id = entry.insert(id);
 
                     Self::on_component_registration(world, Entity::new(*id));
-                    id
+                    *id
                 }
             }
         }
