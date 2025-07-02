@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::sync::atomic::AtomicUsize;
+use core::sync::atomic::AtomicUsize;
 
 use crate::common_test::*;
 
@@ -16,7 +16,7 @@ struct ModuleInvoke;
 
 impl Drop for ModuleInvoke {
     fn drop(&mut self) {
-        MODULE_DTOR_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        MODULE_DTOR_COUNTER.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -280,7 +280,7 @@ fn module_dtor_on_fini() {
         let invoke_counter = world.cloned::<&ModuleInvokeCounter>();
         assert_eq!(invoke_counter.count, 1);
         assert_eq!(
-            MODULE_DTOR_COUNTER.load(std::sync::atomic::Ordering::SeqCst),
+            MODULE_DTOR_COUNTER.load(core::sync::atomic::Ordering::SeqCst),
             0
         );
 
@@ -288,7 +288,7 @@ fn module_dtor_on_fini() {
         assert_eq!(invoke_counter.count, 1);
     }
     assert_eq!(
-        MODULE_DTOR_COUNTER.load(std::sync::atomic::Ordering::SeqCst),
+        MODULE_DTOR_COUNTER.load(core::sync::atomic::Ordering::SeqCst),
         1
     );
 }
@@ -302,7 +302,7 @@ fn module_register_w_root_name() {
     assert!(m.id() != 0);
     assert!(m.id() == m_lookup.id());
 
-    assert!(world.try_lookup("::ns::NamedModule") == None);
+    assert!(world.try_lookup("::ns::NamedModule").is_none());
 
     let c_lookup = world.lookup("::my_scope::NamedModule::Position");
     assert!(c_lookup.id() != 0);
@@ -419,7 +419,7 @@ fn module_lookup_module_after_reparent() {
         unsafe { flecs_ecs_sys::ecs_lookup(world.ptr_mut(), c"p.NestedModule".as_ptr()) } == m.id()
     );
 
-    assert!(world.try_lookup("::ns::NestedModule") == None);
+    assert!(world.try_lookup("::ns::NestedModule").is_none());
 
     let e = world.entity_named("::ns::NestedModule");
     assert!(e != m);
