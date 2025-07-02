@@ -62,6 +62,13 @@ impl OutputCapture {
                     r#"Group deleted: \\"([^\\"]+)\\""#,
                     "group deleted: redacted",
                 ),
+                // Redact JSON "id": number
+                (r#"\\"id\\":\s?\d+"#, r#""id": "[ID]""#),
+                // Redact (Identifier, Name)
+                (
+                    r#"- \(Identifier, Name\) ?: ?\d+"#,
+                    r#"- (Identifier, Name) : #[ID] "#,
+                ),
             ]),
         );
         settings.set_prepend_module_to_snapshot(false);

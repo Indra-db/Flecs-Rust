@@ -2,4 +2,4 @@
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
 expression: str_output
 ---
-" - MyEvent: examples.observers.observer_custom_event.Position: e1\n"
+" - MyEvent: examples.observers.observer_custom_event.Position: #[ID] | e1\n"

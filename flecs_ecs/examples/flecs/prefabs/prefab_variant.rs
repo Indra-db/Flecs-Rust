@@ -2,27 +2,27 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Attack {
     pub value: f32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Defence {
     pub value: f32,
 }
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct FreightCapacity {
     pub value: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct ImpulseSpeed {
     pub value: f32,
 }

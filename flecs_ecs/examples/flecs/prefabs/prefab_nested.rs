@@ -15,7 +15,7 @@ use flecs_ecs::prelude::*;
 // of the prefab child, and the prefab child only has an IsA relationship to the
 // nested prefab.
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone)]
 struct TirePressure {
     value: f32,
 }
