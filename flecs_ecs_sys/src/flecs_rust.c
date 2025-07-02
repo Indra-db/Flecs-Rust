@@ -22,7 +22,7 @@ void* ecs_rust_mut_get_id(
     ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
 
     if (id < FLECS_HI_COMPONENT_ID) {
-        if (!world->non_fragmenting[id]) {
+        if (!world->non_trivial[id]) {
             ecs_get_low_id(table, r, id);
             return NULL;
         }
@@ -51,7 +51,7 @@ void* ecs_rust_get_id(
 
     if (id < FLECS_HI_COMPONENT_ID) {
         ecs_get_low_id(table, r, id);
-        if (!world->non_fragmenting[id]) {
+        if (!world->non_trivial[id]) {
             if (!(table->flags & EcsTableHasIsA)) {
                 return NULL;
             }

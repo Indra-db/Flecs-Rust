@@ -2663,12 +2663,8 @@ fn flecs_docs_component_traits_compile_test() {
     e.enable(id::<Position>()); // Enable component
     assert!(e.is_enabled(id::<Position>())); // Updated to use id::<Position>()
 
-    let movement = world.entity().add_trait::<flecs::Union>();
     let walking = world.entity();
     let running = world.entity();
-
-    let e = world.entity().add((movement, running));
-    e.add((movement, walking)); // replaces (Movement, Running)
 
     world.component::<Position>().add_trait::<flecs::Sparse>();
 

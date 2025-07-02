@@ -28,7 +28,6 @@ bitflags::bitflags! {
         const HasSparse = sys::EcsTableHasSparse;
         const HasDontFragment = sys::EcsTableHasDontFragment;
         const OverrideDontFragment = sys::EcsTableOverrideDontFragment;
-        const HasUnion = sys::EcsTableHasUnion;
         const HasTraversable = sys::EcsTableHasTraversable;
         const HasOrderedChildren = sys::EcsTableHasOrderedChildren;
         const EdgeReparent = sys::EcsTableEdgeReparent;

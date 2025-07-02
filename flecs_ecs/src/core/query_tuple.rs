@@ -342,15 +342,7 @@ where
             if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
                 let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
                 if !ti.is_null() {
-                    // Union relationships always return a value of type
-                    // flecs::entity_t which holds the target id of the 
-                    // union relationship.
-                    // If a union component with a non-zero size (like an  
-                    // enum) is added to the query signature, the each/iter
-                    // functions would accept a parameter of the component
-                    // type instead of flecs::entity_t, which would cause
-                    // an assert.
-                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(_world_ptr, id, *flecs::Union)})
+                    unsafe { (*ti).size == 0 }
                 } else { true }
             } else { true }
         }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
@@ -546,15 +538,7 @@ macro_rules! impl_iterable {
                         if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
                             let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
                             if !ti.is_null() {
-                                // Union relationships always return a value of type
-                                // flecs::entity_t which holds the target id of the
-                                // union relationship.
-                                // If a union component with a non-zero size (like an
-                                // enum) is added to the query signature, the each/iter
-                                // functions would accept a parameter of the component
-                                // type instead of flecs::entity_t, which would cause
-                                // an assert.
-                                (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(_world_ptr, id, *flecs::Union)})
+                                unsafe { (*ti).size == 0 }
                             } else { true }
                         } else { true }
                     }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");

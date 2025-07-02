@@ -163,8 +163,8 @@ pub mod term_flags {
     create_pre_registered_component!(IsToggle, IS_TOGGLE);
     create_pre_registered_component!(KeepAlive, KEEP_ALIVE);
     create_pre_registered_component!(IsSparse, IS_SPARSE);
-    create_pre_registered_component!(IsUnion, IS_UNION);
     create_pre_registered_component!(IsOr, IS_OR);
+    create_pre_registered_component!(IsDontFragment, IS_DONT_FRAGMENT);
 }
 
 /// Query flags discovered & set during query creation.
@@ -456,12 +456,6 @@ create_pre_registered_component!(
     DontFragment,
     ECS_DONT_FRAGMENT,
     "Component trait. Mark component as non-fragmenting"
-);
-create_pre_registered_component!(
-    Union,
-    ECS_UNION,
-    "Component trait. Similar to [`Exclusive`] but combines \
-    different relationship targets in a single table."
 );
 
 // Builtin predicate for comparing entity ids
@@ -761,14 +755,14 @@ mod tests {
                 "EcsTermIsSparse (C) != IsSparse (Rust)"
             );
             assert_eq!(
-                term_flags::IsUnion,
-                sys::EcsTermIsUnion as u64,
-                "EcsTermIsUnion (C) != IsUnion (Rust)"
-            );
-            assert_eq!(
                 term_flags::IsOr,
                 sys::EcsTermIsOr as u64,
                 "EcsTermIsOr (C) != IsOr (Rust)"
+            );
+            assert_eq!(
+                term_flags::IsDontFragment,
+                sys::EcsTermDontFragment as u64,
+                "EcsTermDontFragment (C) != IsDontFragment (Rust)"
             );
 
             // Query flags
@@ -913,7 +907,6 @@ mod tests {
                 sys::EcsDontFragment,
                 "EcsDontFragment (C) != DontFragment (Rust)",
             );
-            assert_eq!(flecs::Union, sys::EcsUnion, "EcsUnion (C) != Union (Rust)");
 
             // Builtin predicate for comparing entity ids
             assert_eq!(flecs::PredEq, sys::EcsPredEq);
