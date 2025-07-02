@@ -1,15 +1,7 @@
 #![doc(hidden)]
 use flecs_ecs_derive::Component;
 
-use super::{
-    ComponentId, ComponentInfo, ComponentType, DataComponent, FlecsFirstIsNotATag,
-    OnComponentRegistration,
-};
-use crate::core::{
-    ECS_I32_T, Entity, FlecsConstantId, WorldProvider, WorldRef, register_copy_lifecycle_action,
-    register_ctor_lifecycle_actions,
-};
-use flecs_ecs_sys as sys;
+use super::ComponentId;
 
 pub struct Enum;
 

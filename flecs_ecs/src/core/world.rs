@@ -1169,7 +1169,7 @@ impl World {
     /// Flecs uses allocators internally for speeding up allocations. Allocators are
     /// not evaluated by this function, which means that the memory reported by the
     /// OS may not go down. For this reason, this function is most effective when
-    /// combined with FLECS_USE_OS_ALLOC, which disables internal allocators.
+    /// combined with `FLECS_USE_OS_ALLOC`, which disables internal allocators.
     pub fn shrink_memory(&self) {
         unsafe { sys::ecs_shrink(self.raw_world.as_ptr()) };
     }
@@ -2533,7 +2533,7 @@ impl World {
     /// may be scoped, where each element in the name is separated by the sep you use.
     /// For example: "`Foo-Bar`". If parts of the hierarchy in the scoped name do
     /// not yet exist, they will be automatically created.
-    /// Note, this does still create the hierarchy as Foo::Bar.
+    /// Note, this does still create the hierarchy as `Foo::Bar`.
     ///
     /// # Example
     ///
@@ -3619,14 +3619,14 @@ impl World {
     /// # Note
     ///
     /// This feature only works in builds where asserts are enabled. The
-    /// feature requires the OS API thread_self_ callback to be set.
+    /// feature requires the OS API `thread_self_` callback to be set.
     ///
     /// # Arguments
     ///
     /// * `thread_name` - Name of the thread obtaining exclusive access. Use `c"thread_name"` to pass a C-style string.
     ///   Required to be a static string for safety reasons.
     pub fn exclusive_access_begin(&self, thread_name: Option<&'static CStr>) {
-        let name_ptr = thread_name.map_or(std::ptr::null(), |name| name.as_ptr()) as *const i8;
+        let name_ptr = thread_name.map_or(core::ptr::null(), CStr::as_ptr);
 
         unsafe {
             sys::ecs_exclusive_access_begin(self.raw_world.as_ptr(), name_ptr);
@@ -3662,7 +3662,7 @@ impl World {
     /// # Note
     ///
     /// This feature only works in builds where asserts are enabled. The
-    /// feature requires the OS API thread_self_ callback to be set.
+    /// feature requires the OS API `thread_self_` callback to be set.
     pub fn exclusive_access_end(&self, lock_world: bool) {
         unsafe {
             sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);

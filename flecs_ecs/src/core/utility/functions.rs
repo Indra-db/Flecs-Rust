@@ -565,7 +565,7 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
 
         if part.starts_with('(') {
             // Join this part with the next one
-            let combined = format!("{}, {} : {}", part, parts[i + 1], id);
+            let combined = format!("{part}, {} : {id}", parts[i + 1]);
             result.push(combined);
             skip_next = true; // Skip the next part since it's already used
         } else {
