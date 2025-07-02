@@ -18,7 +18,7 @@ pub use query_api::*;
 pub use system_api::*;
 pub use world_provider::*;
 
-use crate::core::{ImplementsClone, ImplementsDefault};
+use crate::core::{ImplementsClone, ImplementsDefault, ImplementsPartialEq, ImplementsPartialOrd};
 
 #[doc(hidden)]
 pub mod private {
@@ -287,6 +287,14 @@ impl<T: Clone> ImplementsClone<T> {
 }
 
 impl<T: Default> ImplementsDefault<T> {
+    pub const IMPLS: bool = true;
+}
+
+impl<T: PartialEq> ImplementsPartialEq<T> {
+    pub const IMPLS: bool = true;
+}
+
+impl<T: PartialOrd> ImplementsPartialOrd<T> {
     pub const IMPLS: bool = true;
 }
 

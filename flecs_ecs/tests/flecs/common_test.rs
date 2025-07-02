@@ -130,7 +130,7 @@ pub struct Obj2 {}
 #[derive(Component)]
 pub struct Rel {}
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct RelFoo {
     pub foo: u32,
 }

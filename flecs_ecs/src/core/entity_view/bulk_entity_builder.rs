@@ -430,7 +430,7 @@ impl World {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]

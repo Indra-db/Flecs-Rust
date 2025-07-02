@@ -18,17 +18,17 @@ use flecs_ecs::prelude::*;
 //
 // This example shows how these different features can be used.
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Attack {
     pub value: f32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Defence {
     pub value: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Damage {
     pub value: f32,
 }

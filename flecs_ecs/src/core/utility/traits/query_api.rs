@@ -645,7 +645,7 @@ where
         );
         let query = unsafe { &*query };
         for i in 0..query.term_count {
-            let term = TermRef::new(&query.terms[i as usize]);
+            let term = TermRef::new(unsafe { &*(query.terms.add(i as usize) as *const _) });
             func(&term);
         }
     }
@@ -669,7 +669,7 @@ where
             "query filter is null"
         );
         let query = unsafe { &*query };
-        TermRef::new(&query.terms[index])
+        TermRef::new(unsafe { &*(query.terms.add(index) as *const _) })
     }
 
     /// Get the field count of the current query
@@ -1172,6 +1172,20 @@ where
                 .to_string();
             sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             Some(json)
+        }
+    }
+
+    fn cache_query(&self) -> Option<Query<()>> {
+        let query = self.query_ptr();
+        unsafe {
+            let cache_query = sys::ecs_query_get_cache_query(query);
+            if cache_query.is_null() {
+                None
+            } else {
+                Some(Query::new_from(core::ptr::NonNull::new_unchecked(
+                    cache_query as *mut _,
+                )))
+            }
         }
     }
 }

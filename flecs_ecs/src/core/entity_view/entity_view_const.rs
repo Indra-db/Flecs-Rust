@@ -239,6 +239,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`World::entity_named()`] - Preferred way to create named entities
+    /// * [`World::entity_named_scoped()`]
     /// * [`EntityView::name()`] - Get entity name
     /// * [`EntityView::path()`] - Get full hierarchical path
     /// * [`World::lookup()`] - Look up named entities
@@ -249,6 +250,66 @@ impl<'a> EntityView<'a> {
             name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: core::ptr::null(),
+            use_low_id: false,
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    /// Create a named entity with a custom scope resolution.
+    ///
+    /// Creates a new entity with the specified name. Named entities can be looked up using
+    /// lookup functions. Entity names may be scoped with a custom separator.
+    /// Parts of the hierarchy that don't exist will be automatically created.
+    ///
+    /// # Parameters
+    ///
+    /// * `name` - The name of the entity, which can include hierarchical elements.
+    /// * `sep` - The separator used to separate hierarchical elements in the name.
+    /// * `root_sep` - The separator used to indicate the root of the hierarchy.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// // Create entity with hierarchical name
+    /// let weapon = world.entity_named_scoped("Characters-Bob-Weapon", "-", "-");
+    /// assert_eq!(weapon.path(), Some("::Characters::Bob::Weapon".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity_named()`] - Preferred way to create named entities
+    /// * [`World::entity_named_scoped()`]
+    /// * [`EntityView::name()`] - Get entity name
+    /// * [`EntityView::path()`] - Get full hierarchical path
+    /// * [`World::lookup()`] - Look up named entities
+    pub(crate) fn new_named_scoped(
+        world: impl WorldProvider<'a>,
+        name: &str,
+        sep: &str,
+        root_sep: &str,
+    ) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+        let sep = compact_str::format_compact!("{}\0", sep);
+        let root_sep = compact_str::format_compact!("{}\0", root_sep);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: sep.as_ptr() as *const _,
+            root_sep: root_sep.as_ptr() as *const _,
             _canary: 0,
             id: 0,
             parent: 0,
@@ -734,8 +795,8 @@ impl<'a> EntityView<'a> {
     /// * [`Table::count()`] - Get number of entities in table
     #[inline(always)]
     pub fn table(self) -> Option<Table<'a>> {
-        NonNull::new(unsafe { sys::ecs_get_table(self.world.world_ptr(), *self.id) })
-            .map(|t| Table::new(self.world, t))
+        let table = unsafe { sys::ecs_get_table(self.world.world_ptr(), *self.id) };
+        NonNull::new(table).map(|t| Table::new(self.world, t))
     }
 
     /// Get table range for the entity.
@@ -1036,19 +1097,31 @@ impl<'a> EntityView<'a> {
             return false;
         }
 
-        let mut it: sys::ecs_iter_t = unsafe {
-            sys::ecs_each_id(
-                self.world_ptr(),
-                ecs_pair(*relationship.into_entity(self.world), *self.id),
-            )
-        };
-        while unsafe { sys::ecs_each_next(&mut it) } {
-            count += it.count;
-            for i in 0..it.count as usize {
-                unsafe {
-                    let id = it.entities.add(i);
-                    let ent = EntityView::new_from(self.world, *id);
-                    func(ent);
+        let relationship = relationship.into_entity(self.world);
+
+        if relationship == ECS_CHILD_OF {
+            let mut it: sys::ecs_iter_t = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
+            while unsafe { sys::ecs_children_next(&mut it) } {
+                count += it.count;
+                for i in 0..it.count as usize {
+                    unsafe {
+                        let id = it.entities.add(i);
+                        let ent = EntityView::new_from(self.world, *id);
+                        func(ent);
+                    }
+                }
+            }
+        } else {
+            let mut it: sys::ecs_iter_t =
+                unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship, *self.id)) };
+            while unsafe { sys::ecs_each_next(&mut it) } {
+                count += it.count;
+                for i in 0..it.count as usize {
+                    unsafe {
+                        let id = it.entities.add(i);
+                        let ent = EntityView::new_from(self.world, *id);
+                        func(ent);
+                    }
                 }
             }
         }
@@ -1788,7 +1861,12 @@ impl<'a> EntityView<'a> {
     /// * The parent of the entity.
     #[inline(always)]
     pub fn parent(self) -> Option<EntityView<'a>> {
-        self.target(ECS_CHILD_OF, 0)
+        let id = unsafe { sys::ecs_get_parent(self.world.world_ptr(), *self.id) };
+        if id == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self.world, id))
+        }
     }
 
     /// Lookup an entity by name.
@@ -1940,10 +2018,11 @@ impl<'a> EntityView<'a> {
     }
 
     // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum<T>(self, enum_id: impl IntoEntity, constant: T) -> bool
+    pub fn has_enum<T>(self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
+        let enum_id = T::id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         ecs_assert!(
@@ -1952,7 +2031,7 @@ impl<'a> EntityView<'a> {
             "Constant was not found in Enum reflection data. Did you mean to use has<E>() instead of has(E)?"
         );
 
-        self.has((enum_id.into_entity(self.world), enum_constant_entity_id))
+        self.has((enum_id, enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -1977,6 +2056,70 @@ impl<'a> EntityView<'a> {
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         self.has((component_id, enum_constant_entity_id))
+    }
+
+    /*
+
+        inline E entity_view::to_constant() const {
+    #ifdef FLECS_META
+        using U = typename std::underlying_type<E>::type;
+        const E* ptr = static_cast<const E*>(ecs_get_id(world_, id_,
+            ecs_pair(flecs::Constant, _::type<U>::id(world_))));
+        ecs_assert(ptr != NULL, ECS_INVALID_PARAMETER, "entity is not a constant");
+        return ptr[0];
+    #else
+        ecs_assert(false, ECS_UNSUPPORTED,
+            "operation not supported without FLECS_META addon");
+        return E();
+    #endif
+
+                        #[cfg(feature = "flecs_meta")]
+                    {
+                        let id_underlying_type = world.component_id::<i32>();
+                        let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+                        let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
+
+                        ecs_assert!(
+                            !constant_value.is_null(),
+                            FlecsErrorCode::InternalError,
+                            "missing enum constant value {}",
+                            core::any::type_name::<A>()
+                        );
+
+                        unsafe { constant_value }
+                    }
+         */
+
+    pub fn to_constant<T>(&self) -> T
+    where
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
+    {
+        #[cfg(feature = "flecs_meta")]
+        {
+            let id_underlying_type = self.world.component_id::<i32>();
+            let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+            let constant_value =
+                unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                core::any::type_name::<T>()
+            );
+
+            unsafe { (constant_value.add(0) as *mut T).read() }
+        }
+
+        #[cfg(not(feature = "flecs_meta"))]
+        {
+            ecs_assert!(
+                false,
+                FlecsErrorCode::Unsupported,
+                "operation not supported without FLECS_META addon"
+            );
+            unsafe { std::mem::zeroed() }
+        }
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).
@@ -2036,6 +2179,20 @@ impl<'a> EntityView<'a> {
             )
         };
         dest_entity
+    }
+
+    #[inline(always)]
+    pub fn child(self) -> EntityView<'a> {
+        let w = self.world();
+        let e = w.entity().child_of(self.id);
+        EntityView::new_from(self.world(), *e)
+    }
+
+    #[inline(always)]
+    pub fn child_named(self, name: &str) -> EntityView<'a> {
+        let w = self.world();
+        let e = w.entity_named(name).child_of(self.id);
+        EntityView::new_from(self.world(), *e)
     }
 
     /// Clones the current entity to a new or specified entity.

@@ -131,3 +131,5 @@ impl ObserverEntityBindingCtx {
 
 pub struct ImplementsClone<T>(core::marker::PhantomData<T>);
 pub struct ImplementsDefault<T>(core::marker::PhantomData<T>);
+pub struct ImplementsPartialEq<T>(core::marker::PhantomData<T>);
+pub struct ImplementsPartialOrd<T>(core::marker::PhantomData<T>);

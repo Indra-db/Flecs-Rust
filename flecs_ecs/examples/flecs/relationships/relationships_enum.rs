@@ -56,7 +56,10 @@ fn main() {
 
     // Check if the entity has the Tile relationship and the Tile::Stone pair
     println!("has tile enum: {}", tile.has(id::<Tile>())); // true
-    println!("is the enum from tile stone?: {}", tile.has(Tile::Stone)); // true
+    println!(
+        "is the enum from tile stone?: {}",
+        tile.has_enum(Tile::Stone)
+    ); // true
 
     // Get the current value of the enum
     tile.try_get::<&Tile>(|tile| {

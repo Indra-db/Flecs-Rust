@@ -287,6 +287,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_cache_kind(QueryCacheKind::Auto)
     }
 
+    fn detect_changes(&mut self) -> &mut Self {
+        self.query_desc_mut().flags |= sys::EcsQueryDetectChanges;
+        self
+    }
+
     /// set expression
     ///
     /// # Arguments
@@ -393,9 +398,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Term notation for more complex query features
+    ///
+    /// sets the current term to next one in term list
     fn term(&mut self) -> &mut Self {
-        //let index = *self.current_term_index();
-
         let current_index = self.current_term_index();
         let next_index = self.next_term_index();
 
@@ -410,21 +415,37 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             "Maximum number of terms reached in query builder",
         );
 
-        let term = self.current_term_mut();
-        if term.inout == InOutKind::Default as i16 {
-            term.inout = InOutKind::None as i16;
-        }
-
-        // let term = &mut self.query_desc_mut().terms[index as usize] as *mut sys::ecs_term_t;
-
-        // self.set_term(term);
-
-        // *self.current_term_index_mut() += 1;
-
         self
     }
 
-    /// Term notation for more complex query features
+    /// Sets the current term to the one with the provided type.
+    /// This loops over all terms to find the one with the provided type.
+    /// For performance-critical paths, use `term_at(index: u32)` instead.
+    fn term_at_type<T: ComponentId>(&mut self) -> &mut Self {
+        let term_id = T::id(self.world());
+        let world_ptr = self.world_ptr_mut();
+
+        for i in 0..=self.term_builder().next_term_index - 1 {
+            let desc = self.query_desc();
+            let cur_term = desc.terms[i as usize];
+            let cur_term_id = cur_term.id;
+            let cur_term_pair = ecs_pair(cur_term.first.id, cur_term.second.id);
+
+            if (term_id == cur_term_id
+                || (cur_term_id != 0
+                    && term_id == unsafe { sys::ecs_get_typeid(world_ptr, cur_term_id) }))
+                || (term_id == cur_term_pair
+                    || (cur_term_pair != 0
+                        && term_id == unsafe { sys::ecs_get_typeid(world_ptr, cur_term_pair) }))
+            {
+                return self.term_at(i as u32);
+            }
+        }
+
+        panic!("term_at_type() called with type that is not in query",);
+    }
+
+    /// Sets the current term to the one at the provided index.
     fn term_at(&mut self, index: u32) -> &mut Self {
         ecs_assert!(
             index < sys::FLECS_TERM_COUNT_MAX,
@@ -435,6 +456,71 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self.set_term_ref_mode(TermRefMode::Src);
 
         *self.current_term_index_mut() = index as i32;
+
+        self
+    }
+
+    //flecs_force_build_debug_c || flecs_force_enable_ecs_asserts
+
+    /*
+            /** Sets the current term to the one at the provided index and asserts that the type matches.
+         */
+        template <typename T>
+        Base& term_at(int32_t term_index) {
+            this->term_at(term_index);
+    #if !defined(FLECS_NDEBUG) || defined(FLECS_KEEP_ASSERT)
+            flecs::id_t term_id = _::type<T>::id(this->world_v());
+            ecs_term_t cur_term = *this->term_;
+            ecs_id_t cur_term_id = cur_term.id;
+            ecs_id_t cur_term_pair = ecs_pair(cur_term.first.id, cur_term.second.id);
+
+            ecs_assert((term_id == cur_term_id || (cur_term_id != 0 && term_id == ecs_get_typeid(this->world_v(), cur_term_id))) ||
+                (term_id == cur_term_pair || (cur_term_pair != 0 && term_id == ecs_get_typeid(this->world_v(), cur_term_pair))),
+                ECS_INVALID_PARAMETER, "term type mismatch");
+    #endif
+            return *this;
+        }
+         */
+
+    /// Set the current term to the one with the provided id and assert that the type matches.
+    /// this does not do the type checking in release unless `flecs_force_build_debug_c` or `flecs_force_enable_ecs_asserts` is enabled.
+    fn term_at_checked<T: ComponentId>(&mut self, index: u32) -> &mut Self {
+        ecs_assert!(
+            index < sys::FLECS_TERM_COUNT_MAX,
+            FlecsErrorCode::InvalidParameter,
+            "term_at() called with invalid index"
+        );
+
+        self.set_term_ref_mode(TermRefMode::Src);
+
+        *self.current_term_index_mut() = index as i32;
+
+        #[cfg(any(
+            feature = "flecs_force_build_debug_c",
+            feature = "flecs_force_enable_ecs_asserts",
+            debug_assertions
+        ))]
+        {
+            let term_id = T::id(self.world());
+            let cur_term = self.current_term();
+            let cur_term_id = cur_term.id;
+            let cur_term_pair = ecs_pair(cur_term.first.id, cur_term.second.id);
+
+            ecs_assert!(
+                (term_id == cur_term_id
+                    || (cur_term_id != 0
+                        && term_id
+                            == unsafe { sys::ecs_get_typeid(self.world_ptr_mut(), cur_term_id) }))
+                    || (term_id == cur_term_pair
+                        || (cur_term_pair != 0
+                            && term_id
+                                == unsafe {
+                                    sys::ecs_get_typeid(self.world_ptr_mut(), cur_term_pair)
+                                })),
+                FlecsErrorCode::InvalidParameter,
+                "term type mismatch"
+            );
+        }
 
         self
     }

@@ -29,6 +29,54 @@ where
     }
 }
 
+pub trait SerializeMember<T> {
+    fn to_extern_fn(self) -> extern "C" fn(&Serializer, &T, *const c_char) -> i32;
+}
+
+impl<F, T> SerializeMember<T> for F
+where
+    F: Fn(&Serializer, &T, *const c_char) -> i32,
+{
+    fn to_extern_fn(self) -> extern "C" fn(&Serializer, &T, *const c_char) -> i32 {
+        const {
+            assert!(core::mem::size_of::<Self>() == 0);
+        }
+        core::mem::forget(self);
+
+        extern "C" fn output<F, T>(ser: &Serializer, value: &T, name: *const c_char) -> i32
+        where
+            F: Fn(&Serializer, &T, *const c_char) -> i32,
+        {
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(ser, value, name)
+        }
+
+        output::<F, T>
+    }
+}
+
+pub trait SerializeElement<T> {
+    fn to_extern_fn(self) -> extern "C" fn(&Serializer, &T, usize) -> i32;
+}
+impl<F, T> SerializeElement<T> for F
+where
+    F: Fn(&Serializer, &T, usize) -> i32,
+{
+    fn to_extern_fn(self) -> extern "C" fn(&Serializer, &T, usize) -> i32 {
+        const {
+            assert!(core::mem::size_of::<Self>() == 0);
+        }
+        core::mem::forget(self);
+
+        extern "C" fn output<F, T>(ser: &Serializer, value: &T, elem: usize) -> i32
+        where
+            F: Fn(&Serializer, &T, usize) -> i32,
+        {
+            (unsafe { core::mem::transmute_copy::<_, F>(&()) })(ser, value, elem)
+        }
+
+        output::<F, T>
+    }
+}
 pub trait AssignBoolFn<T> {
     fn to_extern_fn(self) -> extern "C" fn(&mut T, bool);
 }

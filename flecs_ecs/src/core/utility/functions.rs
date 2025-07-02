@@ -312,6 +312,43 @@ pub(crate) fn set_helper<T: ComponentId>(
     }
 }
 
+pub(crate) fn assign_helper<T: ComponentId>(
+    world: *mut sys::ecs_world_t,
+    entity: sys::ecs_entity_t,
+    value: T,
+    id: sys::ecs_id_t,
+) {
+    ecs_assert!(
+        core::mem::size_of::<T>() != 0,
+        FlecsErrorCode::InvalidParameter,
+        "operation invalid for empty type"
+    );
+
+    if !unsafe { sys::ecs_is_deferred(world) } {
+        let dst_ptr = unsafe { sys::ecs_get_mut_id(world, entity, id) };
+        ecs_assert!(
+            !dst_ptr.is_null(),
+            FlecsErrorCode::InvalidOperation,
+            "entity does not have component, use set() instead"
+        );
+
+        let dst = unsafe { &mut *(dst_ptr as *mut T) };
+        *dst = value;
+
+        unsafe { sys::ecs_modified_id(world, entity, id) };
+    } else {
+        let dst_ptr = unsafe { sys::ecs_get_mut_modified_id(world, entity, id) };
+        ecs_assert!(
+            !dst_ptr.is_null(),
+            FlecsErrorCode::InvalidOperation,
+            "entity does not have component, use set() instead"
+        );
+
+        let dst = unsafe { &mut *(dst_ptr as *mut T) };
+        *dst = value;
+    }
+}
+
 /// Remove generation from entity id.
 ///
 /// # Arguments
@@ -565,7 +602,7 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
 
         if part.starts_with('(') {
             // Join this part with the next one
-            let combined = format!("{}, {} : {}", part, parts[i + 1], id);
+            let combined = format!("{part}, {} : {id}", parts[i + 1]);
             result.push(combined);
             skip_next = true; // Skip the next part since it's already used
         } else {

@@ -23,24 +23,24 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 [dependencies]
 flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
-bitflags = "2.8.0"
+bitflags = "2.9.1"
 compact_str = { version = "0.9.0", default-features = false }
-hashbrown = "0.15.2"
+hashbrown = "0.15.4"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
 test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
 
 [dev-dependencies]
-criterion = "0.5.1"
-seq-macro = "0.3.5"
-rand = "0.9.0"
-ctor = "0.4.0"
+criterion = "0.6.0"
+seq-macro = "0.3.6"
+rand = "0.9.1"
+ctor = "0.4.2"
 insta = { version = "1.42.1", features = ["yaml","filters"] }
 libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
 # to be used with flecs_nightly_tests feature flag
-#capture-stdio = "0.1.1" 
+#capture-stdio = "0.1.1"  
 
 [target.wasm32-unknown-unknown.dev-dependencies]
 # We have a transitive dependency on getrandom and it does not automatically
@@ -52,9 +52,6 @@ getrandom = { version = "0.3.3", features = ["wasm_js"] }
 # sys feature flags
 ######################
 
-# use std
-std = ["flecs_ecs_derive/std", "compact_str/std"]
-
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
 
@@ -63,6 +60,12 @@ flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
 
 # force build release for C flecs, even in debug mode
 flecs_force_build_release_c = ["flecs_ecs_sys/force_build_release"]
+
+ # When set, this will cause queries with the EcsQueryCacheDefault policy
+ # to default to EcsQueryCacheNone. This can reduce the memory footprint of
+ # applications at the cost of performance. Queries that use features which 
+ # require caching such as group_by and order_by will still use caching.
+flecs_default_to_uncached_queries = ["flecs_ecs_sys/flecs_default_to_uncached_queries"]
 
 # force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
 flecs_force_enable_ecs_asserts = ["flecs_ecs_sys/flecs_force_enable_ecs_asserts"]
@@ -80,6 +83,15 @@ flecs_disable_build_c = ["flecs_ecs_sys/disable_build_c"]
 ######################
 # Flecs feature flags
 ######################
+
+# When set, the Rust API will not attempt to discover and register enum 
+# constants for registered enum components. This will cause Rust APIs that 
+# accept enum constants to not work.
+# Disabling this feature will reduces the RAM footprint of an application.
+flecs_rust_no_enum_reflection = []
+
+# use std
+std = ["flecs_ecs_derive/std", "compact_str/std"]
 
 # Enable query trait for Rust
 flecs_query_rust_traits = ["flecs_ecs_derive/flecs_query_rust_traits"]
@@ -173,7 +185,7 @@ flecs_base = [
 ]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",

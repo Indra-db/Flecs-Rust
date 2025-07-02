@@ -1158,6 +1158,22 @@ impl World {
         unsafe { sys::ecs_dim(self.raw_world.as_ptr(), entity_count) };
     }
 
+    /// Free unused memory.
+    ///
+    /// This operation frees allocated memory that is no longer in use by the world.
+    /// Examples of allocations that get cleaned up are:
+    /// - Unused pages in the entity index
+    /// - Component columns
+    /// - Empty tables
+    ///
+    /// Flecs uses allocators internally for speeding up allocations. Allocators are
+    /// not evaluated by this function, which means that the memory reported by the
+    /// OS may not go down. For this reason, this function is most effective when
+    /// combined with `FLECS_USE_OS_ALLOC`, which disables internal allocators.
+    pub fn shrink_memory(&self) {
+        unsafe { sys::ecs_shrink(self.raw_world.as_ptr()) };
+    }
+
     /// Set the entity range.
     ///
     /// This function limits the range of issued entity IDs between `min` and `max`.
@@ -1549,6 +1565,63 @@ impl World {
         entity.set_pair::<First, Second>(data);
     }
 
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign<T: ComponentId + DataComponent>(&self, value: T) {
+        let id = T::id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_id<T: ComponentId + DataComponent>(&self, value: T, id: impl IntoId) {
+        let id = *id.into_id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair<First, Second>(
+        &self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
+        );
+
+        entity.assign_pair::<First, Second>(value);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_first<First>(&self, first: First, second: impl Into<Entity>)
+    where
+        First: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, First::id(self));
+        entity.assign_first::<First>(first, second);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, Second::id(self));
+        entity.assign_second::<Second>(first, second);
+    }
+
     /// signal that singleton component was modified.
     ///
     /// # Arguments
@@ -1910,8 +1983,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let id = T::id(self);
-        EntityView::new_from(self, id).has_enum(id, constant)
+        EntityView::new_from(self, T::id(self)).has_enum(constant)
     }
 
     /// Add a singleton component by id.
@@ -1990,25 +2062,6 @@ impl World {
         } else {
             EntityView::new_from(self, id).remove(id)
         }
-    }
-
-    /// Remove singleton pair with enum tag.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value` - The enum value to remove.
-    #[inline(always)]
-    pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
     }
 
     /// Iterate entities in root of world
@@ -2526,6 +2579,36 @@ impl World {
     /// * [`World::entity_named_cstr()`]
     pub fn entity_named(&self, name: &str) -> EntityView {
         EntityView::new_named(self, name)
+    }
+
+    /// Create an entity that's associated with a name within a scope, using a custom separator and root separator.
+    /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
+    /// length of 24 bytes: `"hi this is 24 bytes long"`
+    ///
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by the sep you use.
+    /// For example: "`Foo-Bar`". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
+    /// Note, this does still create the hierarchy as `Foo::Bar`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity_named_scoped("Foo-Bar", "-", "::");
+    /// assert_eq!(entity.get_name(), Some("Bar".to_string()));
+    /// assert_eq!(entity.path(), Some("::Foo::Bar".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity()`]
+    /// * [`World::entity_named_cstr()`]
+    pub fn entity_named_scoped(&self, name: &str, sep: &str, root_sep: &str) -> EntityView {
+        EntityView::new_named_scoped(self, name, sep, root_sep)
     }
 
     /// Create an entity that's associated with a name.
@@ -3572,5 +3655,73 @@ impl World {
     #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }
+    }
+
+    /// Begin exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation ensures that only the thread from which this operation is
+    /// called can access the world. Attempts to access the world from other threads
+    /// will panic.
+    ///
+    /// `exclusive_access_begin()` must be called in pairs with
+    /// `exclusive_access_end()`. Calling `exclusive_access_begin()` from another
+    /// thread without first calling `exclusive_access_end()` will panic.
+    ///
+    /// This operation should only be called once per thread. Calling it multiple
+    /// times for the same thread will cause a panic.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API `thread_self_` callback to be set.
+    ///
+    /// # Arguments
+    ///
+    /// * `thread_name` - Name of the thread obtaining exclusive access. Use `c"thread_name"` to pass a C-style string.
+    ///   Required to be a static string for safety reasons.
+    pub fn exclusive_access_begin(&self, thread_name: Option<&'static CStr>) {
+        let name_ptr = thread_name.map_or(core::ptr::null(), CStr::as_ptr);
+
+        unsafe {
+            sys::ecs_exclusive_access_begin(self.raw_world.as_ptr(), name_ptr);
+        }
+    }
+
+    /// End exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation must be called from the same thread that called
+    /// `exclusive_access_begin()`. Calling it from a different thread will cause
+    /// a panic.
+    ///
+    /// This operation should be called after `exclusive_access_begin()`. After
+    /// calling this operation, other threads are no longer prevented from mutating
+    /// the world.
+    ///
+    /// When `lock_world` is set to true, no thread will be able to mutate the world
+    /// until `exclusive_access_begin()` is called again. While the world is locked,
+    /// only read-only operations are allowed. For example, `get` without mutable access is allowed,
+    /// but `get` with mutable access is not allowed.
+    ///
+    /// A locked world can be unlocked by calling `exclusive_access_end()` again with
+    /// `lock_world` set to false. Note that this only works for locked worlds; if
+    /// `exclusive_access_end()` is called on a world that has exclusive thread
+    /// access from a different thread, a panic will occur.
+    ///
+    /// # Arguments
+    ///
+    /// * `lock_world` - When true, any mutations on the world will be blocked.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API `thread_self_` callback to be set.
+    pub fn exclusive_access_end(&self, lock_world: bool) {
+        unsafe {
+            sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);
+        }
     }
 }

@@ -73,8 +73,8 @@ where
     pub fn set_var_expr(&mut self, name: &str, value: impl Into<Entity>) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 
-        let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
+        let query = self.iter.query;
+        let var_id = unsafe { sys::ecs_query_find_var(query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
@@ -93,8 +93,8 @@ where
     pub fn set_var_table_expr(&mut self, name: &str, table: impl IntoTableRange) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 
-        let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
+        let query = self.iter.query;
+        let var_id = unsafe { sys::ecs_query_find_var(query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,

@@ -2,6 +2,7 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -16,7 +17,7 @@ fn main() {
         .member(point, "stop");
 
     // Create entity, set value of line using reflection API
-    let e = world.entity().add(line);
+    let e = unsafe { world.entity().add_id_unchecked(line) };
 
     let ptr = e.get_untyped_mut(line);
 

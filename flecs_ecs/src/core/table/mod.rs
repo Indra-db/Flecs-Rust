@@ -1,9 +1,11 @@
 //! Table is a wrapper class that gives direct access to the component arrays of a table, the table data
 
 mod field;
+mod flags;
 mod iter;
 
 pub use field::{Field, FieldUntyped};
+pub use flags::TableFlags;
 pub use iter::{TableIter, TableRowIter};
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
@@ -108,7 +110,33 @@ pub trait TableOperations<'a>: IntoTable {
     fn world(&self) -> WorldRef<'a>;
 
     /// Returns the table count
-    fn count(&self) -> i32;
+    fn count(&self) -> i32 {
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_count(table) }
+    }
+
+    /// Get number of allocated elements in table
+    fn size(&self) -> i32 {
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_size(table) }
+    }
+
+    /// Get array with entity ids
+    fn entities(&self) -> &[Entity] {
+        let table = self.table_ptr_mut();
+        let entities = unsafe { sys::ecs_table_entities(table) };
+        if entities.is_null() {
+            return &[];
+        }
+        let count = self.count();
+        unsafe { core::slice::from_raw_parts(entities as *const Entity, count as usize) }
+    }
+
+    fn clear_entities(&self) {
+        let world = self.world().world_ptr_mut();
+        let table = self.table_ptr_mut();
+        unsafe { sys::ecs_table_clear_entities(world, table) };
+    }
 
     /// Converts table type to string
     fn to_string(&self) -> Option<String> {
@@ -132,8 +160,12 @@ pub trait TableOperations<'a>: IntoTable {
     /// Returns the type of the table
     fn archetype(&self) -> Archetype<'a> {
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
-        let slice = unsafe {
-            core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+        let slice = if unsafe { !(*type_vec).array.is_null() && (*type_vec).count != 0 } {
+            unsafe {
+                core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
+            }
+        } else {
+            &[]
         };
         let world = self.world();
         // Safety: we already know table_ptr is NonNull
@@ -318,6 +350,32 @@ pub trait TableOperations<'a>: IntoTable {
                 *rel.into_entity(world),
             )
         }
+    }
+
+    /// get table records array
+    fn records(&self) -> &[sys::ecs_table_record_t] {
+        let records = unsafe { sys::flecs_table_records(self.table_ptr_mut()) };
+
+        unsafe { core::slice::from_raw_parts(records.array, records.count as usize) }
+    }
+
+    /// get table id
+    fn id(&self) -> u64 {
+        unsafe { sys::flecs_table_id(self.table_ptr_mut()) }
+    }
+
+    /// lock table
+    fn lock(&self) {
+        unsafe { sys::ecs_table_lock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
+    }
+
+    /// unlock table
+    fn unlock(&self) {
+        unsafe { sys::ecs_table_unlock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
+    }
+
+    fn has_flags(&self, flags: TableFlags) -> bool {
+        unsafe { sys::ecs_table_has_flags(self.table_ptr_mut(), flags.bits()) }
     }
 }
 

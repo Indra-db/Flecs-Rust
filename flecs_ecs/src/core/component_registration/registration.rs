@@ -22,14 +22,13 @@ where
     let world_ptr = world.world_ptr_mut();
 
     let id = if IS_NAMED {
-        register_component_data_named::<COMPONENT_REGISTRATION, T>(world_ptr, name)
+        register_component_data_named::<COMPONENT_REGISTRATION, T>(world, name)
     } else {
-        register_component_data::<COMPONENT_REGISTRATION, T>(world_ptr)
+        register_component_data::<COMPONENT_REGISTRATION, T>(world)
     };
 
     if T::IS_ENUM {
-        //TODO no full enum support yet with different types
-        let underlying_enum_type_id = world.component_id::<i32>();
+        let underlying_enum_type_id = world.component_id::<T::UnderlyingTypeOfEnum>();
         register_enum_data::<T>(world_ptr, id, *underlying_enum_type_id);
     }
     id
@@ -92,8 +91,8 @@ pub(crate) fn register_enum_data<T>(
                 T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_item.enum_index()),
                 name.as_ptr(),
                 &mut index as *mut usize as *mut c_void,
-                underlying_type_id, //hardcoded
-                4,                  //hardcoded
+                underlying_type_id,
+                core::mem::size_of::<T::UnderlyingTypeOfEnum>(),
             )
         };
         if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
@@ -104,12 +103,15 @@ pub(crate) fn register_enum_data<T>(
 
 /// registers the component with the world.
 pub(crate) fn register_component_data_named<const COMPONENT_REGISTRATION: bool, T>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
     name: *const c_char,
 ) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
+    let worldref = world;
+    let world = worldref.world_ptr_mut();
+
     let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
         unsafe { sys::ecs_set_scope(world, 0) }
     } else {
@@ -121,7 +123,7 @@ where
         0
     };
 
-    let id = register_componment_data_explicit::<T, false>(world, name);
+    let id = register_componment_data_explicit::<T, false>(worldref, name);
 
     if !COMPONENT_REGISTRATION {
         if prev_with != 0 {
@@ -136,11 +138,13 @@ where
 
 /// registers the component with the world.
 pub(crate) fn register_component_data<const COMPONENT_REGISTRATION: bool, T>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
 ) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
+    let worldref = world;
+    let world = worldref.world_ptr_mut();
     let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
         unsafe { sys::ecs_set_scope(world, 0) }
     } else {
@@ -153,7 +157,7 @@ where
         0
     };
 
-    let id = register_componment_data_explicit::<T, false>(world, core::ptr::null());
+    let id = register_componment_data_explicit::<T, false>(worldref, core::ptr::null());
 
     if !COMPONENT_REGISTRATION {
         if prev_with != 0 {
@@ -200,14 +204,68 @@ pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: boo
 
 /// registers the component with the world.
 pub(crate) fn register_componment_data_explicit<T, const ALLOCATE_TAG: bool>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
     name: *const c_char,
 ) -> sys::ecs_entity_t
 where
     T: ComponentId,
 {
+    let worldref = world;
+    let world = worldref.world_ptr_mut();
+
+    let arr = worldref.components_array();
+    let index = T::index() as usize;
+
+    let c = if index < arr.len() { arr[index] } else { 0 };
+
+    if c != 0 && unsafe { sys::ecs_is_alive(world, c) } {
+        return c;
+    }
+
     let only_type_name = crate::core::get_only_type_name::<T>();
     let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
+
+    let type_name = crate::core::type_name_cstring::<T>();
+    let type_name_ptr = type_name.as_ptr();
+
+    let mut user_name = name;
+    let mut implicit_name = false;
+
+    if user_name.is_null() {
+        // If no name was provided, use the type name as the name.
+        user_name = type_name_ptr;
+        /* Keep track of whether name was explicitly set. If not, and
+         * the component was already registered, just use the registered
+         * name. The registered name may differ from the typename as the
+         * registered name includes the flecs scope. This can in theory
+         * be different from the C++ namespace though it is good
+         * practice to keep them the same */
+        implicit_name = true;
+    }
+
+    /* If component is registered by module, ensure it's registered in
+     * the scope of the module. */
+    let module = unsafe { sys::ecs_get_scope(world) };
+
+    if module != 0 && implicit_name {
+        user_name = only_type_name.as_ptr() as *const c_char;
+    }
+
+    //TODO should I do this?
+    /* If the component is not yet registered, ensure no other component
+     * or entity has been registered with this name. Ensure component is
+     * looked up from root. */
+    // let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+    // c = unsafe {
+    //     sys::ecs_lookup_path_w_sep(
+    //         world,
+    //         0,
+    //         user_name,
+    //         SEPARATOR.as_ptr(),
+    //         SEPARATOR.as_ptr(),
+    //         false,
+    //     )
+    // };
 
     // TODO it feels like this should be investigated with the get only type name approach
     // TODO if it's valid. When two components with the same name, but different module get registered
@@ -217,9 +275,7 @@ where
     // symbol was already registered.
     let id = if name.is_null() {
         let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-        let id = unsafe {
-            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const _, false, false)
-        };
+        let id = unsafe { sys::ecs_lookup_symbol(world, type_name_ptr as *const _, false, false) };
         unsafe { sys::ecs_set_scope(world, prev_scope) };
         id
     } else {
@@ -229,12 +285,15 @@ where
         return id;
     }
 
-    let type_name = crate::core::type_name_cstring::<T>();
-    let type_name_ptr = type_name.as_ptr();
+    let name = user_name;
 
-    let name = if name.is_null() { type_name_ptr } else { name };
-
-    let entity_desc = create_entity_desc(name, type_name_ptr);
+    //TODO hack, otherwise importing will have mismatch symbol with the c components
+    let entity_desc_name = if only_type_name.starts_with("Ecs") {
+        only_type_name.as_ptr() as *const c_char
+    } else {
+        type_name_ptr
+    };
+    let entity_desc = create_entity_desc(name, entity_desc_name);
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 

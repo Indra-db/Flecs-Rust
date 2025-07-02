@@ -425,10 +425,8 @@ fn flecs_query_docs_compile_test() {
 
     // Delete empty archetypes that have been empty for 10 calls to this function.
     world.delete_empty_tables(sys::ecs_delete_empty_tables_desc_t {
-        id: 0,
         clear_generation: 10,
         delete_generation: 0,
-        min_id_count: 0,
         time_budget_seconds: 0.0,
     });
 
@@ -2665,12 +2663,8 @@ fn flecs_docs_component_traits_compile_test() {
     e.enable(id::<Position>()); // Enable component
     assert!(e.is_enabled(id::<Position>())); // Updated to use id::<Position>()
 
-    let movement = world.entity().add_trait::<flecs::Union>();
     let walking = world.entity();
     let running = world.entity();
-
-    let e = world.entity().add((movement, running));
-    e.add((movement, walking)); // replaces (Movement, Running)
 
     world.component::<Position>().add_trait::<flecs::Sparse>();
 

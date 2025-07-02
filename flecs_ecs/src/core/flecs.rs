@@ -59,6 +59,8 @@ macro_rules! create_pre_registered_component {
             const IS_TAG: bool = true;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = true;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =
@@ -72,6 +74,7 @@ macro_rules! create_pre_registered_component {
         impl ComponentId for $struct_name {
             type UnderlyingType = $struct_name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl WorldProvider<'a>,
@@ -160,8 +163,8 @@ pub mod term_flags {
     create_pre_registered_component!(IsToggle, IS_TOGGLE);
     create_pre_registered_component!(KeepAlive, KEEP_ALIVE);
     create_pre_registered_component!(IsSparse, IS_SPARSE);
-    create_pre_registered_component!(IsUnion, IS_UNION);
     create_pre_registered_component!(IsOr, IS_OR);
+    create_pre_registered_component!(IsDontFragment, IS_DONT_FRAGMENT);
 }
 
 /// Query flags discovered & set during query creation.
@@ -241,9 +244,15 @@ create_pre_registered_component!(Prefab, ECS_PREFAB);
 create_pre_registered_component!(Disabled, ECS_DISABLED);
 create_pre_registered_component!(NotQueryable, ECS_NOT_QUERYABLE);
 create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
+create_pre_registered_component!(
+    OrderedChildren,
+    ECS_ORDERED_CHILDREN,
+    "Tag that when added to a parent ensures stable order of ecs_children result."
+);
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
 create_pre_registered_component!(Empty, ECS_EMPTY);
+create_pre_registered_component!(Constant, ECS_CONSTANT);
 
 // Component traits
 create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
@@ -272,6 +281,15 @@ create_pre_registered_component!(
     ECS_FINAL,
     "Component trait. This component cannot be used in an [`IsA`] relationship."
 );
+create_pre_registered_component!(
+    Inheritable,
+    ECS_INHERITABLE,
+    "Component trait. Mark component as inheritable.
+    This is the opposite of Final. This trait can be used to enforce that queries
+    take into account component inheritance before inheritance (IsA) 
+    relationships are added with the component as target."
+);
+
 create_pre_registered_component!(
     PairIsTag,
     ECS_PAIR_IS_TAG,
@@ -435,10 +453,9 @@ create_pre_registered_component!(
     "Component trait. Configures a component to use sparse storage."
 );
 create_pre_registered_component!(
-    Union,
-    ECS_UNION,
-    "Component trait. Similar to [`Exclusive`] but combines \
-    different relationship targets in a single table."
+    DontFragment,
+    ECS_DONT_FRAGMENT,
+    "Component trait. Mark component as non-fragmenting"
 );
 
 // Builtin predicate for comparing entity ids
@@ -469,6 +486,23 @@ pub mod pipeline {
     create_pre_registered_component!(Phase, ECS_PHASE);
 }
 
+#[cfg(all(
+    not(feature = "flecs_meta"),
+    not(feature = "flecs_rust_no_enum_reflection")
+))]
+pub mod meta {
+    use super::*;
+
+    create_pre_registered_component!(I8, ECS_I8_T);
+    create_pre_registered_component!(I16, ECS_I16_T);
+    create_pre_registered_component!(I32, ECS_I32_T);
+    create_pre_registered_component!(I64, ECS_I64_T);
+    create_pre_registered_component!(U8, ECS_U8_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
+    create_pre_registered_component!(U32, ECS_U32_T);
+    create_pre_registered_component!(U64, ECS_U64_T);
+}
+
 #[cfg(feature = "flecs_meta")]
 pub mod meta {
     use super::*;
@@ -476,21 +510,20 @@ pub mod meta {
     create_pre_registered_component!(Bool, ECS_BOOL_T);
     create_pre_registered_component!(Char, ECS_CHAR_T);
     create_pre_registered_component!(Byte, ECS_BYTE_T);
-    create_pre_registered_component!(U8, ECS_U8_T);
-    create_pre_registered_component!(U16, ECS_U16_T);
-    create_pre_registered_component!(U32, ECS_U32_T);
-    create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(UPtr, ECS_UPTR_T);
+    create_pre_registered_component!(IPtr, ECS_IPTR_T);
     create_pre_registered_component!(I8, ECS_I8_T);
     create_pre_registered_component!(I16, ECS_I16_T);
     create_pre_registered_component!(I32, ECS_I32_T);
     create_pre_registered_component!(I64, ECS_I64_T);
-    create_pre_registered_component!(IPtr, ECS_IPTR_T);
+    create_pre_registered_component!(U8, ECS_U8_T);
+    create_pre_registered_component!(U16, ECS_U16_T);
+    create_pre_registered_component!(U32, ECS_U32_T);
+    create_pre_registered_component!(U64, ECS_U64_T);
     create_pre_registered_component!(F32, ECS_F32_T);
     create_pre_registered_component!(F64, ECS_F64_T);
     create_pre_registered_component!(String, ECS_STRING_T);
     create_pre_registered_component!(Entity, ECS_ENTITY_T);
-    create_pre_registered_component!(Constant, ECS_CONSTANT);
     create_pre_registered_component!(Quantity, ECS_QUANTITY);
     create_pre_registered_component!(EcsOpaque, ECS_OPAQUE);
 
@@ -575,6 +608,10 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_TAG: bool = true;
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<()>::IMPLS };
     const IMPLS_DEFAULT: bool = { flecs_ecs::core::utility::types::ImplementsDefault::<()>::IMPLS };
+    const IMPLS_PARTIAL_EQ: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialEq::<()>::IMPLS };
+    const IMPLS_PARTIAL_ORD: bool =
+        { flecs_ecs::core::utility::types::ImplementsPartialOrd::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
@@ -587,6 +624,7 @@ impl OnComponentRegistration for () {
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
     type UnderlyingType = ();
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
 
     #[inline(always)]
     fn index() -> u32 {
@@ -717,14 +755,14 @@ mod tests {
                 "EcsTermIsSparse (C) != IsSparse (Rust)"
             );
             assert_eq!(
-                term_flags::IsUnion,
-                sys::EcsTermIsUnion as u64,
-                "EcsTermIsUnion (C) != IsUnion (Rust)"
-            );
-            assert_eq!(
                 term_flags::IsOr,
                 sys::EcsTermIsOr as u64,
                 "EcsTermIsOr (C) != IsOr (Rust)"
+            );
+            assert_eq!(
+                term_flags::IsDontFragment,
+                sys::EcsTermDontFragment as u64,
+                "EcsTermDontFragment (C) != IsDontFragment (Rust)"
             );
 
             // Query flags
@@ -777,9 +815,11 @@ mod tests {
             assert_eq!(flecs::Disabled, sys::EcsDisabled);
             assert_eq!(flecs::NotQueryable, sys::EcsNotQueryable);
             assert_eq!(flecs::SlotOf, sys::EcsSlotOf);
+            assert_eq!(flecs::OrderedChildren, sys::EcsOrderedChildren);
             //assert_eq!(flecs::Flag, sys::EcsFlag);
             assert_eq!(flecs::Monitor, sys::EcsMonitor);
             assert_eq!(flecs::Empty, sys::EcsEmpty);
+            assert_eq!(flecs::Constant, sys::EcsConstant);
 
             // Component traits
             assert_eq!(flecs::Wildcard, sys::EcsWildcard);
@@ -791,6 +831,7 @@ mod tests {
             assert_eq!(flecs::Reflexive, sys::EcsReflexive);
             assert_eq!(flecs::Symmetric, sys::EcsSymmetric);
             assert_eq!(flecs::Final, sys::EcsFinal);
+            assert_eq!(flecs::Inheritable, sys::EcsInheritable);
             assert_eq!(flecs::PairIsTag, sys::EcsPairIsTag);
             assert_eq!(flecs::Exclusive, sys::EcsExclusive);
             assert_eq!(flecs::Acyclic, sys::EcsAcyclic);
@@ -861,7 +902,11 @@ mod tests {
                 sys::EcsSparse,
                 "EcsSparse (C) != Sparse (Rust)",
             );
-            assert_eq!(flecs::Union, sys::EcsUnion, "EcsUnion (C) != Union (Rust)");
+            assert_eq!(
+                flecs::DontFragment,
+                sys::EcsDontFragment,
+                "EcsDontFragment (C) != DontFragment (Rust)",
+            );
 
             // Builtin predicate for comparing entity ids
             assert_eq!(flecs::PredEq, sys::EcsPredEq);
@@ -908,7 +953,6 @@ mod tests {
                 assert_eq!(flecs::meta::F64, sys::FLECS_IDecs_f64_tID_);
                 assert_eq!(flecs::meta::String, sys::FLECS_IDecs_string_tID_);
                 assert_eq!(flecs::meta::Entity, sys::FLECS_IDecs_entity_tID_);
-                assert_eq!(flecs::meta::Constant, sys::EcsConstant);
                 assert_eq!(flecs::meta::Quantity, sys::EcsQuantity);
                 assert_eq!(flecs::meta::EcsOpaque, sys::FLECS_IDEcsOpaqueID_);
 

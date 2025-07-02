@@ -97,6 +97,26 @@ pub fn register_copy_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_ho
     type_hooks.copy_ctor = Some(panic_copy::<T>); //same implementation as copy
 }
 
+pub fn register_partial_ord_lifecycle_action<T: core::cmp::PartialOrd>(
+    type_hooks: &mut sys::ecs_type_hooks_t,
+) {
+    type_hooks.cmp = Some(compare::<T>);
+}
+
+pub fn register_partial_ord_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
+    type_hooks.cmp = Some(panic_compare::<T>);
+}
+
+pub fn register_partial_eq_lifecycle_action<T: core::cmp::PartialEq>(
+    type_hooks: &mut sys::ecs_type_hooks_t,
+) {
+    type_hooks.equals = Some(equals::<T>);
+}
+
+pub fn register_partial_eq_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
+    type_hooks.equals = Some(panic_equals::<T>);
+}
+
 /// Initialize the memory with the default constructor.
 ///
 /// # Arguments
@@ -109,6 +129,12 @@ extern "C" fn ctor<T: Default>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
+    // tags and types with size 0 don't need to be initialized
+    let size = const { core::mem::size_of::<T>() };
+    if size == 0 {
+        return;
+    }
+
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -131,15 +157,27 @@ extern "C" fn ctor<T: Default>(
 /// * `count` - number of elements to be destructed
 /// * `_type_info` - type info for the type to be destructed
 extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
-    ecs_assert!(
-        check_type_info::<T>(_type_info),
-        FlecsErrorCode::InternalError
-    );
-    let arr = ptr as *mut T;
-    for i in 0..count as isize {
-        unsafe {
-            let item = arr.offset(i);
-            ptr::drop_in_place(item);
+    let size = const { core::mem::size_of::<T>() };
+    if size == 0 {
+        let arr = ptr as *mut u8; // tags with drop are (usually) modules with size 1 and alignment 1 
+        for i in 0..count as isize {
+            unsafe {
+                let item = arr.offset(i);
+                ptr::drop_in_place(item as *mut T);
+            }
+        }
+    } else {
+        ecs_assert!(
+            check_type_info::<T>(_type_info),
+            FlecsErrorCode::InternalError
+        );
+
+        let arr = ptr as *mut T;
+        for i in 0..count as isize {
+            unsafe {
+                let item = arr.offset(i);
+                ptr::drop_in_place(item);
+            }
         }
     }
 }
@@ -286,6 +324,64 @@ extern "C" fn ctor_move_dtor<T>(
             core::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
         }
     }
+}
+
+extern "C" fn compare<T: core::cmp::PartialOrd>(
+    a: *const c_void,
+    b: *const c_void,
+    _type_info: *const sys::ecs_type_info_t,
+) -> i32 {
+    ecs_assert!(
+        check_type_info::<T>(_type_info),
+        FlecsErrorCode::InternalError
+    );
+    let lhs = unsafe { &*(a as *const T) };
+    let rhs = unsafe { &*(b as *const T) };
+
+    if lhs == rhs {
+        0
+    } else if lhs < rhs {
+        -1 //less
+    } else {
+        1 //greater
+    }
+}
+
+extern "C" fn panic_compare<T>(
+    _a: *const c_void,
+    _b: *const c_void,
+    _type_info: *const sys::ecs_type_info_t,
+) -> i32 {
+    panic!(
+        "PartialOrd is not implemented for type {} and it's being used in a comparison operation",
+        core::any::type_name::<T>()
+    );
+}
+
+extern "C" fn equals<T: core::cmp::PartialEq>(
+    a: *const c_void,
+    b: *const c_void,
+    _type_info: *const sys::ecs_type_info_t,
+) -> bool {
+    ecs_assert!(
+        check_type_info::<T>(_type_info),
+        FlecsErrorCode::InternalError
+    );
+    let lhs = unsafe { &*(a as *const T) };
+    let rhs = unsafe { &*(b as *const T) };
+
+    lhs == rhs
+}
+
+extern "C" fn panic_equals<T>(
+    _a: *const c_void,
+    _b: *const c_void,
+    _type_info: *const sys::ecs_type_info_t,
+) -> bool {
+    panic!(
+        "PartialEq is not implemented for type {} and it's being used in an equality operation",
+        core::any::type_name::<T>()
+    );
 }
 
 fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {

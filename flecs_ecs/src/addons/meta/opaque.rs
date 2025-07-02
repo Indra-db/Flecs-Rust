@@ -71,6 +71,40 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
         self
     }
 
+    /// Serialize member function
+    pub fn serialize_member(&mut self, func: impl SerializeMember<T>) -> &mut Self {
+        self.desc.type_.serialize_member = Some(unsafe {
+            core::mem::transmute::<
+                extern "C" fn(
+                    &flecs_ecs_sys::ecs_serializer_t,
+                    &T,
+                    *const core::ffi::c_char,
+                ) -> i32,
+                unsafe extern "C" fn(
+                    *const flecs_ecs_sys::ecs_serializer_t,
+                    *const core::ffi::c_void,
+                    *const core::ffi::c_char,
+                ) -> i32,
+            >(func.to_extern_fn())
+        });
+        self
+    }
+
+    /// Serialize element function
+    pub fn serialize_element(&mut self, func: impl SerializeElement<T>) -> &mut Self {
+        self.desc.type_.serialize_element = Some(unsafe {
+            core::mem::transmute::<
+                extern "C" fn(&flecs_ecs_sys::ecs_serializer_t, &T, usize) -> i32,
+                unsafe extern "C" fn(
+                    *const flecs_ecs_sys::ecs_serializer_t,
+                    *const core::ffi::c_void,
+                    usize,
+                ) -> i32,
+            >(func.to_extern_fn())
+        });
+        self
+    }
+
     /// Assign bool value
     pub fn assign_bool(&mut self, func: impl AssignBoolFn<T>) -> &mut Self {
         self.desc.type_.assign_bool = Some(unsafe {
