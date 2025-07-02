@@ -332,7 +332,7 @@ pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
 // Poly target components
-pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID + 0;
+pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID;
 pub(crate) const ECS_OBSERVER: u64 = FLECS_HI_COMPONENT_ID + 1;
 pub(crate) const ECS_SYSTEM: u64 = FLECS_HI_COMPONENT_ID + 2;
 

@@ -36,11 +36,11 @@ criterion = "0.5.1"
 seq-macro = "0.3.5"
 rand = "0.9.0"
 ctor = "0.4.0"
-insta = { version = "1.42.1", features = ["yaml","filters"] }
+#insta = { version = "1.42.1", features = ["yaml","filters"] }
 libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
 # to be used with flecs_nightly_tests feature flag
-capture-stdio = "0.1.1"  
+#capture-stdio = "0.1.1"  
 
 [target.wasm32-unknown-unknown.dev-dependencies]
 # We have a transitive dependency on getrandom and it does not automatically
@@ -186,7 +186,7 @@ flecs_base = [
 
 default = [
     "flecs_regenerate_binding_c",
-    "flecs_nightly_tests",
+    #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
     "flecs_snapshot",
