@@ -1174,6 +1174,20 @@ where
             Some(json)
         }
     }
+
+    fn cache_query(&self) -> Option<Query<()>> {
+        let query = self.query_ptr();
+        unsafe {
+            let cache_query = sys::ecs_query_get_cache_query(query);
+            if cache_query.is_null() {
+                None
+            } else {
+                Some(Query::new_from(core::ptr::NonNull::new_unchecked(
+                    cache_query as *mut _,
+                )))
+            }
+        }
+    }
 }
 
 unsafe extern "C" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)

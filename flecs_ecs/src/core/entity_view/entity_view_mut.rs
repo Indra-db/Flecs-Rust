@@ -634,6 +634,123 @@ impl<'a> EntityView<'a> {
         }
     }
 
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign<T: ComponentId + DataComponent>(self, value: T) -> Self {
+        assign_helper(
+            self.world.world_ptr_mut(),
+            *self.id,
+            value,
+            T::id(self.world),
+        );
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_id<T: ComponentId + DataComponent>(self, value: T, id: impl IntoId) -> Self {
+        let id = *id.into_id(self.world);
+        assign_helper(self.world.world_ptr_mut(), *self.id, value, id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair<First, Second>(
+        self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) -> Self
+    where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        const {
+            assert!(
+                !<(First, Second) as ComponentOrPairId>::IS_TAGS,
+                "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead."
+            );
+        };
+
+        let pair_id = ecs_pair(First::id(self.world), Second::id(self.world));
+
+        ecs_assert!(
+            unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
+            FlecsErrorCode::InvalidOperation,
+            "Pair is not a (data) component. Possible cause: PairIsTag trait"
+        );
+
+        assign_helper(self.world.world_ptr_mut(), *self.id, value, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    where
+        First: ComponentId + DataComponent,
+    {
+        let world_ptr = self.world.world_ptr_mut();
+        let first_id = First::id(self.world);
+        let second_id = *second.into();
+        let pair_id = ecs_pair(first_id, second_id);
+        let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
+
+        if data_id != first_id {
+            panic!(
+                "First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        assign_helper(world_ptr, *self.id, first, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let world = self.world.world_ptr_mut();
+        let first_id = *first.into();
+        let second_id = Second::id(self.world);
+        let pair_id = ecs_pair(first_id, second_id);
+        // NOTE: we could this safety check optional
+        let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
+
+        if data_id != second_id {
+            panic!(
+                "Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        assign_helper(world, *self.id, second, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
+    where
+        First: ComponentId + ComponentType<Struct> + DataComponent,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
+    {
+        assign_helper(
+            self.world.world_ptr_mut(),
+            *self.id,
+            first,
+            ecs_pair(First::id(self.world), **enum_variant.id_variant(self.world)),
+        );
+        self
+    }
+
     /// Sets the name of the entity.
     ///
     /// # Arguments

@@ -2018,10 +2018,11 @@ impl<'a> EntityView<'a> {
     }
 
     // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum<T>(self, enum_id: impl IntoEntity, constant: T) -> bool
+    pub fn has_enum<T>(self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
+        let enum_id = T::id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         ecs_assert!(
@@ -2030,7 +2031,7 @@ impl<'a> EntityView<'a> {
             "Constant was not found in Enum reflection data. Did you mean to use has<E>() instead of has(E)?"
         );
 
-        self.has((enum_id.into_entity(self.world), enum_constant_entity_id))
+        self.has((enum_id, enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -2178,6 +2179,20 @@ impl<'a> EntityView<'a> {
             )
         };
         dest_entity
+    }
+
+    #[inline(always)]
+    pub fn child(self) -> EntityView<'a> {
+        let w = self.world();
+        let e = w.entity().child_of(self.id);
+        EntityView::new_from(self.world(), *e)
+    }
+
+    #[inline(always)]
+    pub fn child_named(self, name: &str) -> EntityView<'a> {
+        let w = self.world();
+        let e = w.entity_named(name).child_of(self.id);
+        EntityView::new_from(self.world(), *e)
     }
 
     /// Clones the current entity to a new or specified entity.

@@ -1565,6 +1565,63 @@ impl World {
         entity.set_pair::<First, Second>(data);
     }
 
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign<T: ComponentId + DataComponent>(&self, value: T) {
+        let id = T::id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_id<T: ComponentId + DataComponent>(&self, value: T, id: impl IntoId) {
+        let id = *id.into_id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair<First, Second>(
+        &self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
+        );
+
+        entity.assign_pair::<First, Second>(value);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_first<First>(&self, first: First, second: impl Into<Entity>)
+    where
+        First: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, First::id(self));
+        entity.assign_first::<First>(first, second);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, Second::id(self));
+        entity.assign_second::<Second>(first, second);
+    }
+
     /// signal that singleton component was modified.
     ///
     /// # Arguments
@@ -1926,8 +1983,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let id = T::id(self);
-        EntityView::new_from(self, id).has_enum(id, constant)
+        EntityView::new_from(self, T::id(self)).has_enum(constant)
     }
 
     /// Add a singleton component by id.

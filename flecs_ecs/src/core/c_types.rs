@@ -246,11 +246,6 @@ pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ECS_IDENTIFIER: u64 = 2;
 pub(crate) const ECS_POLY: u64 = 3;
 
-// Poly target components
-pub(crate) const ECS_QUERY: u64 = 5;
-pub(crate) const ECS_OBSERVER: u64 = 6;
-pub(crate) const ECS_SYSTEM: u64 = 7;
-
 // Term id flags
 
 ///  The base ID, equivalent to the C #define
@@ -335,6 +330,11 @@ pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 /// Query only returns whole tables (ignores toggle/member fields).
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
+
+// Poly target components
+pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID + 0;
+pub(crate) const ECS_OBSERVER: u64 = FLECS_HI_COMPONENT_ID + 1;
+pub(crate) const ECS_SYSTEM: u64 = FLECS_HI_COMPONENT_ID + 2;
 
 // Core scopes & entities
 pub(crate) const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID + 3;

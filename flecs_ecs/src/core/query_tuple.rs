@@ -336,16 +336,6 @@ where
                 "Pair is not a (data) component. Possible cause: PairIsTag trait"
             );
         }
-
-        ecs_assert!(
-        {
-            if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
-                if !ti.is_null() {
-                    unsafe { (*ti).size == 0 }
-                } else { true }
-            } else { true }
-        }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
         query.with(id);
         let term = query.current_term_mut();
@@ -532,16 +522,6 @@ macro_rules! impl_iterable {
                             "Pair is not a (data) component. Possible cause: PairIsTag trait"
                         );
                     }
-
-                    ecs_assert!(
-                    {
-                        if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                            let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
-                            if !ti.is_null() {
-                                unsafe { (*ti).size == 0 }
-                            } else { true }
-                        } else { true }
-                    }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
 
                     query.with(id);
                     let term = query.current_term_mut();
