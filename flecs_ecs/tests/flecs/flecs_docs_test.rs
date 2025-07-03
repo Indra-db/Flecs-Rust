@@ -371,7 +371,7 @@ fn flecs_system_docs_compile_test() {
 
     world.set_threads(4);
 
-    world.system::<&Position>().multi_threaded().each(|p| {
+    world.system::<&Position>().par_each(|p| {
         // ...
     });
 
