@@ -2097,7 +2097,7 @@ fn entity_with_relation_type_self() {
     assert!(!world.component::<SelfRef>().has((Likes::id(), bob)));
 
     let mut count = 0;
-    let q = world.query::<()>().with((id::<&Likes>(), bob)).build();
+    let q = world.query::<()>().with((Likes::id(), bob)).build();
 
     q.each_entity(|e, _| {
         assert!(e.has((Likes::id(), bob)));
@@ -2130,7 +2130,7 @@ fn entity_with_relation_self() {
     assert!(!world.component::<SelfRef>().has((Likes::id(), bob)));
 
     let mut count = 0;
-    let q = world.query::<()>().with((id::<&Likes>(), bob)).build();
+    let q = world.query::<()>().with((Likes::id(), bob)).build();
 
     q.each_entity(|e, _| {
         assert!(e.has((Likes::id(), bob)));

@@ -335,14 +335,14 @@ fn flecs_system_docs_compile_test() {
 
     world
         .system::<&Position>()
-        .with(id::<&mut Transform>())
+        .with(&mut Transform::id())
         .each(|p| {
             // ...
         });
 
     world
         .system::<&Position>()
-        .with(id::<&Transform>())
+        .with(&Transform::id())
         .each(|p| {
             // ...
         });
@@ -440,10 +440,10 @@ fn flecs_query_docs_compile_test() {
     let add_npc = true;
 
     let mut q = world.query::<(&mut Position, &Velocity)>();
-    q.with(id::<&Velocity>());
+    q.with(&Velocity::id());
 
     if add_npc {
-        q.with(id::<&Foo>()); // Conditionally add
+        q.with(&Foo::id()); // Conditionally add
     }
 
     q.build(); // Create query
@@ -476,7 +476,7 @@ fn flecs_query_docs_compile_test() {
 
     world
         .query::<()>()
-        .with(id::<&Tag>())
+        .with(&Tag::id())
         .build()
         .each_entity(|e, _| { /* */ });
 
@@ -522,10 +522,7 @@ fn flecs_query_docs_compile_test() {
 
     q.each(|(p, v)| { /* */ });
 
-    let q = world
-        .query::<&mut Position>()
-        .with(id::<&Velocity>())
-        .build();
+    let q = world.query::<&mut Position>().with(&Velocity::id()).build();
 
     let npc = world.entity();
     let platoon_01 = world.entity();
@@ -626,14 +623,14 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<&mut Position>())
-        .with(id::<&Velocity>()) // uses InOutKind::In modifier
+        .with(&mut Position::id())
+        .with(&Velocity::id()) // uses InOutKind::In modifier
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<&mut Position>())
-        .with(id::<&Velocity>())
+        .with(&mut Position::id())
+        .with(&Velocity::id())
         .build();
 
     q.run(|mut it| {

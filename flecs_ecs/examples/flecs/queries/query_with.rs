@@ -19,7 +19,7 @@ fn main() {
     // result does not become part of the function signatures of each and iter.
     // This is useful for things like tags, which because they don't have a
     // value are less useful to pass to the each/iter functions as argument.
-    let query = world.query::<&Position>().with(id::<&Npc>()).build();
+    let query = world.query::<&Position>().with(&Npc::id()).build();
 
     // Create a few test entities for the Position, Npc query
     world

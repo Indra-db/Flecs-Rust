@@ -77,7 +77,7 @@ impl<'a> Observer<'a> {
                             ```
                             .observer::<flecs::OnAdd, &T>()
                             .observer::<flecs::OnAdd, &mut T>()
-                            .observer::<flecs::OnAdd, ()>().with(id::<&T>())
+                            .observer::<flecs::OnAdd, ()>().with(&T::id())
                             .observer::<flecs::OnAdd, ()>().read_write(T::id())
                             ```
                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

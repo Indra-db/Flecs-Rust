@@ -97,7 +97,7 @@ fn main() {
 
     let mut query = world
         .query::<()>()
-        .with(id::<&Npc>())
+        .with(&Npc::id())
         .group_by(WorldCell::id())
         .build();
 

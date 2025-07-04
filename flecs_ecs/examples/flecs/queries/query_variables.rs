@@ -47,7 +47,7 @@ fn main() {
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
         .with((Eats::id(), "$food"))
-        .with(id::<&Healthy>())
+        .with(&Healthy::id())
         .set_src("$food")
         .build();
 

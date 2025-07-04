@@ -97,7 +97,7 @@ fn main() {
     let mut query = world
         .query::<()>()
         .with(RangedUnit::id())
-        .with(id::<&Platoon>())
+        .with(&Platoon::id())
         .set_second("$platoon")
         .with((Player::id(), "$player"))
         .set_src("$platoon")

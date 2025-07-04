@@ -126,9 +126,9 @@ fn main() {
 
     let query = world
         .query::<()>()
-        .with(id::<&Person>())
+        .with(&Person::id())
         .with((LocatedIn::id(), "$Location"))
-        .with(id::<&Country>())
+        .with(&Country::id())
         .set_src("$Location")
         .build();
 

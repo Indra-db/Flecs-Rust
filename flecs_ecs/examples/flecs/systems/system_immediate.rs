@@ -54,7 +54,7 @@ fn main() {
                 // components to the entities being iterated would interfere
                 // with the system iterator.
                 it.world().defer_suspend();
-                waiter.add((id::<&Plate>(), plate));
+                waiter.add((Plate::id(), plate));
                 it.world().defer_resume();
 
                 // Now that deferring is resumed, we can safely also add the
@@ -63,7 +63,7 @@ fn main() {
                 // currently iterating, and we don't want to move it to a
                 // different table while we're iterating it.
 
-                plate.add((id::<&Waiter>(), waiter));
+                plate.add((Waiter::id(), waiter));
 
                 println!("Assigned {} to {}!", waiter.name(), plate.name());
             }
@@ -77,8 +77,8 @@ fn main() {
     let plate_2 = world.entity_named("plate_2").add(Plate::id());
     world.entity_named("plate_3").add(Plate::id());
 
-    waiter_1.add((id::<&Plate>(), plate_2));
-    plate_2.add((id::<&Waiter>(), waiter_1));
+    waiter_1.add((Plate::id(), plate_2));
+    plate_2.add((Waiter::id(), waiter_1));
 
     // run systems
     world.progress();

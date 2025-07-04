@@ -60,8 +60,8 @@ fn query_builder_builder_assign_from_empty() {
     let q = world
         .query::<()>()
         .set_cache_kind(QueryCacheKind::Auto)
-        .with(id::<&Position>())
-        .with(id::<&Velocity>())
+        .with(&Position::id())
+        .with(&Velocity::id())
         .build();
 
     let e1 = world
@@ -132,8 +132,8 @@ fn query_builder_builder_build_n_statements() {
     let world = World::new();
 
     let mut q = world.query::<()>();
-    q.with(id::<&Position>());
-    q.with(id::<&Velocity>());
+    q.with(&Position::id());
+    q.with(&Velocity::id());
     q.set_cache_kind(QueryCacheKind::Auto);
     let q = q.build();
 
@@ -238,7 +238,7 @@ fn query_builder_type_term() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -320,7 +320,7 @@ fn query_builder_type_pair_term() {
 
     let r = world
         .query::<()>()
-        .with((id::<&Likes>(), *flecs::Wildcard))
+        .with((Likes::id(), *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -348,7 +348,7 @@ fn query_builder_pair_term_w_var() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -389,10 +389,10 @@ fn query_builder_2_pair_terms_w_var() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Eats>())
+        .with(&Eats::id())
         .second()
         .set_var("Food")
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -440,7 +440,7 @@ fn query_builder_set_var() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -480,10 +480,10 @@ fn query_builder_set_2_vars() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Eats>())
+        .with(&Eats::id())
         .second()
         .set_var("Food")
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -522,7 +522,7 @@ fn query_builder_set_var_by_name() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Food")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -557,10 +557,10 @@ fn query_builder_set_2_vars_by_name() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Eats>())
+        .with(&Eats::id())
         .second()
         .set_var("Food")
-        .with(id::<&Likes>())
+        .with(&Likes::id())
         .second()
         .set_var("Person")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -619,7 +619,7 @@ fn query_builder_add_1_type() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -641,8 +641,8 @@ fn query_builder_add_2_types() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .with(id::<&Velocity>())
+        .with(&Position::id())
+        .with(&Velocity::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -667,7 +667,7 @@ fn query_builder_add_1_type_w_1_type() {
 
     let q = world
         .query::<&Position>()
-        .with(id::<&Velocity>())
+        .with(&Velocity::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -692,8 +692,8 @@ fn query_builder_add_2_types_w_1_type() {
 
     let q = world
         .query::<&Position>()
-        .with(id::<&Velocity>())
-        .with(id::<&Mass>())
+        .with(&Velocity::id())
+        .with(&Mass::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -745,7 +745,7 @@ fn query_builder_add_not() {
 
     let q = world
         .query::<&Position>()
-        .with(id::<&Velocity>())
+        .with(&Velocity::id())
         .set_oper(OperKind::Not)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -771,9 +771,9 @@ fn query_builder_add_or() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_oper(OperKind::Or)
-        .with(id::<&Velocity>())
+        .with(&Velocity::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -796,8 +796,8 @@ fn query_builder_add_optional() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .with(id::<&Velocity>())
+        .with(&Position::id())
+        .with(&Velocity::id())
         .set_oper(OperKind::Optional)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -902,7 +902,7 @@ fn query_builder_singleton_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .singleton()
         .set_inout()
         .set_cache_kind(QueryCacheKind::Auto)
@@ -943,7 +943,7 @@ fn query_builder_isa_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .src()
         .up_id(*flecs::IsA)
         .set_in()
@@ -987,7 +987,7 @@ fn query_builder_isa_self_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .src()
         .self_()
         .up_id(*flecs::IsA)
@@ -1041,7 +1041,7 @@ fn query_builder_childof_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .src()
         .up()
         .set_in()
@@ -1081,7 +1081,7 @@ fn query_builder_childof_self_superset_term() {
 
     let q = world
         .query::<&SelfRef>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .src()
         .self_()
         .up()
@@ -1535,7 +1535,7 @@ fn query_builder_add_pair_w_rel_type() {
 
     let q = world
         .query::<&SelfRef>()
-        .with((id::<&Likes>(), *flecs::Wildcard))
+        .with((Likes::id(), *flecs::Wildcard))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -1592,7 +1592,7 @@ fn query_builder_typed_term_at() {
 
     let s = world
         .system::<&Velocity>()
-        .with(id::<&mut RelFoo>())
+        .with(&mut RelFoo::id())
         .term_at_type::<Velocity>()
         .singleton()
         .term_at_type::<RelFoo>()
@@ -1624,7 +1624,7 @@ fn query_builder_typed_term_at_indexed() {
 
     let s = world
         .system::<&Velocity>()
-        .with(id::<&mut RelFoo>())
+        .with(&mut RelFoo::id())
         .term_at_checked::<Velocity>(0)
         .singleton()
         .term_at_checked::<RelFoo>(1)
@@ -1654,7 +1654,7 @@ fn query_builder_explicit_subject_w_id() {
 
     let q = world
         .query::<&Position>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_id(*flecs::This_)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -1682,7 +1682,7 @@ fn query_builder_explicit_subject_w_type() {
 
     let q = world
         .query::<&Position>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_src(Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -1878,8 +1878,7 @@ fn query_builder_1_term_to_empty() {
     let apples = world.entity();
 
     let mut q = world.query::<()>();
-    q.with(id::<&Position>())
-        .set_cache_kind(QueryCacheKind::Auto);
+    q.with(&Position::id()).set_cache_kind(QueryCacheKind::Auto);
     q.with((likes, apples));
 
     let q = q.build();
@@ -1922,8 +1921,8 @@ fn query_builder_optional_tag_is_set() {
 
     let q = world
         .query::<()>()
-        .with(id::<&TagA>())
-        .with(id::<&TagB>())
+        .with(&TagA::id())
+        .with(&TagB::id())
         .set_oper(OperKind::Optional)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -1959,16 +1958,16 @@ fn query_builder_10_terms() {
 
     let f = world
         .query::<()>()
-        .with(id::<&TagA>())
-        .with(id::<&TagB>())
-        .with(id::<&TagC>())
-        .with(id::<&TagD>())
-        .with(id::<&TagE>())
-        .with(id::<&TagF>())
-        .with(id::<&TagG>())
-        .with(id::<&TagH>())
-        .with(id::<&TagI>())
-        .with(id::<&TagJ>())
+        .with(&TagA::id())
+        .with(&TagB::id())
+        .with(&TagC::id())
+        .with(&TagD::id())
+        .with(&TagE::id())
+        .with(&TagF::id())
+        .with(&TagG::id())
+        .with(&TagH::id())
+        .with(&TagI::id())
+        .with(&TagJ::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2006,22 +2005,22 @@ fn query_builder_16_terms() {
 
     let f = world
         .query::<()>()
-        .with(id::<&TagA>())
-        .with(id::<&TagB>())
-        .with(id::<&TagC>())
-        .with(id::<&TagD>())
-        .with(id::<&TagE>())
-        .with(id::<&TagF>())
-        .with(id::<&TagG>())
-        .with(id::<&TagH>())
-        .with(id::<&TagI>())
-        .with(id::<&TagJ>())
-        .with(id::<&TagK>())
-        .with(id::<&TagL>())
-        .with(id::<&TagM>())
-        .with(id::<&TagN>())
-        .with(id::<&TagO>())
-        .with(id::<&TagP>())
+        .with(&TagA::id())
+        .with(&TagB::id())
+        .with(&TagC::id())
+        .with(&TagD::id())
+        .with(&TagE::id())
+        .with(&TagF::id())
+        .with(&TagG::id())
+        .with(&TagH::id())
+        .with(&TagI::id())
+        .with(&TagJ::id())
+        .with(&TagK::id())
+        .with(&TagL::id())
+        .with(&TagM::id())
+        .with(&TagN::id())
+        .with(&TagO::id())
+        .with(&TagP::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2095,13 +2094,13 @@ fn query_builder_group_by_raw() {
 
     let q = world
         .query::<()>()
-        .with(id::<&TagX>())
+        .with(&TagX::id())
         .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id))
         .build();
 
     let q_reverse = world
         .query::<()>()
-        .with(id::<&TagX>())
+        .with(&TagX::id())
         .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id_negated))
         .build();
 
@@ -2158,13 +2157,13 @@ fn query_builder_group_by_template() {
 
     let q = world
         .query::<()>()
-        .with(id::<&TagX>())
+        .with(&TagX::id())
         .group_by_fn(TagX::id(), Some(group_by_first_id))
         .build();
 
     let q_reverse = world
         .query::<()>()
-        .with(id::<&TagX>())
+        .with(&TagX::id())
         .group_by_fn(TagX::id(), Some(group_by_first_id_negated))
         .build();
 
@@ -2286,7 +2285,7 @@ fn query_builder_group_by_iter_one_template() {
 
     let q = world
         .query::<()>()
-        .with((id::<&Rel>(), *flecs::Wildcard))
+        .with((Rel::id(), *flecs::Wildcard))
         .group_by_fn(Rel::id(), Some(group_by_rel))
         .build();
 
@@ -2547,7 +2546,7 @@ fn query_builder_group_by_callbacks() {
 
     let q = world
         .query::<()>()
-        .with((id::<&Rel>(), *flecs::Wildcard))
+        .with((Rel::id(), *flecs::Wildcard))
         .group_by(Rel::id())
         .group_by_ctx(cell_count_group_ctx.as_ptr() as *mut c_void, None)
         .on_group_create(Some(callback_group_create))
@@ -2603,7 +2602,7 @@ fn query_builder_create_w_no_template_args() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2829,7 +2828,7 @@ fn query_builder_up_w_type() {
 
     let q = world
         .query::<&SelfRef2>()
-        .with(id::<&Other>())
+        .with(&Other::id())
         .src()
         .up_id(Rel::id())
         .set_in()
@@ -2932,7 +2931,7 @@ fn query_builder_named_query() {
 
     let q = world
         .query_named::<()>("my_query")
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2957,7 +2956,7 @@ fn query_builder_term_w_write() {
         .with(Position::id())
         .with(Position::id())
         .write_curr()
-        .with(id::<&mut Position>())
+        .with(&mut Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -2978,7 +2977,7 @@ fn query_builder_term_w_read() {
         .with(Position::id())
         .with(Position::id())
         .read_curr()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3028,7 +3027,7 @@ fn query_builder_builder_force_assign_operator() {
 
     // let q = world
     //     .query::<()>()
-    //     .with(id::<&Position>())
+    //     .with(&Position::id())
     //     .set_cache_kind(QueryCacheKind::Auto)
     //     .build();
     // let entity_query = q.entity().id();
@@ -3291,7 +3290,7 @@ fn query_builder_term_after_arg() {
         .query::<(&TagA, &TagB)>()
         .term_at(0)
         .set_src(*flecs::This_) // dummy
-        .with(id::<&TagC>())
+        .with(&TagC::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3347,7 +3346,7 @@ fn query_builder_const_in_term() {
 
     let f = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3653,7 +3652,7 @@ fn query_builder_with_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with("flecs.common_test.Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3679,8 +3678,8 @@ fn query_builder_with_component() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .with(id::<&Velocity>())
+        .with(&Position::id())
+        .with(&Velocity::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3709,7 +3708,7 @@ fn query_builder_with_pair_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3742,7 +3741,7 @@ fn query_builder_with_pair_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3771,7 +3770,7 @@ fn query_builder_with_pair_components() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with((Likes::id(), Apples::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3803,8 +3802,8 @@ fn query_builder_with_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .with((id::<&Likes>(), apples))
+        .with(&Position::id())
+        .with((Likes::id(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3868,7 +3867,7 @@ fn query_builder_with_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with((Likes::id(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3905,7 +3904,7 @@ fn query_builder_with_enum() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .with_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -3988,7 +3987,7 @@ fn query_builder_without_component() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without(Velocity::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4018,7 +4017,7 @@ fn query_builder_without_pair_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4051,7 +4050,7 @@ fn query_builder_without_pair_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4080,7 +4079,7 @@ fn query_builder_without_pair_components() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without((Likes::id(), Apples::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4112,8 +4111,8 @@ fn query_builder_without_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .without((id::<&Likes>(), apples))
+        .with(&Position::id())
+        .without((Likes::id(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4144,7 +4143,7 @@ fn query_builder_without_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without((Likes::id(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4177,7 +4176,7 @@ fn query_builder_without_pair_name_component_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without(("Likes", apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4214,7 +4213,7 @@ fn query_builder_without_enum() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .without_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4243,7 +4242,7 @@ fn query_builder_write() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write(world.id_view_from(Position::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4261,7 +4260,7 @@ fn query_builder_write_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4279,7 +4278,7 @@ fn query_builder_write_component() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write(Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4298,7 +4297,7 @@ fn query_builder_write_pair_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4318,7 +4317,7 @@ fn query_builder_write_pair_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4335,7 +4334,7 @@ fn query_builder_write_pair_components() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write((Likes::id(), Apples::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4354,8 +4353,8 @@ fn query_builder_write_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
-        .write((id::<&Likes>(), apples))
+        .with(&Position::id())
+        .write((Likes::id(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4373,7 +4372,7 @@ fn query_builder_write_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write((Likes::id(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4398,7 +4397,7 @@ fn query_builder_write_enum() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .write_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4415,7 +4414,7 @@ fn query_builder_read() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read(world.id_view_from(Position::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4433,7 +4432,7 @@ fn query_builder_read_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read("flecs.common_test.Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4451,7 +4450,7 @@ fn query_builder_read_component() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read(Position::id())
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4470,7 +4469,7 @@ fn query_builder_read_pair_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read((likes, apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4490,7 +4489,7 @@ fn query_builder_read_pair_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read(("likes", "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4507,7 +4506,7 @@ fn query_builder_read_pair_components() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read((Likes::id(), Apples::id()))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4526,7 +4525,7 @@ fn query_builder_read_pair_component_id() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read((Likes::id(), apples))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4545,7 +4544,7 @@ fn query_builder_read_pair_component_name() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read((Likes::id(), "Apples"))
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4571,7 +4570,7 @@ fn query_builder_read_enum() {
 
     let q = world
         .query::<()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .read_enum(Color::Green)
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4589,7 +4588,7 @@ fn query_builder_assign_after_init() {
     #[allow(unused_assignments)]
     let mut f: Query<()> = world.new_query::<()>();
     let mut fb = world.query::<()>();
-    fb.with(id::<&Position>());
+    fb.with(&Position::id());
     fb.set_cache_kind(QueryCacheKind::Auto);
     f = fb.build();
 
@@ -4882,7 +4881,7 @@ fn query_builder_var_src_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Foo>())
+        .with(&Foo::id())
         .set_src("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -4906,7 +4905,7 @@ fn query_builder_var_first_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Foo>())
+        .with(&Foo::id())
         .term()
         .set_first("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
@@ -4933,7 +4932,7 @@ fn query_builder_var_second_w_prefixed_name() {
 
     let r = world
         .query::<()>()
-        .with(id::<&Foo>())
+        .with(&Foo::id())
         .set_second("$Var")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();

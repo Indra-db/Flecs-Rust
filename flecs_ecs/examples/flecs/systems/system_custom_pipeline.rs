@@ -21,7 +21,7 @@ fn main() {
     let pipeline = world
         .pipeline()
         .with(flecs::system::System::ID)
-        .with(id::<&Physics>())
+        .with(&Physics::id())
         .build();
 
     // Configure the world to use the custom pipeline
