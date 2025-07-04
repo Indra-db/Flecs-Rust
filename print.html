@@ -216,7 +216,7 @@ struct Velocity { x: f32, y: f32 }
 // Add a component. This creates the component in the ECS storage, but does not
 // assign it with a value. To add a component, it needs to be derived with the
 // Default trait otherwise it will panic at compile time.
-e.add(id::&lt;Velocity&gt;());
+e.add(Velocity::id());
 
 // Set the value for the Position &amp; Velocity components. A component will be
 // added if the entity doesn't have it yet.
@@ -229,7 +229,7 @@ e.get::&lt;&amp;Position&gt;(|p| {
 });
 
 // Remove component
-e.remove(id::&lt;Position&gt;());
+e.remove(Position::id());
 <span class="boring">}</span></code></pre>
 <p>Each component is associated by a unique entity identifier by Flecs. This makes it possible to inspect component data, or attach your own data to components.</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -247,7 +247,7 @@ e.remove(id::&lt;Position&gt;());
 println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
 
 // It's possible to add components like you would for any entity
-pos_e.add(id::&lt;Serializable&gt;());
+pos_e.add(Serializable::id());
 <span class="boring">}</span></code></pre>
 <p>The thing that makes an ordinary entity a component is the <code>Component</code> trait. This tells Flecs how much space is needed to store a component, and can be inspected by applications:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -277,11 +277,11 @@ pos_e.get::&lt;&amp;flecs::Component&gt;(|c| {
 struct Enemy;
 
 // Create entity, add Enemy tag
-let e = world.entity().add(id::&lt;Enemy&gt;());
-e.has(id::&lt;Enemy&gt;()); // true!
+let e = world.entity().add(Enemy::id());
+e.has(Enemy::id()); // true!
 
-e.remove(id::&lt;Enemy&gt;());
-e.has(id::&lt;Enemy&gt;()); // false!
+e.remove(Enemy::id());
+e.has(Enemy::id()); // false!
 
 // Option 2: create Tag as entity
 let enemy = world.entity();
@@ -310,12 +310,12 @@ struct Likes;
 let bob = world.entity();
 let alice = world.entity();
 
-bob.add((id::&lt;Likes&gt;(), alice)); // bob likes alice
-alice.add((id::&lt;Likes&gt;(), bob)); // alice likes bob
-bob.has((id::&lt;Likes&gt;(), alice)); // true!
+bob.add((Likes::id(), alice)); // bob likes alice
+alice.add((Likes::id(), bob)); // alice likes bob
+bob.has((Likes::id(), alice)); // true!
 
-bob.remove((id::&lt;Likes&gt;(), alice));
-bob.has((id::&lt;Likes&gt;(), alice)); // false!
+bob.remove((Likes::id(), alice));
+bob.has((Likes::id(), alice)); // false!
 <span class="boring">}</span></code></pre>
 <p>A pair can be encoded in a single 64 bit identifier using the <code>world.id_first</code> function:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -327,7 +327,7 @@ bob.has((id::&lt;Likes&gt;(), alice)); // false!
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span><span class="boring">let bob = world.entity();
-</span>let id = world.id_view_from(id::&lt;Likes&gt;(),bob);
+</span>let id = world.id_view_from(Likes::id(),bob);
 <span class="boring">}</span></code></pre>
 <p>The following examples show how to get back the elements from a pair:</p>
 <pre><code class="language-rust"><span class="boring">extern crate flecs_ecs;
@@ -340,7 +340,7 @@ bob.has((id::&lt;Likes&gt;(), alice)); // false!
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span>let id = world.id_view_from((id::&lt;Likes&gt;(), id::&lt;Apples&gt;()));
+</span>let id = world.id_view_from((Likes::id(), Apples::id()));
 if id.is_pair() {
     let relationship = id.first_id();
     let target = id.second_id();
@@ -375,8 +375,8 @@ bob.has((grows, pears)); // true!
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
 </span><span class="boring">let bob = world.entity();
-</span>let alice = world.entity().add((id::&lt;Likes&gt;(), bob));
-let o = alice.target(id::&lt;Likes&gt;(),0); // Returns bob
+</span>let alice = world.entity().add((Likes::id(), bob));
+let o = alice.target(Likes::id(),0); // Returns bob
 <span class="boring">}</span></code></pre>
 <p>Entity relationships enable lots of interesting patterns and possibilities. Make sure to check out the <a href="Relationships.html">Relationships manual</a>.</p>
 <h3 id="hierarchies"><a class="header" href="#hierarchies">Hierarchies</a></h3>
@@ -440,7 +440,7 @@ q.each(|(p, p_parent)| {
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span>let e = world.entity().add(id::&lt;Position&gt;()).add(id::&lt;Velocity&gt;());
+</span>let e = world.entity().add(Position::id()).add(Velocity::id());
 
 println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
 <span class="boring">}</span></code></pre>
@@ -453,7 +453,7 @@ println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Posi
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span><span class="boring">let e = world.entity().add(id::&lt;Position&gt;());
+</span><span class="boring">let e = world.entity().add(Position::id());
 </span>e.each_component(|id| {
     if id == world.component_id::&lt;Position&gt;() {
         // Found Position component!
@@ -571,7 +571,7 @@ q.run(|mut it| {
 </span>let q = world
     .query::&lt;()&gt;()
     .with::&lt;(flecs::ChildOf, flecs::Wildcard)&gt;()
-    .with(id::&lt;Position&gt;())
+    .with(Position::id())
     .set_oper(OperKind::Not)
     .build();
 
