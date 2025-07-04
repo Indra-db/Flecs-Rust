@@ -291,7 +291,7 @@ fn flecs_system_docs_compile_test() {
     // Custom phases can be used just like regular phases
     world
         .system_named::<(&Position, &Velocity)>("Collide")
-        .kind(collisions) // .has(id::<Physics>())
+        .kind(collisions) // .has(Physics::id())
         .each(|(p, v)| {
             // ...
         });
@@ -311,7 +311,7 @@ fn flecs_system_docs_compile_test() {
     let pipeline = world
         .pipeline()
         .with(id::<flecs::system::System>())
-        .with(id::<Foo>()) // or `.with(foo) if an id`
+        .with(Foo::id()) // or `.with(foo) if an id`
         .build();
 
     // Configure the world to use the custom pipeline
@@ -320,7 +320,7 @@ fn flecs_system_docs_compile_test() {
     // Create system
     world
         .system_named::<(&mut Position, &Velocity)>("Move")
-        .kind(id::<Foo>()) // or `.kind(foo) if an id`
+        .kind(Foo::id()) // or `.kind(foo) if an id`
         .each(|(p, v)| {
             p.x += v.x;
             p.y += v.y;
@@ -458,7 +458,7 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<&Position>()
-        .read((id::<Likes>(), id::<flecs::Wildcard>()))
+        .read((Likes::id(), id::<flecs::Wildcard>()))
         .build();
 
     q.each_iter(|it, index, p| {
@@ -497,14 +497,14 @@ fn flecs_query_docs_compile_test() {
     let q = world.new_query::<&Position>();
 
     q.each_entity(|e, p| {
-        e.add(id::<Velocity>()); // OK
+        e.add(Velocity::id()); // OK
     });
 
     let q = world.new_query::<&Position>();
 
     world.defer(|| {
         q.each_entity(|e, p| {
-            e.add(id::<Velocity>()); // OK
+            e.add(Velocity::id()); // OK
         });
     }); // operations are executed here
 
@@ -513,7 +513,7 @@ fn flecs_query_docs_compile_test() {
     world.defer_begin();
 
     q.each_entity(|e, p| {
-        e.add(id::<Velocity>()); // OK
+        e.add(Velocity::id()); // OK
     });
 
     world.defer_end(); // operations are executed here
@@ -548,11 +548,11 @@ fn flecs_query_docs_compile_test() {
         .with("Position")
         .build();
 
-    let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
+    let e = world.entity().add(Position::id()).add(Velocity::id());
 
     let q = world.query::<()>().with(id::<flecs::Wildcard>()).build();
 
-    let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
+    let e = world.entity().add(Position::id()).add(Velocity::id());
 
     let q = world.query::<()>().with(id::<flecs::Any>()).build();
 
@@ -573,19 +573,16 @@ fn flecs_query_docs_compile_test() {
     let eats = world.component::<Eats>();
     let apples = world.component::<Apples>();
 
-    let q1 = world
-        .query::<()>()
-        .with((id::<Eats>(), id::<Apples>()))
-        .build();
+    let q1 = world.query::<()>().with((Eats::id(), Apples::id())).build();
 
-    let q2 = world.query::<()>().with((id::<Eats>(), apples)).build();
+    let q2 = world.query::<()>().with((Eats::id(), apples)).build();
 
     let q3 = world.query::<()>().with((eats, apples)).build();
 
     let q = world
         .query::<()>()
         .term()
-        .set_first(id::<Eats>())
+        .set_first(Eats::id())
         .set_second(apples)
         .build();
 
@@ -598,7 +595,7 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with((id::<Eats>(), id::<flecs::Wildcard>()))
+        .with((Eats::id(), id::<flecs::Wildcard>()))
         .build();
 
     q.each_iter(|it, index, _| {
@@ -612,15 +609,15 @@ fn flecs_query_docs_compile_test() {
     // The following two queries are the same:
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .set_inout_kind(InOutKind::In)
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .set_in() // shorthand for .set_inout_kind(InOutKind::In)
         .build();
 
@@ -648,17 +645,17 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .set_inout()
-        .with(id::<Velocity>())
+        .with(Velocity::id())
         .set_in()
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .and()
-        .with(id::<Velocity>())
+        .with(Velocity::id())
         .and()
         .build();
 
@@ -666,26 +663,26 @@ fn flecs_query_docs_compile_test() {
 
     let q2 = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .build();
 
     let q3 = world
         .query::<()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .set_oper(OperKind::And)
-        .with(id::<Velocity>())
+        .with(Velocity::id())
         .set_oper(OperKind::And)
         .build();
 
     // Position, Velocity || Speed, Mass
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .set_oper(OperKind::Or)
-        .with(id::<Speed>())
-        .with(id::<Mass>())
+        .with(Speed::id())
+        .with(Mass::id())
         .build();
 
     q.run(|mut it| {
@@ -708,31 +705,31 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .or()
-        .with(id::<Speed>())
-        .with(id::<Mass>())
+        .with(Speed::id())
+        .with(Mass::id())
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .set_oper(OperKind::Not)
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .not()
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .without(id::<Velocity>())
+        .with(Position::id())
+        .without(Velocity::id())
         .build();
 
     let q = world.new_query::<(&Position, Option<&Velocity>)>();
@@ -745,8 +742,8 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .set_oper(OperKind::Optional)
         .build();
 
@@ -761,17 +758,17 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .optional()
         .build();
 
     world
         .query::<()>()
         // $this == Foo
-        .with((id::<flecs::PredEq>(), id::<Foo>()))
+        .with((id::<flecs::PredEq>(), Foo::id()))
         // $this != Foo
-        .without((id::<flecs::PredEq>(), id::<Bar>()))
+        .without((id::<flecs::PredEq>(), Bar::id()))
         // $this == "Foo"
         .with(id::<flecs::PredEq>())
         .set_second("Foo")
@@ -782,7 +779,7 @@ fn flecs_query_docs_compile_test() {
         .flags(sys::EcsIsName)
         .build();
 
-    let type_list = world.prefab().add(id::<Position>()).add(id::<Velocity>());
+    let type_list = world.prefab().add(Position::id()).add(Velocity::id());
 
     let q = world
         .query::<()>()
@@ -807,22 +804,22 @@ fn flecs_query_docs_compile_test() {
     world
         .query::<()>()
         // Position, !{ Velocity || Speed }
-        .with(id::<Position>())
+        .with(Position::id())
         .scope_open()
         .not()
-        .with(id::<Velocity>())
+        .with(Velocity::id())
         .or()
-        .with(id::<Speed>())
+        .with(Speed::id())
         .scope_close()
         .build();
 
-    let game = world.entity().add(id::<SimTime>());
+    let game = world.entity().add(SimTime::id());
 
     let q = world
         .query::<()>()
-        .with(id::<Position>()) // normal term, uses $this source
-        .with(id::<Velocity>()) // normal term, uses $this source
-        .with(id::<SimTime>())
+        .with(Position::id()) // normal term, uses $this source
+        .with(Velocity::id()) // normal term, uses $this source
+        .with(SimTime::id())
         .set_src(game) // fixed source, match SimTime on Game
         .build();
 
@@ -851,7 +848,7 @@ fn flecs_query_docs_compile_test() {
         p.y += v.y * st.value;
     });
 
-    let cfg = world.entity().add(id::<SimConfig>());
+    let cfg = world.entity().add(SimConfig::id());
 
     let q = world
         .query::<(&SimConfig, &mut SimTime)>()
@@ -895,13 +892,13 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<(&Player, &Position)>()
-        .with(id::<Input>())
-        .set_src(id::<Input>()) // match Input on itself
+        .with(Input::id())
+        .set_src(Input::id()) // match Input on itself
         .build();
 
     let q = world
         .query::<(&Player, &Position)>()
-        .with(id::<Input>())
+        .with(Input::id())
         .singleton() // match Input on itself
         .build();
 
@@ -914,19 +911,19 @@ fn flecs_query_docs_compile_test() {
     // These three queries are the same:
     let q1 = world
         .query::<()>()
-        .with(id::<Mass>())
+        .with(Mass::id())
         .up_id(id::<flecs::ChildOf>())
         .build();
 
     let q2 = world
         .query::<()>()
-        .with(id::<Mass>())
+        .with(Mass::id())
         .up() // defaults to .up(flecs::ChildOf)
         .build();
 
     let q3 = world
         .query::<()>()
-        .with(id::<Mass>())
+        .with(Mass::id())
         .parent() // shortcut for .up(flecs::ChildOf)
         .build();
 
@@ -938,14 +935,14 @@ fn flecs_query_docs_compile_test() {
     // These two queries are the same:
     let q1 = world
         .query::<()>()
-        .with(id::<Mass>())
+        .with(Mass::id())
         .self_()
         .up_id(id::<flecs::IsA>())
         .build();
 
     let q2 = world
         .query::<()>()
-        .with(id::<Mass>()) // defaults to .self().up(flecs::IsA)
+        .with(Mass::id()) // defaults to .self().up(flecs::IsA)
         .build();
 
     // Register an inheritable component 'Mass'
@@ -953,7 +950,7 @@ fn flecs_query_docs_compile_test() {
         .component::<Mass>()
         .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
-    let base = world.entity().add(id::<Mass>());
+    let base = world.entity().add(Mass::id());
 
     let parent = world.entity().is_a(base); // inherits Mass
 
@@ -962,7 +959,7 @@ fn flecs_query_docs_compile_test() {
     // Matches 'child', because parent inherits Mass from prefab
     let q = world
         .query::<()>()
-        .with(id::<Mass>())
+        .with(Mass::id())
         .up() // traverses ChildOf upwards
         .build();
 
@@ -971,7 +968,7 @@ fn flecs_query_docs_compile_test() {
         .component::<Position>()
         .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
 
-    let base = world.entity().add(id::<Position>());
+    let base = world.entity().add(Position::id());
 
     let inst = world.entity().is_a(base); // short for .add(flecs::IsA, base);
 
@@ -985,7 +982,7 @@ fn flecs_query_docs_compile_test() {
         .up_id(flecs::IsA::ID)
         .build();
 
-    let parent = world.entity().add(id::<Position>());
+    let parent = world.entity().add(Position::id());
 
     let child = world.entity().child_of(parent); // short for .add((flecs::ChildOf::ID, base));
 
@@ -994,7 +991,7 @@ fn flecs_query_docs_compile_test() {
     // Create a new traversable relationship
     let contained_by = world.entity().add(id::<flecs::Traversable>());
 
-    let parent = world.entity().add(id::<Position>());
+    let parent = world.entity().add(Position::id());
 
     let child = world.entity().add((contained_by, parent));
 
@@ -1034,20 +1031,20 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<SpaceShip>())
-        .with(id::<DockedTo>())
+        .with(SpaceShip::id())
+        .with(DockedTo::id())
         .set_second("$Location")
-        .with(id::<Planet>())
+        .with(Planet::id())
         .set_src("$Location")
         .build();
 
     let q = world
         .query::<()>()
-        .with(id::<SpaceShip>())
-        .with(id::<DockedTo>())
+        .with(SpaceShip::id())
+        .with(DockedTo::id())
         .second()
         .set_var("$Location")
-        .with(id::<Planet>())
+        .with(Planet::id())
         .src()
         .set_var("$Location")
         .build();
@@ -1167,8 +1164,8 @@ fn flecs_query_docs_compile_test() {
     struct Unit;
 
     let unit = world.component::<Unit>();
-    let melee_unit = world.entity().is_a(id::<Unit>());
-    let ranged_unit = world.entity().is_a(id::<Unit>());
+    let melee_unit = world.entity().is_a(Unit::id());
+    let ranged_unit = world.entity().is_a(Unit::id());
 
     let unit_01 = world.entity().add(melee_unit);
     let unit_02 = world.entity().add(ranged_unit);
@@ -1187,14 +1184,14 @@ fn flecs_query_docs_compile_test() {
         .add(id::<flecs::Transitive>());
 
     let new_york = world.entity();
-    let manhattan = world.entity().add((id::<LocatedIn>(), new_york));
-    let central_park = world.entity().add((id::<LocatedIn>(), manhattan));
-    let bob = world.entity().add((id::<LocatedIn>(), central_park));
+    let manhattan = world.entity().add((LocatedIn::id(), new_york));
+    let central_park = world.entity().add((LocatedIn::id(), manhattan));
+    let bob = world.entity().add((LocatedIn::id(), central_park));
 
     // Matches ManHattan, CentralPark, bob
     let q = world
         .query::<()>()
-        .with((id::<LocatedIn>(), new_york))
+        .with((LocatedIn::id(), new_york))
         .build();
 
     // Iterate as usual
@@ -1205,7 +1202,7 @@ fn flecs_query_docs_compile_test() {
     //  - bob (Place = CentralPark, ManHattan, newyork)
     let q = world
         .query::<()>()
-        .with(id::<LocatedIn>())
+        .with(LocatedIn::id())
         .set_second("$Place")
         .build();
 
@@ -1213,7 +1210,7 @@ fn flecs_query_docs_compile_test() {
     struct City;
 
     // Add City property to newyork
-    new_york.add(id::<City>());
+    new_york.add(City::id());
 
     // Matches:
     //  - ManHattan (Place = newyork)
@@ -1222,9 +1219,9 @@ fn flecs_query_docs_compile_test() {
 
     let q = world
         .query::<()>()
-        .with(id::<LocatedIn>())
+        .with(LocatedIn::id())
         .set_second("$Place")
-        .with(id::<City>())
+        .with(City::id())
         .set_src("$Place")
         .build();
 
@@ -1248,9 +1245,9 @@ fn flecs_entities_components_docs_compile_test() {
     e1.destruct(); // Recycles 500
     let e2 = world.entity(); // Returns 500v1
     // Fails, 500v0 is not alive
-    e1.add(id::<Npc>());
+    e1.add(Npc::id());
     // OK, 500v1 is alive
-    e2.add(id::<Npc>());
+    e2.add(Npc::id());
 
     let e1 = world.entity();
     e1.destruct();
@@ -1429,7 +1426,7 @@ fn flecs_entities_components_docs_compile_test() {
     let pos = world.component::<Position>();
 
     // Create entity with Position
-    let e = world.entity().add(id::<Position>());
+    let e = world.entity().add(Position::id());
 
     // Unregister the component
     pos.destruct();
@@ -1453,11 +1450,11 @@ fn flecs_entities_components_docs_compile_test() {
     let e = world.entity().set(Position { x: 10.0, y: 20.0 });
 
     // Disable component
-    e.disable(id::<Position>());
-    assert!(!e.is_enabled(id::<Position>())); // False
+    e.disable(Position::id());
+    assert!(!e.is_enabled(Position::id())); // False
     // Enable component
-    e.enable(id::<Position>());
-    assert!(e.is_enabled(id::<Position>())); // True
+    e.enable(Position::id());
+    assert!(e.is_enabled(Position::id())); // True
 }
 
 fn flecs_docs_relationships_compile_test() {
@@ -1504,7 +1501,7 @@ fn flecs_docs_relationships_compile_test() {
         index += 1;
     }
 
-    let parent = bob.target_for(id::<Position>(), flecs::ChildOf::ID);
+    let parent = bob.target_for(Position::id(), flecs::ChildOf::ID);
 
     bob.each_component(|id| {
         if id.is_pair() {
@@ -1556,7 +1553,7 @@ fn flecs_docs_relationships_compile_test() {
     // ChildOf has the Tag property, so even though Position is a type, the pair
     // does not assume the Position type
     e.add((flecs::ChildOf::ID, world.component_id::<Position>()));
-    e.add((id::<flecs::ChildOf>(), id::<Position>()));
+    e.add((id::<flecs::ChildOf>(), Position::id()));
 
     let e = world.entity();
     let first = world.entity();
@@ -1691,7 +1688,7 @@ fn flecs_docs_quick_start_compile_test() {
 
     // Add a component. This creates the component in the ECS storage, but does not
     // assign it with a value.
-    e.add(id::<Velocity>());
+    e.add(Velocity::id());
 
     // Set the value for the Position & Velocity components. A component will be
     // added if the entity doesn't have it yet.
@@ -1704,7 +1701,7 @@ fn flecs_docs_quick_start_compile_test() {
     });
 
     // Remove component
-    e.remove(id::<Position>());
+    e.remove(Position::id());
 
     //Rust applications can use the `world::entity_from` function.
 
@@ -1712,7 +1709,7 @@ fn flecs_docs_quick_start_compile_test() {
     println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
 
     // It's possible to add components like you would for any entity
-    pos_e.add(id::<Serializable>());
+    pos_e.add(Serializable::id());
 
     let pos_e = world.entity_from::<Position>();
 
@@ -1725,11 +1722,11 @@ fn flecs_docs_quick_start_compile_test() {
     struct Enemy;
 
     // Create entity, add Enemy tag
-    let e = world.entity().add(id::<Enemy>());
-    e.has(id::<Enemy>()); // true!
+    let e = world.entity().add(Enemy::id());
+    e.has(Enemy::id()); // true!
 
-    e.remove(id::<Enemy>());
-    e.has(id::<Enemy>()); // false!
+    e.remove(Enemy::id());
+    e.has(Enemy::id()); // false!
 
     // Option 2: create Tag as entity
     let enemy = world.entity();
@@ -1749,14 +1746,14 @@ fn flecs_docs_quick_start_compile_test() {
     let bob = world.entity();
     let alice = world.entity();
 
-    bob.add((id::<Likes>(), alice)); // bob likes alice
-    alice.add((id::<Likes>(), bob)); // alice likes bob
-    bob.has((id::<Likes>(), alice)); // true!
+    bob.add((Likes::id(), alice)); // bob likes alice
+    alice.add((Likes::id(), bob)); // alice likes bob
+    bob.has((Likes::id(), alice)); // true!
 
-    bob.remove((id::<Likes>(), alice));
-    bob.has((id::<Likes>(), alice)); // false!
+    bob.remove((Likes::id(), alice));
+    bob.has((Likes::id(), alice)); // false!
 
-    let id_likes_apples = world.id_view_from((id::<Likes>(), id::<Apples>()));
+    let id_likes_apples = world.id_view_from((Likes::id(), Apples::id()));
     if id_likes_apples.is_pair() {
         let relationship = id_likes_apples.first_id();
         let target = id_likes_apples.second_id();
@@ -1771,8 +1768,8 @@ fn flecs_docs_quick_start_compile_test() {
     bob.has((eats, pears)); // true!
     bob.has((grows, pears)); // true!
 
-    let alice = world.entity().add((id::<Likes>(), bob));
-    let o = alice.target(id::<Likes>(), 0); // Returns bob
+    let alice = world.entity().add((Likes::id(), bob));
+    let o = alice.target(Likes::id(), 0); // Returns bob
 
     let parent = world.entity();
     let child = world.entity().child_of(parent);
@@ -1798,7 +1795,7 @@ fn flecs_docs_quick_start_compile_test() {
         // Do the thing
     });
 
-    let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
+    let e = world.entity().add(Position::id()).add(Velocity::id());
 
     println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
 
@@ -1862,7 +1859,7 @@ fn flecs_docs_quick_start_compile_test() {
     let q = world
         .query::<()>()
         .with((id::<flecs::ChildOf>(), id::<flecs::Wildcard>()))
-        .with(id::<Position>())
+        .with(Position::id())
         .set_oper(OperKind::Not)
         .build();
 
@@ -1951,10 +1948,10 @@ fn flecs_docs_observers_compile_test() {
     let e = world.entity();
 
     // OnAdd observer fires
-    e.add(id::<Position>());
+    e.add(Position::id());
 
     // OnAdd observer doesn't fire, entity already has component
-    e.add(id::<Position>());
+    e.add(Position::id());
 
     let e = world.entity();
 
@@ -1978,7 +1975,7 @@ fn flecs_docs_observers_compile_test() {
     i.set(Position { x: 20.0, y: 30.0 });
 
     // Reexposes inherited component, produces OnSet event
-    i.remove(id::<Position>());
+    i.remove(Position::id());
 
     let p = world.prefab().set(Position { x: 10.0, y: 20.0 });
 
@@ -1988,15 +1985,15 @@ fn flecs_docs_observers_compile_test() {
     let e = world.entity().set(Position { x: 10.0, y: 20.0 });
 
     // OnRemove observer fires
-    e.remove(id::<Position>());
+    e.remove(Position::id());
 
     // OnRemove observer doesn't fire, entity doesn't have the component
-    e.remove(id::<Position>());
+    e.remove(Position::id());
 
     // Observer that listens for both OnAdd and OnRemove events
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .add_event(id::<flecs::OnRemove>())
         .each_entity(|e, p| {
             // ...
@@ -2005,7 +2002,7 @@ fn flecs_docs_observers_compile_test() {
     world
         .observer::<flecs::OnAdd, ()>()
         .add_event(id::<flecs::OnRemove>())
-        .with(id::<Position>())
+        .with(Position::id())
         .each_iter(|it, i, p| {
             if it.event() == flecs::OnAdd::ID {
                 // ...
@@ -2024,8 +2021,8 @@ fn flecs_docs_observers_compile_test() {
     // Observer that listens for entities with both Position and Velocity
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .each_entity(|e, _| {
             // ...
         });
@@ -2033,16 +2030,16 @@ fn flecs_docs_observers_compile_test() {
     let e = world.entity();
 
     // Does not trigger "Position, Velocity" observer
-    e.add(id::<Position>());
+    e.add(Position::id());
 
     // Entity now matches "Position, Velocity" query, triggers observer
-    e.add(id::<Velocity>());
+    e.add(Velocity::id());
 
     // Observer that only triggers on Position, not on Velocity
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .filter()
         .each_entity(|e, p| {
             // ...
@@ -2062,7 +2059,7 @@ fn flecs_docs_observers_compile_test() {
     // OnSet observer with both component and tag
     world
         .observer::<flecs::OnSet, &Position>()
-        .with(id::<Npc>()) // Tag
+        .with(Npc::id()) // Tag
         .each_entity(|e, p| {
             // ...
         });
@@ -2073,7 +2070,7 @@ fn flecs_docs_observers_compile_test() {
     e.set(Position { x: 10.0, y: 20.0 });
 
     // Produces and OnAdd event & triggers observer
-    e.add(id::<Npc>());
+    e.add(Npc::id());
 
     // Produces an OnSet event & triggers observer
     e.set(Position { x: 20.0, y: 30.0 });
@@ -2081,8 +2078,8 @@ fn flecs_docs_observers_compile_test() {
     // Observer with a Not term
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
-        .without(id::<Velocity>())
+        .with(Position::id())
+        .without(Velocity::id())
         .each_entity(|e, p| {
             // ...
         });
@@ -2096,7 +2093,7 @@ fn flecs_docs_observers_compile_test() {
     e.set(Velocity { x: 1.0, y: 2.0 });
 
     // Triggers the observer, as the Velocity term was inverted to OnRemove
-    e.remove(id::<Velocity>());
+    e.remove(Velocity::id());
 
     // Monitor observer
     world
@@ -2118,7 +2115,7 @@ fn flecs_docs_observers_compile_test() {
     e.set(Velocity { x: 1.0, y: 2.0 });
 
     // Entity no longer matches, triggers monitor with OnRemove event
-    e.remove(id::<Position>());
+    e.remove(Position::id());
 
     // Entity created before the observer
     let e1 = world.entity().set(Position { x: 10.0, y: 20.0 });
@@ -2126,8 +2123,8 @@ fn flecs_docs_observers_compile_test() {
     // Yield existing observer
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
-        .with(id::<Velocity>())
+        .with(Position::id())
+        .with(Velocity::id())
         .yield_existing()
         .each_iter(|it, i, _| {
             // ...
@@ -2192,7 +2189,7 @@ fn flecs_docs_observers_compile_test() {
     // Create an observer that matches OnAdd(Position) events on a parent
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .term_at(0)
         .up() // .trav(flecs::ChildOf) (default)
         .each_entity(|e, _| {
@@ -2223,7 +2220,7 @@ fn flecs_docs_observers_compile_test() {
     // Emit custom event
     world
         .event()
-        .add(id::<Position>())
+        .add(Position::id())
         .entity(e)
         .emit(&Synchronized);
 
@@ -2347,11 +2344,11 @@ fn flecs_docs_prefabs_compile_test() {
         println!("Defense value: {}", defense.value);
     });
 
-    if inst.owns(id::<Defense>()) {
+    if inst.owns(Defense::id()) {
         // not inherited
     }
 
-    let inherited_from = inst.target(id::<Defense>(), 0);
+    let inherited_from = inst.target(Defense::id(), 0);
     if inherited_from.is_none() {
         // not inherited
     }
@@ -2384,7 +2381,7 @@ fn flecs_docs_prefabs_compile_test() {
     let inst_b = world.entity().is_a(spaceship);
 
     // Override Defense only for inst_a
-    inst_a.add(id::<Defense>()); // Initialized with value 50
+    inst_a.add(Defense::id()); // Initialized with value 50
 
     // Make Defense component inheritable
     world
@@ -2396,7 +2393,7 @@ fn flecs_docs_prefabs_compile_test() {
 
     // Create prefab instance
     let inst = world.entity().is_a(spaceship);
-    inst.owns(id::<Defense>()); // true
+    inst.owns(Defense::id()); // true
 
     // Create prefab
     let spaceship = world
@@ -2447,7 +2444,7 @@ fn flecs_docs_prefabs_compile_test() {
         .set(Health { value: 100 });
 
     // Instantiate prefab with type
-    let inst = world.entity().is_a(id::<Spaceship>());
+    let inst = world.entity().is_a(Spaceship::id());
 
     // Lookup prefab handle
     let prefab = world.lookup("spaceship");
@@ -2477,7 +2474,7 @@ fn flecs_docs_component_traits_compile_test() {
         .component::<Archer>()
         .add_trait::<(flecs::OnDelete, flecs::Remove)>();
 
-    let e = world.entity().add(id::<Archer>());
+    let e = world.entity().add(Archer::id());
 
     // This will remove Archer from e
     world.component::<Archer>().destruct();
@@ -2487,7 +2484,7 @@ fn flecs_docs_component_traits_compile_test() {
         .component::<Archer>()
         .add_trait::<(flecs::OnDelete, flecs::Delete)>();
 
-    let e = world.entity().add(id::<Archer>());
+    let e = world.entity().add(Archer::id());
 
     // This will delete e
     world.component::<Archer>().destruct();
@@ -2509,8 +2506,8 @@ fn flecs_docs_component_traits_compile_test() {
             // This observer will be invoked when a Node is removed
         });
 
-    let p = world.entity().add(id::<Node>());
-    let c = world.entity().add(id::<Node>()).child_of(p);
+    let p = world.entity().add(Node::id());
+    let c = world.entity().add(Node::id()).child_of(p);
 
     {
         #[derive(Component)]
@@ -2533,9 +2530,9 @@ fn flecs_docs_component_traits_compile_test() {
 
         let e = world
             .entity()
-            .add(id::<Likes>()) // Panic, 'Likes' is not used as relationship
-            .add((id::<Apples>(), id::<Likes>())) // Panic, 'Likes' is not used as relationship, but as target
-            .add((id::<Likes>(), id::<Apples>())); // OK
+            .add(Likes::id()) // Panic, 'Likes' is not used as relationship
+            .add((Apples::id(), Likes::id())) // Panic, 'Likes' is not used as relationship, but as target
+            .add((Likes::id(), Apples::id())); // OK
     }
     {
         #[derive(Component)]
@@ -2563,9 +2560,9 @@ fn flecs_docs_component_traits_compile_test() {
 
     let e = world
         .entity()
-        .add(id::<Apples>()) // Panic, 'Apples' is not used as target
-        .add((id::<Apples>(), id::<Likes>())) // Panic, 'Apples' is not used as target, but as relationship
-        .add((id::<Likes>(), id::<Apples>())); // OK
+        .add(Apples::id()) // Panic, 'Apples' is not used as target
+        .add((Apples::id(), Likes::id())) // Panic, 'Apples' is not used as target, but as relationship
+        .add((Likes::id(), Apples::id())); // OK
 
     #[derive(Component)]
     struct Serializable; // Tag, contains no data
@@ -2607,7 +2604,7 @@ fn flecs_docs_component_traits_compile_test() {
     let base = world.entity().set(Mass { value: 100.0 });
     let inst = world.entity().is_a(base); // Mass is copied to inst
 
-    assert!(inst.owns(id::<Mass>()));
+    assert!(inst.owns(Mass::id()));
     assert!(base.cloned::<&Mass>() != inst.cloned::<&Mass>());
 
     // Register component with trait
@@ -2618,8 +2615,8 @@ fn flecs_docs_component_traits_compile_test() {
     let base = world.entity().set(Mass { value: 100.0 });
     let inst = world.entity().is_a(base);
 
-    assert!(inst.has(id::<Mass>()));
-    assert!(!inst.owns(id::<Mass>()));
+    assert!(inst.has(Mass::id()));
+    assert!(!inst.owns(Mass::id()));
     assert!(base.cloned::<&Mass>() != inst.cloned::<&Mass>());
 
     // Register component with trait
@@ -2630,8 +2627,8 @@ fn flecs_docs_component_traits_compile_test() {
     let base = world.entity().set(Mass { value: 100.0 });
     let inst = world.entity().is_a(base);
 
-    assert!(!inst.has(id::<Mass>()));
-    assert!(!inst.owns(id::<Mass>()));
+    assert!(!inst.has(Mass::id()));
+    assert!(!inst.owns(Mass::id()));
     assert!(inst.try_get::<&Mass>(|mass| {}).is_none());
 
     let locatedin = world.entity();
@@ -2657,11 +2654,11 @@ fn flecs_docs_component_traits_compile_test() {
 
     let e = world.entity().set(Position { x: 10.0, y: 20.0 });
 
-    e.disable(id::<Position>()); // Disable component
-    assert!(!e.is_enabled(id::<Position>()));
+    e.disable(Position::id()); // Disable component
+    assert!(!e.is_enabled(Position::id()));
 
-    e.enable(id::<Position>()); // Enable component
-    assert!(e.is_enabled(id::<Position>())); // Updated to use id::<Position>()
+    e.enable(Position::id()); // Enable component
+    assert!(e.is_enabled(Position::id())); // Updated to use Position::id()
 
     let walking = world.entity();
     let running = world.entity();

@@ -8,8 +8,8 @@ fn main() {
 
     let point = world
         .component_untyped_named("Point")
-        .member(id::<f32>(), "x")
-        .member(id::<f32>(), "y");
+        .member(f32::id(), "x")
+        .member(f32::id(), "y");
 
     let line = world
         .component_untyped_named("Line")

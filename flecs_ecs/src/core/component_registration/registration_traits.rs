@@ -415,7 +415,7 @@ pub trait ComponentId:
         }
     }
 
-    /// utility function to returning an Id object which is used for fn's that take IntoEntity or IntoId variable
+    /// utility function to returning an Id object which is used for fn's that take `IntoEntity` or `IntoId` variable
     #[inline(always)]
     fn id() -> utility::id::Id<Self> {
         utility::id::Id::<Self>::new()

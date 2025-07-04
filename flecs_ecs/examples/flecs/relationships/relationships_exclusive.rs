@@ -20,16 +20,16 @@ fn main() {
     let unit = world.entity();
 
     // Add unit to platoon 1
-    unit.add((id::<Platoon>(), platoon_1));
+    unit.add((Platoon::id(), platoon_1));
 
     // Log platoon of unit
     println!(
         "Unit in platoon 1: {}",
-        unit.has((id::<Platoon>(), platoon_1))
+        unit.has((Platoon::id(), platoon_1))
     ); // true
     println!(
         "Unit in platoon 2: {}",
-        unit.has((id::<Platoon>(), platoon_2))
+        unit.has((Platoon::id(), platoon_2))
     ); // false
 
     println!();
@@ -37,16 +37,16 @@ fn main() {
     // Add unit to platoon 2. Because Platoon is an exclusive relationship, this
     // both removes (Platoon, platoon_1) and adds (Platoon, platoon_2) in a
     // single operation.
-    unit.add((id::<Platoon>(), platoon_2));
+    unit.add((Platoon::id(), platoon_2));
 
     // Log platoon of unit
     println!(
         "Unit in platoon 1: {}",
-        unit.has((id::<Platoon>(), platoon_1))
+        unit.has((Platoon::id(), platoon_1))
     ); // false
     println!(
         "Unit in platoon 2: {}",
-        unit.has((id::<Platoon>(), platoon_2))
+        unit.has((Platoon::id(), platoon_2))
     ); // true
 
     // Output:

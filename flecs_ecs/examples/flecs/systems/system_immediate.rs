@@ -27,8 +27,8 @@ fn main() {
     // Create query to find all waiters without a plate
     let mut q_waiter = world
         .query::<()>()
-        .with(id::<Waiter>())
-        .without((id::<Plate>(), id::<flecs::Wildcard>()))
+        .with(Waiter::id())
+        .without((Plate::id(), id::<flecs::Wildcard>()))
         .build();
 
     // System that assigns plates to waiter. By making this system no_readonly
@@ -36,8 +36,8 @@ fn main() {
     // ensures that we won't assign plates to the same waiter more than once.
     world
         .system_named::<()>("AssignPlate")
-        .with(id::<Plate>())
-        .without((id::<Waiter>(), id::<flecs::Wildcard>()))
+        .with(Plate::id())
+        .without((Waiter::id(), id::<flecs::Wildcard>()))
         .immediate(true)
         .each_iter(move |mut it, index, plate| {
             let world = it.world();
@@ -69,13 +69,13 @@ fn main() {
             }
         });
 
-    let waiter_1 = world.entity_named("waiter_1").add(id::<Waiter>());
-    world.entity_named("waiter_2").add(id::<Waiter>());
-    world.entity_named("waiter_3").add(id::<Waiter>());
+    let waiter_1 = world.entity_named("waiter_1").add(Waiter::id());
+    world.entity_named("waiter_2").add(Waiter::id());
+    world.entity_named("waiter_3").add(Waiter::id());
 
-    world.entity_named("plate_1").add(id::<Plate>());
-    let plate_2 = world.entity_named("plate_2").add(id::<Plate>());
-    world.entity_named("plate_3").add(id::<Plate>());
+    world.entity_named("plate_1").add(Plate::id());
+    let plate_2 = world.entity_named("plate_2").add(Plate::id());
+    world.entity_named("plate_3").add(Plate::id());
 
     waiter_1.add((id::<&Plate>(), plate_2));
     plate_2.add((id::<&Waiter>(), waiter_1));

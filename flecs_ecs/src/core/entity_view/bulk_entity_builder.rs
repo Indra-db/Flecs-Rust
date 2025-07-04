@@ -290,7 +290,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// let ent = world
     ///     .entity()
     ///     .set(Position { x: 0, y: 0 })
-    ///     .add(id::<Velocity>())
+    ///     .add(Velocity::id())
     ///     .add(ent_id);
     ///
     /// let mut table = ent.table().unwrap();

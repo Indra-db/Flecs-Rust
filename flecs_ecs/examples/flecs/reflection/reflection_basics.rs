@@ -16,8 +16,8 @@ fn main() {
     world.component::<Position>().meta();
 
     /* Alternatively, you can do it manually like so (without the derive macro)
-        .member(id::<f32>(),"x", 1 /* count */, core::mem::offset_of!(Position, x))
-        .member(id::<f32>(),"y", 1, core::mem::offset_of!(Position, y));
+        .member(f32::id(),"x", 1 /* count */, core::mem::offset_of!(Position, x))
+        .member(f32::id(),"y", 1, core::mem::offset_of!(Position, y));
     */
 
     // Create a new entity

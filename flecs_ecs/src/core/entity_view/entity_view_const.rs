@@ -53,7 +53,7 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 ///     .entity_named("Player")
 ///     .set(Position { x: 10.0, y: 20.0 })
 ///     .set(Velocity { x: 1.0, y: 0.0 })
-///     .add(id::<Walking>());
+///     .add(Walking::id());
 ///
 /// // Get component data
 /// player.get::<&Position>(|pos| {
@@ -61,10 +61,10 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 /// });
 ///
 /// // Check for components
-/// assert!(player.has(id::<Walking>()));
+/// assert!(player.has(Walking::id()));
 ///
 /// // Remove components
-/// player.remove(id::<Walking>());
+/// player.remove(Walking::id());
 /// ```
 ///
 /// Working with hierarchies:
@@ -773,7 +773,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add(id::<Position>());
+    /// let entity = world.entity().add(Position::id());
     ///
     /// if let Some(table) = entity.table() {
     ///     println!(
@@ -816,7 +816,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add(id::<Position>());
+    /// let entity = world.entity().add(Position::id());
     ///
     /// if let Some(range) = entity.range() {
     ///     println!("Entity is at row {} in its table", range.offset());
@@ -905,8 +905,8 @@ impl<'a> EntityView<'a> {
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add((id::<Likes>(), apple))
-    ///     .add((id::<Likes>(), banana));
+    ///     .add((Likes::id(), apple))
+    ///     .add((Likes::id(), banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -1054,8 +1054,8 @@ impl<'a> EntityView<'a> {
     /// let banana = world.entity_named("Banana");
     ///
     /// entity
-    ///     .add((id::<Likes>(), apple))
-    ///     .add((id::<Likes>(), banana));
+    ///     .add((Likes::id(), apple))
+    ///     .add((Likes::id(), banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```

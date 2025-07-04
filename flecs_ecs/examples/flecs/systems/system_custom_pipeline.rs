@@ -28,7 +28,7 @@ fn main() {
     world.set_pipeline(pipeline.entity());
 
     // Create system with Physics tag
-    world.system::<()>().kind(id::<Physics>()).run(|mut it| {
+    world.system::<()>().kind(Physics::id()).run(|mut it| {
         while it.next() {
             println!("System with Physics ran!");
         }

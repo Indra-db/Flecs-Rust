@@ -425,7 +425,7 @@ impl World {
     ///
     /// world.readonly_begin(false);
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 0);
+    /// assert_eq!(stage.count(Position::id()), 0);
     ///
     /// world.readonly_end();
     ///
@@ -434,11 +434,11 @@ impl World {
     /// stage.entity().set(Position { x: 10, y: 20 });
     /// stage.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 0);
+    /// assert_eq!(stage.count(Position::id()), 0);
     ///
     /// world.readonly_end();
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 2);
+    /// assert_eq!(stage.count(Position::id()), 2);
     /// ```
     ///
     /// # See also
@@ -540,11 +540,11 @@ impl World {
     ///
     /// let e = world.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// world.defer_end();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     ///
     /// # See also
@@ -886,11 +886,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     ///
     /// # See also
@@ -992,11 +992,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }

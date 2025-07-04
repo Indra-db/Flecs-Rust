@@ -97,11 +97,7 @@ impl World {
     ///
     /// * C API: `ecs_ptr_to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
-        Script::to_expr(
-            self,
-            id::<T>(),
-            value as *const T as *const core::ffi::c_void,
-        )
+        Script::to_expr(self, T::id(), value as *const T as *const core::ffi::c_void)
     }
 
     /// Wraps the provided entity id in a [`ScriptEntityView`].

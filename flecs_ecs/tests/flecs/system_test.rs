@@ -647,7 +647,7 @@ fn system_iter_tag() {
         }
     });
 
-    world.entity().add(id::<TagA>());
+    world.entity().add(TagA::id());
 
     world.progress();
 
@@ -673,7 +673,7 @@ fn system_each_tag() {
         }
     });
 
-    world.entity().add(id::<TagA>());
+    world.entity().add(TagA::id());
 
     world.progress();
 
@@ -899,16 +899,16 @@ fn system_add_from_each() {
     let e3 = world.entity().set(Position { x: 2, y: 0 });
 
     world.system::<&Position>().each_entity(|e, _p| {
-        e.add(id::<Velocity>());
+        e.add(Velocity::id());
         // Add is deferred
-        assert!(!e.has(id::<Velocity>()));
+        assert!(!e.has(Velocity::id()));
     });
 
     world.progress();
 
-    assert!(e1.has(id::<Velocity>()));
-    assert!(e2.has(id::<Velocity>()));
-    assert!(e3.has(id::<Velocity>()));
+    assert!(e1.has(Velocity::id()));
+    assert!(e2.has(Velocity::id()));
+    assert!(e3.has(Velocity::id()));
 }
 
 #[test]
@@ -949,24 +949,24 @@ fn system_add_from_each_world_handle() {
     world.system::<&EntityRef>().each_entity(|e, c| {
         let world = e.world();
         let e = world.entity_from_id(c.value);
-        e.mut_stage_of(e).add(id::<Position>());
+        e.mut_stage_of(e).add(Position::id());
     });
 
     world.progress();
 
     e1.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 
     e2.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 
     e3.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 }
 
@@ -980,26 +980,26 @@ fn system_new_from_each() {
 
     world.system::<&Position>().each_entity(|e, _p| {
         e.set(EntityRef {
-            value: e.world().entity().add(id::<Velocity>()).id(),
+            value: e.world().entity().add(Velocity::id()).id(),
         });
     });
 
     world.progress();
 
-    assert!(e1.has(id::<EntityRef>()));
-    assert!(e2.has(id::<EntityRef>()));
-    assert!(e3.has(id::<EntityRef>()));
+    assert!(e1.has(EntityRef::id()));
+    assert!(e2.has(EntityRef::id()));
+    assert!(e3.has(EntityRef::id()));
 
     e1.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 
     e2.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 
     e3.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 }
 
@@ -1014,17 +1014,17 @@ fn system_add_from_iter() {
     world.system::<&Position>().run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                it.entity(i).unwrap().add(id::<Velocity>());
-                assert!(!it.entity(i).unwrap().has(id::<Velocity>()));
+                it.entity(i).unwrap().add(Velocity::id());
+                assert!(!it.entity(i).unwrap().has(Velocity::id()));
             }
         }
     });
 
     world.progress();
 
-    assert!(e1.has(id::<Velocity>()));
-    assert!(e2.has(id::<Velocity>()));
-    assert!(e3.has(id::<Velocity>()));
+    assert!(e1.has(Velocity::id()));
+    assert!(e2.has(Velocity::id()));
+    assert!(e3.has(Velocity::id()));
 }
 
 #[test]
@@ -1074,7 +1074,7 @@ fn system_add_from_iter_world_handle() {
                 world
                     .entity_from_id(c[i].value)
                     .mut_current_stage(it.world())
-                    .add(id::<Position>());
+                    .add(Position::id());
             }
         }
     });
@@ -1083,17 +1083,17 @@ fn system_add_from_iter_world_handle() {
 
     e1.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 
     e2.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 
     e3.get::<&EntityRef>(|c| {
         let e = world.entity_from_id(c.value);
-        assert!(e.has(id::<Position>()));
+        assert!(e.has(Position::id()));
     });
 }
 
@@ -1109,7 +1109,7 @@ fn system_new_from_iter() {
         while it.next() {
             for i in it.iter() {
                 it.entity(i).unwrap().set(EntityRef {
-                    value: it.world().entity().add(id::<Velocity>()).id(),
+                    value: it.world().entity().add(Velocity::id()).id(),
                 });
             }
         }
@@ -1117,20 +1117,20 @@ fn system_new_from_iter() {
 
     world.progress();
 
-    assert!(e1.has(id::<EntityRef>()));
-    assert!(e2.has(id::<EntityRef>()));
-    assert!(e3.has(id::<EntityRef>()));
+    assert!(e1.has(EntityRef::id()));
+    assert!(e2.has(EntityRef::id()));
+    assert!(e3.has(EntityRef::id()));
 
     e1.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 
     e2.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 
     e3.get::<&EntityRef>(|c| {
-        assert!(world.entity_from_id(c.value).has(id::<Velocity>()));
+        assert!(world.entity_from_id(c.value).has(Velocity::id()));
     });
 }
 
@@ -1150,7 +1150,7 @@ fn system_each_w_mut_children_it() {
         while it.next() {
             for i in it.iter() {
                 it.entity(i).unwrap().each_child(|child| {
-                    child.add(id::<Velocity>());
+                    child.add(Velocity::id());
                     world.get::<&mut Count>(|c| {
                         c.0 += 1;
                     });
@@ -1165,9 +1165,9 @@ fn system_each_w_mut_children_it() {
         assert_eq!(c.0, 3);
     });
 
-    assert!(e1.has(id::<Velocity>()));
-    assert!(e2.has(id::<Velocity>()));
-    assert!(e3.has(id::<Velocity>()));
+    assert!(e1.has(Velocity::id()));
+    assert!(e2.has(Velocity::id()));
+    assert!(e3.has(Velocity::id()));
 }
 
 #[test]
@@ -1428,27 +1428,27 @@ fn system_update_rate_filter() {
 fn system_test_let_defer_each() {
     let world = World::new();
 
-    let e1 = world.entity().add(id::<Tag>()).set(Value { value: 10 });
-    let e2 = world.entity().add(id::<Tag>()).set(Value { value: 20 });
-    let e3 = world.entity().add(id::<Tag>()).set(Value { value: 30 });
+    let e1 = world.entity().add(Tag::id()).set(Value { value: 10 });
+    let e2 = world.entity().add(Tag::id()).set(Value { value: 20 });
+    let e3 = world.entity().add(Tag::id()).set(Value { value: 30 });
 
     let s = world
         .system::<&mut Value>()
-        .with(id::<Tag>())
+        .with(Tag::id())
         .each_entity(|e, v| {
             v.value += 1;
-            e.remove(id::<Tag>());
+            e.remove(Tag::id());
         });
 
     s.run();
 
-    assert!(!e1.has(id::<Tag>()));
-    assert!(!e2.has(id::<Tag>()));
-    assert!(!e3.has(id::<Tag>()));
+    assert!(!e1.has(Tag::id()));
+    assert!(!e2.has(Tag::id()));
+    assert!(!e3.has(Tag::id()));
 
-    assert!(e1.has(id::<Value>()));
-    assert!(e2.has(id::<Value>()));
-    assert!(e3.has(id::<Value>()));
+    assert!(e1.has(Value::id()));
+    assert!(e2.has(Value::id()));
+    assert!(e3.has(Value::id()));
 
     e1.get::<&Value>(|v| {
         assert_eq!(v.value, 11);
@@ -1467,32 +1467,29 @@ fn system_test_let_defer_each() {
 fn system_test_let_defer_iter() {
     let world = World::new();
 
-    let e1 = world.entity().add(id::<Tag>()).set(Value { value: 10 });
-    let e2 = world.entity().add(id::<Tag>()).set(Value { value: 20 });
-    let e3 = world.entity().add(id::<Tag>()).set(Value { value: 30 });
+    let e1 = world.entity().add(Tag::id()).set(Value { value: 10 });
+    let e2 = world.entity().add(Tag::id()).set(Value { value: 20 });
+    let e3 = world.entity().add(Tag::id()).set(Value { value: 30 });
 
-    let s = world
-        .system::<&mut Value>()
-        .with(id::<Tag>())
-        .run(|mut it| {
-            while it.next() {
-                let mut v = it.field::<Value>(0).unwrap();
-                for i in it.iter() {
-                    v[i].value += 1;
-                    it.entity(i).unwrap().remove(id::<Tag>());
-                }
+    let s = world.system::<&mut Value>().with(Tag::id()).run(|mut it| {
+        while it.next() {
+            let mut v = it.field::<Value>(0).unwrap();
+            for i in it.iter() {
+                v[i].value += 1;
+                it.entity(i).unwrap().remove(Tag::id());
             }
-        });
+        }
+    });
 
     s.run();
 
-    assert!(!e1.has(id::<Tag>()));
-    assert!(!e2.has(id::<Tag>()));
-    assert!(!e3.has(id::<Tag>()));
+    assert!(!e1.has(Tag::id()));
+    assert!(!e2.has(Tag::id()));
+    assert!(!e3.has(Tag::id()));
 
-    assert!(e1.has(id::<Value>()));
-    assert!(e2.has(id::<Value>()));
-    assert!(e3.has(id::<Value>()));
+    assert!(e1.has(Value::id()));
+    assert!(e2.has(Value::id()));
+    assert!(e3.has(Value::id()));
 
     e1.get::<&Value>(|v| {
         assert_eq!(v.value, 11);
@@ -1644,7 +1641,7 @@ fn system_create_w_no_template_args() {
 
     let s = world
         .system::<()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .each_entity(move |e, _| {
             let world = e.world();
             assert!(e == entity_id);
@@ -1687,16 +1684,16 @@ fn system_system_w_type_kind_type_pipeline() {
         .cascade_id(id::<flecs::DependsOn>())
         .build();
 
-    world.set_pipeline(id::<PipelineType>());
+    world.set_pipeline(PipelineType::id());
 
-    let entity = world.entity().add(id::<Tag>());
+    let entity = world.entity().add(Tag::id());
     let entity_id = entity.id();
 
     world.set(Count2 { a: 0, b: 0 });
 
     world
         .system::<&Tag>()
-        .kind(id::<Second>())
+        .kind(Second::id())
         .run(move |mut it| {
             while it.next() {
                 for i in it.iter() {
@@ -1712,22 +1709,19 @@ fn system_system_w_type_kind_type_pipeline() {
             }
         });
 
-    world
-        .system::<&Tag>()
-        .kind(id::<First>())
-        .run(move |mut it| {
-            while it.next() {
-                for i in it.iter() {
-                    let world = it.world();
-                    let e = it.entity(i).unwrap();
-                    assert!(e == entity_id);
-                    world.get::<&mut Count2>(|c| {
-                        assert_eq!(c.b, 0);
-                        c.b += 1;
-                    });
-                }
+    world.system::<&Tag>().kind(First::id()).run(move |mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let world = it.world();
+                let e = it.entity(i).unwrap();
+                assert!(e == entity_id);
+                world.get::<&mut Count2>(|c| {
+                    assert_eq!(c.b, 0);
+                    c.b += 1;
+                });
             }
-        });
+        }
+    });
 
     world.progress();
 
@@ -2191,7 +2185,7 @@ fn system_nested_rate_tick_source() {
 //     flecs::entity e2 = world.entity().set(Position{x: 20, y: 30});
 
 //     let s = world.system::<()>()
-//         .with(id::<Position>())
+//         .with(Position::id())
 //         .each([&](flecs::iter& iter, size_t index) {
 //             let e = iter.entity(index).unwrap();
 //             &Position *p = &iter.table().get<Position>()[index];
@@ -2216,7 +2210,7 @@ fn system_nested_rate_tick_source() {
 //     flecs::entity e2 = world.entity().set(Position{x: 20, y: 30});
 
 //     let s = world.system::<()>()
-//         .with(id::<Position>())
+//         .with(Position::id())
 //         .each([&](flecs::iter& iter, size_t index) {
 //             let e = iter.entity(index).unwrap();
 //             &Position *p = &iter.range().get<Position>()[index];
@@ -2282,7 +2276,7 @@ fn system_run_w_0_src_query() {
 
     world.set(Count(0));
 
-    world.system::<()>().write(id::<Position>()).run(|it| {
+    world.system::<()>().write(Position::id()).run(|it| {
         let world = it.world();
         world.get::<&mut Count>(|c| {
             c.0 += 1;

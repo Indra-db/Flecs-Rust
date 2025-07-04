@@ -209,7 +209,7 @@ fn query_iter_targets_second_field() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add(id::<Position>())
+        .add(Position::id())
         .add((likes, pizza))
         .add((likes, salad));
 
@@ -277,7 +277,7 @@ fn query_iter_targets_field_not_a_pair() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add(id::<Position>())
+        .add(Position::id())
         .add((likes, pizza))
         .add((likes, salad));
 
@@ -298,7 +298,7 @@ fn query_iter_targets_field_not_set() {
     let world = World::new();
 
     let likes = world.entity();
-    let alice = world.entity().add(id::<Position>());
+    let alice = world.entity().add(Position::id());
 
     let q = world
         .query::<&Position>()

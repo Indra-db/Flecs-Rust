@@ -168,11 +168,11 @@ where
     /// world
     ///     .entity_named("adam")
     ///     .set(Position { x: 10, y: 20 })
-    ///     .add((id::<Likes>(), eva));
+    ///     .add((Likes::id(), eva));
     ///
     /// world
     ///     .query::<&Position>()
-    ///     .with((id::<Likes>(), id::<flecs::Wildcard>()))
+    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
     ///     .build()
     ///     .each_iter(|it, index, p| {
     ///         let e = it.entity(index).unwrap();
@@ -380,13 +380,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag::id()).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag::id())
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
     /// let query = world.new_query::<(&Tag, &Position)>();
     ///
@@ -474,15 +474,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag::id()).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag::id())
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
-    /// let query = world.query::<(&Position)>().with(id::<Tag>()).build();
+    /// let query = world.query::<(&Position)>().with(Tag::id()).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -562,15 +562,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag::id()).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag::id())
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
-    /// let query = world.query::<(&Position)>().with(id::<Tag>()).build();
+    /// let query = world.query::<(&Position)>().with(Tag::id()).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;

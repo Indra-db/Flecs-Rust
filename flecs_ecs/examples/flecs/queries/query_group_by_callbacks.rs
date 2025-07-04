@@ -83,7 +83,7 @@ fn main() {
     // Grouped query
     let query = world
         .query::<(&Position,)>()
-        .group_by(id::<Group>())
+        .group_by(Group::id())
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))
         // Callback invoked when a group is deleted
@@ -93,32 +93,32 @@ fn main() {
     // Create entities in 6 different tables with 3 group ids
     world
         .entity()
-        .add((id::<Group>(), id::<Third>()))
+        .add((Group::id(), Third::id()))
         .set(Position { x: 1.0, y: 1.0 });
     world
         .entity()
-        .add((id::<Group>(), id::<Second>()))
+        .add((Group::id(), Second::id()))
         .set(Position { x: 2.0, y: 2.0 });
     world
         .entity()
-        .add((id::<Group>(), id::<First>()))
+        .add((Group::id(), First::id()))
         .set(Position { x: 3.0, y: 3.0 });
 
     world
         .entity()
-        .add((id::<Group>(), id::<Third>()))
+        .add((Group::id(), Third::id()))
         .set(Position { x: 4.0, y: 4.0 })
-        .add(id::<Tag>());
+        .add(Tag::id());
     world
         .entity()
-        .add((id::<Group>(), id::<Second>()))
+        .add((Group::id(), Second::id()))
         .set(Position { x: 5.0, y: 5.0 })
-        .add(id::<Tag>());
+        .add(Tag::id());
     world
         .entity()
-        .add((id::<Group>(), id::<First>()))
+        .add((Group::id(), First::id()))
         .set(Position { x: 6.0, y: 6.0 })
-        .add(id::<Tag>());
+        .add(Tag::id());
 
     println!();
 

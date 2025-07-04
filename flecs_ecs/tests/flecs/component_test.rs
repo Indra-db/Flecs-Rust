@@ -66,7 +66,7 @@ fn temp_test_hook() {
             });
         });
 
-        entity.remove(id::<Position>());
+        entity.remove(Position::id());
         assert_eq!(unsafe { COUNT_ADD_POS }, 1);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
 
@@ -79,10 +79,10 @@ fn temp_test_hook() {
 
         assert_eq!(unsafe { COUNT_SET_VEL }, 1);
 
-        entity.remove(id::<Position>());
+        entity.remove(Position::id());
         assert_eq!(unsafe { COUNT_ADD_POS }, 1);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
-        entity2.remove(id::<Position>());
+        entity2.remove(Position::id());
         assert_eq!(unsafe { COUNT_ADD_POS }, 0);
         assert_eq!(unsafe { COUNT_SET_POS }, 3);
     }

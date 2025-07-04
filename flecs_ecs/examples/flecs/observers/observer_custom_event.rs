@@ -34,7 +34,7 @@ fn main() {
     // Emit the custom event. This triggers the observer.
     world
         .event()
-        .add(id::<Position>())
+        .add(Position::id())
         .entity(entity)
         .emit(&MyEvent);
 

@@ -1922,17 +1922,17 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// let mut world = World::new();
 ///
 /// // Basic
-/// let builder = world.query::<(&Foo, &mut Bar)>().with(id::<Bazz>()).build();
+/// let builder = world.query::<(&Foo, &mut Bar)>().with(Bazz::id()).build();
 /// let dsl = query!(&mut world, &Foo, &mut Bar, Bazz).build();
 /// assert_eq!(builder.to_string(), dsl.to_string());
 ///
 /// // Logical modifiers
 /// let builder = world
 ///     .query::<()>()
-///     .with(id::<Foo>())
+///     .with(Foo::id())
 ///     .or()
-///     .with(id::<Bar>())
-///     .without(id::<Bazz>())
+///     .with(Bar::id())
+///     .without(Bazz::id())
 ///     .build();
 ///
 /// let dsl = query!(&mut world, Foo || Bar, !Bazz).build();
@@ -2146,7 +2146,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// world.entity_named("square").set(Square { side: 5.0 });
 /// world.entity_named("triangle").set(Triangle { side: 5.0 });
 ///
-/// let query = world.query::<()>().with(id::<ShapesTrait>()).build();
+/// let query = world.query::<()>().with(ShapesTrait::id()).build();
 ///
 /// query.run(|mut it| {
 ///     it.next();

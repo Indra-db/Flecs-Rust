@@ -321,7 +321,7 @@ impl<'a> EntityView<'a> {
         self,
         component: T,
     ) -> Self {
-        self.auto_override(id::<T>()).set(component)
+        self.auto_override(T::id()).set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -1141,9 +1141,9 @@ impl<'a> EntityView<'a> {
     ///
     /// let world = World::new();
     /// let parent = world.entity().add(flecs::OrderedChildren);
-    /// let child_a = world.entity().child_of(parent).add(id::<Position>());
-    /// let child_b = world.entity().child_of(parent).add(id::<Position>());
-    /// let child_c = world.entity().child_of(parent).add(id::<Position>());
+    /// let child_a = world.entity().child_of(parent).add(Position::id());
+    /// let child_b = world.entity().child_of(parent).add(Position::id());
+    /// let child_c = world.entity().child_of(parent).add(Position::id());
     ///
     /// let mut vec : Vec<Entity> = vec![];
     /// parent.each_child(|e| {

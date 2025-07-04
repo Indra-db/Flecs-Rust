@@ -193,9 +193,9 @@ fn module_import() {
         "::flecs::module_test::ns::SimpleModule::Position"
     );
 
-    let e = world.entity().add(id::<Position>());
+    let e = world.entity().add(Position::id());
     assert!(e.id() != 0);
-    assert!(e.has(id::<Position>()));
+    assert!(e.has(Position::id()));
 }
 
 #[test]
@@ -273,7 +273,7 @@ fn module_dtor_on_fini() {
     {
         let world = World::new();
 
-        world.add(id::<ModuleInvokeCounter>());
+        world.add(ModuleInvokeCounter::id());
 
         world.import::<ModuleInvoke>();
 

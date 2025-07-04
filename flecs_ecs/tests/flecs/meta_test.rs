@@ -81,8 +81,8 @@ fn meta_struct() {
 
     let c = world
         .component::<Test>()
-        .member(id::<i32>(), "a")
-        .member(id::<f32>(), "b");
+        .member(i32::id(), "a")
+        .member(f32::id(), "b");
 
     assert_ne!(c.id(), 0);
 
@@ -117,7 +117,7 @@ fn meta_nested_struct() {
         a: Test,
     }
 
-    let t = world.component::<Test>().member(id::<i32>(), "x");
+    let t = world.component::<Test>().member(i32::id(), "x");
 
     let n = world.component::<Nested>().member(t, "a");
 
@@ -195,10 +195,10 @@ fn meta_struct_w_portable_type() {
 
     let t = world
         .component::<Test>()
-        .member(id::<usize>(), "a")
-        .member(id::<usize>(), "b")
-        .member(id::<Entity>(), "c")
-        .member(id::<Entity>(), "d");
+        .member(usize::id(), "a")
+        .member(usize::id(), "b")
+        .member(Entity::id(), "c")
+        .member(Entity::id(), "d");
 
     assert_ne!(t.id(), 0);
 
@@ -249,7 +249,7 @@ fn meta_partial_struct() {
         x: f32,
     }
 
-    let c = world.component::<Position>().member(id::<f32>(), "x");
+    let c = world.component::<Position>().member(f32::id(), "x");
 
     assert_ne!(c.id(), 0);
 
@@ -279,7 +279,7 @@ fn meta_partial_struct_custom_offset() {
 
     let c = world
         .component::<Position>()
-        .member(id::<f32>(), ("y", Count(1), offset_of!(Position, y)));
+        .member(f32::id(), ("y", Count(1), offset_of!(Position, y)));
 
     assert_ne!(c.id(), 0);
 
@@ -360,7 +360,7 @@ fn meta_bitmask() {
         .bit("tomato", Toppings::TOMATO);
 
     world.component::<Sandwich>().member(
-        id::<Toppings>(),
+        Toppings::id(),
         ("toppings", Count(1), offset_of!(Sandwich, toppings)),
     );
 
@@ -441,7 +441,7 @@ fn meta_world_ser_deser_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     let e1 = world.entity_named("ent1");
     let e2 = world
@@ -460,7 +460,7 @@ fn meta_world_ser_deser_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     world.from_json_world(json.as_str(), None);
 
@@ -485,7 +485,7 @@ fn meta_new_world_ser_deser_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     let e1 = world.entity_named("ent1");
     let e2 = world
@@ -504,7 +504,7 @@ fn meta_new_world_ser_deser_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     world.from_json_world(json.as_str(), None);
 
@@ -535,7 +535,7 @@ fn meta_new_world_ser_deser_empty_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     let e1 = Entity::null();
     let e2 = world.entity_named("ent2").set(RustEntity { entity: e1 });
@@ -552,7 +552,7 @@ fn meta_new_world_ser_deser_empty_flecs_entity() {
 
     world
         .component::<RustEntity>()
-        .member(id::<Entity>(), "entity");
+        .member(Entity::id(), "entity");
 
     world.from_json_world(json.as_str(), None);
 
@@ -661,13 +661,13 @@ fn meta_enum_w_bits() {
 
     world
         .component::<EnumWithBitsStruct>()
-        .member(id::<EnumWithBits>(), "bits");
+        .member(EnumWithBits::id(), "bits");
 
     for _ in 0..30 {
         world
             .entity()
             .child_of(world.entity())
-            .add(id::<EnumWithBitsStruct>());
+            .add(EnumWithBitsStruct::id());
     }
 
     let q = world.new_query::<&EnumWithBitsStruct>();
@@ -687,9 +687,9 @@ fn meta_value_range() {
 
     let c = world
         .component::<Position>()
-        .member(id::<f32>(), "x")
+        .member(f32::id(), "x")
         .range(-1.0, 1.0)
-        .member(id::<f32>(), "y")
+        .member(f32::id(), "y")
         .range(-2.0, 2.0);
 
     let x = c.lookup("x");
@@ -723,9 +723,9 @@ fn meta_warning_range() {
 
     let c = world
         .component::<Position>()
-        .member(id::<f32>(), "x")
+        .member(f32::id(), "x")
         .warning_range(-1.0, 1.0)
-        .member(id::<f32>(), "y")
+        .member(f32::id(), "y")
         .warning_range(-2.0, 2.0);
 
     let x = c.lookup("x");
@@ -759,9 +759,9 @@ fn meta_error_range() {
 
     let c = world
         .component::<Position>()
-        .member(id::<f32>(), "x")
+        .member(f32::id(), "x")
         .error_range(-1.0, 1.0)
-        .member(id::<f32>(), "y")
+        .member(f32::id(), "y")
         .error_range(-2.0, 2.0);
 
     let x = c.lookup("x");
@@ -804,13 +804,13 @@ fn meta_struct_member_ptr() {
         b: [Test2; 2],
     }
 
-    let t = world.component::<Test>().member(id::<i32>(), "x");
+    let t = world.component::<Test>().member(i32::id(), "x");
 
-    let t2 = world.component::<Test2>().member(id::<f64>(), "y");
+    let t2 = world.component::<Test2>().member(f64::id(), "y");
 
     let n = world
         .component::<Nested>()
-        .member(id::<Test>(), ("a", Count(1), offset_of!(Nested, a)))
+        .member(Test::id(), ("a", Count(1), offset_of!(Nested, a)))
         .member(t2, ("b", Count(2), offset_of!(Nested, b)));
 
     //validate Test #1

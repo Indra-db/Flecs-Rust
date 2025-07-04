@@ -39,7 +39,7 @@ fn main() {
             });
 
         if i % 2 == 0 {
-            creature.add(id::<Enchanted>());
+            creature.add(Enchanted::id());
         }
     }
 
@@ -54,7 +54,7 @@ fn main() {
 
         if i % 2 != 0 {
             // Differentiate enchantment condition to diversify
-            artifact.add(id::<Enchanted>());
+            artifact.add(Enchanted::id());
         }
     }
 

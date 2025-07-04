@@ -120,21 +120,21 @@ mod tests {
         //     )>::IF_ID_IS_DEFAULT_SECOND
         // );
 
-        e.add((id::<Tag>(), id::<Position>()));
-        e.add((id::<Position>(), id::<Position>()));
-        e.add((id::<Position>(), id::<Tag>()));
+        e.add((Tag::id(), Position::id()));
+        e.add((Position::id(), Position::id()));
+        e.add((Position::id(), Tag::id()));
 
         e.add(e);
         e.add((e, e));
-        e.add((id::<Position>(), e));
-        e.add((e, id::<Position>()));
+        e.add((Position::id(), e));
+        e.add((e, Position::id()));
 
         // //ignore
-        // assert!(e.has(id::<Position>()));
+        // assert!(e.has(Position::id()));
         // assert!(e.has(e));
-        // assert!(e.has(id::<Position>()));
+        // assert!(e.has(Position::id()));
         // assert!(e.has((e, e)));
-        // assert!(e.has((id::<Position>(), e)));
-        // assert!(e.has((e, id::<Position>())));
+        // assert!(e.has((Position::id(), e)));
+        // assert!(e.has((e, Position::id())));
     }
 }

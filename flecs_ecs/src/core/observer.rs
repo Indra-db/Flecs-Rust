@@ -70,7 +70,7 @@ impl<'a> Observer<'a> {
                             should be written as:
                             ```
                             .observer::<flecs::OnAdd, ()>()
-                            .with(id::<Position>()) // Note: no `&` or `&mut` here! 
+                            .with(Position::id()) // Note: no `&` or `&mut` here! 
                             ```
                         
                             Invalid signatures include:
@@ -78,7 +78,7 @@ impl<'a> Observer<'a> {
                             .observer::<flecs::OnAdd, &T>()
                             .observer::<flecs::OnAdd, &mut T>()
                             .observer::<flecs::OnAdd, ()>().with(id::<&T>())
-                            .observer::<flecs::OnAdd, ()>().read_write(id::<T>())
+                            .observer::<flecs::OnAdd, ()>().read_write(T::id())
                             ```
                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                             "#

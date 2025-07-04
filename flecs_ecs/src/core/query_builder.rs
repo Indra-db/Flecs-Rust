@@ -369,7 +369,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
     /// set term with enum wildcard
     fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
-        self.with((id::<T>(), flecs::Wildcard::ID))
+        self.with((T::id(), flecs::Wildcard::ID))
     }
 
     /* Without methods, shorthand for .with(...).not() */

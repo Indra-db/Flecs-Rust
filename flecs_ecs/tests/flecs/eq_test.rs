@@ -14,7 +14,7 @@ fn entity_eq_test() {
     let e1_id: Id = e1_entity.into();
 
     let comp1 = world.component::<Position>();
-    let comp_untyped1 = world.component_untyped_from(id::<Position>());
+    let comp_untyped1 = world.component_untyped_from(Position::id());
 
     assert_eq!(e1_id, e1_id);
     assert_eq!(e1_id, e1_entity);
@@ -119,9 +119,9 @@ fn entity_eq_test() {
 fn table_eq_test() {
     let world = World::new();
 
-    let ent1 = world.entity().add(id::<Position>());
-    let ent2 = world.entity().add(id::<Position>());
-    let ent3 = world.entity().add(id::<Position>()).add(id::<Velocity>());
+    let ent1 = world.entity().add(Position::id());
+    let ent2 = world.entity().add(Position::id());
+    let ent3 = world.entity().add(Position::id()).add(Velocity::id());
 
     let table1 = ent1.table().unwrap();
     let table2 = ent2.table().unwrap();
@@ -130,7 +130,7 @@ fn table_eq_test() {
     assert_eq!(table1, table2);
     assert_ne!(table1, table3);
 
-    ent1.add(id::<Velocity>());
+    ent1.add(Velocity::id());
     let table1 = ent1.table().unwrap();
 
     assert_ne!(table1, table2);

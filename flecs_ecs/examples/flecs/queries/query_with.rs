@@ -25,12 +25,12 @@ fn main() {
     world
         .entity_named("e1")
         .set(Position { x: 10.0, y: 20.0 })
-        .add(id::<Npc>());
+        .add(Npc::id());
 
     world
         .entity_named("e2")
         .set(Position { x: 10.0, y: 20.0 })
-        .add(id::<Npc>());
+        .add(Npc::id());
 
     // This entity will not match as it does not have Position, Npc
     world.entity_named("e3").set(Position { x: 10.0, y: 20.0 });

@@ -77,7 +77,7 @@ fn main() {
     set_log_level(1);
 
     while world.progress() {
-        if world.count(id::<Position>()) == 0 {
+        if world.count(Position::id()) == 0 {
             break; // No more entities left with Position
         }
     }

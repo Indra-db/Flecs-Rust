@@ -73,7 +73,7 @@ fn entity_new_add() {
     let entity = world.entity().set(Position { x: 0, y: 0 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 }
 
 #[test]
@@ -86,8 +86,8 @@ fn entity_new_add_2() {
         .set(Velocity { x: 0, y: 0 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.has(Velocity::id()));
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn entity_new_set() {
     assert!(entity.is_valid());
 
     // Verify that the entity has the Position component
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
     // Verify the component data
     entity.get::<&Position>(|pos| {
@@ -120,8 +120,8 @@ fn entity_new_set_2() {
         .set(Velocity { x: 1, y: 2 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.has(Velocity::id()));
 
     entity.get::<(&Position, &Velocity)>(|(pos, vel)| {
         assert_eq!(pos.x, 10);
@@ -141,7 +141,7 @@ fn entity_add() {
 
     entity.set(Position { x: 0, y: 0 });
 
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 }
 
 #[test]
@@ -152,10 +152,10 @@ fn entity_remove() {
     assert!(entity.is_valid());
 
     entity.set(Position { x: 0, y: 0 });
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
-    entity.remove(id::<Position>());
-    assert!(!entity.has(id::<Position>()));
+    entity.remove(Position::id());
+    assert!(!entity.has(Position::id()));
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn entity_set() {
     assert!(entity.is_valid());
 
     entity.set(Position { x: 10, y: 20 });
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
     entity.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -185,8 +185,8 @@ fn entity_add_2() {
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 });
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.has(Velocity::id()));
 }
 
 #[test]
@@ -240,13 +240,13 @@ fn entity_remove_2() {
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 });
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.has(Velocity::id()));
 
-    entity.remove(id::<Position>()).remove(id::<Velocity>());
+    entity.remove(Position::id()).remove(Velocity::id());
 
-    assert!(!entity.has(id::<Position>()));
-    assert!(!entity.has(id::<Velocity>()));
+    assert!(!entity.has(Position::id()));
+    assert!(!entity.has(Velocity::id()));
 }
 
 #[test]
@@ -258,8 +258,8 @@ fn entity_set_2() {
         .set::<Position>(Position { x: 10, y: 20 })
         .set::<Velocity>(Velocity { x: 1, y: 2 });
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.has(Velocity::id()));
 
     entity.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -331,9 +331,9 @@ fn entity_get_generic() {
     let entity = world.entity().set(Position { x: 10, y: 20 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
-    let pos_void = entity.get_untyped(world.id_view_from(id::<Position>()));
+    let pos_void = entity.get_untyped(world.id_view_from(Position::id()));
     assert!(!pos_void.is_null());
 
     let pos = unsafe { &*(pos_void as *const Position) };
@@ -355,7 +355,7 @@ fn entity_get_generic_mut() {
     let entity = world.entity().set(Position { x: 10, y: 20 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
     world
         .observer::<flecs::OnSet, &Position>()
@@ -387,7 +387,7 @@ fn entity_get_mut_generic_w_id() {
     let entity = world.entity().set(Position { x: 10, y: 20 });
 
     assert!(entity.is_valid());
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
     let void_p = entity.get_untyped(position);
     assert!(!void_p.is_null());
@@ -412,7 +412,7 @@ fn entity_set_generic() {
         )
     };
 
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
     assert!(entity.has(position));
 
     entity.try_get::<&Position>(|pos| {
@@ -434,7 +434,7 @@ fn entity_set_generic_no_size() {
             .set_ptr(position.id(), &pos as *const _ as *const c_void)
     };
 
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
     assert!(entity.has(position));
 
     entity.get::<&Position>(|pos| {
@@ -729,8 +729,8 @@ fn entity_clear() {
         .set(Velocity { x: 0, y: 0 });
 
     entity.clear();
-    assert!(!entity.has(id::<Position>()));
-    assert!(!entity.has(id::<Velocity>()));
+    assert!(!entity.has(Position::id()));
+    assert!(!entity.has(Velocity::id()));
 
     let entity2 = world.entity();
     assert!(entity2 > entity);
@@ -751,14 +751,14 @@ fn entity_force_owned() {
         .prefab()
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 })
-        .auto_override(id::<Position>());
+        .auto_override(Position::id());
 
     let entity = world.entity().add((flecs::IsA::ID, prefab));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
-    assert!(!entity.owns(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
+    assert!(entity.has(Velocity::id()));
+    assert!(!entity.owns(Velocity::id()));
 }
 
 #[test]
@@ -776,15 +776,15 @@ fn entity_force_owned_2() {
         .prefab()
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 })
-        .auto_override(id::<Position>())
-        .auto_override(id::<Velocity>());
+        .auto_override(Position::id())
+        .auto_override(Velocity::id());
 
     let entity = world.entity().add((flecs::IsA::ID, prefab));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
-    assert!(entity.owns(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
+    assert!(entity.has(Velocity::id()));
+    assert!(entity.owns(Velocity::id()));
 }
 
 #[test]
@@ -802,16 +802,16 @@ fn entity_force_owned_nested() {
         .prefab()
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 })
-        .auto_override(id::<Position>());
+        .auto_override(Position::id());
 
     let prefab_2 = world.entity().add((flecs::IsA::ID, prefab));
 
     let entity = world.entity().add((flecs::IsA::ID, prefab_2));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
-    assert!(entity.has(id::<Velocity>()));
-    assert!(!entity.owns(id::<Velocity>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
+    assert!(entity.has(Velocity::id()));
+    assert!(!entity.owns(Velocity::id()));
 }
 
 #[test]
@@ -891,45 +891,45 @@ fn entity_is_component_enabled() {
         .set(Velocity { x: 0, y: 0 })
         .set(Mass { value: 0 });
 
-    assert!(entity.is_enabled(id::<Position>()));
-    assert!(entity.is_enabled(id::<Velocity>()));
-    assert!(entity.is_enabled(id::<Mass>()));
+    assert!(entity.is_enabled(Position::id()));
+    assert!(entity.is_enabled(Velocity::id()));
+    assert!(entity.is_enabled(Mass::id()));
 
-    entity.disable(id::<Position>());
+    entity.disable(Position::id());
 
-    assert!(!entity.is_enabled(id::<Position>()));
-    assert!(entity.is_enabled(id::<Velocity>()));
-    assert!(entity.is_enabled(id::<Mass>()));
+    assert!(!entity.is_enabled(Position::id()));
+    assert!(entity.is_enabled(Velocity::id()));
+    assert!(entity.is_enabled(Mass::id()));
 
-    entity.disable(id::<Velocity>());
+    entity.disable(Velocity::id());
 
-    assert!(!entity.is_enabled(id::<Position>()));
-    assert!(!entity.is_enabled(id::<Velocity>()));
-    assert!(entity.is_enabled(id::<Mass>()));
+    assert!(!entity.is_enabled(Position::id()));
+    assert!(!entity.is_enabled(Velocity::id()));
+    assert!(entity.is_enabled(Mass::id()));
 
-    entity.disable(id::<Mass>());
+    entity.disable(Mass::id());
 
-    assert!(!entity.is_enabled(id::<Position>()));
-    assert!(!entity.is_enabled(id::<Velocity>()));
-    assert!(!entity.is_enabled(id::<Mass>()));
+    assert!(!entity.is_enabled(Position::id()));
+    assert!(!entity.is_enabled(Velocity::id()));
+    assert!(!entity.is_enabled(Mass::id()));
 
-    entity.enable(id::<Position>());
+    entity.enable(Position::id());
 
-    assert!(entity.is_enabled(id::<Position>()));
-    assert!(!entity.is_enabled(id::<Velocity>()));
-    assert!(!entity.is_enabled(id::<Mass>()));
+    assert!(entity.is_enabled(Position::id()));
+    assert!(!entity.is_enabled(Velocity::id()));
+    assert!(!entity.is_enabled(Mass::id()));
 
-    entity.enable(id::<Velocity>());
+    entity.enable(Velocity::id());
 
-    assert!(entity.is_enabled(id::<Position>()));
-    assert!(entity.is_enabled(id::<Velocity>()));
-    assert!(!entity.is_enabled(id::<Mass>()));
+    assert!(entity.is_enabled(Position::id()));
+    assert!(entity.is_enabled(Velocity::id()));
+    assert!(!entity.is_enabled(Mass::id()));
 
-    entity.enable(id::<Mass>());
+    entity.enable(Mass::id());
 
-    assert!(entity.is_enabled(id::<Position>()));
-    assert!(entity.is_enabled(id::<Velocity>()));
-    assert!(entity.is_enabled(id::<Mass>()));
+    assert!(entity.is_enabled(Position::id()));
+    assert!(entity.is_enabled(Velocity::id()));
+    assert!(entity.is_enabled(Mass::id()));
 }
 
 /// # See also
@@ -947,28 +947,28 @@ fn entity_is_enabled_pair() {
         .entity()
         .set_pair::<Position, TagA>(Position { x: 0, y: 0 })
         .set_pair::<Position, TagC>(Position { x: 0, y: 0 })
-        .add((id::<TagB>(), id::<TagC>()))
-        .disable((id::<Position>(), id::<TagC>()));
+        .add((TagB::id(), TagC::id()))
+        .disable((Position::id(), TagC::id()));
 
-    assert!(entity.is_enabled((id::<Position>(), id::<TagA>())));
-    assert!(!entity.is_enabled((id::<Position>(), id::<TagB>())));
-    assert!(!entity.is_enabled((id::<Position>(), id::<TagC>())));
+    assert!(entity.is_enabled((Position::id(), TagA::id())));
+    assert!(!entity.is_enabled((Position::id(), TagB::id())));
+    assert!(!entity.is_enabled((Position::id(), TagC::id())));
 
-    entity.enable((id::<Position>(), id::<TagC>()));
-    assert!(entity.is_enabled((id::<Position>(), id::<TagC>())));
+    entity.enable((Position::id(), TagC::id()));
+    assert!(entity.is_enabled((Position::id(), TagC::id())));
 
-    entity.disable((id::<Position>(), id::<TagA>()));
-    assert!(!entity.is_enabled((id::<Position>(), id::<TagA>())));
+    entity.disable((Position::id(), TagA::id()));
+    assert!(!entity.is_enabled((Position::id(), TagA::id())));
 
-    entity.enable((id::<Position>(), id::<TagA>()));
-    entity.enable((id::<Position>(), id::<TagC>()));
-    assert!(entity.is_enabled((id::<Position>(), id::<TagA>())));
-    assert!(entity.is_enabled((id::<Position>(), id::<TagC>())));
+    entity.enable((Position::id(), TagA::id()));
+    entity.enable((Position::id(), TagC::id()));
+    assert!(entity.is_enabled((Position::id(), TagA::id())));
+    assert!(entity.is_enabled((Position::id(), TagC::id())));
 
-    entity.disable((id::<Position>(), id::<TagC>()));
-    assert!(!entity.is_enabled((id::<Position>(), id::<TagC>())));
+    entity.disable((Position::id(), TagC::id()));
+    assert!(!entity.is_enabled((Position::id(), TagC::id())));
     //component it doesn't have
-    assert!(!entity.is_enabled((id::<Position>(), id::<TagB>())));
+    assert!(!entity.is_enabled((Position::id(), TagB::id())));
 }
 
 /// # See also
@@ -1012,8 +1012,8 @@ fn entity_is_first_enabled() {
         .entity()
         .set_first::<Position>(Position { x: 0, y: 0 }, tgt_a);
 
-    assert!(e.is_enabled((id::<Position>(), tgt_a)));
-    assert!(!e.is_enabled((id::<Position>(), tgt_b)));
+    assert!(e.is_enabled((Position::id(), tgt_a)));
+    assert!(!e.is_enabled((Position::id(), tgt_b)));
 }
 
 #[test]
@@ -1033,13 +1033,13 @@ fn entity_get_type() {
     {
         let type_2 = entity.archetype();
         assert_eq!(type_2.count(), 1);
-        assert_eq!(type_2.get(0).unwrap(), world.id_view_from(id::<Position>()));
+        assert_eq!(type_2.get(0).unwrap(), world.id_view_from(Position::id()));
     }
 
     entity.set(Velocity { x: 0, y: 0 });
     let type_3 = entity.archetype();
     assert_eq!(type_3.count(), 2);
-    assert_eq!(type_3.get(1).unwrap(), world.id_view_from(id::<Velocity>()));
+    assert_eq!(type_3.get(1).unwrap(), world.id_view_from(Velocity::id()));
 }
 
 #[test]
@@ -1051,11 +1051,11 @@ fn entity_get_nonempty_type() {
 
     let type_1 = entity.archetype();
     assert_eq!(type_1.count(), 1);
-    assert_eq!(type_1.get(0).unwrap(), world.id_view_from(id::<Position>()));
+    assert_eq!(type_1.get(0).unwrap(), world.id_view_from(Position::id()));
 
     let type_2 = entity.archetype();
     assert_eq!(type_2.count(), 1);
-    assert_eq!(type_2.get(0).unwrap(), world.id_view_from(id::<Position>()));
+    assert_eq!(type_2.get(0).unwrap(), world.id_view_from(Position::id()));
 }
 
 #[test]
@@ -1068,7 +1068,7 @@ fn entity_set_no_copy() {
         assert_eq!(pod.clone_count, 0);
     });
 
-    assert!(entity.has(id::<Pod>()));
+    assert!(entity.has(Pod::id()));
 
     entity.get::<&Pod>(|pod| {
         assert_eq!(pod.value, 10);
@@ -1087,13 +1087,13 @@ fn entity_set_copy() {
         assert_eq!(pod.clone_count, 1);
     });
 
-    assert!(entity.has(id::<Pod>()));
+    assert!(entity.has(Pod::id()));
 
     entity.get::<&Pod>(|pod| {
         assert_eq!(pod.value, 10);
     });
 
-    assert!(entity_dupl.has(id::<Pod>()));
+    assert!(entity_dupl.has(Pod::id()));
 
     entity_dupl.get::<&Pod>(|pod| {
         assert_eq!(pod.value, 10);
@@ -1106,7 +1106,7 @@ fn entity_set_deduced() {
 
     let entity = world.entity().set(Position { x: 10, y: 20 });
 
-    assert!(entity.has(id::<Position>()));
+    assert!(entity.has(Position::id()));
 
     entity.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -1122,12 +1122,12 @@ fn entity_override() {
         .component::<Position>()
         .add((*flecs::OnInstantiate, *flecs::Inherit));
 
-    let base = world.entity().auto_override(id::<Position>());
+    let base = world.entity().auto_override(Position::id());
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
 }
 
 #[test]
@@ -1161,16 +1161,16 @@ fn entity_override_pair_w_tgt_id() {
 
     let base = world
         .entity()
-        .auto_override((id::<Position>(), tgt_a))
+        .auto_override((Position::id(), tgt_a))
         .set_first::<Position>(Position { x: 0, y: 0 }, tgt_b);
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has((id::<Position>(), tgt_a)));
-    assert!(entity.owns((id::<Position>(), tgt_a)));
+    assert!(entity.has((Position::id(), tgt_a)));
+    assert!(entity.owns((Position::id(), tgt_a)));
 
-    assert!(entity.has((id::<Position>(), tgt_b)));
-    assert!(!entity.owns((id::<Position>(), tgt_b)));
+    assert!(entity.has((Position::id(), tgt_b)));
+    assert!(!entity.owns((Position::id(), tgt_b)));
 }
 
 #[test]
@@ -1201,16 +1201,16 @@ fn entity_override_pair() {
         .add((*flecs::OnInstantiate, *flecs::Inherit));
     let base = world
         .entity()
-        .auto_override((id::<Position>(), id::<TagA>()))
+        .auto_override((Position::id(), TagA::id()))
         .set_pair::<Position, TagB>(Position { x: 0, y: 0 });
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has((id::<Position>(), id::<TagA>())));
-    assert!(entity.owns((id::<Position>(), id::<TagA>())));
+    assert!(entity.has((Position::id(), TagA::id())));
+    assert!(entity.owns((Position::id(), TagA::id())));
 
-    assert!(entity.has((id::<Position>(), id::<TagB>())));
-    assert!(!entity.owns((id::<Position>(), id::<TagB>())));
+    assert!(entity.has((Position::id(), TagB::id())));
+    assert!(!entity.owns((Position::id(), TagB::id())));
 }
 
 #[test]
@@ -1225,8 +1225,8 @@ fn entity_set_auto_override() {
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
 
     entity.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -1253,8 +1253,8 @@ fn entity_set_auto_override_lvalue() {
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has(id::<Position>()));
-    assert!(entity.owns(id::<Position>()));
+    assert!(entity.has(Position::id()));
+    assert!(entity.owns(Position::id()));
 
     entity.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -1281,8 +1281,8 @@ fn entity_set_auto_override_pair() {
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has((id::<Position>(), id::<TagA>())));
-    assert!(entity.owns((id::<Position>(), id::<TagA>())));
+    assert!(entity.has((Position::id(), TagA::id())));
+    assert!(entity.owns((Position::id(), TagA::id())));
 
     entity.get::<&(Position, TagA)>(|pos| {
         assert_eq!(pos.x, 10);
@@ -1306,13 +1306,13 @@ fn entity_set_auto_override_pair_w_tgt_id() {
     // let base = unsafe {
     //     world
     //         .entity()
-    //         .set_auto_override((id::<Position>(), Position { x: 10, y: 20 }, tgt))
+    //         .set_auto_override((Position::id(), Position { x: 10, y: 20 }, tgt))
     // };
 
     // let entity = world.entity().add((flecs::IsA::ID, base));
 
-    // assert!(entity.has((id::<Position>(), tgt)));
-    // assert!(entity.owns((id::<Position>(), tgt)));
+    // assert!(entity.has((Position::id(), tgt)));
+    // assert!(entity.owns((Position::id(), tgt)));
 
     // let p = entity.try_get_first_id::<Position>(tgt);
     // assert!(p.is_some());
@@ -1341,8 +1341,8 @@ fn entity_set_auto_override_pair_w_rel_tag() {
 
     let entity = world.entity().add((flecs::IsA::ID, base));
 
-    assert!(entity.has((id::<TagA>(), id::<Position>())));
-    assert!(entity.owns((id::<TagA>(), id::<Position>())));
+    assert!(entity.has((TagA::id(), Position::id())));
+    assert!(entity.owns((TagA::id(), Position::id())));
 
     entity.get::<&(TagA, Position)>(|pos| {
         assert_eq!(pos.x, 10);
@@ -1522,7 +1522,7 @@ fn entity_entity_view_to_entity_world() {
     let entity_mut = entity_view.mut_current_stage(&world);
     entity_mut.set(Position { x: 10, y: 20 });
 
-    assert!(entity_view.has(id::<Position>()));
+    assert!(entity_view.has(Position::id()));
     entity_view.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
@@ -1540,12 +1540,12 @@ fn entity_entity_view_to_entity_stage() {
 
     let entity_mut = entity_view.mut_current_stage(stage);
     entity_mut.set(Position { x: 10, y: 20 });
-    assert!(!entity_mut.has(id::<Position>()));
+    assert!(!entity_mut.has(Position::id()));
 
     world.readonly_end();
 
-    assert!(entity_mut.has(id::<Position>()));
-    assert!(entity_view.has(id::<Position>()));
+    assert!(entity_mut.has(Position::id()));
+    assert!(entity_view.has(Position::id()));
 
     entity_view.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -1565,7 +1565,7 @@ fn entity_create_entity_view_from_stage() {
 
     let entity_mut = entity_view.mut_current_stage(&world);
     entity_mut.set(Position { x: 10, y: 20 });
-    assert!(entity_view.has(id::<Position>()));
+    assert!(entity_view.has(Position::id()));
 
     entity_mut.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -1808,11 +1808,11 @@ fn entity_defer_set_1_component() {
 
     let e = world.entity().set(Position { x: 10, y: 20 });
 
-    assert!(!e.has(id::<Position>()));
+    assert!(!e.has(Position::id()));
 
     world.defer_end();
 
-    assert!(e.has(id::<Position>()));
+    assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -1831,13 +1831,13 @@ fn entity_defer_set_2_components() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(!e.has(id::<Position>()));
-    assert!(!e.has(id::<Velocity>()));
+    assert!(!e.has(Position::id()));
+    assert!(!e.has(Velocity::id()));
 
     world.defer_end();
 
-    assert!(e.has(id::<Position>()));
-    assert!(e.has(id::<Velocity>()));
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
 
     e.get::<(&Velocity, &Position)>(|(v, p)| {
         assert_eq!(p.x, 10);
@@ -1859,15 +1859,15 @@ fn entity_defer_set_3_components() {
         .set(Velocity { x: 1, y: 2 })
         .set(Mass { value: 50 });
 
-    assert!(!e.has(id::<Position>()));
-    assert!(!e.has(id::<Velocity>()));
-    assert!(!e.has(id::<Mass>()));
+    assert!(!e.has(Position::id()));
+    assert!(!e.has(Velocity::id()));
+    assert!(!e.has(Mass::id()));
 
     world.defer_end();
 
-    assert!(e.has(id::<Position>()));
-    assert!(e.has(id::<Velocity>()));
-    assert!(e.has(id::<Mass>()));
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
+    assert!(e.has(Mass::id()));
 
     e.get::<(&Velocity, &Position, &Mass)>(|(v, p, m)| {
         assert_eq!(p.x, 10);
@@ -1992,7 +1992,7 @@ fn entity_set_2_after_set_1() {
 
     let e = world.entity().set(Position { x: 5, y: 10 });
 
-    assert!(e.has(id::<Position>()));
+    assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 5);
@@ -2022,8 +2022,8 @@ fn entity_set_2_after_set_2() {
         .set(Position { x: 5, y: 10 })
         .set(Velocity { x: 1, y: 2 });
 
-    assert!(e.has(id::<Position>()));
-    assert!(e.has(id::<Velocity>()));
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
 
     e.get::<(&Position, &Velocity)>(|(p, v)| {
         assert_eq!(p.x, 5);
@@ -2083,7 +2083,7 @@ fn entity_with_self() {
 fn entity_with_relation_type_self() {
     let world = World::new();
 
-    let bob = world.entity().with_first(id::<Likes>(), || {
+    let bob = world.entity().with_first(Likes::id(), || {
         let e1 = world.entity();
         e1.set(SelfRef { value: e1.into() });
 
@@ -2094,13 +2094,13 @@ fn entity_with_relation_type_self() {
         e3.set(SelfRef { value: e3.into() });
     });
 
-    assert!(!world.component::<SelfRef>().has((id::<Likes>(), bob)));
+    assert!(!world.component::<SelfRef>().has((Likes::id(), bob)));
 
     let mut count = 0;
     let q = world.query::<()>().with((id::<&Likes>(), bob)).build();
 
     q.each_entity(|e, _| {
-        assert!(e.has((id::<Likes>(), bob)));
+        assert!(e.has((Likes::id(), bob)));
 
         e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
@@ -2116,7 +2116,7 @@ fn entity_with_relation_type_self() {
 fn entity_with_relation_self() {
     let world = World::new();
 
-    let bob = world.entity().with_first(id::<Likes>(), || {
+    let bob = world.entity().with_first(Likes::id(), || {
         let e1 = world.entity();
         e1.set(SelfRef { value: e1.into() });
 
@@ -2127,13 +2127,13 @@ fn entity_with_relation_self() {
         e3.set(SelfRef { value: e3.into() });
     });
 
-    assert!(!world.component::<SelfRef>().has((id::<Likes>(), bob)));
+    assert!(!world.component::<SelfRef>().has((Likes::id(), bob)));
 
     let mut count = 0;
     let q = world.query::<()>().with((id::<&Likes>(), bob)).build();
 
     q.each_entity(|e, _| {
-        assert!(e.has((id::<Likes>(), bob)));
+        assert!(e.has((Likes::id(), bob)));
 
         e.get::<&SelfRef>(|s| {
             assert_eq!(s.value, e);
@@ -2467,15 +2467,15 @@ fn entity_defer_w_with_implicit_component() {
     let mut e = world.entity_null();
 
     world.defer(|| {
-        world.with(id::<Tag>(), || {
+        world.with(Tag::id(), || {
             e = world.entity();
-            assert!(!e.has(id::<Tag>()));
+            assert!(!e.has(Tag::id()));
         });
 
-        assert!(!e.has(id::<Tag>()));
+        assert!(!e.has(Tag::id()));
     });
 
-    assert!(e.has(id::<Tag>()));
+    assert!(e.has(Tag::id()));
 }
 
 #[test]
@@ -2485,20 +2485,20 @@ fn entity_defer_suspend_resume() {
 
     world.defer(|| {
         e.set(Position { x: 10, y: 20 });
-        assert!(!e.has(id::<Position>()));
+        assert!(!e.has(Position::id()));
 
         world.defer_suspend();
         e.set(Velocity { x: 1, y: 2 });
-        assert!(!e.has(id::<Position>()));
-        assert!(e.has(id::<Velocity>()));
+        assert!(!e.has(Position::id()));
+        assert!(e.has(Velocity::id()));
         world.defer_resume();
 
-        assert!(!e.has(id::<Position>()));
-        assert!(e.has(id::<Velocity>()));
+        assert!(!e.has(Position::id()));
+        assert!(e.has(Velocity::id()));
     });
 
-    assert!(e.has(id::<Position>()));
-    assert!(e.has(id::<Velocity>()));
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
 }
 
 #[test]
@@ -2512,7 +2512,7 @@ fn entity_with_after_builder_method() {
     let b = world
         .entity()
         .set(Position { x: 30, y: 40 })
-        .with_first(id::<Likes>(), || {
+        .with_first(Likes::id(), || {
             world.entity_named("Y");
         });
 
@@ -2542,7 +2542,7 @@ fn entity_with_after_builder_method() {
     assert!(x.has(a));
 
     let y = world.lookup_recursive("Y");
-    assert!(y.has((id::<Likes>(), b)));
+    assert!(y.has((Likes::id(), b)));
 
     let z = world.lookup_recursive("Z");
     assert!(z.has((*flecs::IsA, c)));
@@ -2561,7 +2561,7 @@ fn entity_with_before_builder_method() {
 
     let b = world
         .entity()
-        .with_first(id::<Likes>(), || {
+        .with_first(Likes::id(), || {
             world.entity_named("Y");
         })
         .set(Position { x: 30, y: 40 });
@@ -2592,7 +2592,7 @@ fn entity_with_before_builder_method() {
     assert!(x.has(a));
 
     let y = world.lookup_recursive("Y");
-    assert!(y.has((id::<Likes>(), b)));
+    assert!(y.has((Likes::id(), b)));
 
     let z = world.lookup_recursive("Z");
     assert!(z.has((*flecs::IsA, c)));
@@ -2633,7 +2633,7 @@ fn entity_insert() {
     let world = World::new();
 
     let e = world.entity().set(Position { x: 10, y: 20 });
-    assert!(e.has(id::<Position>()));
+    assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -2746,10 +2746,10 @@ fn entity_has_pair_id_t_w_type() {
     let id_2 = world.entity();
     let id_3 = world.entity();
 
-    let e = world.entity().add((id::<Rel>(), id_2));
+    let e = world.entity().add((Rel::id(), id_2));
 
-    assert!(e.has((id::<Rel>(), id_2)));
-    assert!(!e.has((id::<Rel>(), id_3)));
+    assert!(e.has((Rel::id(), id_2)));
+    assert!(!e.has((Rel::id(), id_3)));
 }
 
 #[test]
@@ -2786,10 +2786,10 @@ fn entity_has_pair_id_w_type() {
     let id_2 = world.entity();
     let id_3 = world.entity();
 
-    let e = world.entity().add((id::<Rel>(), id_2));
+    let e = world.entity().add((Rel::id(), id_2));
 
-    assert!(e.has((id::<Rel>(), id_2)));
-    assert!(!e.has((id::<Rel>(), id_3)));
+    assert!(e.has((Rel::id(), id_2)));
+    assert!(!e.has((Rel::id(), id_3)));
 }
 
 #[test]
@@ -2859,10 +2859,10 @@ fn entity_owns_pair_id_t_w_type() {
     let id_2 = world.entity();
     let id_3 = world.entity();
 
-    let e = world.entity().add((id::<Rel>(), id_2));
+    let e = world.entity().add((Rel::id(), id_2));
 
-    assert!(e.owns((id::<Rel>(), id_2)));
-    assert!(!e.owns((id::<Rel>(), id_3)));
+    assert!(e.owns((Rel::id(), id_2)));
+    assert!(!e.owns((Rel::id(), id_3)));
 }
 
 #[test]
@@ -2932,10 +2932,10 @@ fn entity_owns_pair_id_w_type() {
     let id_2 = world.entity();
     let id_3 = world.entity();
 
-    let e = world.entity().add((id::<Rel>(), id_2));
+    let e = world.entity().add((Rel::id(), id_2));
 
-    assert!(e.owns((id::<Rel>(), id_2)));
-    assert!(!e.owns((id::<Rel>(), id_3)));
+    assert!(e.owns((Rel::id(), id_2)));
+    assert!(!e.owns((Rel::id(), id_3)));
 }
 
 #[test]
@@ -3002,10 +3002,10 @@ fn entity_is_a_w_type() {
 
     let base = world.entity_from::<Prefab>();
 
-    let e = world.entity().is_a(id::<Prefab>());
+    let e = world.entity().is_a(Prefab::id());
 
     assert!(e.has((*flecs::IsA, base)));
-    assert!(e.has((id::<flecs::IsA>(), id::<Prefab>())));
+    assert!(e.has((id::<flecs::IsA>(), Prefab::id())));
 }
 
 #[test]
@@ -3025,10 +3025,10 @@ fn entity_child_of_w_type() {
 
     let base = world.entity_from::<Parent>();
 
-    let e = world.entity().child_of(id::<Parent>());
+    let e = world.entity().child_of(Parent::id());
 
     assert!(e.has((*flecs::ChildOf, base)));
-    assert!(e.has((*flecs::ChildOf, id::<Parent>())));
+    assert!(e.has((*flecs::ChildOf, Parent::id())));
 }
 
 #[test]
@@ -3049,7 +3049,7 @@ fn entity_slot_of_w_type() {
     let world = World::new();
 
     let base = world.prefab_type::<Parent>();
-    let base_child = world.prefab().child_of(base).slot_of(id::<Parent>());
+    let base_child = world.prefab().child_of(base).slot_of(Parent::id());
 
     assert!(base_child.has((*flecs::SlotOf, base)));
 
@@ -3097,17 +3097,17 @@ fn entity_id_get_invalid_entity() {
 fn entity_each_in_stage() {
     let world = World::new();
 
-    let e = world.entity().add((id::<Rel>(), id::<Obj>()));
-    assert!(e.has((id::<Rel>(), id::<Obj>())));
+    let e = world.entity().add((Rel::id(), Obj::id()));
+    assert!(e.has((Rel::id(), Obj::id())));
 
     world.readonly_begin(false);
 
     let s = world.stage(0);
     let em = e.mut_current_stage(s);
-    assert!(em.has((id::<Rel>(), id::<Obj>())));
+    assert!(em.has((Rel::id(), Obj::id())));
     let mut count = 0;
 
-    em.each_target(id::<Rel>(), |obj| {
+    em.each_target(Rel::id(), |obj| {
         count += 1;
         assert_eq!(obj, world.entity_from::<Obj>());
     });
@@ -3147,11 +3147,11 @@ fn entity_get_obj_by_template() {
     let o1 = world.entity();
     let o2 = world.entity();
 
-    e1.add((id::<Rel>(), o1));
-    e1.add((id::<Rel>(), o2));
+    e1.add((Rel::id(), o1));
+    e1.add((Rel::id(), o2));
 
-    assert_eq!(o1, e1.target(id::<Rel>(), 0).unwrap());
-    assert_eq!(o2, e1.target(id::<Rel>(), 1).unwrap());
+    assert_eq!(o1, e1.target(Rel::id(), 0).unwrap());
+    assert_eq!(o2, e1.target(Rel::id(), 1).unwrap());
 }
 
 #[test]
@@ -3186,10 +3186,10 @@ fn entity_clone() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(id::<Tag>()).set(v);
+    let src = world.entity().add(Tag::id()).set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has(id::<Tag>()));
-    assert!(dst.has(id::<Position>()));
+    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -3203,10 +3203,10 @@ fn entity_clone_w_value() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(id::<Tag>()).set(v);
+    let src = world.entity().add(Tag::id()).set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has(id::<Tag>()));
-    assert!(dst.has(id::<Position>()));
+    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -3220,13 +3220,13 @@ fn entity_clone_to_existing() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(id::<Tag>()).set(v);
+    let src = world.entity().add(Tag::id()).set(v);
     let dst = world.entity();
     let result = src.duplicate_into(true, dst);
     assert_eq!(result, dst);
 
-    assert!(dst.has(id::<Tag>()));
-    assert!(dst.has(id::<Position>()));
+    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
         assert_eq!(pos.x, 10);
@@ -3242,7 +3242,7 @@ fn entity_clone_to_existing_overlap() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(id::<Tag>()).set(v);
+    let src = world.entity().add(Tag::id()).set(v);
     let dst = world.entity().set(Position { x: 0, y: 0 });
 
     src.duplicate_into(true, dst);
@@ -3309,8 +3309,8 @@ fn entity_prefab_hierarchy_w_types() {
     let turret = world.prefab_type::<Turret>();
     let turret_base = world
         .prefab_type::<Base>()
-        .child_of(id::<Turret>())
-        .slot_of(id::<Turret>());
+        .child_of(Turret::id())
+        .slot_of(Turret::id());
 
     assert!(turret.is_valid());
     assert!(turret_base.is_valid());
@@ -3325,16 +3325,16 @@ fn entity_prefab_hierarchy_w_types() {
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
     assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
 
-    let railgun = world.prefab_type::<Railgun>().is_a(id::<Turret>());
+    let railgun = world.prefab_type::<Railgun>().is_a(Turret::id());
     let railgun_base = railgun.lookup_recursive("Base");
     let railgun_head = world
         .prefab_type::<Head>()
-        .child_of(id::<Railgun>())
-        .slot_of(id::<Railgun>());
+        .child_of(Railgun::id())
+        .slot_of(Railgun::id());
     let railgun_beam = world
         .prefab_type::<Beam>()
-        .child_of(id::<Railgun>())
-        .slot_of(id::<Railgun>());
+        .child_of(Railgun::id())
+        .slot_of(Railgun::id());
 
     assert!(railgun.is_valid());
     assert!(railgun_base.is_valid());
@@ -3370,8 +3370,8 @@ fn entity_prefab_hierarchy_w_root_types() {
     let turret = world.prefab_type::<Turret>();
     let turret_base = world
         .prefab_type::<Base>()
-        .child_of(id::<Turret>())
-        .slot_of(id::<Turret>());
+        .child_of(Turret::id())
+        .slot_of(Turret::id());
 
     assert!(turret.is_valid());
     assert!(turret_base.is_valid());
@@ -3386,7 +3386,7 @@ fn entity_prefab_hierarchy_w_root_types() {
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
     assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
 
-    let inst = world.entity().is_a(id::<Turret>());
+    let inst = world.entity().is_a(Turret::id());
     assert!(inst.is_valid());
 
     let inst_base = inst.lookup_recursive("Base");
@@ -3400,11 +3400,11 @@ fn entity_entity_array() {
     let entities = [world.entity(), world.entity(), world.entity()];
 
     for e in entities.iter() {
-        e.add(id::<TagA>()).add(id::<TagB>());
+        e.add(TagA::id()).add(TagB::id());
     }
 
-    assert_eq!(world.count(id::<TagA>()), 3);
-    assert_eq!(world.count(id::<TagB>()), 3);
+    assert_eq!(world.count(TagA::id()), 3);
+    assert_eq!(world.count(TagB::id()), 3);
 }
 
 #[test]
@@ -3419,7 +3419,7 @@ fn entity_entity_w_type_defer() {
 
     assert_eq!(e.name(), "Tag");
     assert_eq!(e.symbol(), "flecs::common_test::Tag");
-    assert_eq!(world.id_view_from(id::<Tag>()), e);
+    assert_eq!(world.id_view_from(Tag::id()), e);
 }
 
 #[test]
@@ -3428,8 +3428,8 @@ fn entity_add_if_true_t() {
 
     let e = world.entity();
 
-    e.add_if(id::<Tag>(), true);
-    assert!(e.has(id::<Tag>()));
+    e.add_if(Tag::id(), true);
+    assert!(e.has(Tag::id()));
 }
 
 #[test]
@@ -3438,13 +3438,13 @@ fn entity_add_if_false_t() {
 
     let e = world.entity();
 
-    e.add_if(id::<Tag>(), false);
-    assert!(!e.has(id::<Tag>()));
+    e.add_if(Tag::id(), false);
+    assert!(!e.has(Tag::id()));
 
-    e.add(id::<Tag>());
-    assert!(e.has(id::<Tag>()));
-    e.add_if(id::<Tag>(), false);
-    assert!(!e.has(id::<Tag>()));
+    e.add(Tag::id());
+    assert!(e.has(Tag::id()));
+    e.add_if(Tag::id(), false);
+    assert!(!e.has(Tag::id()));
 }
 
 #[test]
@@ -3480,8 +3480,8 @@ fn entity_add_if_true_r_o() {
 
     let e = world.entity();
 
-    e.add_if((id::<Rel>(), id::<Obj>()), true);
-    assert!(e.has((id::<Rel>(), id::<Obj>())));
+    e.add_if((Rel::id(), Obj::id()), true);
+    assert!(e.has((Rel::id(), Obj::id())));
 }
 
 #[test]
@@ -3489,12 +3489,12 @@ fn entity_add_if_false_r_o() {
     let world = World::new();
 
     let e = world.entity();
-    e.add_if((id::<Rel>(), id::<Obj2>()), false);
-    assert!(!e.has((id::<Rel>(), id::<Obj2>())));
-    e.add((id::<Rel>(), id::<Obj2>()));
-    assert!(e.has((id::<Rel>(), id::<Obj2>())));
-    e.add_if((id::<Rel>(), id::<Obj2>()), false);
-    assert!(!e.has((id::<Rel>(), id::<Obj2>())));
+    e.add_if((Rel::id(), Obj2::id()), false);
+    assert!(!e.has((Rel::id(), Obj2::id())));
+    e.add((Rel::id(), Obj2::id()));
+    assert!(e.has((Rel::id(), Obj2::id())));
+    e.add_if((Rel::id(), Obj2::id()), false);
+    assert!(!e.has((Rel::id(), Obj2::id())));
 }
 
 #[test]
@@ -3504,8 +3504,8 @@ fn entity_add_if_true_r_o_2() {
     let e = world.entity();
     let o = world.entity();
 
-    e.add_if((id::<Rel>(), o), true);
-    assert!(e.has((id::<Rel>(), o)));
+    e.add_if((Rel::id(), o), true);
+    assert!(e.has((Rel::id(), o)));
 }
 
 #[test]
@@ -3515,12 +3515,12 @@ fn entity_add_if_false_r_o_2() {
     let e = world.entity();
     let o = world.entity();
 
-    e.add_if((id::<Rel>(), o), false);
-    assert!(!e.has((id::<Rel>(), o)));
-    e.add((id::<Rel>(), o));
-    assert!(e.has((id::<Rel>(), o)));
-    e.add_if((id::<Rel>(), o), false);
-    assert!(!e.has((id::<Rel>(), o)));
+    e.add_if((Rel::id(), o), false);
+    assert!(!e.has((Rel::id(), o)));
+    e.add((Rel::id(), o));
+    assert!(e.has((Rel::id(), o)));
+    e.add_if((Rel::id(), o), false);
+    assert!(!e.has((Rel::id(), o)));
 }
 
 #[test]
@@ -3582,16 +3582,16 @@ fn entity_add_if_exclusive_r_o_2() {
     let o_1 = world.entity();
     let o_2 = world.entity();
 
-    e.add((id::<First>(), o_1));
-    assert!(e.has((id::<First>(), o_1)));
+    e.add((First::id(), o_1));
+    assert!(e.has((First::id(), o_1)));
 
-    e.add_if((id::<First>(), o_2), true);
-    assert!(!e.has((id::<First>(), o_1)));
-    assert!(e.has((id::<First>(), o_2)));
+    e.add_if((First::id(), o_2), true);
+    assert!(!e.has((First::id(), o_1)));
+    assert!(e.has((First::id(), o_2)));
 
-    e.add_if((id::<First>(), o_1), false);
-    assert!(!e.has((id::<First>(), o_1)));
-    assert!(!e.has((id::<First>(), o_2)));
+    e.add_if((First::id(), o_1), false);
+    assert!(!e.has((First::id(), o_1)));
+    assert!(!e.has((First::id(), o_2)));
 }
 
 #[test]
@@ -3602,16 +3602,16 @@ fn entity_add_if_exclusive_r_o_3() {
 
     let e = world.entity();
 
-    e.add((id::<Rel>(), id::<Obj>()));
-    assert!(e.has((id::<Rel>(), id::<Obj>())));
+    e.add((Rel::id(), Obj::id()));
+    assert!(e.has((Rel::id(), Obj::id())));
 
-    e.add_if((id::<Rel>(), id::<Obj2>()), true);
-    assert!(!e.has((id::<Rel>(), id::<Obj>())));
-    assert!(e.has((id::<Rel>(), id::<Obj2>())));
+    e.add_if((Rel::id(), Obj2::id()), true);
+    assert!(!e.has((Rel::id(), Obj::id())));
+    assert!(e.has((Rel::id(), Obj2::id())));
 
-    e.add_if((id::<Rel>(), id::<Obj>()), false);
-    assert!(!e.has((id::<Rel>(), id::<Obj>())));
-    assert!(!e.has((id::<Rel>(), id::<Obj2>())));
+    e.add_if((Rel::id(), Obj::id()), false);
+    assert!(!e.has((Rel::id(), Obj::id())));
+    assert!(!e.has((Rel::id(), Obj2::id())));
 }
 
 #[test]
@@ -3664,15 +3664,15 @@ fn entity_children_w_custom_relation_type() {
     let world = World::new();
 
     let parent = world.entity();
-    let child_1 = world.entity().add((id::<Rel>(), parent));
-    let child_2 = world.entity().add((id::<Rel>(), parent));
+    let child_1 = world.entity().add((Rel::id(), parent));
+    let child_2 = world.entity().add((Rel::id(), parent));
     world.entity().child_of(parent);
 
     let mut child_1_found = false;
     let mut child_2_found = false;
     let mut count = 0;
 
-    parent.each_child_of(id::<Rel>(), |child| {
+    parent.each_child_of(Rel::id(), |child| {
         if child == child_1 {
             child_1_found = true;
         } else if child == child_2 {
@@ -3765,14 +3765,14 @@ fn entity_get_depth_w_type() {
     world.component::<Rel>().add(id::<flecs::Traversable>());
 
     let e1 = world.entity();
-    let e2 = world.entity().add((id::<Rel>(), e1));
-    let e3 = world.entity().add((id::<Rel>(), e2));
-    let e4 = world.entity().add((id::<Rel>(), e3));
+    let e2 = world.entity().add((Rel::id(), e1));
+    let e3 = world.entity().add((Rel::id(), e2));
+    let e4 = world.entity().add((Rel::id(), e3));
 
-    assert_eq!(e1.depth(id::<Rel>()), 0);
-    assert_eq!(e2.depth(id::<Rel>()), 1);
-    assert_eq!(e3.depth(id::<Rel>()), 2);
-    assert_eq!(e4.depth(id::<Rel>()), 3);
+    assert_eq!(e1.depth(Rel::id()), 0);
+    assert_eq!(e2.depth(Rel::id()), 1);
+    assert_eq!(e3.depth(Rel::id()), 2);
+    assert_eq!(e4.depth(Rel::id()), 3);
 }
 
 #[test]
@@ -3792,15 +3792,15 @@ fn entity_insert_w_observer() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
+        .with(Position::id())
         .each_entity(|e, _| {
             e.set(Velocity { x: 1, y: 2 });
         });
 
     let e = world.entity().set(Position { x: 10, y: 20 });
 
-    assert!(e.has(id::<Position>()));
-    assert!(e.has(id::<Velocity>()));
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
     e.get::<(&Position, &Velocity)>(|(pos, vel)| {
         assert_eq!(pos.x, 10);
         assert_eq!(pos.y, 20);
@@ -3837,8 +3837,8 @@ fn entity_override_sparse() {
 
     let e = world.entity().is_a(base);
 
-    assert!(e.has(id::<Velocity>()));
-    assert!(e.owns(id::<Velocity>()));
+    assert!(e.has(Velocity::id()));
+    assert!(e.owns(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
         assert_eq!(v.x, 1);
@@ -3856,8 +3856,8 @@ fn entity_delete_w_override_sparse() {
 
     let e = world.entity().is_a(base);
 
-    assert!(e.has(id::<Velocity>()));
-    assert!(e.owns(id::<Velocity>()));
+    assert!(e.has(Velocity::id()));
+    assert!(e.owns(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
         assert_eq!(v.x, 1);
@@ -3871,7 +3871,7 @@ fn entity_delete_w_override_sparse() {
 fn entity_iter_type() {
     let world = World::new();
 
-    let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
+    let e = world.entity().add(Position::id()).add(Velocity::id());
 
     let mut count = 0;
     let mut pos_found = false;
@@ -3879,10 +3879,10 @@ fn entity_iter_type() {
 
     for id in e.archetype().as_slice() {
         count += 1;
-        if *id == world.id_view_from(flecs_ecs::core::id::<Position>()) {
+        if *id == world.id_view_from(Position::id()) {
             pos_found = true;
         }
-        if *id == world.id_view_from(flecs_ecs::core::id::<Velocity>()) {
+        if *id == world.id_view_from(Velocity::id()) {
             velocity_found = true;
         }
     }

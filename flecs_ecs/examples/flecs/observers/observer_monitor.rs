@@ -55,7 +55,7 @@ fn main() {
     entity.set(Velocity { x: 1.0, y: 2.0 });
 
     // This triggers the monitor with EcsOnRemove, as the entity no longer matches.
-    entity.remove(id::<Position>());
+    entity.remove(Position::id());
 
     // Output:
     //  - Enter: Velocity: e
