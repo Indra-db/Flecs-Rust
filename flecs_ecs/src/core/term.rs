@@ -209,12 +209,12 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * `T` - The type of component to use.
     fn init_term_from<T: ComponentOrPairId>(&mut self) {
         if !T::IS_PAIR {
-            let id: sys::ecs_id_t = T::First::id(self.world());
+            let id: sys::ecs_id_t = T::First::entity_id(self.world());
             self.init_current_term(id);
         } else {
             let world = self.world();
-            let id_rel = T::First::id(world);
-            let id_target = T::Second::id(world);
+            let id_rel = T::First::entity_id(world);
+            let id_target = T::Second::entity_id(world);
             self.init_current_term((id_rel, id_target));
         }
     }

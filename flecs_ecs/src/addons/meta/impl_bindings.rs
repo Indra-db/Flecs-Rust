@@ -60,7 +60,7 @@ impl<T: ComponentId> ComponentId for Opaque<'static, T> {
         true
     }
 
-    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+    fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         ECS_OPAQUE
     }
 }

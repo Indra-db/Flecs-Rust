@@ -182,7 +182,7 @@ impl<'a> Timer<'a> {
 
     pub(crate) fn new_from<T: ComponentId>(world: impl WorldProvider<'a>) -> Self {
         Timer {
-            entity: EntityView::new_from(world.world(), T::id(world)),
+            entity: EntityView::new_from(world.world(), T::entity_id(world)),
         }
     }
 }

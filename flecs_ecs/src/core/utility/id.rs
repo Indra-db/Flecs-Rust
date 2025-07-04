@@ -1,3 +1,5 @@
+#![doc(hidden)]
+
 use crate::core::ComponentId;
 
 impl<T: ComponentId> Clone for Id<T> {

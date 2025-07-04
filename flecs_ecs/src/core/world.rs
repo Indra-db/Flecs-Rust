@@ -1512,7 +1512,7 @@ impl World {
     ///
     /// * `component` - The singleton component to set on the world.
     pub fn set<T: ComponentId + DataComponent + ComponentType<Struct>>(&self, component: T) {
-        let id = T::id(self);
+        let id = T::entity_id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
 
@@ -1525,7 +1525,7 @@ impl World {
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, First::id(self));
+        let entity = EntityView::new_from(self, First::entity_id(self));
         entity.set_first::<First>(first, second);
     }
 
@@ -1538,7 +1538,7 @@ impl World {
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, Second::id(self));
+        let entity = EntityView::new_from(self, Second::entity_id(self));
         entity.set_second::<Second>(first, second);
     }
 
@@ -1560,7 +1560,7 @@ impl World {
 
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::entity_id(self),
         );
         entity.set_pair::<First, Second>(data);
     }
@@ -1569,7 +1569,7 @@ impl World {
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
     pub fn assign<T: ComponentId + DataComponent>(&self, value: T) {
-        let id = T::id(self);
+        let id = T::entity_id(self);
         assign_helper(self.ptr_mut(), id, value, id);
     }
 
@@ -1594,7 +1594,7 @@ impl World {
     {
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::entity_id(self),
         );
 
         entity.assign_pair::<First, Second>(value);
@@ -1607,7 +1607,7 @@ impl World {
     where
         First: ComponentId + DataComponent,
     {
-        let entity = EntityView::new_from(self, First::id(self));
+        let entity = EntityView::new_from(self, First::entity_id(self));
         entity.assign_first::<First>(first, second);
     }
 
@@ -1618,7 +1618,7 @@ impl World {
     where
         Second: ComponentId + DataComponent,
     {
-        let entity = EntityView::new_from(self, Second::id(self));
+        let entity = EntityView::new_from(self, Second::entity_id(self));
         entity.assign_second::<Second>(first, second);
     }
 
@@ -1791,7 +1791,7 @@ impl<Return> WorldGet<Return> for World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.try_get::<T>(callback)
     }
@@ -1805,7 +1805,7 @@ impl<Return> WorldGet<Return> for World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.get::<T>(callback)
     }
@@ -1871,7 +1871,7 @@ impl World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.cloned::<T>()
     }
@@ -1907,7 +1907,7 @@ impl World {
     /// The entity representing the component.
     #[inline(always)]
     pub fn singleton<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::id(self))
+        EntityView::new_from(self, T::entity_id(self))
     }
 
     /// Retrieves the target for a given pair from a singleton entity.
@@ -1983,7 +1983,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        EntityView::new_from(self, T::id(self)).has_enum(constant)
+        EntityView::new_from(self, T::entity_id(self)).has_enum(constant)
     }
 
     /// Add a singleton component by id.
@@ -2022,7 +2022,7 @@ impl World {
         &self,
         enum_value: T,
     ) -> EntityView {
-        EntityView::new_from(self, T::id(self)).add_enum::<T>(enum_value)
+        EntityView::new_from(self, T::entity_id(self)).add_enum::<T>(enum_value)
     }
 
     /// Add a singleton pair with enum tag.
@@ -2045,7 +2045,8 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        EntityView::new_from(self, First::id(self)).add_pair_enum::<First, Second>(enum_value)
+        EntityView::new_from(self, First::entity_id(self))
+            .add_pair_enum::<First, Second>(enum_value)
     }
 
     /// Remove singleton component by id.
@@ -2091,7 +2092,7 @@ impl World {
     pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView {
         let alias = compact_str::format_compact!("{}\0", alias);
 
-        let id = T::id(self);
+        let id = T::entity_id(self);
         if alias.is_empty() {
             unsafe {
                 sys::ecs_set_alias(
@@ -2217,7 +2218,7 @@ impl World {
         unsafe {
             sys::ecs_count_id(
                 self.raw_world.as_ptr(),
-                ecs_pair(First::id(self), *(enum_value.id_variant(self)).id),
+                ecs_pair(First::entity_id(self), *(enum_value.id_variant(self)).id),
             )
         }
     }
@@ -2318,7 +2319,7 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.with(
-            ecs_pair(First::id(self), **(enum_value.id_variant(self))),
+            ecs_pair(First::entity_id(self), **(enum_value.id_variant(self))),
             func,
         );
     }
@@ -2369,7 +2370,10 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.delete_entities_with(ecs_pair(First::id(self), **enum_value.id_variant(self)));
+        self.delete_entities_with(ecs_pair(
+            First::entity_id(self),
+            **enum_value.id_variant(self),
+        ));
     }
 
     /// Remove all instances of the given id from entities
@@ -2414,7 +2418,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.remove_all((First::id(self), enum_value.id_variant(self)));
+        self.remove_all((First::entity_id(self), enum_value.id_variant(self)));
     }
 
     /// Checks if the given entity ID exists in the world.
@@ -2550,7 +2554,7 @@ impl World {
     ///
     /// * `T` - The component type to associate with the new entity.
     pub fn entity_from<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::id(self))
+        EntityView::new_from(self, T::entity_id(self))
     }
 
     /// Create an entity that's associated with a name.
@@ -2763,7 +2767,7 @@ impl World {
     /// Get the id of the provided component type.
     /// This returns the id of a component type which has been registered with [`ComponentId`] trait.
     pub fn component_id<T: ComponentId>(&self) -> Entity {
-        Entity(T::id(self))
+        Entity(T::entity_id(self))
     }
 
     /// Get the id of the provided component type.
@@ -3328,7 +3332,7 @@ impl World {
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
-        PipelineBuilder::<()>::new_w_entity(self, Pipeline::id(self))
+        PipelineBuilder::<()>::new_w_entity(self, Pipeline::entity_id(self))
     }
 
     /// Set a custom pipeline. This operation sets the pipeline to run when [`World::progress()`] is invoked.

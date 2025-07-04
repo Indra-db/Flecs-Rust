@@ -566,7 +566,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
         }
@@ -636,7 +636,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $id }
             }
         }

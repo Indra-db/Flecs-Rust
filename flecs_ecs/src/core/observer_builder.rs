@@ -37,7 +37,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             _phantom: core::marker::PhantomData,
         };
 
-        obj.desc.events[0] = P::UnderlyingType::id(world.world());
+        obj.desc.events[0] = P::UnderlyingType::entity_id(world.world());
         obj.desc.entity =
             unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
@@ -70,7 +70,7 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
             ..default::Default::default()
         };
 
-        obj.desc.events[0] = P::id(world.world());
+        obj.desc.events[0] = P::entity_id(world.world());
         obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &entity_desc) };
 
         T::populate(&mut obj);

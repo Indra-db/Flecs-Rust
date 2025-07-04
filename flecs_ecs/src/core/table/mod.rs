@@ -262,9 +262,10 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// Some(Pointer) to the column, or `None` if not found
     fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
-        self.get_mut_untyped(T::id(self.world())).map(|ptr| unsafe {
-            core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
-        })
+        self.get_mut_untyped(T::entity_id(self.world()))
+            .map(|ptr| unsafe {
+                core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
+            })
     }
 
     /// Get column, components array ptr from table by component type.
@@ -314,7 +315,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// Some(Pointer) to the column, or `None` if not found
     fn get_pair_mut_untyped<First: ComponentId, Second: ComponentId>(&self) -> Option<*mut c_void> {
         let world = self.world();
-        self.get_pair_ids_mut_untyped(First::id(world), Second::id(world))
+        self.get_pair_ids_mut_untyped(First::entity_id(world), Second::entity_id(world))
     }
 
     /// Get column size from table at the provided column index.

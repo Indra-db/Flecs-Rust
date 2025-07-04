@@ -113,7 +113,7 @@ impl<'a> MetricBuilder<'a> {
     where
         T: ComponentId,
     {
-        let id = T::id(self.world());
+        let id = T::entity_id(self.world());
 
         let ent = EntityView::new_from(self.world(), id);
         let m = ent.try_lookup(name);
@@ -166,7 +166,7 @@ impl<'a> MetricBuilder<'a> {
         let expr_cstr = ManuallyDrop::new(format!("{expr}\0"));
         self.desc.dotmember = expr_cstr.as_ptr() as *const c_char;
         self.str_ptrs_to_free.push(expr_cstr);
-        self.desc.id = T::id(self.world());
+        self.desc.id = T::entity_id(self.world());
 
         self
     }

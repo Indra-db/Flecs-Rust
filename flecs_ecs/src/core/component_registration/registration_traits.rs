@@ -415,11 +415,17 @@ pub trait ComponentId:
         }
     }
 
+    /// utility function to returning an Id object which is used for fn's that take IntoEntity or IntoId variable
+    #[inline(always)]
+    fn id() -> utility::id::Id<Self> {
+        utility::id::Id::<Self>::new()
+    }
+
     /// returns the component id registered with a particular world. If the component is not registered, it will register it.
     /// # Note
     /// Each world has it's own unique id for the component.
     #[inline(always)]
-    fn id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t {
+    fn entity_id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t {
         Self::UnderlyingType::__register_or_get_id::<true>(world)
     }
 
@@ -453,7 +459,7 @@ pub trait ComponentId:
             "There is no need to register default hooks for non generic components. This is done automatically if a type has Default implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();
@@ -476,7 +482,7 @@ pub trait ComponentId:
             "There is no need to register clone hooks for non generic components. This is done automatically if a type has Clone implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();
@@ -499,7 +505,7 @@ pub trait ComponentId:
             "There is no need to register compare hooks for non generic components. This is done automatically if a type has PartialEq implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();
@@ -522,7 +528,7 @@ pub trait ComponentId:
             "There is no need to register equals hooks for non generic components. This is done automatically if a type has PartialEq implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();

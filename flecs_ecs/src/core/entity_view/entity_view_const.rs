@@ -1074,7 +1074,7 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId,
     {
-        self.target_id_count(T::id(self.world))
+        self.target_id_count(T::entity_id(self.world))
     }
 
     /// Iterate children for entity
@@ -1609,7 +1609,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(First::id(self.world), *second.into()),
+                ecs_pair(First::entity_id(self.world), *second.into()),
             )
         }
     }
@@ -1641,7 +1641,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(*first.into(), Second::id(self.world)),
+                ecs_pair(*first.into(), Second::entity_id(self.world)),
             )
         }
     }
@@ -1694,7 +1694,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_mut_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(First::id(self.world), *second.into()),
+                ecs_pair(First::entity_id(self.world), *second.into()),
             )
         }
     }
@@ -1725,7 +1725,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_mut_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(*first.into(), Second::id(self.world)),
+                ecs_pair(*first.into(), Second::entity_id(self.world)),
             )
         }
     }
@@ -1817,7 +1817,7 @@ impl<'a> EntityView<'a> {
         &self,
         second: impl Into<Entity>,
     ) -> *const First {
-        let comp_id = First::id(self.world);
+        let comp_id = First::entity_id(self.world);
         ecs_assert!(
             core::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -2022,7 +2022,7 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let enum_id = T::id(self.world);
+        let enum_id = T::entity_id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         ecs_assert!(
@@ -2052,7 +2052,7 @@ impl<'a> EntityView<'a> {
         &self,
         constant: U,
     ) -> bool {
-        let component_id: sys::ecs_id_t = T::id(self.world);
+        let component_id: sys::ecs_id_t = T::entity_id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         self.has((component_id, enum_constant_entity_id))
@@ -2443,7 +2443,7 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
             Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
@@ -2493,7 +2493,7 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
             Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
@@ -2543,7 +2543,7 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
             Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
@@ -2593,7 +2593,7 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
             Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),

@@ -93,7 +93,7 @@ macro_rules! create_pre_registered_component {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $const_name
             }
 

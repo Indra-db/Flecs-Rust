@@ -83,7 +83,7 @@ impl ComponentId for EntityView<'static> {
         true
     }
 
-    fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+    fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         ECS_ENTITY_T
     }
 }

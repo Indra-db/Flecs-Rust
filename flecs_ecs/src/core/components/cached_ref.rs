@@ -33,7 +33,7 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
         };
 
         if id == 0 {
-            id = T::id(world);
+            id = T::entity_id(world);
         }
 
         const {

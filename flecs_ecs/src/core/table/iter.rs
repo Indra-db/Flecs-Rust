@@ -395,7 +395,7 @@ where
     }
 
     fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
-        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+        let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
 
         if index > self.iter.field_count {
             return None;
@@ -788,7 +788,7 @@ where
     where
         T: ComponentId,
     {
-        let id = <T::UnderlyingType as ComponentId>::id(self.world());
+        let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
 
         if index > self.iter.field_count {
             return None;

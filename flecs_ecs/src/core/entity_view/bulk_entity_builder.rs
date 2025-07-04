@@ -208,7 +208,7 @@ impl<'a> BulkEntityBuilder<'a> {
             component_data.len() == self.desc.count as usize,
             "component_data length must be equal to count of entities"
         );
-        let id = T::id(self.world);
+        let id = T::entity_id(self.world);
 
         self.desc.ids[self.current_id_index as usize] = id;
         self.data[self.current_id_index as usize] =

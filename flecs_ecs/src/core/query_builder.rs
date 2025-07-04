@@ -362,7 +362,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         &mut self,
         value: T,
     ) -> &mut Self {
-        let enum_id = T::id(self.world());
+        let enum_id = T::entity_id(self.world());
         let enum_field_id = value.id_variant(self.world());
         self.with((enum_id, enum_field_id))
     }
@@ -422,7 +422,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// This loops over all terms to find the one with the provided type.
     /// For performance-critical paths, use `term_at(index: u32)` instead.
     fn term_at_type<T: ComponentId>(&mut self) -> &mut Self {
-        let term_id = T::id(self.world());
+        let term_id = T::entity_id(self.world());
         let world_ptr = self.world_ptr_mut();
 
         for i in 0..=self.term_builder().next_term_index - 1 {
@@ -501,7 +501,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             debug_assertions
         ))]
         {
-            let term_id = T::id(self.world());
+            let term_id = T::entity_id(self.world());
             let cur_term = self.current_term();
             let cur_term_id = cur_term.id;
             let cur_term_pair = ecs_pair(cur_term.first.id, cur_term.second.id);
@@ -614,7 +614,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
             >(compare.to_extern_fn())
         });
 
-        self.__internal_order_by_id(T::id(self.world()), cmp);
+        self.__internal_order_by_id(T::entity_id(self.world()), cmp);
         self
     }
 

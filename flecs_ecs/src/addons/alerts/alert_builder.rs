@@ -244,8 +244,8 @@ where
         Severity: ComponentId,
         With: ComponentId + ComponentType<Struct>,
     {
-        let severity_id = Severity::id(self.world());
-        let with_id = With::id(self.world());
+        let severity_id = Severity::entity_id(self.world());
+        let with_id = With::entity_id(self.world());
         self.severity_filter(severity_id, with_id, var)
     }
 
@@ -274,8 +274,8 @@ where
         With: EnumComponentInfo + ComponentType<Enum>,
     {
         let world = self.world();
-        let severity_id = Severity::id(world);
-        let with_id = With::id(world);
+        let severity_id = Severity::entity_id(world);
+        let with_id = With::entity_id(world);
         let constant_id = with.id_variant(world);
         let pair_id = ecs_pair(with_id, *constant_id.id());
         self.severity_filter(severity_id, pair_id, var)
@@ -330,7 +330,7 @@ where
     {
         let member_name = compact_str::format_compact!("{}\0", member_name);
         let world = self.world();
-        let id = With::id(world);
+        let id = With::entity_id(world);
         let member_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 world.world_ptr_mut(),

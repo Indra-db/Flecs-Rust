@@ -53,7 +53,7 @@ pub trait ExternalComponent<T> {
 
 impl<T: ComponentId> FlecsComponent<T> for &&ComponentIdFetcher<T> {
     fn deref_id<'a>(&self, world: impl WorldProvider<'a>) -> FetchedId<T> {
-        FetchedId::new(T::id(world))
+        FetchedId::new(T::entity_id(world))
     }
 }
 

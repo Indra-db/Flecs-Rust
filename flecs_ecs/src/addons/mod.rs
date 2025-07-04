@@ -132,7 +132,7 @@ macro_rules! create_pre_registered_extern_component {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $static_id }
             }
 
@@ -224,7 +224,7 @@ macro_rules! impl_component_traits_primitive_type {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
         }

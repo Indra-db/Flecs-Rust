@@ -18784,13 +18784,13 @@ public:
 #endif
 
         ecs_log_push();
-        ecs_cpp_enum_init(world, id, type<U>::id(world));
+        ecs_cpp_enum_init(world, id, type<U>::entity_id(world));
 
         for (U v = 0; v < static_cast<U>(max + 1); v ++) {
             if (constants[v].index) {
                 flecs::entity_t constant = ecs_cpp_enum_constant_register(world,
-                    type<E>::id(world), 0, constants[v].name, &constants[v].value, 
-                    type<U>::id(world), sizeof(U));
+                    type<E>::entity_id(world), 0, constants[v].name, &constants[v].value, 
+                    type<U>::entity_id(world), sizeof(U));
 
                 flecs_component_ids_set(world, constants[v].index, constant);
             }
@@ -18919,7 +18919,7 @@ struct enum_data {
 /** Convenience function for getting enum reflection data */
 template <typename E>
 enum_data<E> enum_type(flecs::world_t *world) {
-    _::type<E>::id(world); // Ensure enum is registered
+    _::type<E>::entity_id(world); // Ensure enum is registered
     auto& ref = _::enum_type<E>::get();
     return enum_data<E>(world, ref);
 }
@@ -20070,7 +20070,7 @@ template <typename T, typename ElemType = void>
 struct opaque {
     opaque(flecs::world_t *w = nullptr) : world(w) {
         if (world) {
-            desc.entity = _::type<T>::id(world);
+            desc.entity = _::type<T>::entity_id(world);
         }
     }
 
@@ -21824,14 +21824,14 @@ inline void set(world_t *world, flecs::entity_t entity, const T& value, flecs::i
 // set(T&&)
 template <typename T, typename A>
 inline void set(world_t *world, entity_t entity, A&& value) {
-    id_t id = _::type<T>::id(world);
+    id_t id = _::type<T>::entity_id(world);
     flecs::set(world, entity, FLECS_FWD(value), id);
 }
 
 // set(const T&)
 template <typename T, typename A>
 inline void set(world_t *world, entity_t entity, const A& value) {
-    id_t id = _::type<T>::id(world);
+    id_t id = _::type<T>::entity_id(world);
     flecs::set(world, entity, value, id);
 }
 
@@ -21892,14 +21892,14 @@ inline void assign(world_t *world, flecs::entity_t entity, const T& value, flecs
 // set(T&&)
 template <typename T, typename A>
 inline void assign(world_t *world, entity_t entity, A&& value) {
-    id_t id = _::type<T>::id(world);
+    id_t id = _::type<T>::entity_id(world);
     flecs::assign(world, entity, FLECS_FWD(value), id);
 }
 
 // set(const T&)
 template <typename T, typename A>
 inline void assign(world_t *world, entity_t entity, const A& value) {
-    id_t id = _::type<T>::id(world);
+    id_t id = _::type<T>::entity_id(world);
     flecs::assign(world, entity, value, id);
 }
 
@@ -24536,7 +24536,7 @@ struct ref : public untyped_ref {
     ref() : untyped_ref() { }
 
     ref(world_t *world, entity_t entity, flecs::id_t id = 0)
-        : untyped_ref(world, entity, id ? id : _::type<T>::id(world))
+        : untyped_ref(world, entity, id ? id : _::type<T>::entity_id(world))
     {    }
 
     ref(flecs::entity entity, flecs::id_t id = 0);
@@ -29143,8 +29143,8 @@ struct type<T, if_t< is_pair<T>::value >>
     // Override id method to return id of pair
     static id_t id(world_t *world = nullptr) {
         return ecs_pair(
-            type< pair_first_t<T> >::id(world),
-            type< pair_second_t<T> >::id(world));
+            type< pair_first_t<T> >::entity_id(world),
+            type< pair_second_t<T> >::entity_id(world));
     }
 };
 
@@ -31072,7 +31072,7 @@ namespace _ {
     struct sig {
         sig(flecs::world_t *world) 
             : world_(world)
-            , ids({ (_::type<remove_pointer_t<Components>>::id(world))... })
+            , ids({ (_::type<remove_pointer_t<Components>>::entity_id(world))... })
             , inout ({ (type_to_inout<Components>())... })
             , oper ({ (type_to_oper<Components>())... }) 
         { }
@@ -32819,7 +32819,7 @@ namespace _ {
         {
             using Delegate = _::entity_observer_delegate<Func>;
             auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(f));
-            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
+            entity_observer_create(world, _::type<Evt>::entity_id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
         }
 
         template <typename Evt, if_not_t<is_empty<Evt>::value> = 0>
@@ -32830,7 +32830,7 @@ namespace _ {
         {
             using Delegate = _::entity_payload_observer_delegate<Func, Evt>;
             auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(f));
-            entity_observer_create(world, _::type<Evt>::id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
+            entity_observer_create(world, _::type<Evt>::entity_id(world), entity, Delegate::run, ctx, _::free_obj<Delegate>);
         }
     };
 }
