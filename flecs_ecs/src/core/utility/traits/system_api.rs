@@ -429,6 +429,101 @@ where
     }
 }
 
+pub trait ParSystemAPI<'a, P, T>:
+    SystemAPI<'a, P, T> + private::internal_ParSystemAPI<'a, P, T>
+where
+    T: QueryTuple,
+    P: ComponentId,
+{
+    /// Variant of [`SystemAPI::each`] which allows the system to run in multiple threads
+    fn par_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.each(func);
+        // If the user calls non-parallel each on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::each_entity`] which allows the system to run in multiple threads
+    fn par_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.each_entity(func);
+        // If the user calls non-parallel each on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::each_iter`] which allows the system to run in multiple threads
+    fn par_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<false, P>, usize, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.each_iter(func);
+        // If the user calls non-parallel each on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::run`] which allows the system to run in multiple threads
+    fn par_run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run(func);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::run_each`] which allows the system to run in multiple threads
+    fn par_run_each<Func, FuncEach>(
+        &mut self,
+        func: Func,
+        func_each: FuncEach,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        FuncEach: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run_each(func, func_each);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+
+    /// Variant of [`SystemAPI::run_each_entity`] which allows the system to run in multiple threads
+    fn par_run_each_entity<Func, FuncEachEntity>(
+        &mut self,
+        func: Func,
+        func_each_entity: FuncEachEntity,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        FuncEachEntity: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        let built = self.run_each_entity(func, func_each_entity);
+        // If the user calls non-parallel run on the same builder later, multithreading
+        // should be disabled
+        self.set_multi_threaded(false);
+        built
+    }
+}
+
 macro_rules! implement_reactor_api {
     ($param:ty, $type:ty) => {
         impl<'a, T> internal_SystemAPI<'a, $param, T> for $type
@@ -554,4 +649,38 @@ macro_rules! implement_reactor_api {
     };
 }
 
+macro_rules! implement_reactor_par_api {
+    ($param:ty, $type:ty) => {
+        impl<'a, T> internal_ParSystemAPI<'a, $param, T> for $type
+        where
+            T: QueryTuple,
+        {
+            fn set_multi_threaded(&mut self, multi_threaded: bool) {
+                self.desc.multi_threaded = multi_threaded;
+            }
+        }
+
+        impl<'a, T> ParSystemAPI<'a, $param, T> for $type where T: QueryTuple {}
+    };
+    ($type:ty) => {
+        impl<'a, P, T> internal_ParSystemAPI<'a, P, T> for $type
+        where
+            T: QueryTuple,
+            P: ComponentId,
+        {
+            fn set_multi_threaded(&mut self, multi_threaded: bool) {
+                self.desc.multi_threaded = multi_threaded;
+            }
+        }
+
+        impl<'a, P, T> ParSystemAPI<'a, P, T> for $type
+        where
+            T: QueryTuple,
+            P: ComponentId,
+        {
+        }
+    };
+}
+
 pub(crate) use implement_reactor_api;
+pub(crate) use implement_reactor_par_api;
