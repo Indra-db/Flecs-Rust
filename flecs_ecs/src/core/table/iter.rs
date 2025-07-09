@@ -1002,4 +1002,11 @@ where
             None
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let c = self.iter.count();
+        (c, Some(c))
+    }
 }
+
+impl<const IS_RUN: bool, P> ExactSizeIterator for TableRowIter<'_, IS_RUN, P> where P: ComponentId {}
