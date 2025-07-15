@@ -624,11 +624,11 @@ fn observer_on_add_expr() {
                 count.0 += 1;
             });
         });
-    let e = world.entity().add(Tag::id());
+    let e = world.entity().add(Tag);
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
-    e.remove(Tag::id());
+    e.remove(Tag);
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);
     });
@@ -1011,8 +1011,8 @@ fn observer_name_from_root() {
 //     struct Tag;
 
 //     let world = World::new();
-//     world.observer::<flecs::OnAdd, ()>().with(Tag::id()).run(|_| panic!());
-//     world.add(Tag::id());
+//     world.observer::<flecs::OnAdd, ()>().with(Tag).run(|_| panic!());
+//     world.add(Tag);
 // }
 
 #[test]

@@ -2467,15 +2467,15 @@ fn entity_defer_w_with_implicit_component() {
     let mut e = world.entity_null();
 
     world.defer(|| {
-        world.with(Tag::id(), || {
+        world.with(Tag, || {
             e = world.entity();
-            assert!(!e.has(Tag::id()));
+            assert!(!e.has(Tag));
         });
 
-        assert!(!e.has(Tag::id()));
+        assert!(!e.has(Tag));
     });
 
-    assert!(e.has(Tag::id()));
+    assert!(e.has(Tag));
 }
 
 #[test]
@@ -3186,9 +3186,9 @@ fn entity_clone() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(Tag::id()).set(v);
+    let src = world.entity().add(Tag).set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Tag));
     assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
@@ -3203,9 +3203,9 @@ fn entity_clone_w_value() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(Tag::id()).set(v);
+    let src = world.entity().add(Tag).set(v);
     let dst = src.duplicate(true);
-    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Tag));
     assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
@@ -3220,12 +3220,12 @@ fn entity_clone_to_existing() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(Tag::id()).set(v);
+    let src = world.entity().add(Tag).set(v);
     let dst = world.entity();
     let result = src.duplicate_into(true, dst);
     assert_eq!(result, dst);
 
-    assert!(dst.has(Tag::id()));
+    assert!(dst.has(Tag));
     assert!(dst.has(Position::id()));
 
     dst.get::<&Position>(|pos| {
@@ -3242,7 +3242,7 @@ fn entity_clone_to_existing_overlap() {
 
     let v = Position { x: 10, y: 20 };
 
-    let src = world.entity().add(Tag::id()).set(v);
+    let src = world.entity().add(Tag).set(v);
     let dst = world.entity().set(Position { x: 0, y: 0 });
 
     src.duplicate_into(true, dst);
@@ -3419,7 +3419,7 @@ fn entity_entity_w_type_defer() {
 
     assert_eq!(e.name(), "Tag");
     assert_eq!(e.symbol(), "flecs::common_test::Tag");
-    assert_eq!(world.id_view_from(Tag::id()), e);
+    assert_eq!(world.id_view_from(Tag), e);
 }
 
 #[test]
@@ -3428,8 +3428,8 @@ fn entity_add_if_true_t() {
 
     let e = world.entity();
 
-    e.add_if(Tag::id(), true);
-    assert!(e.has(Tag::id()));
+    e.add_if(Tag, true);
+    assert!(e.has(Tag));
 }
 
 #[test]
@@ -3438,13 +3438,13 @@ fn entity_add_if_false_t() {
 
     let e = world.entity();
 
-    e.add_if(Tag::id(), false);
-    assert!(!e.has(Tag::id()));
+    e.add_if(Tag, false);
+    assert!(!e.has(Tag));
 
-    e.add(Tag::id());
-    assert!(e.has(Tag::id()));
-    e.add_if(Tag::id(), false);
-    assert!(!e.has(Tag::id()));
+    e.add(Tag);
+    assert!(e.has(Tag));
+    e.add_if(Tag, false);
+    assert!(!e.has(Tag));
 }
 
 #[test]

@@ -380,11 +380,11 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
@@ -474,15 +474,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
-    /// let query = world.query::<(&Position)>().with(Tag::id()).build();
+    /// let query = world.query::<(&Position)>().with(Tag).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;
@@ -562,15 +562,15 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
-    /// let query = world.query::<(&Position)>().with(Tag::id()).build();
+    /// let query = world.query::<(&Position)>().with(Tag).build();
     ///
     /// let mut count_tables = 0;
     /// let mut count_entities = 0;

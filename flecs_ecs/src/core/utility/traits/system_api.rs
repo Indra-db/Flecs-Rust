@@ -158,11 +158,11 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
@@ -246,11 +246,11 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
@@ -262,7 +262,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with(Tag::id())
+    /// let system = world.system::<(&Position)>().with(Tag)
     /// .run_each(
     ///     move |mut it| {
     ///         println!("start operations");
@@ -354,11 +354,11 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(Tag::id()).add(Position::id());
-    /// world.entity().add(Tag::id()).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(Tag::id())
+    ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
@@ -370,7 +370,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with(Tag::id())
+    /// let system = world.system::<(&Position)>().with(Tag)
     /// .run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");

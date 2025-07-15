@@ -1428,23 +1428,20 @@ fn system_update_rate_filter() {
 fn system_test_let_defer_each() {
     let world = World::new();
 
-    let e1 = world.entity().add(Tag::id()).set(Value { value: 10 });
-    let e2 = world.entity().add(Tag::id()).set(Value { value: 20 });
-    let e3 = world.entity().add(Tag::id()).set(Value { value: 30 });
+    let e1 = world.entity().add(Tag).set(Value { value: 10 });
+    let e2 = world.entity().add(Tag).set(Value { value: 20 });
+    let e3 = world.entity().add(Tag).set(Value { value: 30 });
 
-    let s = world
-        .system::<&mut Value>()
-        .with(Tag::id())
-        .each_entity(|e, v| {
-            v.value += 1;
-            e.remove(Tag::id());
-        });
+    let s = world.system::<&mut Value>().with(Tag).each_entity(|e, v| {
+        v.value += 1;
+        e.remove(Tag);
+    });
 
     s.run();
 
-    assert!(!e1.has(Tag::id()));
-    assert!(!e2.has(Tag::id()));
-    assert!(!e3.has(Tag::id()));
+    assert!(!e1.has(Tag));
+    assert!(!e2.has(Tag));
+    assert!(!e3.has(Tag));
 
     assert!(e1.has(Value::id()));
     assert!(e2.has(Value::id()));
@@ -1467,25 +1464,25 @@ fn system_test_let_defer_each() {
 fn system_test_let_defer_iter() {
     let world = World::new();
 
-    let e1 = world.entity().add(Tag::id()).set(Value { value: 10 });
-    let e2 = world.entity().add(Tag::id()).set(Value { value: 20 });
-    let e3 = world.entity().add(Tag::id()).set(Value { value: 30 });
+    let e1 = world.entity().add(Tag).set(Value { value: 10 });
+    let e2 = world.entity().add(Tag).set(Value { value: 20 });
+    let e3 = world.entity().add(Tag).set(Value { value: 30 });
 
-    let s = world.system::<&mut Value>().with(Tag::id()).run(|mut it| {
+    let s = world.system::<&mut Value>().with(Tag).run(|mut it| {
         while it.next() {
             let mut v = it.field::<Value>(0).unwrap();
             for i in it.iter() {
                 v[i].value += 1;
-                it.entity(i).unwrap().remove(Tag::id());
+                it.entity(i).unwrap().remove(Tag);
             }
         }
     });
 
     s.run();
 
-    assert!(!e1.has(Tag::id()));
-    assert!(!e2.has(Tag::id()));
-    assert!(!e3.has(Tag::id()));
+    assert!(!e1.has(Tag));
+    assert!(!e2.has(Tag));
+    assert!(!e3.has(Tag));
 
     assert!(e1.has(Value::id()));
     assert!(e2.has(Value::id()));
@@ -1686,7 +1683,7 @@ fn system_system_w_type_kind_type_pipeline() {
 
     world.set_pipeline(PipelineType::id());
 
-    let entity = world.entity().add(Tag::id());
+    let entity = world.entity().add(Tag);
     let entity_id = entity.id();
 
     world.set(Count2 { a: 0, b: 0 });

@@ -67,8 +67,8 @@ fn main() {
         .entity_named("Bob")
         .set(Position { x: 10.0, y: 20.0 })
         .set(Velocity { x: 1.0, y: 1.0 })
-        .add(Human::id())
-        .add((Eats::id(), Apples::id()));
+        .add(Human)
+        .add((Eats, Apples));
 
     println!("Bob's components:");
     iterate_components(bob);

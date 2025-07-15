@@ -11,23 +11,23 @@ struct Healthy;
 fn main() {
     let world = World::new();
 
-    let apples = world.entity_named("Apples").add(Healthy::id());
-    let salad = world.entity_named("Salad").add(Healthy::id());
+    let apples = world.entity_named("Apples").add(Healthy);
+    let salad = world.entity_named("Salad").add(Healthy);
     let burgers = world.entity_named("Burgers");
     let pizza = world.entity_named("Pizza");
     let chocolate = world.entity_named("Chocolate");
 
     world
         .entity_named("Bob")
-        .add((Eats::id(), apples))
-        .add((Eats::id(), burgers))
-        .add((Eats::id(), pizza));
+        .add((Eats, apples))
+        .add((Eats, burgers))
+        .add((Eats, pizza));
 
     world
         .entity_named("Alice")
-        .add((Eats::id(), salad))
-        .add((Eats::id(), chocolate))
-        .add((Eats::id(), apples));
+        .add((Eats, salad))
+        .add((Eats, chocolate))
+        .add((Eats, apples));
 
     // Here we're creating a rule that in the query DSL would look like this:
     //   Eats($This, $Food), Healthy($Food)
@@ -46,8 +46,8 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with((Eats::id(), "$food"))
-        .with(&Healthy::id())
+        .with((Eats, "$food"))
+        .with(&Healthy)
         .set_src("$food")
         .build();
 

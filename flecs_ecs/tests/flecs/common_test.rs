@@ -142,7 +142,7 @@ pub struct Alice {}
 pub struct Bob {}
 
 #[derive(Component)]
-pub struct Tag {}
+pub struct Tag;
 
 #[derive(Component)]
 pub struct TagA {}

@@ -476,7 +476,7 @@ fn flecs_query_docs_compile_test() {
 
     world
         .query::<()>()
-        .with(&Tag::id())
+        .with(&Tag)
         .build()
         .each_entity(|e, _| { /* */ });
 

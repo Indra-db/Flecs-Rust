@@ -509,6 +509,11 @@ pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 119;
 
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {
+        impl From<$name> for crate::core::Entity {
+            fn from(_: $name) -> Self {
+                crate::core::Entity($id)
+            }
+        }
         impl FlecsConstantId for $name {
             const ID: u64 = $id;
         }

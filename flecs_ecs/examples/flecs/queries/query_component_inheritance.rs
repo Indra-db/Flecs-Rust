@@ -32,30 +32,30 @@ fn main() {
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
-    world.component::<CombatUnit>().is_a(Unit::id());
-    world.component::<MeleeUnit>().is_a(CombatUnit::id());
-    world.component::<RangedUnit>().is_a(CombatUnit::id());
+    world.component::<CombatUnit>().is_a(Unit);
+    world.component::<MeleeUnit>().is_a(CombatUnit);
+    world.component::<RangedUnit>().is_a(CombatUnit);
 
-    world.component::<Warrior>().is_a(MeleeUnit::id());
-    world.component::<Wizard>().is_a(RangedUnit::id());
-    world.component::<Marksman>().is_a(RangedUnit::id());
-    world.component::<BuilderX>().is_a(Unit::id());
+    world.component::<Warrior>().is_a(MeleeUnit);
+    world.component::<Wizard>().is_a(RangedUnit);
+    world.component::<Marksman>().is_a(RangedUnit);
+    world.component::<BuilderX>().is_a(Unit);
 
     // Create a few units
-    world.entity_named("warrior_1").add(Warrior::id());
-    world.entity_named("warrior_2").add(Warrior::id());
+    world.entity_named("warrior_1").add(Warrior);
+    world.entity_named("warrior_2").add(Warrior);
 
-    world.entity_named("marksman_1").add(Marksman::id());
-    world.entity_named("marksman_2").add(Marksman::id());
+    world.entity_named("marksman_1").add(Marksman);
+    world.entity_named("marksman_2").add(Marksman);
 
-    world.entity_named("wizard_1").add(Wizard::id());
-    world.entity_named("wizard_2").add(Wizard::id());
+    world.entity_named("wizard_1").add(Wizard);
+    world.entity_named("wizard_2").add(Wizard);
 
-    world.entity_named("builder_1").add(BuilderX::id());
-    world.entity_named("builder_2").add(BuilderX::id());
+    world.entity_named("builder_1").add(BuilderX);
+    world.entity_named("builder_2").add(BuilderX);
 
     // Create a rule to find all ranged units
-    let r = world.query::<()>().with(RangedUnit::id()).build();
+    let r = world.query::<()>().with(RangedUnit).build();
 
     // Iterate the rule
     r.each_entity(|e, rangedunit| {

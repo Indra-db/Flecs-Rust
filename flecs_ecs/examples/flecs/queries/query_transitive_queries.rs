@@ -39,82 +39,80 @@ fn main() {
     let world = World::new();
 
     // Register the LocatedIn relationship as transitive
-    world
-        .component::<LocatedIn>()
-        .add(id::<flecs::Transitive>());
+    world.component::<LocatedIn>().add(flecs::Transitive);
 
     // Populate the store with locations
-    let earth = world.entity_named("Earth").add(Planet::id());
+    let earth = world.entity_named("Earth").add(Planet);
 
     // Continents
     let north_america = world
         .entity_named("NorthAmerica")
-        .add(Continent::id())
-        .add((LocatedIn::id(), earth));
+        .add(Continent)
+        .add((LocatedIn, earth));
 
     let europe = world
         .entity_named("Europe")
-        .add(Continent::id())
-        .add((LocatedIn::id(), earth));
+        .add(Continent)
+        .add((LocatedIn, earth));
 
     // Countries
     let united_states = world
         .entity_named("UnitedStates")
-        .add(Country::id())
-        .add((LocatedIn::id(), north_america));
+        .add(Country)
+        .add((LocatedIn, north_america));
 
     let netherlands = world
         .entity_named("Netherlands")
-        .add(Country::id())
-        .add((LocatedIn::id(), europe));
+        .add(Country)
+        .add((LocatedIn, europe));
 
     // States
     let california = world
         .entity_named("California")
-        .add(State::id())
-        .add((LocatedIn::id(), united_states));
+        .add(State)
+        .add((LocatedIn, united_states));
 
     let washington = world
         .entity_named("Washington")
-        .add(State::id())
-        .add((LocatedIn::id(), united_states));
+        .add(State)
+        .add((LocatedIn, united_states));
 
     let noord_holland = world
         .entity_named("NoordHolland")
-        .add(State::id())
-        .add((LocatedIn::id(), netherlands));
+        .add(State)
+        .add((LocatedIn, netherlands));
 
     // Cities
     let san_francisco = world
         .entity_named("SanFrancisco")
-        .add(City::id())
-        .add((LocatedIn::id(), california));
+        .add(City)
+        .add((LocatedIn, california));
 
     let seattle = world
         .entity_named("Seattle")
-        .add(City::id())
-        .add((LocatedIn::id(), washington));
+        .add(City)
+        .add((LocatedIn, washington));
 
     let amsterdam = world
         .entity_named("Amsterdam")
-        .add(City::id())
-        .add((LocatedIn::id(), noord_holland));
+        .add(City)
+        .add((LocatedIn, noord_holland));
 
     // Inhabitants
     world
         .entity_named("Bob")
-        .add(Person::id())
-        .add((LocatedIn::id(), san_francisco));
+        .add(Person)
+        .add((LocatedIn, san_francisco));
 
     world
         .entity_named("Alice")
-        .add(Person::id())
-        .add((LocatedIn::id(), seattle));
+        .add(Person)
+        .add((LocatedIn, seattle));
 
     world
         .entity_named("Job")
-        .add(Person::id())
-        .add((LocatedIn::id(), amsterdam));
+        .add(Person)
+        .add((LocatedIn, amsterdam));
 
     // Create a query that finds the countries persons live in. Note that these
     // have not been explicitly added to the Person entities, but because the
@@ -126,9 +124,9 @@ fn main() {
 
     let query = world
         .query::<()>()
-        .with(&Person::id())
-        .with((LocatedIn::id(), "$Location"))
-        .with(&Country::id())
+        .with(&Person)
+        .with((LocatedIn, "$Location"))
+        .with(&Country)
         .set_src("$Location")
         .build();
 

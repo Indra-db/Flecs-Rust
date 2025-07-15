@@ -120,9 +120,9 @@ mod tests {
         //     )>::IF_ID_IS_DEFAULT_SECOND
         // );
 
-        e.add((Tag::id(), Position::id()));
+        e.add((Tag, Position::id()));
         e.add((Position::id(), Position::id()));
-        e.add((Position::id(), Tag::id()));
+        e.add((Position::id(), Tag));
 
         e.add(e);
         e.add((e, e));
