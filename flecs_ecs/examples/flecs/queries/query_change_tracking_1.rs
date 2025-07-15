@@ -96,7 +96,7 @@ fn main() {
         .set(Position { x: 50.0, y: 30.0 })
         .set(WorldPosition { x: 0.0, y: 0.0 })
         // this is to make sure independent entity is in a different archetype
-        .add(DummyTag::id());
+        .add(DummyTag);
 
     // Since this is the first time the query is iterated, all tables
     // will show up as changed and not skipped

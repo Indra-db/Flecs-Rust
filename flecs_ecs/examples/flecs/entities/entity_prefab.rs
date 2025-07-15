@@ -68,7 +68,7 @@ fn main() {
         .is_a(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
-        .add(HasFlt::id());
+        .add(HasFlt);
 
     let mammoth_freighter = world
         .prefab_named("MammothFreighter")
@@ -79,7 +79,7 @@ fn main() {
     world
         .prefab_named("Frigate")
         .is_a(spaceship)
-        .add(HasFlt::id())
+        .add(HasFlt)
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
         .set(ImpulseSpeed { value: 125.0 });

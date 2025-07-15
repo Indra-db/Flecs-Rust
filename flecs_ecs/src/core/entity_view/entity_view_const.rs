@@ -53,7 +53,7 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 ///     .entity_named("Player")
 ///     .set(Position { x: 10.0, y: 20.0 })
 ///     .set(Velocity { x: 1.0, y: 0.0 })
-///     .add(Walking::id());
+///     .add(Walking);
 ///
 /// // Get component data
 /// player.get::<&Position>(|pos| {
@@ -905,8 +905,8 @@ impl<'a> EntityView<'a> {
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add((Likes::id(), apple))
-    ///     .add((Likes::id(), banana));
+    ///     .add((Likes, apple))
+    ///     .add((Likes, banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -1054,8 +1054,8 @@ impl<'a> EntityView<'a> {
     /// let banana = world.entity_named("Banana");
     ///
     /// entity
-    ///     .add((Likes::id(), apple))
-    ///     .add((Likes::id(), banana));
+    ///     .add((Likes, apple))
+    ///     .add((Likes, banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```

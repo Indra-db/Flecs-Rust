@@ -78,7 +78,7 @@ fn main() {
     println!(
         "{}",
         world
-            .id_view_from((Requires::id(), Gigawatts::id()))
+            .id_view_from((Requires::id(), Gigawatts))
             .type_id()
             .path()
             .unwrap()
@@ -86,7 +86,7 @@ fn main() {
     println!(
         "{}",
         world
-            .id_view_from((Gigawatts::id(), Requires::id()))
+            .id_view_from((Gigawatts, Requires::id()))
             .type_id()
             .path()
             .unwrap()

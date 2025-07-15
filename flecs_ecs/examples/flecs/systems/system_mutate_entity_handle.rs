@@ -65,12 +65,12 @@ fn main() {
     // Observer that triggers when entity is actually deleted
     world
         .observer::<flecs::OnRemove, ()>()
-        .with(Tag::id())
+        .with(Tag)
         .each_entity(|e, _tag| {
             println!("Expired: {} actually deleted", e.name());
         });
 
-    let to_delete = world.entity_named("ToDelete").add(Tag::id());
+    let to_delete = world.entity_named("ToDelete").add(Tag);
 
     world.entity_named("MyEntity").set(Timeout {
         to_delete: to_delete.id(),

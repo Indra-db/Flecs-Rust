@@ -22,7 +22,7 @@ fn main() {
     //
     // The without method is short for:
     //   .term<Npc>().not_()
-    let query = world.query::<&Position>().without(Npc::id()).build();
+    let query = world.query::<&Position>().without(Npc).build();
 
     // Create a few test entities for the Position query
     world.entity_named("e1").set(Position { x: 10.0, y: 20.0 });
@@ -33,7 +33,7 @@ fn main() {
     world
         .entity_named("e3")
         .set(Position { x: 10.0, y: 20.0 })
-        .add(Npc::id());
+        .add(Npc);
 
     // Note how the Npc tag is not part of the each signature
     query.each_entity(|entity, pos| {

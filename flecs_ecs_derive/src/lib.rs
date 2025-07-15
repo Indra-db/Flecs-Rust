@@ -715,7 +715,64 @@ fn impl_cached_component_data_struct(
     let is_empty_component_trait = if has_fields {
         quote! { impl #impl_generics flecs_ecs::core::DataComponent for #name #type_generics #where_clause{} }
     } else {
-        quote! { impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {} }
+        quote! {
+            impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {}
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = false;
+                const IS_TYPED_MUT_REF: bool = false;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for &'static #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = true;
+                const IS_TYPED_MUT_REF: bool = false;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for &'static mut #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = false;
+                const IS_TYPED_MUT_REF: bool = true;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+        }
     };
 
     let on_component_registration = if has_on_registration {

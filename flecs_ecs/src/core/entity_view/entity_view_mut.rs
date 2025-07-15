@@ -382,13 +382,18 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `component` - The component to set on the entity.
-    pub fn set<T: ComponentId + DataComponent>(self, component: T) -> Self {
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id,
-            component,
-            T::entity_id(self.world),
-        );
+    pub fn set<T: ComponentId>(self, component: T) -> Self {
+        let id = T::entity_id(self.world);
+        if T::IS_TAG {
+            unsafe { self.add_id_unchecked(id) };
+        } else {
+            set_helper(
+                self.world.world_ptr_mut(),
+                *self.id,
+                component,
+                T::entity_id(self.world),
+            );
+        }
         self
     }
 

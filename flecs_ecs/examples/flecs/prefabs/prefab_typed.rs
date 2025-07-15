@@ -33,29 +33,23 @@ fn main() {
     // Associate types with prefabs
     world.prefab_type::<Turret>();
 
-    world
-        .prefab_type::<Base>()
-        .child_of(Turret::id())
-        .slot_of(Turret::id());
+    world.prefab_type::<Base>().child_of(Turret).slot_of(Turret);
 
-    world
-        .prefab_type::<Head>()
-        .child_of(Turret::id())
-        .slot_of(Turret::id());
+    world.prefab_type::<Head>().child_of(Turret).slot_of(Turret);
 
-    world.prefab_type::<Railgun>().is_a(Turret::id());
+    world.prefab_type::<Railgun>().is_a(Turret);
     world
         .prefab_type::<Beam>()
-        .slot_of(Railgun::id())
-        .child_of(Railgun::id());
+        .slot_of(Railgun)
+        .child_of(Railgun);
 
     // Create prefab instance.
-    let inst = world.entity_named("my_railgun").is_a(Railgun::id());
+    let inst = world.entity_named("my_railgun").is_a(Railgun);
 
     // Get entities for slots
-    let inst_base = inst.target(Base::id(), 0).unwrap();
-    let inst_head = inst.target(Head::id(), 0).unwrap();
-    let inst_beam = inst.target(Beam::id(), 0).unwrap();
+    let inst_base = inst.target(Base, 0).unwrap();
+    let inst_head = inst.target(Head, 0).unwrap();
+    let inst_beam = inst.target(Beam, 0).unwrap();
 
     println!("instance base: {}", inst_base.path().unwrap());
     println!("instance head: {}", inst_head.path().unwrap());

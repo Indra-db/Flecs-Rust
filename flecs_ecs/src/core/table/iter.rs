@@ -623,8 +623,8 @@ where
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add(DerivedAction::id())
-    ///     .add(DerivedAction2::id());
+    ///     .add(DerivedAction)
+    ///     .add(DerivedAction2);
     ///
     /// world.new_query::<&Action>().run(|mut it| {
     ///     let mut vec = vec![];

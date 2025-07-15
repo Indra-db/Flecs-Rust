@@ -28,7 +28,7 @@ fn main() {
     // Create an observer for three events
     world
         .observer::<flecs::OnSet, &Position>()
-        .add_event(id::<flecs::OnRemove>())
+        .add_event(flecs::OnRemove)
         .each_iter(|it, index, pos| {
             println!(
                 " - {}: {}: {}: with {:?}",

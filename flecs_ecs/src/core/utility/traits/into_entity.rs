@@ -114,8 +114,8 @@ impl InternalIntoEntity for crate::core::IdView<'_> {
 #[doc(hidden)]
 impl<T, U> InternalIntoEntity for (T, U)
 where
-    T: InternalIntoEntity + Copy,
-    U: InternalIntoEntity + Copy,
+    T: InternalIntoEntity,
+    U: InternalIntoEntity,
 {
     const IS_TYPED_PAIR: bool = true;
     const IS_TYPED: bool = T::IS_TYPED;

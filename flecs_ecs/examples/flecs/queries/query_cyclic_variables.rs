@@ -15,11 +15,11 @@ fn main() {
     let john = world.entity_named("John");
     let jane = world.entity_named("Jane");
 
-    bob.add((Likes::id(), alice));
-    alice.add((Likes::id(), bob));
-    john.add((Likes::id(), jane));
-    jane.add((Likes::id(), john));
-    bob.add((Likes::id(), jane)); // inserting a bit of drama
+    bob.add((Likes, alice));
+    alice.add((Likes, bob));
+    john.add((Likes, jane));
+    jane.add((Likes, john));
+    bob.add((Likes, jane)); // inserting a bit of drama
 
     // The following rule will only return entities that have a cyclic Likes
     // relationship- that is they must both like each other.
@@ -37,9 +37,9 @@ fn main() {
 
     let rule = world
         .query::<()>()
-        .with((Likes::id(), "$Y"))
+        .with((Likes, "$Y"))
         .set_src("$X")
-        .with((Likes::id(), "$X"))
+        .with((Likes, "$X"))
         .set_src("$Y")
         .build();
 

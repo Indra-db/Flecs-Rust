@@ -220,7 +220,7 @@ impl<'a, T> Doc<'a> for T where T: Into<Entity> + WorldProvider<'a> + Clone {}
 ///
 /// let world = World::default();
 /// world.component::<Tag>();
-/// world.set_doc_name(Tag::id(), "A tag");
+/// world.set_doc_name(Tag, "A tag");
 /// ```
 impl World {
     //MARK: _World::getters
@@ -517,10 +517,7 @@ fn test_compile_doc() {
     let system = world.system::<()>().build();
     system.set_doc_name("name");
 
-    let observer = world
-        .observer::<flecs::OnAdd, ()>()
-        .with(Tag::id())
-        .run(|_| {});
+    let observer = world.observer::<flecs::OnAdd, ()>().with(Tag).run(|_| {});
     observer.set_doc_name("name");
 
     let comp = world.component::<()>();

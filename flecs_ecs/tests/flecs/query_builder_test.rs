@@ -1606,7 +1606,7 @@ fn query_builder_typed_term_at() {
             }
         });
 
-    world.entity().add((RelFoo::id(), Tag::id()));
+    world.entity().add((RelFoo::id(), Tag));
     world.set(Velocity { x: 0, y: 0 });
 
     s.run();
@@ -1638,7 +1638,7 @@ fn query_builder_typed_term_at_indexed() {
             }
         });
 
-    world.entity().add((RelFoo::id(), Tag::id()));
+    world.entity().add((RelFoo::id(), Tag));
     world.set(Velocity { x: 0, y: 0 });
 
     s.run();
@@ -2279,9 +2279,9 @@ fn query_builder_group_by_iter_one_template() {
     let e2 = world.entity().add((Rel::id(), TagB::id()));
     world.entity().add((Rel::id(), TagC::id()));
 
-    world.entity().add((Rel::id(), TagA::id())).add(Tag::id());
-    let e5 = world.entity().add((Rel::id(), TagB::id())).add(Tag::id());
-    world.entity().add((Rel::id(), TagC::id())).add(Tag::id());
+    world.entity().add((Rel::id(), TagA::id())).add(Tag);
+    let e5 = world.entity().add((Rel::id(), TagB::id())).add(Tag);
+    world.entity().add((Rel::id(), TagC::id())).add(Tag);
 
     let q = world
         .query::<()>()
