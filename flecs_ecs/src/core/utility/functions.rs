@@ -418,7 +418,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 #[inline(always)]
 pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
     unsafe {
-        let size = core::mem::size_of::<T>();
+        let size = const { core::mem::size_of::<T>() };
 
         ecs_assert!(
             size != 0,

@@ -76,7 +76,7 @@ impl World {
     }
 }
 
-//#[test]
+#[test]
 fn query_ref_count() {
     unsafe {
         flecs_ecs::sys::ecs_os_init();

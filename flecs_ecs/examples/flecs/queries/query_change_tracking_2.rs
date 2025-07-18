@@ -113,7 +113,7 @@ fn main() {
     query_write.run(|mut it| {
         while it.next() {
             let dirty = it.field::<Dirty>(0).unwrap();
-            let mut pos = it.field::<Position>(1).unwrap();
+            let mut pos = it.field_mut::<Position>(1).unwrap();
 
             println!("iterate table [{}]", it.archetype().unwrap());
 

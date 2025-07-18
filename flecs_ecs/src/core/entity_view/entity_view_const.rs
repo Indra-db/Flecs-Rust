@@ -209,10 +209,24 @@ impl<'a> EntityView<'a> {
     /// * [`Entity::entity_view()`] - Convert Entity to EntityView
     /// * [`World::entity_from_id()`] - Get entity view from ID
     #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
+    #[inline(always)]
     pub fn new_from(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
         let world = world.world();
         let id = id.into_entity(world);
         Self { world, id }
+    }
+
+    pub(crate) fn new_from_raw(world: &'a WorldRef<'a>, id: u64) -> Self {
+        Self {
+            world: *world,
+            id: Entity(id),
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn replace_id(&mut self, id: u64) -> &mut Self {
+        self.id = Entity(id);
+        self
     }
 
     /// Create a named entity.
@@ -2184,8 +2198,8 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn child(self) -> EntityView<'a> {
         let w = self.world();
-        let e = w.entity().child_of(self.id);
-        EntityView::new_from(self.world(), *e)
+        let e = unsafe { sys::ecs_new_w_id(w.ptr_mut(), ecs_pair(ECS_CHILD_OF, *self.id)) };
+        EntityView::new_from(w, e)
     }
 
     #[inline(always)]
@@ -2446,7 +2460,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty::<Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_empty::<Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2496,7 +2510,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty_entity::<Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_empty_entity::<Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2546,7 +2560,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload::<C, Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_payload::<C, Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2596,7 +2610,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload_entity::<C, Func> as unsafe extern "C" fn(_)),
+            Some(Self::run_payload_entity::<C, Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2628,7 +2642,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(),
     {
@@ -2653,7 +2667,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView),
     {
@@ -2682,7 +2696,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&C),
     {
@@ -2709,7 +2723,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView, &C),
     {

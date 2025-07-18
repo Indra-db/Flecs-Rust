@@ -65,6 +65,7 @@ where
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
+                iter.flags |= sys::EcsIterCppEach;
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
@@ -103,16 +104,17 @@ where
         }
 
         unsafe {
-            let world = self.world_ptr_mut();
+            let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
+                iter.flags |= sys::EcsIterCppEach;
+                let world = self.world();
                 ecs_assert!(
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
                     "Query does not return entities ($this variable is not populated).\nQuery: {:?}",
-                    WorldRef::from_ptr(world).entity_from_id((*iter.query).entity)
+                    world.entity_from_id((*iter.query).entity)
                 );
 
                 let mut components_data = T::create_ptrs(&iter);
@@ -124,7 +126,7 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -132,13 +134,17 @@ where
                 // most of the cost since the branch is almost always the same.
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
                 for i in 0..iter_count {
-                    let world = self.world();
+                    ecs_assert!(
+                        !iter.entities.is_null(),
+                        FlecsErrorCode::InvalidParameter,
+                        "Query does not return entities ($this variable is not populated)."
+                    );
                     let tuple = components_data.get_tuple(&iter, i);
-
-                    func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
+                    let e = EntityView::new_from_raw(&world, *iter.entities.add(i));
+                    func(e, tuple);
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
         }
     }
@@ -194,7 +200,7 @@ where
         }
 
         unsafe {
-            let world = self.world_ptr_mut();
+            let world_ptr = self.world_ptr_mut();
             let mut iter = self.retrieve_iter();
             iter.flags |= sys::EcsIterCppEach;
 
@@ -208,7 +214,7 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&iter, i);
@@ -217,7 +223,7 @@ where
                     func(iter_t, i, tuple);
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
         }
     }
@@ -235,16 +241,16 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
-            let world = self.world_ptr_mut();
+            let world_ptr = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
+                let world = self.world();
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.world();
                     let tuple = components_data.get_tuple(&iter, i);
                     if func(tuple) {
                         entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
@@ -252,7 +258,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
             entity
         }
@@ -274,16 +280,16 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
-            let world = self.world_ptr_mut();
+            let world_ptr = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
+                let world = self.world();
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
-                    let world = self.world();
                     let entity = EntityView::new_from(world, *iter.entities.add(i));
 
                     let tuple = components_data.get_tuple(&iter, i);
@@ -293,7 +299,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
             entity_result
         }
@@ -318,9 +324,10 @@ where
         unsafe {
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
-            let world = self.world_ptr_mut();
+            let world_ptr = self.world_ptr_mut();
 
             while self.iter_next(&mut iter) {
+                let world = self.world();
                 let mut components_data = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
@@ -330,19 +337,19 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 for i in 0..iter_count {
                     let tuple = components_data.get_tuple(&iter, i);
                     let iter_t = TableIter::new(&mut iter);
-                    let world = self.world();
+
                     if func(iter_t, i, tuple) {
                         entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
                         break;
                     }
                 }
 
-                sys::ecs_table_unlock(world, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
             entity_result
         }
@@ -397,7 +404,7 @@ where
     ///     println!("start operations");
     ///     while it.next() {
     ///         count_tables += 1;
-    ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
+    ///         let pos = it.field::<Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             count_entities += 1;
     ///             let entity = it.entity(i).unwrap();
@@ -422,25 +429,9 @@ where
         P: ComponentId,
     {
         let mut iter = self.retrieve_iter();
-        let mut iter_t = unsafe { TableIter::new(&mut iter) };
-        iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
+        iter.flags &= !sys::EcsIterIsValid;
+        let iter_t = unsafe { TableIter::new(&mut iter) };
         func(iter_t);
-
-        //TODO flecs will integrate this before V4 release.
-        // // if the while loop with `iter_next()` exited early, the table should be unlocked
-        // // and iter should be cleaned up
-        // if (iter.flags & sys::EcsIterIsValid) != 0 && !iter.table.is_null() {
-        //     unsafe {
-        //         sys::ecs_table_unlock(iter.world, iter.table);
-        //         sys::ecs_iter_fini(&mut iter)
-        //     };
-        // }
-
-        // ecs_assert!(
-        //     iter.flags & sys::EcsIterIsValid != 0,
-        //     FlecsErrorCode::InvalidOperation,
-        //     "when using `run()`, you must call `while it.next()` in the callback"
-        // );
     }
 
     /// Run iterator with each forwarding.

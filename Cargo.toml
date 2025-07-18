@@ -43,6 +43,13 @@ libc = "0.2.169"
 lto = true
 codegen-units = 1
 panic = "abort"
+debug = false
+
+[profile.bench]
+inherits = "release"
+lto = true
+codegen-units = 1
+panic = "abort"
 
 [profile.dev.package]
 insta.opt-level = 3

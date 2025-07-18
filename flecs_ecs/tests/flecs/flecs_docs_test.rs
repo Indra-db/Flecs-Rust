@@ -170,7 +170,7 @@ fn flecs_system_docs_compile_test() {
     q.run(|mut it| {
         while it.next() {
             let mut p = it
-                .field::<Position>(0)
+                .field_mut::<Position>(0)
                 .expect("query term changed and not at the same index anymore");
             let v = it
                 .field::<Velocity>(1)
@@ -188,7 +188,7 @@ fn flecs_system_docs_compile_test() {
         .run(|mut it| {
             while it.next() {
                 let mut p = it
-                    .field::<Position>(0)
+                    .field_mut::<Position>(0)
                     .expect("query term changed and not at the same index anymore");
                 let v = it
                     .field::<Velocity>(1)
@@ -203,7 +203,7 @@ fn flecs_system_docs_compile_test() {
     // Query iteration (run_iter)
     q.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
             for i in it.iter() {
                 p[i].x += v[i].x;
@@ -217,7 +217,7 @@ fn flecs_system_docs_compile_test() {
         .system_named::<(&mut Position, &Velocity)>("Move")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field::<Position>(0).unwrap();
+                let mut p = it.field_mut::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
                 for i in it.iter() {
                     p[i].x += v[i].x;
@@ -237,7 +237,7 @@ fn flecs_system_docs_compile_test() {
         .system_named::<(&mut Position, &Velocity)>("Move")
         .run(|mut it| {
             while it.next() {
-                let mut p = it.field::<Position>(0).unwrap();
+                let mut p = it.field_mut::<Position>(0).unwrap();
                 let v = it.field::<Velocity>(1).unwrap();
                 for i in it.iter() {
                     p[i].x += v[i].x * it.delta_time();
@@ -484,7 +484,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
             for i in it.iter() {
                 p[i].x += v[i].x;
@@ -635,7 +635,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
         }
     });
@@ -684,7 +684,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Mass>(2).unwrap(); // not 4, because of the Or expression
 
             let vs_id = it.id(1);
@@ -746,7 +746,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
             if let Some(v) = it.field::<Velocity>(1) {
                 // iterate as usual
             }
@@ -822,7 +822,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
             let st = it.field::<SimTime>(2).unwrap();
 
@@ -859,7 +859,7 @@ fn flecs_query_docs_compile_test() {
     q.run(|mut it| {
         while it.next() {
             let sc = it.field::<SimConfig>(0).unwrap();
-            let mut st = it.field::<SimTime>(1).unwrap();
+            let mut st = it.field_mut::<SimTime>(1).unwrap();
             st[0].value += sc[0].sim_speed; // 0 because it's a single source element
         }
     });
@@ -1007,7 +1007,7 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             let m = it.field::<Mass>(1).unwrap();
 
             if it.is_self(1) {
@@ -1845,7 +1845,7 @@ fn flecs_docs_quick_start_compile_test() {
     // Option 2: the run() callback offers more control over the iteration
     q.run(|mut it| {
         while it.next() {
-            let p = it.field::<Position>(0).unwrap();
+            let p = it.field_mut::<Position>(0).unwrap();
 
             for i in it.iter() {
                 println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);

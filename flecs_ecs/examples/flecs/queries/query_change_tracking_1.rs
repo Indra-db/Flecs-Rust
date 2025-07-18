@@ -43,9 +43,9 @@ fn update_transforms(mut it: TableIter<true, ()>) {
 
         println!("non-skip archetype: {:?}", it.archetype().unwrap());
 
-        let pos = it.field::<&Position>(0).unwrap();
-        let parent_pos = it.field::<&Position>(1); // Optional
-        let mut world_pos = it.field::<&mut WorldPosition>(2).unwrap();
+        let pos = it.field_mut::<Position>(0).unwrap();
+        let parent_pos = it.field::<Position>(1); // Optional
+        let mut world_pos = it.field_mut::<WorldPosition>(2).unwrap();
 
         match parent_pos {
             None => {

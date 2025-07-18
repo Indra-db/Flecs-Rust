@@ -45,7 +45,7 @@ fn main() {
     // of information on the entities currently being iterated.
     query.run(|mut it| {
         while it.next() {
-            let mut position = it.field::<Position>(0).unwrap();
+            let mut position = it.field_mut::<Position>(0).unwrap();
             let velocity = it.field::<Velocity>(1).unwrap();
 
             println!();

@@ -56,7 +56,7 @@ fn main() {
     // are iterated as it provides multiple entities in the same callback.
     query.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
+            let mut p = it.field_mut::<Position>(0).unwrap();
             let v = it.field::<Velocity>(1).unwrap();
 
             for i in it.iter() {

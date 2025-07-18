@@ -176,7 +176,7 @@ where
     ///     println!("start operations");
     ///     while it.next() {
     ///         *count_tables_ref.borrow_mut() += 1;
-    ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
+    ///         let pos = it.field::<Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
     ///             let entity = it.entity(i).unwrap();

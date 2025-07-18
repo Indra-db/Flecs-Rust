@@ -106,7 +106,7 @@ fn main() {
     query.run(|mut it| {
         while it.next() {
             let group = world.entity_from_id(it.group_id());
-            let pos = it.field::<Position>(0).unwrap();
+            let pos = it.field_mut::<Position>(0).unwrap();
 
             println!(
                 "Group: {:?} - Table: [{:?}]",

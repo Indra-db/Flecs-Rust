@@ -68,7 +68,9 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     }
 
     fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_> {
-        if self.is_any_array.a_row {
+        if !self.is_any_array.a_ref && !self.is_any_array.a_row {
+            T::create_tuple(&self.array_components[..], index)
+        } else if self.is_any_array.a_row {
             T::create_tuple_with_row(
                 iter,
                 &mut self.array_components[..],
@@ -77,14 +79,12 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 &self.index_array_components[..],
                 index,
             )
-        } else if self.is_any_array.a_ref {
+        } else {
             T::create_tuple_with_ref(
                 &self.array_components[..],
                 &self.is_ref_array_components[..],
                 index,
             )
-        } else {
-            T::create_tuple(&self.array_components[..], index)
         }
     }
 }
@@ -547,7 +547,7 @@ macro_rules! impl_iterable {
                 let mut any_ref = false;
                 let mut any_row = false;
                 $(
-                    if it.row_fields & (1u32 << index) != 0 {
+                    if (it.row_fields & (1u32 << index)) != 0 {
                         // Need to fetch the value with ecs_field_at()
                         is_ref[index as usize] =  true;
                         is_row[index as usize] = true;

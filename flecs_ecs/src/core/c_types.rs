@@ -2,6 +2,7 @@
 #![allow(non_upper_case_globals)]
 
 use core::ffi::CStr;
+use core::fmt::Display;
 
 use crate::sys;
 
@@ -193,6 +194,7 @@ impl From<OperKind> for i16 {
 /// - `None`: No caching
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum QueryCacheKind {
     Default = sys::ecs_query_cache_kind_t_EcsQueryCacheDefault as u32,
     Auto = sys::ecs_query_cache_kind_t_EcsQueryCacheAuto as u32,
@@ -226,6 +228,17 @@ impl From<sys::ecs_query_cache_kind_t> for QueryCacheKind {
             sys::ecs_query_cache_kind_t_EcsQueryCacheAll => QueryCacheKind::All,
             sys::ecs_query_cache_kind_t_EcsQueryCacheNone => QueryCacheKind::None,
             _ => QueryCacheKind::Default,
+        }
+    }
+}
+
+impl Display for QueryCacheKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            QueryCacheKind::Default => write!(f, "Default"),
+            QueryCacheKind::Auto => write!(f, "Auto"),
+            QueryCacheKind::All => write!(f, "All"),
+            QueryCacheKind::None => write!(f, "None"),
         }
     }
 }

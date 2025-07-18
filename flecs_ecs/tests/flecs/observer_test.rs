@@ -241,7 +241,7 @@ fn observer_2_entities_iter() {
         .run(move |mut it| {
             let world = it.world();
             while it.next() {
-                let p = it.field::<&Position>(0).unwrap();
+                let p = it.field::<Position>(0).unwrap();
 
                 for i in it.iter() {
                     world.get::<&mut Count>(|count| {
@@ -739,7 +739,7 @@ fn observer_get_query() {
     let q = o.query();
     q.run(|mut it| {
         while it.next() {
-            let pos = it.field::<&Position>(0).unwrap();
+            let pos = it.field::<Position>(0).unwrap();
             for i in it.iter() {
                 assert_eq!(i as i32, pos[i].x);
                 world.get::<&mut Count>(|count| {
@@ -878,7 +878,7 @@ fn observer_on_add_pair_singleton() {
         .run(|mut it| {
             let world = it.world();
             while it.next() {
-                let pos = it.field::<&Position>(0).unwrap();
+                let pos = it.field::<Position>(0).unwrap();
                 assert_eq!(pos[0].x, 10);
                 assert_eq!(pos[0].y, 20);
                 world.get::<&mut Count>(|count| {

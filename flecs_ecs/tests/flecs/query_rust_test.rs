@@ -26,8 +26,8 @@ fn query_rust_pass_query_to_system() {
         query.run(|mut it| {
             let mut count = 0;
             while it.next() {
-                let pos = &it.field::<&Position>(0).unwrap()[0]; //singleton
-                let vel = it.field::<&Velocity>(1).unwrap();
+                let pos = &it.field::<Position>(0).unwrap()[0]; //singleton
+                let vel = it.field::<Velocity>(1).unwrap();
                 for i in it.iter() {
                     count += 1;
                     assert_eq!(pos.x, 1);
