@@ -11,6 +11,7 @@ use flecs_ecs_derive::tuples;
 //     pub is_ref: bool,
 // }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[doc(hidden)]
 pub struct IsAnyArray {
     pub a_ref: bool, //e.g. singleton
@@ -22,18 +23,25 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub is_ref_array_components: [bool; LEN],
     pub is_row_array_components: [bool; LEN],
     pub index_array_components: [i8; LEN],
-    pub is_any_array: IsAnyArray,
     _marker: PhantomData<T>,
 }
 
 pub trait ComponentPointers<T: QueryTuple> {
-    fn new(iter: &sys::ecs_iter_t) -> Self;
+    fn new(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self);
 
-    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_>;
+    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_>;
+
+    fn get_tuple_with_row(
+        &mut self,
+        iter: &sys::ecs_iter_t,
+        index_row_entity: usize,
+    ) -> T::TupleType<'_>;
+
+    fn get_tuple_with_ref(&mut self, index: usize) -> T::TupleType<'_>;
 }
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
-    fn new(iter: &sys::ecs_iter_t) -> Self {
+    fn new(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self) {
         let mut array_components = [core::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
         let mut is_row_array_components = [false; LEN];
@@ -57,35 +65,49 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             }
         };
 
-        Self {
-            array_components,
-            is_ref_array_components,
-            is_row_array_components,
-            index_array_components,
+        (
             is_any_array,
-            _marker: PhantomData::<T>,
-        }
+            Self {
+                array_components,
+                is_ref_array_components,
+                is_row_array_components,
+                index_array_components,
+                _marker: PhantomData::<T>,
+            },
+        )
     }
 
-    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_> {
-        if !self.is_any_array.a_ref && !self.is_any_array.a_row {
-            T::create_tuple(&self.array_components[..], index)
-        } else if self.is_any_array.a_row {
-            T::create_tuple_with_row(
-                iter,
-                &mut self.array_components[..],
-                &self.is_ref_array_components[..],
-                &self.is_row_array_components[..],
-                &self.index_array_components[..],
-                index,
-            )
-        } else {
-            T::create_tuple_with_ref(
-                &self.array_components[..],
-                &self.is_ref_array_components[..],
-                index,
-            )
-        }
+    fn get_tuple(
+        &mut self,
+        index: usize,
+    ) -> T::TupleType<'_> {
+        T::create_tuple(&self.array_components[..], index)
+    }
+
+    fn get_tuple_with_row(
+        &mut self,
+        iter: &sys::ecs_iter_t,
+        index_row_entity: usize,
+    ) -> T::TupleType<'_> {
+        T::create_tuple_with_row(
+            iter,
+            &mut self.array_components[..],
+            &self.is_ref_array_components[..],
+            &self.is_row_array_components[..],
+            &self.index_array_components[..],
+            index_row_entity,
+        )
+    }
+
+    fn get_tuple_with_ref(
+        &mut self,
+        index: usize,
+    ) -> T::TupleType<'_> {
+        T::create_tuple_with_ref(
+            &self.array_components[..],
+            &self.is_ref_array_components[..],
+            index,
+        )
     }
 }
 
@@ -266,7 +288,7 @@ pub trait QueryTuple: Sized {
     const CONTAINS_ANY_TAG_TERM: bool;
     const COUNT: i32;
 
-    fn create_ptrs(iter: &sys::ecs_iter_t) -> Self::Pointers {
+    fn create_ptrs(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self::Pointers) {
         Self::Pointers::new(iter)
     }
 

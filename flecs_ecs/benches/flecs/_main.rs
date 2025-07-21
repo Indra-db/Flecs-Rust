@@ -35,8 +35,8 @@ fn ecs_default_criterion() -> Criterion {
     criterion_config = criterion_config
         .warm_up_time(Duration::from_millis(200))
         .measurement_time(Duration::from_secs(1))
-        .sample_size(25)
-        .noise_threshold(0.01)
+        //.sample_size(25)
+        .noise_threshold(0.02)
         .confidence_level(0.95)
         .significance_level(0.05)
         .without_plots();

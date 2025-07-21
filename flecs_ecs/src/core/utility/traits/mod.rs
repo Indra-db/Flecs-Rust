@@ -87,7 +87,7 @@ pub mod private {
 
                 let each = &mut *(iter.callback_ctx as *mut Func);
 
-                let mut components_data = T::create_ptrs(&*iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -100,8 +100,21 @@ pub mod private {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&*iter, i);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    // If query has no This terms, count can be 0. Since each does not
+                    // have an entity parameter, just pass through components
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        each(tuple);
+                    }
+                } else if is_any_array.a_row {
+                    // If query has a This term, we need to pass the row entity
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(iter, i);
+                        each(tuple);
+                    }
+                } else {
+                    let tuple = components_data.get_tuple_with_ref(0);
                     each(tuple);
                 }
 
@@ -132,11 +145,12 @@ pub mod private {
                 }
 
                 let iter = &mut *iter;
+                let world = WorldRef::from_ptr(iter.world);
                 iter.flags |= sys::EcsIterCppEach;
 
                 let each_entity = &mut *(iter.callback_ctx as *mut Func);
 
-                let mut components_data = T::create_ptrs(&*iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         // If query has no This terms, count can be 0. Since each does not
@@ -158,12 +172,27 @@ pub mod private {
                     sys::ecs_table_lock(iter.world, iter.table);
                 }
 
-                for i in 0..iter_count {
-                    let world = WorldRef::from_ptr(iter.world);
-                    let entity = EntityView::new_from(world, *iter.entities.add(i));
-                    let tuple = components_data.get_tuple(&*iter, i);
-
-                    each_entity(entity, tuple);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    // If query has no This terms, count can be 0. Since each does not
+                    // have an entity parameter, just pass through components
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple(i);
+                        each_entity(entity, tuple);
+                    }
+                } else if is_any_array.a_row {
+                    // If query has a This term, we need to pass the row entity
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_row(iter, i);
+                        each_entity(entity, tuple);
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        each_entity(entity, tuple);
+                    }
                 }
 
                 if !CALLED_FROM_RUN {
@@ -195,7 +224,7 @@ pub mod private {
                 iter.flags |= sys::EcsIterCppEach;
 
                 let each_iter = &mut *(iter.callback_ctx as *mut Func);
-                let mut components_data = T::create_ptrs(&*iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -206,12 +235,29 @@ pub mod private {
 
                 sys::ecs_table_lock(iter.world, iter.table);
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&*iter, i);
-                    let iter_t = TableIter::new(iter);
-
-                    each_iter(iter_t, i, tuple);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    // If query has no This terms, count can be 0. Since each does not
+                    // have an entity parameter, just pass through components
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        //TODO we should move this out the loop
+                        let iter_t = TableIter::new(iter);
+                        each_iter(iter_t, i, tuple);
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(iter, i);
+                        let iter_t = TableIter::new(iter);
+                        each_iter(iter_t, i, tuple);
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        let iter_t = TableIter::new(iter);
+                        each_iter(iter_t, i, tuple);
+                    }
                 }
+
                 sys::ecs_table_unlock(iter.world, iter.table);
             }
         }
@@ -229,9 +275,9 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
+                iter.flags &= !sys::EcsIterIsValid;
                 let run = &mut *(iter.run_ctx as *mut Func);
-                let mut iter_t = TableIter::new(&mut *iter);
-                iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
+                let iter_t = TableIter::new(iter);
                 run(iter_t);
                 // ecs_assert!(
                 //     iter.flags & sys::EcsIterIsValid == 0,

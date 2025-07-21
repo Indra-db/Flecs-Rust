@@ -66,7 +66,7 @@ where
 
             while self.iter_next(&mut iter) {
                 iter.flags |= sys::EcsIterCppEach;
-                let mut components_data = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -77,9 +77,21 @@ where
 
                 sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&iter, i);
-                    func(tuple);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        func(tuple);
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        func(tuple);
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        func(tuple);
+                    }
                 }
 
                 sys::ecs_table_unlock(self.world_ptr_mut(), iter.table);
@@ -104,12 +116,13 @@ where
         }
 
         unsafe {
-            let world_ptr = self.world_ptr_mut();
+            let world = self.world();
+            let world_ptr = world.ptr_mut();
             let mut iter = self.retrieve_iter();
 
             while self.iter_next(&mut iter) {
                 iter.flags |= sys::EcsIterCppEach;
-                let world = self.world();
+
                 ecs_assert!(
                     !iter.entities.is_null(),
                     FlecsErrorCode::InvalidParameter,
@@ -117,7 +130,7 @@ where
                     world.entity_from_id((*iter.query).entity)
                 );
 
-                let mut components_data = T::create_ptrs(&iter);
+                let (_is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -126,25 +139,35 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                //sys::ecs_table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
                 // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
                 // most of the cost since the branch is almost always the same.
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
-                for i in 0..iter_count {
-                    ecs_assert!(
-                        !iter.entities.is_null(),
-                        FlecsErrorCode::InvalidParameter,
-                        "Query does not return entities ($this variable is not populated)."
-                    );
-                    let tuple = components_data.get_tuple(&iter, i);
-                    let e = EntityView::new_from_raw(&world, *iter.entities.add(i));
-                    func(e, tuple);
-                }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                //if !is_any_array.a_ref && !is_any_array.a_row {
+                for i in 0..iter_count {
+                    let entity = EntityView::new_from(world, *iter.entities.add(i));
+                    let tuple = components_data.get_tuple(i);
+                    func(entity, tuple);
+                }
+                // } else if is_any_array.a_row {
+                //     for i in 0..iter_count {
+                //         let entity = EntityView::new_from(world, *iter.entities.add(i));
+                //         let tuple = components_data.get_tuple_with_row(&iter, i);
+                //         func(entity, tuple);
+                //     }
+                // } else {
+                //     for i in 0..iter_count {
+                //         let entity = EntityView::new_from(world, *iter.entities.add(i));
+                //         let tuple = components_data.get_tuple_with_ref(i);
+                //         func(entity, tuple);
+                //     }
+                // }
+
+                //sys::ecs_table_unlock(world_ptr, iter.table);
             }
         }
     }
@@ -205,7 +228,7 @@ where
             iter.flags |= sys::EcsIterCppEach;
 
             while self.iter_next(&mut iter) {
-                let mut components_data = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -216,11 +239,24 @@ where
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&iter, i);
-                    let iter_t = TableIter::new(&mut iter);
-
-                    func(iter_t, i, tuple);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        let iter_t = TableIter::new(&mut iter);
+                        func(iter_t, i, tuple);
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        let iter_t = TableIter::new(&mut iter);
+                        func(iter_t, i, tuple);
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        let iter_t = TableIter::new(&mut iter);
+                        func(iter_t, i, tuple);
+                    }
                 }
 
                 sys::ecs_table_unlock(world_ptr, iter.table);
@@ -245,16 +281,34 @@ where
 
             while self.iter_next(&mut iter) {
                 let world = self.world();
-                let mut components_data = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&iter, i);
-                    if func(tuple) {
-                        entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
-                        break;
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        if func(tuple) {
+                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        if func(tuple) {
+                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        if func(tuple) {
+                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
                     }
                 }
 
@@ -284,18 +338,39 @@ where
 
             while self.iter_next(&mut iter) {
                 let world = self.world();
-                let mut components_data = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
-                for i in 0..iter_count {
-                    let entity = EntityView::new_from(world, *iter.entities.add(i));
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
 
-                    let tuple = components_data.get_tuple(&iter, i);
-                    if func(entity, tuple) {
-                        entity_result = Some(entity);
-                        break;
+                        let tuple = components_data.get_tuple(i);
+                        if func(entity, tuple) {
+                            entity_result = Some(entity);
+                            break;
+                        }
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        if func(entity, tuple) {
+                            entity_result = Some(entity);
+                            break;
+                        }
+                    }
+                } else {
+                    // is_any_array.a_ref
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        if func(entity, tuple) {
+                            entity_result = Some(entity);
+                            break;
+                        }
                     }
                 }
 
@@ -328,7 +403,7 @@ where
 
             while self.iter_next(&mut iter) {
                 let world = self.world();
-                let mut components_data = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 {
                         1_usize
@@ -339,13 +414,38 @@ where
 
                 sys::ecs_table_lock(world_ptr, iter.table);
 
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&iter, i);
-                    let iter_t = TableIter::new(&mut iter);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple(i);
+                        let iter_t = TableIter::new(&mut iter);
 
-                    if func(iter_t, i, tuple) {
-                        entity_result = Some(EntityView::new_from(world, *iter.entities.add(i)));
-                        break;
+                        if func(iter_t, i, tuple) {
+                            entity_result =
+                                Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        let iter_t = TableIter::new(&mut iter);
+
+                        if func(iter_t, i, tuple) {
+                            entity_result =
+                                Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        let iter_t = TableIter::new(&mut iter);
+
+                        if func(iter_t, i, tuple) {
+                            entity_result =
+                                Some(EntityView::new_from(world, *iter.entities.add(i)));
+                            break;
+                        }
                     }
                 }
 
@@ -880,8 +980,14 @@ where
 
         // Proceed only if there is at least one entity in the iterator
         if self.iter_next(&mut it) && it.count > 0 {
-            let mut components_data = T::create_ptrs(&it);
-            let tuple = components_data.get_tuple(&it, 0);
+            let (is_any_array, mut components_data) = T::create_ptrs(&it);
+            let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
+                components_data.get_tuple(0)
+            } else if is_any_array.a_row {
+                components_data.get_tuple_with_row(&it, 0)
+            } else {
+                components_data.get_tuple_with_ref(0)
+            };
 
             let result = Some(func(tuple));
             // Clean up iterator resources safely
@@ -988,8 +1094,15 @@ where
         // Proceed only if we can iterate
         if self.iter_next(&mut it) {
             if it.count == 1 {
-                let mut components_data = T::create_ptrs(&it);
-                let tuple = components_data.get_tuple(&it, 0);
+                let (is_any_array, mut components_data) = T::create_ptrs(&it);
+
+                let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
+                    components_data.get_tuple(0)
+                } else if is_any_array.a_row {
+                    components_data.get_tuple_with_row(&it, 0)
+                } else {
+                    components_data.get_tuple_with_ref(0)
+                };
 
                 // Clean up iterator resources safely
                 let result = func(tuple);
@@ -1186,15 +1299,28 @@ where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
+    let iter = unsafe { &mut *iter };
     unsafe {
-        let func = &mut *((*iter).callback_ctx as *mut Func);
+        let func = &mut *(iter.callback_ctx as *mut Func);
 
-        let mut components_data = T::create_ptrs(&*iter);
-        let iter_count = (*iter).count as usize;
+        let (is_any_array, mut components_data) = T::create_ptrs(iter);
+        let iter_count = iter.count as usize;
 
-        for i in 0..iter_count {
-            let tuple = components_data.get_tuple(&*iter, i);
-            func(tuple);
+        if !is_any_array.a_row && !is_any_array.a_ref {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple(i);
+                func(tuple);
+            }
+        } else if is_any_array.a_row {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_row(iter, i);
+                func(tuple);
+            }
+        } else if is_any_array.a_ref {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_ref(i);
+                func(tuple);
+            }
         }
     }
 }
@@ -1205,16 +1331,28 @@ where
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
     unsafe {
-        let func = &mut *((*iter).callback_ctx as *mut Func);
+        let iter = &mut *iter;
+        let func = &mut *(iter.callback_ctx as *mut Func);
 
-        let mut components_data = T::create_ptrs(&*iter);
-        let iter_count = (*iter).count as usize;
-        let world = WorldRef::from_ptr((*iter).world);
+        let (is_any_array, mut components_data) = T::create_ptrs(iter);
+        let iter_count = iter.count as usize;
+        let world = WorldRef::from_ptr(iter.world);
 
-        for i in 0..iter_count {
-            let tuple = components_data.get_tuple(&*iter, i);
-
-            func(EntityView::new_from(world, *(*iter).entities.add(i)), tuple);
+        if !is_any_array.a_row && !is_any_array.a_ref {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple(i);
+                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
+            }
+        } else if is_any_array.a_row {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_row(iter, i);
+                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
+            }
+        } else if is_any_array.a_ref {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_ref(i);
+                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
+            }
         }
     }
 }
