@@ -390,7 +390,7 @@ where
             is_row[0] = true;
             indexes[0] = 0;
         } else {
-            components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+            components[0] = ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
         IsAnyArray {
@@ -404,7 +404,7 @@ where
         components: &mut [*mut u8],
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-        components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+        components[0] = ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
@@ -574,9 +574,9 @@ macro_rules! impl_iterable {
                         is_ref[index as usize] =  true;
                         is_row[index as usize] = true;
                         indexes[index as usize] = index as i8;
-                    } else {
+                    } else { 
                         components[index as usize] =
-                            unsafe { ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8 };
+                            ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                         is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
                     }
                     any_ref |= is_ref[index as usize];
@@ -598,7 +598,7 @@ macro_rules! impl_iterable {
                 $(
                     ecs_assert!(unsafe { *it.sources.add(index as usize) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index as usize] =
-                        unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
+                        ecs_field::<$t::OnlyPairType>(it, index) as *mut u8;
                     index += 1;
                 )*
 

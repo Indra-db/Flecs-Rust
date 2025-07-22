@@ -40,10 +40,12 @@ flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
 libc = "0.2.169"
 
 [profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
+opt-level = 3
 debug = false
+debug-assertions = false
+codegen-units = 1
+lto = true
+panic = "abort"
 
 [profile.bench]
 inherits = "release"

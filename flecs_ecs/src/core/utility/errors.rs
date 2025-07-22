@@ -147,11 +147,6 @@ macro_rules! ecs_assert {
         );
     };
     ($condition:expr $(,)?, $error_code:expr, $fmt:expr, $($arg:tt)+) => {
-        #[cfg(feature = "std")]
-        extern crate std;
-
-        extern crate alloc;
-
         assert!($condition, "{}: {}", $error_code, alloc::format!($fmt, $($arg)+));
     };
 }

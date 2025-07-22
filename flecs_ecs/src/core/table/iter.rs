@@ -78,6 +78,7 @@ where
     ///     }
     /// });
     /// ```
+    #[inline(always)]
     pub fn iter(&self) -> TableRowIter<IS_RUN, P> {
         TableRowIter {
             iter: self,
@@ -275,8 +276,10 @@ where
     /// # Returns
     ///
     /// Returns whether field is matched on self
+    #[inline(always)]
     pub fn is_self(&self, index: i8) -> bool {
-        unsafe { sys::ecs_field_is_self(self.iter, index) }
+        return self.iter.sources.is_null()
+            || unsafe { (*self.iter.sources.add(index as usize)) == 0 };
     }
 
     /// # Arguments
@@ -287,7 +290,7 @@ where
     ///
     /// Returns whether field is set
     pub fn is_set(&self, index: i8) -> bool {
-        unsafe { sys::ecs_field_is_set(self.iter, index) }
+        return self.iter.set_fields & (1u32 << (index as usize)) != 0;
     }
 
     /// # Arguments
@@ -703,15 +706,14 @@ where
         } else {
             // If column is owned, there will be as many values as there are
             // entities.
-            self.count()
+            self.count
         };
 
         if count == 0 {
             return None;
         }
 
-        let size = const { core::mem::size_of::<T>() };
-        let array = unsafe { sys::ecs_field_w_size(self.iter, size, index) as *const T };
+        let array = ecs_field::<T>(self.iter, index);
 
         //we don't do null check on array because we already checked if the type is correct before calling this function and if index is correct
 
@@ -739,8 +741,7 @@ where
             return None;
         }
 
-        let size = const { core::mem::size_of::<T>() };
-        let array = unsafe { sys::ecs_field_w_size(self.iter, size, index) as *mut T };
+        let array = ecs_field::<T>(self.iter, index);
 
         //we don't do null check on array because we already checked if the type is correct before calling this function and if index is correct
 
@@ -768,7 +769,7 @@ where
         }
 
         Some(FieldUntyped::new(
-            unsafe { sys::ecs_field_w_size(self.iter, 0, index) },
+            ecs_field_w_size(self.iter, size, index),
             size,
             count,
             is_shared,
@@ -794,7 +795,7 @@ where
         }
 
         Some(FieldUntypedMut::new(
-            unsafe { sys::ecs_field_w_size(self.iter, size, index) },
+            ecs_field_w_size(self.iter, size, index),
             size,
             count,
             is_shared,
@@ -944,6 +945,7 @@ where
     /// invalid context is inside an `each()` callback.
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> bool {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
             unsafe {
                 sys::ecs_table_unlock(self.iter.world, self.iter.table);
@@ -952,7 +954,6 @@ where
 
         let result = {
             if let Some(next) = self.iter.next {
-                //sets flag invalid
                 let result = unsafe { next(self.iter) };
                 self.count = self.iter.count as usize;
                 result
@@ -963,10 +964,13 @@ where
         };
 
         self.iter.flags |= sys::EcsIterIsValid;
-        if result && !self.iter.table.is_null() {
-            unsafe {
-                sys::ecs_table_lock(self.iter.world, self.iter.table);
-            };
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        {
+            if result && !self.iter.table.is_null() {
+                unsafe {
+                    sys::ecs_table_lock(self.iter.world, self.iter.table);
+                };
+            }
         }
 
         result
@@ -998,6 +1002,7 @@ where
     /// });
     /// ```
     pub fn fini(self) {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
             unsafe {
                 sys::ecs_table_unlock(self.iter.world, self.iter.table);

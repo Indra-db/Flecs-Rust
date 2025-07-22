@@ -130,7 +130,7 @@ where
                     world.entity_from_id((*iter.query).entity)
                 );
 
-                let (_is_any_array, mut components_data) = T::create_ptrs(&iter);
+                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = {
                     if iter.count == 0 && iter.table.is_null() {
                         1_usize
@@ -139,7 +139,7 @@ where
                     }
                 };
 
-                //sys::ecs_table_lock(world_ptr, iter.table);
+                sys::ecs_table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -147,27 +147,27 @@ where
                 // most of the cost since the branch is almost always the same.
                 // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
 
-                //if !is_any_array.a_ref && !is_any_array.a_row {
-                for i in 0..iter_count {
-                    let entity = EntityView::new_from(world, *iter.entities.add(i));
-                    let tuple = components_data.get_tuple(i);
-                    func(entity, tuple);
+                if !is_any_array.a_ref && !is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple(i);
+                        func(entity, tuple);
+                    }
+                } else if is_any_array.a_row {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_row(&iter, i);
+                        func(entity, tuple);
+                    }
+                } else {
+                    for i in 0..iter_count {
+                        let entity = EntityView::new_from(world, *iter.entities.add(i));
+                        let tuple = components_data.get_tuple_with_ref(i);
+                        func(entity, tuple);
+                    }
                 }
-                // } else if is_any_array.a_row {
-                //     for i in 0..iter_count {
-                //         let entity = EntityView::new_from(world, *iter.entities.add(i));
-                //         let tuple = components_data.get_tuple_with_row(&iter, i);
-                //         func(entity, tuple);
-                //     }
-                // } else {
-                //     for i in 0..iter_count {
-                //         let entity = EntityView::new_from(world, *iter.entities.add(i));
-                //         let tuple = components_data.get_tuple_with_ref(i);
-                //         func(entity, tuple);
-                //     }
-                // }
 
-                //sys::ecs_table_unlock(world_ptr, iter.table);
+                sys::ecs_table_unlock(world_ptr, iter.table);
             }
         }
     }

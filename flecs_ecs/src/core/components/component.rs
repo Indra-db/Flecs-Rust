@@ -279,12 +279,13 @@ impl<'a, T> Component<'a, T> {
         Func: FnMut(EntityView, &mut T) + 'static,
     {
         unsafe {
-            let ctx: *mut ComponentBindingCtx = (*iter).callback_ctx as *mut _;
+            let iter = &*iter;
+            let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
             let on_add = (*ctx).on_add.unwrap();
             let on_add = on_add as *mut Func;
             let on_add = &mut *on_add;
-            let world = WorldRef::from_ptr((*iter).world);
-            let entity = EntityView::new_from(world, *(*iter).entities);
+            let world = WorldRef::from_ptr(iter.world);
+            let entity = EntityView::new_from(world, *iter.entities);
             let component: *mut T = ecs_field::<T>(iter, 0);
             on_add(entity, &mut *component);
         }
@@ -295,13 +296,14 @@ impl<'a, T> Component<'a, T> {
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).callback_ctx as *mut _ };
+        let iter = unsafe { &*iter };
+        let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
-        let world = unsafe { WorldRef::from_ptr((*iter).world) };
-        let entity = EntityView::new_from(world, unsafe { *(*iter).entities });
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
+        let world = unsafe { WorldRef::from_ptr(iter.world) };
+        let entity = EntityView::new_from(world, unsafe { *iter.entities });
+        let component: *mut T = ecs_field::<T>(iter, 0);
         on_set(entity, unsafe { &mut *component });
     }
 
@@ -311,12 +313,13 @@ impl<'a, T> Component<'a, T> {
         Func: FnMut(EntityView, &mut T) + 'static,
     {
         unsafe {
-            let ctx: *mut ComponentBindingCtx = (*iter).callback_ctx as *mut _;
+            let iter = &*iter;
+            let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
             let on_remove = (*ctx).on_remove.unwrap();
             let on_remove = on_remove as *mut Func;
             let on_remove = &mut *on_remove;
-            let world = WorldRef::from_ptr((*iter).world);
-            let entity = EntityView::new_from(world, *(*iter).entities);
+            let world = WorldRef::from_ptr(iter.world);
+            let entity = EntityView::new_from(world, *iter.entities);
             let component: *mut T = ecs_field::<T>(iter, 0);
             on_remove(entity, &mut *component);
         }

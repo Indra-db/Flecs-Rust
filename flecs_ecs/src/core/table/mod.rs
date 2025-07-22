@@ -4,7 +4,7 @@ mod field;
 mod flags;
 mod iter;
 
-pub use field::{Field, FieldUntyped};
+pub use field::{Field, FieldUntyped, ecs_field, ecs_field_w_size};
 pub use flags::TableFlags;
 pub use iter::{TableIter, TableRowIter};
 
