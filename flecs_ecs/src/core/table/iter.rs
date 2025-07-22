@@ -2,7 +2,7 @@
 use core::marker::PhantomData;
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
-use crate::core::table::field::{FieldMut, FieldUntypedMut};
+use crate::core::table::field::{FieldIndex, FieldMut, FieldUntypedMut};
 use crate::core::*;
 use crate::sys;
 
@@ -1026,13 +1026,13 @@ impl<const IS_RUN: bool, P> Iterator for TableRowIter<'_, IS_RUN, P>
 where
     P: ComponentId,
 {
-    type Item = usize;
+    type Item = FieldIndex;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.count {
             let result = self.index;
             self.index += 1;
-            Some(result)
+            Some(FieldIndex(result))
         } else {
             None
         }

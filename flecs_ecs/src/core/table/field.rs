@@ -2,10 +2,21 @@
 
 use crate::core::*;
 use crate::sys;
-use core::{
-    ffi::c_void,
-    ops::{Deref, DerefMut},
-};
+use core::ffi::c_void;
+use core::ops::Index;
+use core::ops::IndexMut;
+
+// TODO I can probably return two different field types, one for shared and one for non-shared
+// then I can customize the index behavior
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FieldIndex(pub(crate) usize);
+
+impl Into<usize> for FieldIndex {
+    fn into(self) -> usize {
+        self.0
+    }
+}
 
 /// Wrapper class around a table column with immutable access.
 ///
@@ -30,12 +41,33 @@ impl<'a, T> Field<'a, T> {
     }
 }
 
-impl<T: ComponentId> Deref for Field<'_, T> {
-    type Target = [T];
+impl<'a, T> Index<FieldIndex> for Field<'a, T> {
+    type Output = T;
 
     #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        self.slice_components
+    fn index(&self, idx: FieldIndex) -> &T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx.0 == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        unsafe { self.slice_components.get_unchecked(idx.0) }
+    }
+}
+
+impl<'a, T> Index<usize> for Field<'a, T> {
+    type Output = T;
+
+    #[inline(always)]
+    fn index(&self, idx: usize) -> &T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        &self.slice_components[idx]
     }
 }
 
@@ -69,19 +101,59 @@ impl<'a, T> FieldMut<'a, T> {
     }
 }
 
-impl<T: ComponentId> Deref for FieldMut<'_, T> {
-    type Target = [T];
+impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
+    type Output = T;
 
     #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        self.slice_components
+    fn index(&self, idx: FieldIndex) -> &T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx.0 == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        unsafe { self.slice_components.get_unchecked(idx.0) }
     }
 }
 
-impl<T: ComponentId> DerefMut for FieldMut<'_, T> {
+impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
     #[inline(always)]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.slice_components
+    fn index_mut(&mut self, idx: FieldIndex) -> &mut T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx.0 == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        unsafe { self.slice_components.get_unchecked_mut(idx.0) }
+    }
+}
+
+impl<'a, T> Index<usize> for FieldMut<'a, T> {
+    type Output = T;
+
+    #[inline(always)]
+    fn index(&self, idx: usize) -> &T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        &self.slice_components[idx]
+    }
+}
+
+impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
+    #[inline(always)]
+    fn index_mut(&mut self, idx: usize) -> &mut T {
+        // Safety: This index can only be obtained from `it.iter`
+        ecs_assert!(
+            self.is_shared && idx == 0,
+            FlecsErrorCode::InvalidParameter,
+            "Field is shared, cannot index above index 0"
+        );
+        &mut self.slice_components[idx]
     }
 }
 
