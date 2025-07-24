@@ -40,18 +40,11 @@ flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
 libc = "0.2.169"
 
 [profile.release]
-opt-level = 3
-debug = false
-debug-assertions = false
-codegen-units = 1
 lto = "thin"
 panic = "abort"
 
 [profile.bench]
 inherits = "release"
-lto = "thin"
-codegen-units = 1
-panic = "abort"
 
 [profile.dev.package]
 insta.opt-level = 3

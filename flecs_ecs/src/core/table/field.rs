@@ -355,30 +355,37 @@ pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
         index
     );
 
-    if !it.ptrs.is_null() && it.offset == 0 {
-        let ptr = unsafe { *it.ptrs.add(index_usize) };
-        if !ptr.is_null() {
-            // #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-            // {
-            //     // Make sure that address in ptrs array is the same as what this
-            //     // function would have returned if no ptrs array was set.
-            //     // not done due to const casting in rust
-            //     // let temp_ptrs = it.ptrs;
-            //     // it.ptrs = core::ptr::null_mut();
-            //     // ecs_assert!(
-            //     //     ptr == unsafe { sys::ecs_field_w_size(it, _size, index) },
-            //     //     FlecsErrorCode::InternalError,
-            //     //     "ptr address mismatch"
-            //     // );
-            //     // it.ptrs = temp_ptrs;
-            // }
-            return ptr as *mut T;
-        }
+    let ptrs = it.ptrs;
+    let offset = it.offset;
+
+    if ptrs.is_null() || offset != 0 {
+        return ecs_field_fallback(it, index);
     }
 
-    //return std::ptr::null_mut();
+    // fast path: direct load
+    let p = unsafe { *ptrs.add(index_usize) };
 
-    ecs_field_fallback(it, index)
+    if p.is_null() {
+        return ecs_field_fallback(it, index);
+    }
+
+    // #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    // {
+    //     // Make sure that address in ptrs array is the same as what this
+    //     // function would have returned if no ptrs array was set.
+    //     // not done due to const casting in rust
+    //     // let temp_ptrs = it.ptrs;
+    //     // it.ptrs = core::ptr::null_mut();
+    //     // ecs_assert!(
+    //     //     ptr == unsafe { sys::ecs_field_w_size(it, _size, index) },
+    //     //     FlecsErrorCode::InternalError,
+    //     //     "ptr address mismatch"
+    //     // );
+    //     // it.ptrs = temp_ptrs;
+    // }
+
+    // best case
+    p as *mut T
 }
 
 #[cold]
