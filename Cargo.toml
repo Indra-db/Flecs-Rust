@@ -44,12 +44,12 @@ opt-level = 3
 debug = false
 debug-assertions = false
 codegen-units = 1
-lto = true
+lto = "thin"
 panic = "abort"
 
 [profile.bench]
 inherits = "release"
-lto = true
+lto = "thin"
 codegen-units = 1
 panic = "abort"
 

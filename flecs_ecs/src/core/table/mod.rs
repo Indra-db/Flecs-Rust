@@ -4,11 +4,11 @@ mod field;
 mod flags;
 mod iter;
 
+use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 pub use field::{Field, FieldUntyped, ecs_field, ecs_field_w_size};
 pub use flags::TableFlags;
-pub use iter::{TableIter, TableRowIter};
-
-use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
+pub use iter::TableIter;
+pub(crate) use iter::{table_lock, table_unlock};
 
 use crate::core::*;
 use crate::sys;

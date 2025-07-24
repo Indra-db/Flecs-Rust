@@ -77,6 +77,7 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
         )
     }
 
+    #[inline(always)]
     fn get_tuple(
         &mut self,
         index: usize,
@@ -146,6 +147,7 @@ where
         term.inout = InOutKind::In as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         unsafe { &*data_ptr.add(index) }
@@ -181,6 +183,7 @@ where
         term.inout = InOutKind::InOut as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         unsafe { &mut *data_ptr.add(index) }
@@ -217,6 +220,7 @@ where
         term.oper = OperKind::Optional as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         if data_ptr.is_null() {
@@ -257,6 +261,7 @@ where
         term.oper = OperKind::Optional as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         if data_ptr.is_null() {
@@ -408,7 +413,7 @@ where
     }
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
-        A::create_tuple_data(array_components[0], index)
+        A::create_tuple_data(unsafe { *array_components.get_unchecked(0) }, index)
 
     }
 
@@ -606,10 +611,12 @@ macro_rules! impl_iterable {
 
             #[allow(unused, clippy::unused_unit)]
             fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
-                let mut column: isize = -1;
+                let mut column: usize = 0;
+
                 ($({
+                    let data_ptr = unsafe { *array_components.get_unchecked(column) };
                     column += 1;
-                    $t::create_tuple_data(array_components[column as usize], index)
+                    $t::create_tuple_data(data_ptr, index)
                 },)*)
             }
 

@@ -7,7 +7,7 @@ use crate::core::*;
 use crate::sys;
 
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
-    pub(crate) iter: &'a mut sys::ecs_iter_t,
+    pub iter: &'a mut sys::ecs_iter_t,
     pub(crate) count: usize,
     marker: PhantomData<P>,
 }
@@ -79,12 +79,9 @@ where
     /// });
     /// ```
     #[inline(always)]
-    pub fn iter(&self) -> TableRowIter<IS_RUN, P> {
-        TableRowIter {
-            iter: self,
-            index: 0,
-            count: self.count,
-        }
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = FieldIndex> {
+        // Range has no bounds checks, .map(FieldIndex) is inlined out to a single `add+load`
+        (0..self.count).map(FieldIndex)
     }
 
     /// Wrap the system id in the iterator in an [`EntityView`] object.
@@ -107,8 +104,8 @@ where
     /// # Arguments
     ///
     /// * `row` - Row being iterated over
-    pub fn entity(&self, row: usize) -> Option<EntityView<'a>> {
-        let ptr = unsafe { self.iter.entities.add(row) };
+    pub fn entity(&self, row: impl Into<usize>) -> Option<EntityView<'a>> {
+        let ptr = unsafe { self.iter.entities.add(row.into()) };
         if ptr.is_null() {
             return None;
         }
@@ -422,6 +419,7 @@ where
     /// Returns a column object that can be used to access the field data.
     #[inline(always)]
     pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<'a, T::UnderlyingType>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true>(index);
         self.field_internal::<T::UnderlyingType>(index)
     }
@@ -440,6 +438,7 @@ where
         &'a self,
         index: i8,
     ) -> Option<FieldMut<'a, T::UnderlyingType>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true>(index);
         self.field_internal_mut::<T::UnderlyingType>(index)
     }
@@ -455,6 +454,7 @@ where
     /// Returns a column object that can be used to access the field data.
     #[inline(always)]
     pub fn field_untyped(&self, index: i8) -> Option<FieldUntyped> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<(), true, false>(index);
         self.field_untyped_internal(index)
     }
@@ -470,6 +470,7 @@ where
     /// Returns a column object that can be used to access the field data.
     #[inline(always)]
     pub fn field_untyped_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<(), false, false>(index);
         self.field_untyped_internal_mut(index)
     }
@@ -500,7 +501,7 @@ where
             }
         } else {
             let field = self.field_internal::<T::UnderlyingType>(index)?;
-            Some(&field.slice_components[row])
+            Some(unsafe { &*field.slice_components.add(row) })
         }
     }
 
@@ -522,7 +523,7 @@ where
             }
         } else {
             let field = self.field_internal_mut::<T::UnderlyingType>(index)?;
-            Some(&mut field.slice_components[row])
+            Some(unsafe { &mut *field.slice_components.add(row) })
         }
     }
 
@@ -626,10 +627,10 @@ where
     ///
     /// The entity ids.
     pub fn entities(&self) -> Field<Entity> {
-        let slice = unsafe {
-            core::slice::from_raw_parts_mut(self.iter.entities as *mut Entity, self.count)
-        };
-        Field::<Entity>::new(slice, false)
+        // let slice = unsafe {
+        //     core::slice::from_raw_parts_mut(, self.count)
+        // };
+        Field::<Entity>::new(self.iter.entities as *mut Entity, false)
     }
 
     /// Check if the current table has changed since the last iteration.
@@ -717,9 +718,9 @@ where
 
         //we don't do null check on array because we already checked if the type is correct before calling this function and if index is correct
 
-        let slice = unsafe { core::slice::from_raw_parts(array, count) };
+        //let slice = unsafe { core::slice::from_raw_parts(array, count) };
 
-        Some(Field::new(slice, is_shared))
+        Some(Field::new(array, is_shared))
     }
 
     #[inline(always)]
@@ -745,9 +746,7 @@ where
 
         //we don't do null check on array because we already checked if the type is correct before calling this function and if index is correct
 
-        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
-
-        Some(FieldMut::new(slice, is_shared))
+        Some(FieldMut::new(array, is_shared))
     }
 
     pub(crate) fn field_untyped_internal(&self, index: i8) -> Option<FieldUntyped> {
@@ -938,12 +937,9 @@ where
     P: ComponentId,
 {
     /// Progress iterator.
-    ///
-    /// # Safety
-    ///
-    /// This operation is valid inside a `run()` callback. An example of an
-    /// invalid context is inside an `each()` callback.
+    /// this operation is not available on functions where the iterator is not from `.run()``
     #[allow(clippy::should_implement_trait)]
+    #[inline(always)]
     pub fn next(&mut self) -> bool {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
@@ -952,12 +948,14 @@ where
             };
         }
 
-        let result = {
-            if let Some(next) = self.iter.next {
-                let result = unsafe { next(self.iter) };
+        let result = match self.iter.next {
+            Some(next) => {
+                let r = unsafe { next(self.iter) };
                 self.count = self.iter.count as usize;
-                result
-            } else {
+                r
+            }
+            None => {
+                // no more items → clear valid and return
                 self.iter.flags &= !sys::EcsIterIsValid;
                 return false;
             }
@@ -1015,26 +1013,18 @@ where
     }
 }
 
-/// Iterator to iterate over rows in a table
-pub struct TableRowIter<'a, const IS_RUN: bool, P> {
-    iter: &'a TableIter<'a, IS_RUN, P>,
-    count: usize,
-    index: usize,
+#[inline(always)]
+pub(crate) fn table_lock(world_ptr: *mut sys::ecs_world_t, table_ptr: *mut sys::ecs_table_t) {
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    unsafe {
+        sys::ecs_table_lock(world_ptr, table_ptr);
+    }
 }
 
-impl<const IS_RUN: bool, P> Iterator for TableRowIter<'_, IS_RUN, P>
-where
-    P: ComponentId,
-{
-    type Item = FieldIndex;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.count {
-            let result = self.index;
-            self.index += 1;
-            Some(FieldIndex(result))
-        } else {
-            None
-        }
+#[inline(always)]
+pub(crate) fn table_unlock(world_ptr: *mut sys::ecs_world_t, table_ptr: *mut sys::ecs_table_t) {
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    unsafe {
+        sys::ecs_table_unlock(world_ptr, table_ptr);
     }
 }

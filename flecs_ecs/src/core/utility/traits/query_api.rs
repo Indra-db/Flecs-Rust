@@ -60,42 +60,41 @@ where
             );
         }
 
-        unsafe {
-            let mut iter = self.retrieve_iter();
+        let world = self.world();
+        let world_ptr = world.ptr_mut();
+        let mut iter = self.retrieve_iter();
+
+        while self.iter_next(&mut iter) {
             iter.flags |= sys::EcsIterCppEach;
-
-            while self.iter_next(&mut iter) {
-                iter.flags |= sys::EcsIterCppEach;
-                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                sys::ecs_table_lock(self.world_ptr_mut(), iter.table);
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple(i);
-                        func(tuple);
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_row(&iter, i);
-                        func(tuple);
-                    }
+            let (is_any_array, mut components_data) = T::create_ptrs(&iter);
+            let iter_count = {
+                if iter.count == 0 && iter.table.is_null() {
+                    1_usize
                 } else {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        func(tuple);
-                    }
+                    iter.count as usize
                 }
+            };
 
-                sys::ecs_table_unlock(self.world_ptr_mut(), iter.table);
+            table_lock(world_ptr, iter.table);
+
+            if !is_any_array.a_ref && !is_any_array.a_row {
+                for i in 0..iter_count {
+                    let tuple = components_data.get_tuple(i);
+                    func(tuple);
+                }
+            } else if is_any_array.a_row {
+                for i in 0..iter_count {
+                    let tuple = components_data.get_tuple_with_row(&iter, i);
+                    func(tuple);
+                }
+            } else {
+                for i in 0..iter_count {
+                    let tuple = components_data.get_tuple_with_ref(i);
+                    func(tuple);
+                }
             }
+
+            table_unlock(world_ptr, iter.table);
         }
     }
 
@@ -139,7 +138,8 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+                table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -167,7 +167,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
         }
     }
@@ -237,7 +237,7 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
                     for i in 0..iter_count {
@@ -259,7 +259,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
         }
     }
@@ -284,7 +284,7 @@ where
                 let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
                     for i in 0..iter_count {
@@ -312,7 +312,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
             entity
         }
@@ -341,7 +341,7 @@ where
                 let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
                     for i in 0..iter_count {
@@ -374,7 +374,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
             entity_result
         }
@@ -412,7 +412,7 @@ where
                     }
                 };
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
                     for i in 0..iter_count {
@@ -449,7 +449,7 @@ where
                     }
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
             entity_result
         }

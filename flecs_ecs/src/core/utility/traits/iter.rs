@@ -103,7 +103,7 @@ where
                     "no entities returned, use each() without flecs::entity argument",
                 );
 
-                sys::ecs_table_lock(world_ptr, iter.table);
+                table_lock(world_ptr, iter.table);
 
                 // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
                 // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
@@ -116,7 +116,7 @@ where
                     func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
                 }
 
-                sys::ecs_table_unlock(world_ptr, iter.table);
+                table_unlock(world_ptr, iter.table);
             }
         }
     }

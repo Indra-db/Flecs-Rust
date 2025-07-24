@@ -13,6 +13,7 @@ use core::ops::IndexMut;
 pub struct FieldIndex(pub(crate) usize);
 
 impl Into<usize> for FieldIndex {
+    #[inline(always)]
     fn into(self) -> usize {
         self.0
     }
@@ -23,16 +24,19 @@ impl Into<usize> for FieldIndex {
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
+#[derive(Debug)]
 pub struct Field<'a, T> {
-    pub(crate) slice_components: &'a [T],
+    pub(crate) slice_components: *const T,
     pub(crate) is_shared: bool,
+    pub(crate) _marker: core::marker::PhantomData<&'a T>,
 }
 
 impl<'a, T> Field<'a, T> {
-    pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
+    pub(crate) fn new(slice_components: *const T, is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
+            _marker: core::marker::PhantomData,
         }
     }
 
@@ -45,14 +49,14 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
     type Output = T;
 
     #[inline(always)]
-    fn index(&self, idx: FieldIndex) -> &T {
+    fn index(&self, idx: FieldIndex) -> &'a Self::Output {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
             self.is_shared && idx.0 == 0,
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.get_unchecked(idx.0) }
+        unsafe { &*self.slice_components.add(idx.0) }
     }
 }
 
@@ -60,14 +64,14 @@ impl<'a, T> Index<usize> for Field<'a, T> {
     type Output = T;
 
     #[inline(always)]
-    fn index(&self, idx: usize) -> &T {
+    fn index(&self, idx: usize) -> &Self::Output {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
             self.is_shared && idx == 0,
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        &self.slice_components[idx]
+        unsafe { self.slice_components.add(idx).as_ref().unwrap() }
     }
 }
 
@@ -77,8 +81,9 @@ impl<'a, T> Index<usize> for Field<'a, T> {
 ///
 /// * `T`: The type of the column.
 pub struct FieldMut<'a, T> {
-    pub(crate) slice_components: &'a mut [T],
+    pub(crate) slice_components: *mut T,
     pub(crate) is_shared: bool,
+    pub(crate) _marker: core::marker::PhantomData<&'a mut T>,
 }
 
 impl<'a, T> FieldMut<'a, T> {
@@ -88,10 +93,11 @@ impl<'a, T> FieldMut<'a, T> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
+    pub fn new(slice_components: *mut T, is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
+            _marker: core::marker::PhantomData,
         }
     }
 
@@ -112,7 +118,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.get_unchecked(idx.0) }
+        unsafe { &*self.slice_components.add(idx.0) }
     }
 }
 
@@ -125,7 +131,7 @@ impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.get_unchecked_mut(idx.0) }
+        unsafe { &mut *self.slice_components.add(idx.0) }
     }
 }
 
@@ -140,7 +146,7 @@ impl<'a, T> Index<usize> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        &self.slice_components[idx]
+        unsafe { self.slice_components.add(idx).as_ref().unwrap() }
     }
 }
 
@@ -153,7 +159,7 @@ impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        &mut self.slice_components[idx]
+        unsafe { self.slice_components.add(idx).as_mut().unwrap() }
     }
 }
 
@@ -319,7 +325,7 @@ pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     const {
         assert!(core::mem::size_of::<T>() != 0, "Size of T must not be zero");
     }
-
+    //flecs_ecs::core::table::field::ecs_field::panic_cold_explicit
     let index_usize = index as usize;
     //TODO should be soft asserts
     ecs_assert!(
@@ -352,24 +358,33 @@ pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     if !it.ptrs.is_null() && it.offset == 0 {
         let ptr = unsafe { *it.ptrs.add(index_usize) };
         if !ptr.is_null() {
-            #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-            {
-                // Make sure that address in ptrs array is the same as what this
-                // function would have returned if no ptrs array was set.
-                // not done due to const casting in rust
-                // let temp_ptrs = it.ptrs;
-                // it.ptrs = core::ptr::null_mut();
-                // ecs_assert!(
-                //     ptr == unsafe { sys::ecs_field_w_size(it, _size, index) },
-                //     FlecsErrorCode::InternalError,
-                //     "ptr address mismatch"
-                // );
-                // it.ptrs = temp_ptrs;
-            }
+            // #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+            // {
+            //     // Make sure that address in ptrs array is the same as what this
+            //     // function would have returned if no ptrs array was set.
+            //     // not done due to const casting in rust
+            //     // let temp_ptrs = it.ptrs;
+            //     // it.ptrs = core::ptr::null_mut();
+            //     // ecs_assert!(
+            //     //     ptr == unsafe { sys::ecs_field_w_size(it, _size, index) },
+            //     //     FlecsErrorCode::InternalError,
+            //     //     "ptr address mismatch"
+            //     // );
+            //     // it.ptrs = temp_ptrs;
+            // }
             return ptr as *mut T;
         }
     }
 
+    //return std::ptr::null_mut();
+
+    ecs_field_fallback(it, index)
+}
+
+#[cold]
+#[inline(never)]
+fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
+    let index_usize = index as usize;
     let tr = unsafe { *it.trs.add(index_usize) };
     if tr.is_null() {
         ecs_assert!(
@@ -444,7 +459,8 @@ pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     unsafe { sys::ecs_table_get_column(table, column_index as i32, row as i32) as *mut T }
 }
 
-#[inline(always)]
+#[inline(never)]
+#[unsafe(no_mangle)]
 pub fn ecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
     let index_usize = index as usize;
     //TODO should be soft asserts
