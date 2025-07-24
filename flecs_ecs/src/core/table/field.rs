@@ -52,7 +52,7 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
     fn index(&self, idx: FieldIndex) -> &'a Self::Output {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx.0 == 0,
+            !(self.is_shared && idx.0 > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
@@ -67,7 +67,7 @@ impl<'a, T> Index<usize> for Field<'a, T> {
     fn index(&self, idx: usize) -> &Self::Output {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx == 0,
+            !(self.is_shared && idx > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
@@ -142,7 +142,7 @@ impl<'a, T> Index<usize> for FieldMut<'a, T> {
     fn index(&self, idx: usize) -> &T {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx == 0,
+            !(self.is_shared && idx > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
@@ -155,7 +155,7 @@ impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
     fn index_mut(&mut self, idx: usize) -> &mut T {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx == 0,
+            !(self.is_shared && idx > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
