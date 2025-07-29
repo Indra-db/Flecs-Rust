@@ -100,6 +100,10 @@ impl<'a> System<'a> {
         };
         unsafe { Query::<()>::new_from(query) }
     }
+ 
+    pub fn immediate(&self) -> bool {
+        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).immediate }
+    }
 
     /// Run the system
     ///
