@@ -275,7 +275,7 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
         self
     }
 
-    /// Sets a rate filter on the system, causing it to run once every `rate` 
+    /// Sets a rate filter on the system, causing it to run once every `rate`
     /// ticks. The tick source may be any entity, including another system.
     pub fn set_tick_source_rate(&mut self, tick_source: impl Into<Entity>, rate: i32) -> &mut Self {
         self.desc.rate = rate;
@@ -283,7 +283,7 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
         self
     }
 
-    /// Sets a rate filter on the system, causing it to run once every `rate` 
+    /// Sets a rate filter on the system, causing it to run once every `rate`
     /// ticks. If a tick source was provided, this just updates the rate of the
     /// system.
     pub fn set_rate(&mut self, rate: i32) -> &mut Self {

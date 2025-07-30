@@ -58,6 +58,10 @@ where
     _phantom: PhantomData<T>,
 }
 
+unsafe impl<T> Send for Query<T> where T: QueryTuple {}
+
+unsafe impl<T> Sync for Query<T> where T: QueryTuple {}
+
 impl<T> Clone for Query<T>
 where
     T: QueryTuple,

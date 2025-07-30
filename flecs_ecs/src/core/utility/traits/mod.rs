@@ -158,6 +158,16 @@ pub mod private {
         //     }
         // }
     }
+
+    #[allow(non_camel_case_types)]
+    #[doc(hidden)]
+    pub trait internal_ParSystemAPI<'a, P, T>: internal_SystemAPI<'a, P, T>
+    where
+        T: QueryTuple,
+        P: ComponentId,
+    {
+        fn set_multi_threaded(&mut self, multi_threaded: bool);
+    }
 }
 
 pub trait DoesNotImpl {

@@ -1766,8 +1766,7 @@ fn system_multithread_system_w_query_each() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_entity(move |e, p| {
+        .par_each_entity(move |e, p| {
             let world = e.world();
             q.iter_stage(world).each(|v| {
                 p.x += v.x;
@@ -1796,21 +1795,18 @@ fn system_multithread_system_w_query_each_w_iter() {
 
     let q = world.new_query::<&Velocity>();
 
-    world
-        .system::<&mut Position>()
-        .multi_threaded()
-        .run(move |mut it| {
-            while it.next() {
-                let mut p = it.field_mut::<Position>(0);
-                for i in it.iter() {
-                    let p = &mut p[i];
-                    q.iter_stage(it.world()).each(|v| {
-                        p.x += v.x;
-                        p.y += v.y;
-                    });
-                }
+    world.system::<&mut Position>().par_run(move |mut it| {
+        while it.next() {
+            let mut p = it.field_mut::<Position>(0);
+            for i in it.iter() {
+                let p = &mut p[i];
+                q.iter_stage(it.world()).each(|v| {
+                    p.x += v.x;
+                    p.y += v.y;
+                });
             }
-        });
+        }
+    });
 
     world.progress();
 
@@ -1832,22 +1828,19 @@ fn system_multithread_system_w_query_each_w_world() {
         .set(Velocity { x: 1, y: 2 });
 
     let q = world.new_query::<&Velocity>();
-    world
-        .system::<&mut Position>()
-        .multi_threaded()
-        .run(move |mut it| {
-            let world = it.world();
-            while it.next() {
-                let mut p = it.field_mut::<Position>(0);
-                for i in it.iter() {
-                    let p = &mut p[i];
-                    q.iter_stage(world).each(|v| {
-                        p.x += v.x;
-                        p.y += v.y;
-                    });
-                }
+    world.system::<&mut Position>().par_run(move |mut it| {
+        let world = it.world();
+        while it.next() {
+            let mut p = it.field_mut::<Position>(0);
+            for i in it.iter() {
+                let p = &mut p[i];
+                q.iter_stage(world).each(|v| {
+                    p.x += v.x;
+                    p.y += v.y;
+                });
             }
-        });
+        }
+    });
 
     world.progress();
 
@@ -1872,8 +1865,7 @@ fn system_multithread_system_w_query_iter() {
 
     world
         .system::<&mut Position>()
-        .multi_threaded()
-        .each_entity(move |e, p| {
+        .par_each_entity(move |e, p| {
             q.iter_stage(e).run(|mut it| {
                 while it.next() {
                     let v = it.field::<Velocity>(0);
@@ -1907,27 +1899,24 @@ fn system_multithread_system_w_query_iter_w_iter() {
 
     let q = world.new_query::<&Velocity>();
 
-    world
-        .system::<&mut Position>()
-        .multi_threaded()
-        .run(move |mut it| {
-            let world = it.world();
-            while it.next() {
-                let mut p = it.field_mut::<Position>(0);
-                for i in it.iter() {
-                    let p = &mut p[i];
-                    q.iter_stage(world).run(|mut it| {
-                        while it.next() {
-                            let v = it.field::<Velocity>(0);
-                            for i in it.iter() {
-                                p.x += v[i].x;
-                                p.y += v[i].y;
-                            }
+    world.system::<&mut Position>().par_run(move |mut it| {
+        let world = it.world();
+        while it.next() {
+            let mut p = it.field_mut::<Position>(0);
+            for i in it.iter() {
+                let p = &mut p[i];
+                q.iter_stage(world).run(|mut it| {
+                    while it.next() {
+                        let v = it.field::<Velocity>(0);
+                        for i in it.iter() {
+                            p.x += v[i].x;
+                            p.y += v[i].y;
                         }
-                    });
-                }
+                    }
+                });
             }
-        });
+        }
+    });
 
     world.progress();
 
@@ -1950,27 +1939,24 @@ fn system_multithread_system_w_query_iter_w_world() {
 
     let q = world.new_query::<&Velocity>();
 
-    world
-        .system::<&mut Position>()
-        .multi_threaded()
-        .run(move |mut it| {
-            let world = it.world();
-            while it.next() {
-                let mut p = it.field_mut::<Position>(0);
-                for i in it.iter() {
-                    let p = &mut p[i];
-                    q.iter_stage(world).run(|mut it| {
-                        while it.next() {
-                            let v = it.field::<Velocity>(0);
-                            for i in it.iter() {
-                                p.x += v[i].x;
-                                p.y += v[i].y;
-                            }
+    world.system::<&mut Position>().par_run(move |mut it| {
+        let world = it.world();
+        while it.next() {
+            let mut p = it.field_mut::<Position>(0);
+            for i in it.iter() {
+                let p = &mut p[i];
+                q.iter_stage(world).run(|mut it| {
+                    while it.next() {
+                        let v = it.field::<Velocity>(0);
+                        for i in it.iter() {
+                            p.x += v[i].x;
+                            p.y += v[i].y;
                         }
-                    });
-                }
+                    }
+                });
             }
-        });
+        }
+    });
 
     world.progress();
 
