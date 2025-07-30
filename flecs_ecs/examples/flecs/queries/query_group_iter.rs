@@ -55,51 +55,43 @@ fn main() {
     // Create npc's in world cell 0_0
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_0_0>()))
-        .add(id::<Merchant>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_0_0))
+        .add(Merchant)
+        .add(Npc);
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_0_0>()))
-        .add(id::<Merchant>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_0_0))
+        .add(Merchant)
+        .add(Npc);
 
     // Create npc's in world cell 0_1
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_0_1>()))
-        .add(id::<Beggar>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_0_1))
+        .add(Beggar)
+        .add(Npc);
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_0_1>()))
-        .add(id::<Soldier>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_0_1))
+        .add(Soldier)
+        .add(Npc);
 
     // Create npc's in world cell 1_0
+    world.entity().add((WorldCell, Cell_1_0)).add(Mage).add(Npc);
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_1_0>()))
-        .add(id::<Mage>())
-        .add(id::<Npc>());
-    world
-        .entity()
-        .add((id::<WorldCell>(), id::<Cell_1_0>()))
-        .add(id::<Beggar>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_1_0))
+        .add(Beggar)
+        .add(Npc);
 
     // Create npc's in world cell 1_1
     world
         .entity()
-        .add((id::<WorldCell>(), id::<Cell_1_1>()))
-        .add(id::<Soldier>())
-        .add(id::<Npc>());
+        .add((WorldCell, Cell_1_1))
+        .add(Soldier)
+        .add(Npc);
 
-    let mut query = world
-        .query::<()>()
-        .with(id::<&Npc>())
-        .group_by(id::<WorldCell>())
-        .build();
+    let mut query = world.query::<()>().with(&Npc).group_by(WorldCell).build();
 
     // Iterate all tables
     println!("All tables");
@@ -119,9 +111,9 @@ fn main() {
 
     println!("Tables for cell 1_0:");
 
-    query.set_group(id::<Cell_1_0>()).run(|mut iter| {
+    query.set_group(Cell_1_0).run(|mut iter| {
+        let world = iter.world();
         while iter.next() {
-            let world = iter.world();
             let group = world.entity_from_id(iter.group_id());
             println!(
                 "group: {:?} - Table [{}]",

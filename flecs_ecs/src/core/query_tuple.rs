@@ -11,6 +11,7 @@ use flecs_ecs_derive::tuples;
 //     pub is_ref: bool,
 // }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[doc(hidden)]
 pub struct IsAnyArray {
     pub a_ref: bool, //e.g. singleton
@@ -22,18 +23,25 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub is_ref_array_components: [bool; LEN],
     pub is_row_array_components: [bool; LEN],
     pub index_array_components: [i8; LEN],
-    pub is_any_array: IsAnyArray,
     _marker: PhantomData<T>,
 }
 
 pub trait ComponentPointers<T: QueryTuple> {
-    fn new(iter: &sys::ecs_iter_t) -> Self;
+    fn new(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self);
 
-    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_>;
+    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_>;
+
+    fn get_tuple_with_row(
+        &mut self,
+        iter: &sys::ecs_iter_t,
+        index_row_entity: usize,
+    ) -> T::TupleType<'_>;
+
+    fn get_tuple_with_ref(&mut self, index: usize) -> T::TupleType<'_>;
 }
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
-    fn new(iter: &sys::ecs_iter_t) -> Self {
+    fn new(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self) {
         let mut array_components = [core::ptr::null::<u8>() as *mut u8; LEN];
         let mut is_ref_array_components = [false; LEN];
         let mut is_row_array_components = [false; LEN];
@@ -57,35 +65,44 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             }
         };
 
-        Self {
-            array_components,
-            is_ref_array_components,
-            is_row_array_components,
-            index_array_components,
+        (
             is_any_array,
-            _marker: PhantomData::<T>,
-        }
+            Self {
+                array_components,
+                is_ref_array_components,
+                is_row_array_components,
+                index_array_components,
+                _marker: PhantomData::<T>,
+            },
+        )
     }
 
-    fn get_tuple(&mut self, iter: &sys::ecs_iter_t, index: usize) -> T::TupleType<'_> {
-        if self.is_any_array.a_row {
-            T::create_tuple_with_row(
-                iter,
-                &mut self.array_components[..],
-                &self.is_ref_array_components[..],
-                &self.is_row_array_components[..],
-                &self.index_array_components[..],
-                index,
-            )
-        } else if self.is_any_array.a_ref {
-            T::create_tuple_with_ref(
-                &self.array_components[..],
-                &self.is_ref_array_components[..],
-                index,
-            )
-        } else {
-            T::create_tuple(&self.array_components[..], index)
-        }
+    #[inline(always)]
+    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_> {
+        T::create_tuple(&self.array_components[..], index)
+    }
+
+    fn get_tuple_with_row(
+        &mut self,
+        iter: &sys::ecs_iter_t,
+        index_row_entity: usize,
+    ) -> T::TupleType<'_> {
+        T::create_tuple_with_row(
+            iter,
+            &mut self.array_components[..],
+            &self.is_ref_array_components[..],
+            &self.is_row_array_components[..],
+            &self.index_array_components[..],
+            index_row_entity,
+        )
+    }
+
+    fn get_tuple_with_ref(&mut self, index: usize) -> T::TupleType<'_> {
+        T::create_tuple_with_ref(
+            &self.array_components[..],
+            &self.is_ref_array_components[..],
+            index,
+        )
     }
 }
 
@@ -120,15 +137,18 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
+    #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         unsafe { &*data_ptr.add(index) }
     }
 
+    #[inline(always)]
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
@@ -155,15 +175,18 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
+    #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         unsafe { &mut *data_ptr.add(index) }
     }
 
+    #[inline(always)]
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
@@ -195,6 +218,7 @@ where
         term.oper = OperKind::Optional as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         if data_ptr.is_null() {
@@ -204,6 +228,7 @@ where
         }
     }
 
+    #[inline(always)]
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
@@ -230,11 +255,13 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
 
+    #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::InOut as i16;
         term.oper = OperKind::Optional as i16;
     }
 
+    #[inline(always)]
     fn create_tuple_data<'a>(array_components_data: *mut u8, index: usize) -> Self::ActualType<'a> {
         let data_ptr = array_components_data as Self::CastType;
         if data_ptr.is_null() {
@@ -244,6 +271,7 @@ where
         }
     }
 
+    #[inline(always)]
     fn create_tuple_with_ref_data<'a>(
         array_components_data: *mut u8,
         is_ref: bool,
@@ -266,12 +294,13 @@ pub trait QueryTuple: Sized {
     const CONTAINS_ANY_TAG_TERM: bool;
     const COUNT: i32;
 
-    fn create_ptrs(iter: &sys::ecs_iter_t) -> Self::Pointers {
+    fn create_ptrs(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self::Pointers) {
         Self::Pointers::new(iter)
     }
 
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>);
 
+    #[inline(always)]
     fn register_ids_descriptor(world: *mut sys::ecs_world_t, desc: &mut sys::ecs_query_desc_t) {
         Self::register_ids_descriptor_at(world, &mut desc.terms[..], &mut 0);
     }
@@ -318,12 +347,13 @@ pub trait QueryTuple: Sized {
 impl<A> QueryTuple for A
 where
     A: IterableTypeOperation,
-{ 
+{
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
     const COUNT : i32 = 1;
 
+    #[inline(always)]
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
         let _world_ptr = query.world_ptr();
 
@@ -336,24 +366,6 @@ where
                 "Pair is not a (data) component. Possible cause: PairIsTag trait"
             );
         }
-
-        ecs_assert!(
-        {
-            if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
-                if !ti.is_null() {
-                    // Union relationships always return a value of type
-                    // flecs::entity_t which holds the target id of the 
-                    // union relationship.
-                    // If a union component with a non-zero size (like an  
-                    // enum) is added to the query signature, the each/iter
-                    // functions would accept a parameter of the component
-                    // type instead of flecs::entity_t, which would cause
-                    // an assert.
-                    (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(_world_ptr, id, *flecs::Union)})
-                } else { true }
-            } else { true }
-        }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
         
         query.with(id);
         let term = query.current_term_mut();
@@ -362,6 +374,7 @@ where
     }
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
     fn register_ids_descriptor_at(
         world: *mut sys::ecs_world_t,
         terms: &mut [sys::ecs_term_t],
@@ -373,6 +386,7 @@ where
         *index += 1;
     }
 
+    #[inline(always)]
     fn populate_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
@@ -381,12 +395,12 @@ where
         indexes: &mut [i8],
     ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
-            // Need to fetch the value with ecs_field_at()
+            // Need to fetch the value with flecs_field_at()
             is_ref[0] = true;
             is_row[0] = true;
             indexes[0] = 0;
         } else {
-            components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+            components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
         IsAnyArray {
@@ -395,16 +409,18 @@ where
         }
     }
 
+    #[inline(always)]
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-        components[0] = unsafe { ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 };
+        components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
 
+    #[inline(always)]
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
-        A::create_tuple_data(array_components[0], index)
+        A::create_tuple_data(unsafe { *array_components.get_unchecked(0) }, index)
 
     }
 
@@ -419,6 +435,7 @@ where
     }
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[inline(always)]
     fn create_tuple_with_row<'a>(
             iter: *const sys::ecs_iter_t,
             array_components: &'a mut [*mut u8],
@@ -430,7 +447,7 @@ where
 
         if is_row_array_components[0] {
             let ptr_to_first_index_array = &mut array_components[0];
-            *ptr_to_first_index_array = unsafe { ecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
+            *ptr_to_first_index_array = unsafe { flecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
         }
 
         A::create_tuple_with_ref_data(
@@ -526,6 +543,7 @@ macro_rules! impl_iterable {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
 
+            #[inline(always)]
             fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
                 let _world = query.world();
                 let _world_ptr = query.world_ptr();
@@ -541,24 +559,6 @@ macro_rules! impl_iterable {
                         );
                     }
 
-                    ecs_assert!(
-                    {
-                        if (id & (sys::ECS_ID_FLAGS_MASK as u64)) == 0 {
-                            let ti =  unsafe { sys::ecs_get_type_info(_world_ptr, id) };
-                            if !ti.is_null() {
-                                // Union relationships always return a value of type
-                                // flecs::entity_t which holds the target id of the
-                                // union relationship.
-                                // If a union component with a non-zero size (like an
-                                // enum) is added to the query signature, the each/iter
-                                // functions would accept a parameter of the component
-                                // type instead of flecs::entity_t, which would cause
-                                // an assert.
-                                (unsafe { (*ti).size == 0 } || !unsafe { sys::ecs_has_id(_world_ptr, id, *flecs::Union)})
-                            } else { true }
-                        } else { true }
-                    }, FlecsErrorCode::InvalidParameter, "use `with` method to add union relationship");
-
                     query.with(id);
                     let term = query.current_term_mut();
                     $t::populate_term(term);
@@ -567,11 +567,13 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused)]
+            #[inline(always)]
             fn register_ids_descriptor_at(world: *mut sys::ecs_world_t, terms: &mut [sys::ecs_term_t], index: &mut usize) {
                 $( $t::register_ids_descriptor_at(world, terms, index); )*
             }
 
             #[allow(unused)]
+            #[inline(always)]
             fn populate_array_ptrs(
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
@@ -579,22 +581,22 @@ macro_rules! impl_iterable {
                 is_row: &mut [bool],
                 indexes: &mut [i8],
             ) -> IsAnyArray {
-                let mut index = 0;
+                let mut index : usize = 0;
                 let mut any_ref = false;
                 let mut any_row = false;
                 $(
-                    if it.row_fields & (1u32 << index) != 0 {
-                        // Need to fetch the value with ecs_field_at()
-                        is_ref[index as usize] =  true;
-                        is_row[index as usize] = true;
-                        indexes[index as usize] = index as i8;
+                    if (it.row_fields & (1u32 << index)) != 0 {
+                        // Need to fetch the value with flecs_field_at()
+                        is_ref[index ] =  true;
+                        is_row[index ] = true;
+                        indexes[index ] = index as i8;
                     } else {
-                        components[index as usize] =
-                            unsafe { ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8 };
-                        is_ref[index as usize] = unsafe { *it.sources.add(index as usize) != 0 };
+                        components[index ] =
+                            flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
+                        is_ref[index ] = unsafe { *it.sources.add(index ) != 0 };
                     }
-                    any_ref |= is_ref[index as usize];
-                    any_row |= is_row[index as usize];
+                    any_ref |= is_ref[index ];
+                    any_row |= is_row[index ];
                     index += 1;
                 )*
                 IsAnyArray {
@@ -604,40 +606,48 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused)]
+            #[inline(always)]
             fn populate_self_array_ptrs(
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
             ) {
-                let mut index = 0;
+                let mut index : usize = 0;
                 $(
-                    ecs_assert!(unsafe { *it.sources.add(index as usize) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-                    components[index as usize] =
-                        unsafe { ecs_field::<$t::OnlyPairType>(it, index) as *mut u8 };
+                    ecs_assert!(unsafe { *it.sources.add(index ) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
+                    components[index] =
+                        flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                     index += 1;
                 )*
 
             }
 
             #[allow(unused, clippy::unused_unit)]
+            #[inline(always)]
             fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_> {
-                let mut column: isize = -1;
+                let mut column: usize = 0;
+
                 ($({
+                    let data_ptr = unsafe { *array_components.get_unchecked(column) };
                     column += 1;
-                    $t::create_tuple_data(array_components[column as usize], index)
+                    $t::create_tuple_data(data_ptr, index)
                 },)*)
             }
 
             #[allow(unused, clippy::unused_unit)]
+            #[inline(always)]
             fn create_tuple_with_ref<'a>(array_components: &'a [*mut u8], is_ref_array_components: &[bool], index: usize) -> Self::TupleType<'a> {
-                let mut column: isize = -1;
+                let mut column: usize = 0;
                 ($({
+                    let data_ptr = unsafe { *array_components.get_unchecked(column) };
+                    let is_ref = unsafe { *is_ref_array_components.get_unchecked(column) };
                     column += 1;
-                    $t::create_tuple_with_ref_data(array_components[column as usize], is_ref_array_components[column as usize], index)
+                    $t::create_tuple_with_ref_data(data_ptr, is_ref, index)
                 },)*)
             }
 
             #[allow(unused, clippy::unused_unit)]
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
+            #[inline(always)]
             fn create_tuple_with_row<'a>(
                 iter: *const sys::ecs_iter_t,
                 array_components: &'a mut [*mut u8],
@@ -646,15 +656,18 @@ macro_rules! impl_iterable {
                 indexes_array_components: &[i8],
                 index_row_entity: usize
             ) -> Self::TupleType<'a> {
-                let mut column: isize = -1;
+                let mut column: usize = 0;
                 ($({
-                    column += 1;
-                    if is_row_array_components[column as usize] {
-                        let ptr_to_first_index_array = &mut array_components[column as usize];
-                        *ptr_to_first_index_array = unsafe { ecs_field_at::<$t::OnlyPairType>(iter, indexes_array_components[column as usize], index_row_entity as i32) } as *mut $t::OnlyPairType as *mut u8;
+                    let is_row = unsafe { *is_row_array_components.get_unchecked(column) };
+                    if is_row {
+                        let ptr_to_first_index_array = unsafe { &mut *array_components.get_unchecked_mut(column) };
+                        let index_array_component = unsafe { *indexes_array_components.get_unchecked(column) };
+                        *ptr_to_first_index_array = unsafe { flecs_field_at::<$t::OnlyPairType>(iter, index_array_component, index_row_entity as i32) } as *mut $t::OnlyPairType as *mut u8;
                     }
-
-                    $t::create_tuple_with_ref_data(array_components[column as usize], is_ref_array_components[column as usize], index_row_entity)
+                    let data_ptr = unsafe { *array_components.get_unchecked(column) };
+                    let is_ref = unsafe { *is_ref_array_components.get_unchecked(column) };
+                    column += 1;
+                    $t::create_tuple_with_ref_data(data_ptr, is_ref, index_row_entity)
                 },)*)
             }
         }

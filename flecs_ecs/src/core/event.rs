@@ -48,7 +48,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
             ids_array: Default::default(),
             _phantom: PhantomData,
         };
-        obj.desc.event = T::UnderlyingType::id(world);
+        obj.desc.event = T::UnderlyingType::entity_id(world);
         obj
     }
 
@@ -104,7 +104,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         enum_value: C,
     ) -> &mut Self {
         let world = self.world;
-        let rel = T::id(world);
+        let rel = T::entity_id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::id call
         let target = unsafe { enum_value.id_variant_unchecked(world) };
         ecs_assert!(
@@ -120,9 +120,9 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `entity` - The target entity to emit for the event
-    pub fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
+    pub fn entity(&mut self, entity: impl IntoEntity) -> &mut Self {
         let desc = &mut self.desc;
-        desc.entity = *entity.into();
+        desc.entity = *entity.into_entity(self.world);
         self
     }
 

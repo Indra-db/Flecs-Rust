@@ -32,7 +32,7 @@ fn main() {
     world.component::<TypeWithEnum>().meta();
 
     /* Alternatively, you can do it manually like so (without the derive macro)
-    .member(id::<Color>(),"color", 1, core::mem::offset_of!(TypeWithEnum, color));
+    .member(Color::id(),"color", 1, core::mem::offset_of!(TypeWithEnum, color));
      */
 
     // Create a new entity
@@ -43,7 +43,7 @@ fn main() {
     // Convert TypeWithEnum component to flecs expression string
     e.get::<&TypeWithEnum>(|p| {
         let expr: String = world.to_expr(p);
-        println!("TypeWithEnum: {}", expr);
+        println!("TypeWithEnum: {expr}");
     });
 
     // Output:

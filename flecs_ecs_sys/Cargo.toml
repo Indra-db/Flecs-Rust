@@ -49,6 +49,12 @@ disable_build_c = []
 # Flecs C defines / features
 ###############################
 
+ # When set, this will cause queries with the EcsQueryCacheDefault policy
+ # to default to EcsQueryCacheNone. This can reduce the memory footprint of
+ # applications at the cost of performance. Queries that use features which 
+ # require caching such as group_by and order_by will still use caching.
+flecs_default_to_uncached_queries = []
+
 # Math functions for flecs script (may require linking with libm) */
 flecs_script_math = []
 
@@ -74,7 +80,7 @@ flecs_stats = ["flecs_pipeline", "flecs_timer", "flecs_module"]
 flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_pipeline", "flecs_metrics"]
+flecs_alerts = ["flecs_pipeline", "flecs_metrics", "flecs_script"]
 
 # System support
 flecs_system = ["flecs_module"]

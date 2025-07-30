@@ -161,7 +161,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the binding context.
-    unsafe extern "C-unwind" fn binding_ctx_drop(ptr: *mut c_void) {
+    unsafe extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);
@@ -241,7 +241,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on add hook.
-    unsafe extern "C-unwind" fn on_add_drop<Func>(func: *mut c_void)
+    unsafe extern "C" fn on_add_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -252,7 +252,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on remove hook.
-    unsafe extern "C-unwind" fn on_remove_drop<Func>(func: *mut c_void)
+    unsafe extern "C" fn on_remove_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -263,7 +263,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on set hook.
-    unsafe extern "C-unwind" fn on_set_drop<Func>(func: *mut c_void)
+    unsafe extern "C" fn on_set_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -274,50 +274,53 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to run the on add hook.
-    unsafe extern "C-unwind" fn run_add<Func>(iter: *mut sys::ecs_iter_t)
+    unsafe extern "C" fn run_add<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
         unsafe {
-            let ctx: *mut ComponentBindingCtx = (*iter).callback_ctx as *mut _;
+            let iter = &*iter;
+            let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
             let on_add = (*ctx).on_add.unwrap();
             let on_add = on_add as *mut Func;
             let on_add = &mut *on_add;
-            let world = WorldRef::from_ptr((*iter).world);
-            let entity = EntityView::new_from(world, *(*iter).entities);
-            let component: *mut T = ecs_field::<T>(iter, 0);
+            let world = WorldRef::from_ptr(iter.world);
+            let entity = EntityView::new_from(world, *iter.entities);
+            let component: *mut T = flecs_field::<T>(iter, 0);
             on_add(entity, &mut *component);
         }
     }
 
     /// Function to run the on set hook.
-    unsafe extern "C-unwind" fn run_set<Func>(iter: *mut sys::ecs_iter_t)
+    unsafe extern "C" fn run_set<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
-        let ctx: *mut ComponentBindingCtx = unsafe { (*iter).callback_ctx as *mut _ };
+        let iter = unsafe { &*iter };
+        let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
         let on_set = unsafe { (*ctx).on_set.unwrap() };
         let on_set = on_set as *mut Func;
         let on_set = unsafe { &mut *on_set };
-        let world = unsafe { WorldRef::from_ptr((*iter).world) };
-        let entity = EntityView::new_from(world, unsafe { *(*iter).entities });
-        let component: *mut T = unsafe { ecs_field::<T>(iter, 0) };
+        let world = unsafe { WorldRef::from_ptr(iter.world) };
+        let entity = EntityView::new_from(world, unsafe { *iter.entities });
+        let component: *mut T = flecs_field::<T>(iter, 0);
         on_set(entity, unsafe { &mut *component });
     }
 
     /// Function to run the on remove hook.
-    unsafe extern "C-unwind" fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
+    unsafe extern "C" fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
         unsafe {
-            let ctx: *mut ComponentBindingCtx = (*iter).callback_ctx as *mut _;
+            let iter = &*iter;
+            let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
             let on_remove = (*ctx).on_remove.unwrap();
             let on_remove = on_remove as *mut Func;
             let on_remove = &mut *on_remove;
-            let world = WorldRef::from_ptr((*iter).world);
-            let entity = EntityView::new_from(world, *(*iter).entities);
-            let component: *mut T = ecs_field::<T>(iter, 0);
+            let world = WorldRef::from_ptr(iter.world);
+            let entity = EntityView::new_from(world, *iter.entities);
+            let component: *mut T = flecs_field::<T>(iter, 0);
             on_remove(entity, &mut *component);
         }
     }

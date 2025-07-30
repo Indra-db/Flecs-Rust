@@ -31,7 +31,7 @@ fn main() {
 
     // Deserialize new strings into value
     world.from_json::<StringComponent>(&mut v, "{\"a\": \"hello\", \"b\": \"world\"}", None);
-    println!("{:?}", v);
+    println!("{v:?}");
 
     // Output:
     //   {"a": "foo", "b": "bar"}

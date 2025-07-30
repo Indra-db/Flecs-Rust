@@ -62,7 +62,7 @@ pub(crate) fn meta_init_builtin(world: &World) {
     map.insert(TypeId::of::<flecs::meta::F64>(), ECS_F64_T);
     map.insert(TypeId::of::<flecs::meta::String>(), ECS_STRING_T);
     map.insert(TypeId::of::<flecs::meta::Entity>(), ECS_ENTITY_T);
-    map.insert(TypeId::of::<flecs::meta::Constant>(), ECS_CONSTANT);
+    map.insert(TypeId::of::<flecs::Constant>(), ECS_CONSTANT);
     map.insert(TypeId::of::<flecs::meta::Quantity>(), ECS_QUANTITY);
     map.insert(TypeId::of::<flecs::meta::EcsOpaque>(), ECS_OPAQUE);
 
@@ -102,8 +102,8 @@ pub fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Op
 
     // Forward core::string value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &T| {
-        let data = format!("{:?}", data);
-        let data = compact_str::format_compact!("{}\0", data);
+        let data = format!("{data:?}");
+        let data = compact_str::format_compact!("{data}\0");
         s.value_id(
             flecs::meta::String,
             &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
@@ -121,8 +121,8 @@ pub fn meta_ser_stringify_type_display<T: core::fmt::Display>(world: WorldRef) -
 
     // Forward core::string value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &T| {
-        let data = format!("{}", data);
-        let data = compact_str::format_compact!("{}\0", data);
+        let data = format!("{data}");
+        let data = compact_str::format_compact!("{data}\0");
         s.value_id(
             flecs::meta::String,
             &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,

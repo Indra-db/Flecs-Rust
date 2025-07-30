@@ -20,15 +20,17 @@ use crate::core::*;
 pub struct Entity(pub u64);
 
 impl Entity {
-    #[inline]
+    #[inline(always)]
     pub fn new(id: u64) -> Self {
         Self(id)
     }
 
+    #[inline(always)]
     pub fn null() -> Self {
         Self(0)
     }
 
+    #[inline(always)]
     pub fn is_valid(&self) -> bool {
         self.0 != 0
     }
@@ -42,7 +44,7 @@ impl Entity {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    #[inline]
+    #[inline(always)]
     pub fn entity_view<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         EntityView::new_from(world, *self)
     }
@@ -56,7 +58,7 @@ impl Entity {
     /// # Arguments
     ///
     /// * `world` - The world the entity belongs to
-    #[inline]
+    #[inline(always)]
     pub fn id_view<'a>(&self, world: impl WorldProvider<'a>) -> IdView<'a> {
         IdView::new_from_id(world, *self)
     }
@@ -76,6 +78,7 @@ impl Entity {
 // impl ComponentId for Entity {
 //     type UnderlyingType = Entity;
 //     type UnderlyingEnumType = NoneEnum;
+type UnderlyingTypeOfEnum = NoneEnum;
 
 //     #[inline(always)]
 //     fn index() -> u32 {

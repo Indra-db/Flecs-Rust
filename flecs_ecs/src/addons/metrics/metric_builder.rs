@@ -113,7 +113,7 @@ impl<'a> MetricBuilder<'a> {
     where
         T: ComponentId,
     {
-        let id = T::id(self.world());
+        let id = T::entity_id(self.world());
 
         let ent = EntityView::new_from(self.world(), id);
         let m = ent.try_lookup(name);
@@ -144,7 +144,7 @@ impl<'a> MetricBuilder<'a> {
     ///
     /// * `expr` - The dot-separated member expression.
     pub fn dotmember_named(&mut self, expr: &str) -> &mut Self {
-        let expr_cstr = ManuallyDrop::new(format!("{}\0", expr));
+        let expr_cstr = ManuallyDrop::new(format!("{expr}\0"));
         self.desc.dotmember = expr_cstr.as_ptr() as *const c_char;
         self.str_ptrs_to_free.push(expr_cstr);
         self
@@ -163,10 +163,10 @@ impl<'a> MetricBuilder<'a> {
     where
         T: ComponentId,
     {
-        let expr_cstr = ManuallyDrop::new(format!("{}\0", expr));
+        let expr_cstr = ManuallyDrop::new(format!("{expr}\0"));
         self.desc.dotmember = expr_cstr.as_ptr() as *const c_char;
         self.str_ptrs_to_free.push(expr_cstr);
-        self.desc.id = T::id(self.world());
+        self.desc.id = T::entity_id(self.world());
 
         self
     }
@@ -207,7 +207,7 @@ impl<'a> MetricBuilder<'a> {
     ///
     /// * `b` - The brief description.
     pub fn brief(&mut self, brief: &str) -> &mut Self {
-        let brief = ManuallyDrop::new(format!("{}\0", brief));
+        let brief = ManuallyDrop::new(format!("{brief}\0"));
         self.desc.brief = brief.as_ptr() as *const c_char;
         self.str_ptrs_to_free.push(brief);
         self

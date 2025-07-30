@@ -89,7 +89,7 @@ impl<'a> UntypedComponent<'a> {
         }
 
         let mut metric = world.metric(metric_entity);
-        metric.member(me).kind(id::<Kind>());
+        metric.member(me).kind(Kind::id());
         if let Some(brief) = brief {
             metric.brief(brief);
         }

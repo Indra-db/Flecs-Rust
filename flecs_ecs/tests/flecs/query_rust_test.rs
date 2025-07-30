@@ -26,8 +26,8 @@ fn query_rust_pass_query_to_system() {
         query.run(|mut it| {
             let mut count = 0;
             while it.next() {
-                let pos = &it.field::<&Position>(0).unwrap()[0]; //singleton
-                let vel = it.field::<&Velocity>(1).unwrap();
+                let pos = &it.field::<Position>(0)[0]; //singleton
+                let vel = it.field::<Velocity>(1);
                 for i in it.iter() {
                     count += 1;
                     assert_eq!(pos.x, 1);
@@ -108,6 +108,7 @@ fn test_trait_query() {
                 let e = it.entity(i).unwrap();
                 let id = it.id(0);
                 // cast the component to the Shapes trait
+                let _test_compile: &mut dyn Shapes = ShapesTrait::cast_mut(e, id);
                 let shape: &dyn Shapes = ShapesTrait::cast(e, id);
                 // call the method on the trait
                 let calc = shape.calculate();

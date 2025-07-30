@@ -425,7 +425,7 @@ impl World {
     ///
     /// world.readonly_begin(false);
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 0);
+    /// assert_eq!(stage.count(Position::id()), 0);
     ///
     /// world.readonly_end();
     ///
@@ -434,11 +434,11 @@ impl World {
     /// stage.entity().set(Position { x: 10, y: 20 });
     /// stage.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 0);
+    /// assert_eq!(stage.count(Position::id()), 0);
     ///
     /// world.readonly_end();
     ///
-    /// assert_eq!(stage.count(id::<Position>()), 2);
+    /// assert_eq!(stage.count(Position::id()), 2);
     /// ```
     ///
     /// # See also
@@ -540,11 +540,11 @@ impl World {
     ///
     /// let e = world.entity().set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// world.defer_end();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     ///
     /// # See also
@@ -886,11 +886,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     ///
     /// # See also
@@ -992,11 +992,11 @@ impl World {
     ///
     /// e.mut_current_stage(stage).set(Position { x: 10, y: 20 });
     ///
-    /// assert!(!e.has(id::<Position>()));
+    /// assert!(!e.has(Position::id()));
     ///
     /// stage.merge();
     ///
-    /// assert!(e.has(id::<Position>()));
+    /// assert!(e.has(Position::id()));
     /// ```
     pub fn create_async_stage(&self) -> WorldRef {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
@@ -1050,7 +1050,7 @@ impl World {
     /// use core::ffi::c_void;
     /// use flecs_ecs::prelude::*;
     ///
-    /// extern "C-unwind" fn free_ctx(ctx: *mut c_void) {
+    /// extern "C" fn free_ctx(ctx: *mut c_void) {
     ///     unsafe {
     ///         Box::from_raw(ctx as *mut i32);
     ///     }
@@ -1102,7 +1102,8 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
-    pub(crate) fn components_map(&self) -> &'static mut FlecsIdMap {
+    #[doc(hidden)]
+    pub fn components_map(&self) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(self.components.as_ptr())) }
     }
 
@@ -1114,7 +1115,8 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
-    pub(crate) fn components_array(&self) -> &'static mut FlecsArray {
+    #[doc(hidden)]
+    pub fn components_array(&self) -> &'static mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
     }
 
@@ -1156,6 +1158,22 @@ impl World {
     /// * `entity_count` - Number of entities to preallocate memory for.
     pub fn preallocate_entity_count(&self, entity_count: i32) {
         unsafe { sys::ecs_dim(self.raw_world.as_ptr(), entity_count) };
+    }
+
+    /// Free unused memory.
+    ///
+    /// This operation frees allocated memory that is no longer in use by the world.
+    /// Examples of allocations that get cleaned up are:
+    /// - Unused pages in the entity index
+    /// - Component columns
+    /// - Empty tables
+    ///
+    /// Flecs uses allocators internally for speeding up allocations. Allocators are
+    /// not evaluated by this function, which means that the memory reported by the
+    /// OS may not go down. For this reason, this function is most effective when
+    /// combined with `FLECS_USE_OS_ALLOC`, which disables internal allocators.
+    pub fn shrink_memory(&self) {
+        unsafe { sys::ecs_shrink(self.raw_world.as_ptr()) };
     }
 
     /// Set the entity range.
@@ -1394,10 +1412,7 @@ impl World {
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!(
-                "Entity {} not found, when unsure, use try_lookup_recursive",
-                name
-            )
+            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
     }
 
@@ -1425,7 +1440,7 @@ impl World {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
+            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].
@@ -1499,7 +1514,7 @@ impl World {
     ///
     /// * `component` - The singleton component to set on the world.
     pub fn set<T: ComponentId + DataComponent + ComponentType<Struct>>(&self, component: T) {
-        let id = T::id(self);
+        let id = T::entity_id(self);
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
 
@@ -1512,7 +1527,7 @@ impl World {
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, First::id(self));
+        let entity = EntityView::new_from(self, First::entity_id(self));
         entity.set_first::<First>(first, second);
     }
 
@@ -1525,7 +1540,7 @@ impl World {
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let entity = EntityView::new_from(self, Second::id(self));
+        let entity = EntityView::new_from(self, Second::entity_id(self));
         entity.set_second::<Second>(first, second);
     }
 
@@ -1547,9 +1562,66 @@ impl World {
 
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::id(self),
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::entity_id(self),
         );
         entity.set_pair::<First, Second>(data);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign<T: ComponentId + DataComponent>(&self, value: T) {
+        let id = T::entity_id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_id<T: ComponentId + DataComponent>(&self, value: T, id: impl IntoId) {
+        let id = *id.into_id(self);
+        assign_helper(self.ptr_mut(), id, value, id);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair<First, Second>(
+        &self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        let entity = EntityView::new_from(
+            self,
+            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::entity_id(self),
+        );
+
+        entity.assign_pair::<First, Second>(value);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_first<First>(&self, first: First, second: impl Into<Entity>)
+    where
+        First: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, First::entity_id(self));
+        entity.assign_first::<First>(first, second);
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let entity = EntityView::new_from(self, Second::entity_id(self));
+        entity.assign_second::<Second>(first, second);
     }
 
     /// signal that singleton component was modified.
@@ -1721,7 +1793,7 @@ impl<Return> WorldGet<Return> for World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.try_get::<T>(callback)
     }
@@ -1735,7 +1807,7 @@ impl<Return> WorldGet<Return> for World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.get::<T>(callback)
     }
@@ -1801,7 +1873,7 @@ impl World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::id(self),
+            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
         );
         entity.cloned::<T>()
     }
@@ -1837,7 +1909,7 @@ impl World {
     /// The entity representing the component.
     #[inline(always)]
     pub fn singleton<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::id(self))
+        EntityView::new_from(self, T::entity_id(self))
     }
 
     /// Retrieves the target for a given pair from a singleton entity.
@@ -1913,8 +1985,7 @@ impl World {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let id = T::id(self);
-        EntityView::new_from(self, id).has_enum(id, constant)
+        EntityView::new_from(self, T::entity_id(self)).has_enum(constant)
     }
 
     /// Add a singleton component by id.
@@ -1953,7 +2024,7 @@ impl World {
         &self,
         enum_value: T,
     ) -> EntityView {
-        EntityView::new_from(self, T::id(self)).add_enum::<T>(enum_value)
+        EntityView::new_from(self, T::entity_id(self)).add_enum::<T>(enum_value)
     }
 
     /// Add a singleton pair with enum tag.
@@ -1976,7 +2047,8 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        EntityView::new_from(self, First::id(self)).add_pair_enum::<First, Second>(enum_value)
+        EntityView::new_from(self, First::entity_id(self))
+            .add_pair_enum::<First, Second>(enum_value)
     }
 
     /// Remove singleton component by id.
@@ -1993,25 +2065,6 @@ impl World {
         } else {
             EntityView::new_from(self, id).remove(id)
         }
-    }
-
-    /// Remove singleton pair with enum tag.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first element of the pair.
-    /// * `Second` - The second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value` - The enum value to remove.
-    #[inline(always)]
-    pub fn remove_enum_tag<First, Second>(&self, enum_value: Second)
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        EntityView::new_from(self, First::id(self)).remove_enum_tag::<First, Second>(enum_value);
     }
 
     /// Iterate entities in root of world
@@ -2041,7 +2094,7 @@ impl World {
     pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView {
         let alias = compact_str::format_compact!("{}\0", alias);
 
-        let id = T::id(self);
+        let id = T::entity_id(self);
         if alias.is_empty() {
             unsafe {
                 sys::ecs_set_alias(
@@ -2167,7 +2220,7 @@ impl World {
         unsafe {
             sys::ecs_count_id(
                 self.raw_world.as_ptr(),
-                ecs_pair(First::id(self), *(enum_value.id_variant(self)).id),
+                ecs_pair(First::entity_id(self), *(enum_value.id_variant(self)).id),
             )
         }
     }
@@ -2268,7 +2321,7 @@ impl World {
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
         self.with(
-            ecs_pair(First::id(self), **(enum_value.id_variant(self))),
+            ecs_pair(First::entity_id(self), **(enum_value.id_variant(self))),
             func,
         );
     }
@@ -2319,7 +2372,10 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.delete_entities_with(ecs_pair(First::id(self), **enum_value.id_variant(self)));
+        self.delete_entities_with(ecs_pair(
+            First::entity_id(self),
+            **enum_value.id_variant(self),
+        ));
     }
 
     /// Remove all instances of the given id from entities
@@ -2364,7 +2420,7 @@ impl World {
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        self.remove_all((First::id(self), enum_value.id_variant(self)));
+        self.remove_all((First::entity_id(self), enum_value.id_variant(self)));
     }
 
     /// Checks if the given entity ID exists in the world.
@@ -2500,7 +2556,7 @@ impl World {
     ///
     /// * `T` - The component type to associate with the new entity.
     pub fn entity_from<T: ComponentId>(&self) -> EntityView {
-        EntityView::new_from(self, T::id(self))
+        EntityView::new_from(self, T::entity_id(self))
     }
 
     /// Create an entity that's associated with a name.
@@ -2529,6 +2585,36 @@ impl World {
     /// * [`World::entity_named_cstr()`]
     pub fn entity_named(&self, name: &str) -> EntityView {
         EntityView::new_named(self, name)
+    }
+
+    /// Create an entity that's associated with a name within a scope, using a custom separator and root separator.
+    /// The name does an extra allocation if it's bigger than 24 bytes. To avoid this, use `entity_named_cstr`.
+    /// length of 24 bytes: `"hi this is 24 bytes long"`
+    ///
+    /// Named entities can be looked up with the lookup functions. Entity names
+    /// may be scoped, where each element in the name is separated by the sep you use.
+    /// For example: "`Foo-Bar`". If parts of the hierarchy in the scoped name do
+    /// not yet exist, they will be automatically created.
+    /// Note, this does still create the hierarchy as `Foo::Bar`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    ///
+    /// let entity = world.entity_named_scoped("Foo-Bar", "-", "::");
+    /// assert_eq!(entity.get_name(), Some("Bar".to_string()));
+    /// assert_eq!(entity.path(), Some("::Foo::Bar".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity()`]
+    /// * [`World::entity_named_cstr()`]
+    pub fn entity_named_scoped(&self, name: &str, sep: &str, root_sep: &str) -> EntityView {
+        EntityView::new_named_scoped(self, name, sep, root_sep)
     }
 
     /// Create an entity that's associated with a name.
@@ -2564,6 +2650,7 @@ impl World {
     ///
     /// * [`World::entity_named()`]
     /// * [`World::entity_named_cstr()`]
+    #[inline(always)]
     pub fn entity(&self) -> EntityView {
         EntityView::new(self)
     }
@@ -2607,7 +2694,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab(&self) -> EntityView {
         let result = EntityView::new(self);
-        result.add(flecs::Prefab::ID);
+        result.add(id::<flecs::Prefab>());
         result
     }
 
@@ -2628,7 +2715,7 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
-        result.add(ECS_PREFAB);
+        unsafe { result.add_id_unchecked(ECS_PREFAB) };
         result
     }
 
@@ -2682,8 +2769,9 @@ impl World {
 impl World {
     /// Get the id of the provided component type.
     /// This returns the id of a component type which has been registered with [`ComponentId`] trait.
+    #[inline(always)]
     pub fn component_id<T: ComponentId>(&self) -> Entity {
-        Entity(T::id(self))
+        Entity(T::entity_id(self))
     }
 
     /// Get the id of the provided component type.
@@ -3040,6 +3128,21 @@ impl World {
         QueryBuilder::<Components>::new_named(self, name)
     }
 
+    /// Create a query from a query description.
+    ///
+    /// # Safety
+    ///
+    /// Caller needs to ensure the query type is correct of the provided `desc`.
+    pub unsafe fn query_from_desc<Components>(
+        &self,
+        desc: &mut sys::ecs_query_desc_t,
+    ) -> QueryBuilder<Components>
+    where
+        Components: QueryTuple,
+    {
+        QueryBuilder::<Components>::new_from_desc(self, desc)
+    }
+
     /// Attempts to convert an entity into a query.
     ///
     /// Returns the untyped query if the entity is alive and valid; otherwise, returns `None`.
@@ -3248,7 +3351,7 @@ impl World {
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
-        PipelineBuilder::<()>::new_w_entity(self, Pipeline::id(self))
+        PipelineBuilder::<()>::new_w_entity(self, Pipeline::entity_id(self))
     }
 
     /// Set a custom pipeline. This operation sets the pipeline to run when [`World::progress()`] is invoked.
@@ -3575,5 +3678,73 @@ impl World {
     #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }
+    }
+
+    /// Begin exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation ensures that only the thread from which this operation is
+    /// called can access the world. Attempts to access the world from other threads
+    /// will panic.
+    ///
+    /// `exclusive_access_begin()` must be called in pairs with
+    /// `exclusive_access_end()`. Calling `exclusive_access_begin()` from another
+    /// thread without first calling `exclusive_access_end()` will panic.
+    ///
+    /// This operation should only be called once per thread. Calling it multiple
+    /// times for the same thread will cause a panic.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API `thread_self_` callback to be set.
+    ///
+    /// # Arguments
+    ///
+    /// * `thread_name` - Name of the thread obtaining exclusive access. Use `c"thread_name"` to pass a C-style string.
+    ///   Required to be a static string for safety reasons.
+    pub fn exclusive_access_begin(&self, thread_name: Option<&'static CStr>) {
+        let name_ptr = thread_name.map_or(core::ptr::null(), CStr::as_ptr);
+
+        unsafe {
+            sys::ecs_exclusive_access_begin(self.raw_world.as_ptr(), name_ptr);
+        }
+    }
+
+    /// End exclusive thread access to the world.
+    ///
+    /// # Panics
+    ///
+    /// This operation must be called from the same thread that called
+    /// `exclusive_access_begin()`. Calling it from a different thread will cause
+    /// a panic.
+    ///
+    /// This operation should be called after `exclusive_access_begin()`. After
+    /// calling this operation, other threads are no longer prevented from mutating
+    /// the world.
+    ///
+    /// When `lock_world` is set to true, no thread will be able to mutate the world
+    /// until `exclusive_access_begin()` is called again. While the world is locked,
+    /// only read-only operations are allowed. For example, `get` without mutable access is allowed,
+    /// but `get` with mutable access is not allowed.
+    ///
+    /// A locked world can be unlocked by calling `exclusive_access_end()` again with
+    /// `lock_world` set to false. Note that this only works for locked worlds; if
+    /// `exclusive_access_end()` is called on a world that has exclusive thread
+    /// access from a different thread, a panic will occur.
+    ///
+    /// # Arguments
+    ///
+    /// * `lock_world` - When true, any mutations on the world will be blocked.
+    ///
+    /// # Note
+    ///
+    /// This feature only works in builds where asserts are enabled. The
+    /// feature requires the OS API `thread_self_` callback to be set.
+    pub fn exclusive_access_end(&self, lock_world: bool) {
+        unsafe {
+            sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);
+        }
     }
 }

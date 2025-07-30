@@ -312,6 +312,43 @@ pub(crate) fn set_helper<T: ComponentId>(
     }
 }
 
+pub(crate) fn assign_helper<T: ComponentId>(
+    world: *mut sys::ecs_world_t,
+    entity: sys::ecs_entity_t,
+    value: T,
+    id: sys::ecs_id_t,
+) {
+    ecs_assert!(
+        core::mem::size_of::<T>() != 0,
+        FlecsErrorCode::InvalidParameter,
+        "operation invalid for empty type"
+    );
+
+    if !unsafe { sys::ecs_is_deferred(world) } {
+        let dst_ptr = unsafe { sys::ecs_get_mut_id(world, entity, id) };
+        ecs_assert!(
+            !dst_ptr.is_null(),
+            FlecsErrorCode::InvalidOperation,
+            "entity does not have component, use set() instead"
+        );
+
+        let dst = unsafe { &mut *(dst_ptr as *mut T) };
+        *dst = value;
+
+        unsafe { sys::ecs_modified_id(world, entity, id) };
+    } else {
+        let dst_ptr = unsafe { sys::ecs_get_mut_modified_id(world, entity, id) };
+        ecs_assert!(
+            !dst_ptr.is_null(),
+            FlecsErrorCode::InvalidOperation,
+            "entity does not have component, use set() instead"
+        );
+
+        let dst = unsafe { &mut *(dst_ptr as *mut T) };
+        *dst = value;
+    }
+}
+
 /// Remove generation from entity id.
 ///
 /// # Arguments
@@ -340,62 +377,8 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
     (*(entity.into() & sys::ECS_GENERATION_MASK) >> 32) as u32
 }
 
-/// Gets the component data from the iterator.
-/// Retrieves a pointer to the data array for a specified query field.
-///
-/// This function obtains a pointer to an array of data corresponding to the term in the query,
-/// based on the given index. The index starts from 0, representing the first term in the query.
-///
-/// For instance, given a query "Position, Velocity", invoking this function with index 0 would
-/// return a pointer to the "Position" data array, and index 1 would return the "Velocity" data array.
-///
-/// If the specified field is not owned by the entity being iterated (e.g., a shared component from a prefab,
-/// a component from a parent, or a component from another entity), this function returns a direct pointer
-/// instead of an array pointer. Use `ecs_field_is_self` to dynamically check if a field is owned.
-///
-/// The `size` of the type `T` must match the size of the data type of the returned array. Mismatches between
-/// the provided type size and the actual data type size may cause the operation to assert. The size of the
-/// field can be obtained dynamically using `ecs_field_size`.
-///
-/// # Safety
-///
-/// This function is unsafe because it dereferences the iterator and uses the index to get the component data.
-/// Ensure that the iterator is valid and the index is valid.
-///
-/// # Arguments
-///
-/// - `it`: A pointer to the iterator.
-/// - `index`: The index of the field in the iterator, starting from 0.
-///
-/// # Returns
-///
-/// A pointer to the data of the specified field. The pointer type is determined by the generic type `T`.
-///
-/// # Example
-///
-/// ```ignore
-/// // Assuming `it` is a valid iterator pointer obtained from a query.
-/// let position_ptr: *mut Position = ecs_field(it, 0);
-/// let velocity_ptr: *mut Velocity = ecs_field(it, 1);
-/// ```
 #[inline(always)]
-pub unsafe fn ecs_field<T>(it: *const sys::ecs_iter_t, index: i8) -> *mut T {
-    unsafe {
-        let size = core::mem::size_of::<T>();
-
-        ecs_assert!(
-            size != 0,
-            FlecsErrorCode::NotAComponent,
-            "{}: cannot fetch terms that are Tags / zero-sized. With queries, either switch the signature from using the type signature to `.with`",
-            core::any::type_name::<T>()
-        );
-
-        sys::ecs_field_w_size(it, size, index) as *mut T
-    }
-}
-
-#[inline(always)]
-pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
+pub(crate) unsafe fn flecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
     unsafe {
         let size = core::mem::size_of::<T>();
         sys::ecs_field_at_w_size(it, size, index, row) as *mut T
@@ -478,7 +461,7 @@ pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
         // This can fail if the C string is not valid UTF-8, so handle errors appropriately
         #[allow(clippy::print_stdout)]
         match c_str.to_str() {
-            Ok(s) => println!("{}", s),
+            Ok(s) => println!("{s}"),
             Err(_) => println!("Failed to convert C string to Rust string"),
         }
     }
@@ -530,11 +513,7 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
     !core::ptr::fn_addr_eq(
         ctor_hooks,
         sys::flecs_default_ctor
-            as unsafe extern "C-unwind" fn(
-                *mut core::ffi::c_void,
-                i32,
-                *const sys::ecs_type_info_t,
-            ),
+            as unsafe extern "C" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t),
     )
 }
 
@@ -569,11 +548,11 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
 
         if part.starts_with('(') {
             // Join this part with the next one
-            let combined = format!("{}, {} : {}", part, parts[i + 1], id);
+            let combined = format!("{part}, {} : {id}", parts[i + 1]);
             result.push(combined);
             skip_next = true; // Skip the next part since it's already used
         } else {
-            result.push(format!("{} : {}", part, id));
+            result.push(format!("{part} : {id}"));
         }
         i_ids += 1;
     }

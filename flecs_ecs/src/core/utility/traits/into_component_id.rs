@@ -36,7 +36,7 @@ where
 
     #[inline]
     fn get_id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_id_t {
-        T::id(world)
+        T::entity_id(world)
     }
 
     #[inline]
@@ -63,7 +63,7 @@ where
     #[inline]
     fn get_id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_id_t {
         let world = world.world();
-        ecs_pair(T::id(world), U::id(world))
+        ecs_pair(T::entity_id(world), U::entity_id(world))
     }
 
     #[inline]

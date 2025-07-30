@@ -36,8 +36,6 @@ fn generate_bindings() {
         .allowlist_file("src/flecs.h")
         .allowlist_file("src/flecs_rust.h")
         .allowlist_recursively(false)
-        // Use the "C-unwind" ABI
-        .override_abi(bindgen::Abi::CUnwind, ".*")
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
         // Prefer core::* over std::*
@@ -73,6 +71,16 @@ fn generate_bindings() {
         .raw_line("use libc::FILE;")
         .clang_arg("-DFLECS_CUSTOM_BUILD")
         .clang_arg("-DFLECS_CPP");
+
+    #[cfg(feature = "flecs_default_to_uncached_queries")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_DEFAULT_TO_UNCACHED_QUERIES");
+    }
+
+    #[cfg(feature = "flecs_script_math")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_SCRIPT_MATH");
+    }
 
     #[cfg(feature = "flecs_perf_trace")]
     {

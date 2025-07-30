@@ -76,10 +76,10 @@ fn query_run_sparse() {
 
     q.run(|mut it| {
         while it.next() {
-            let v = it.field::<Velocity>(1).unwrap();
+            let v = it.field::<Velocity>(1);
 
             for i in it.iter() {
-                let p = it.field_at_mut::<Position>(0, i).unwrap();
+                let p = it.field_at_mut::<Position>(0, i);
                 p.x += v[i].x;
                 p.y += v[i].y;
             }
@@ -176,21 +176,25 @@ fn query_iter_targets() {
     let mut count = 0;
     let mut tgt_count = 0;
 
-    q.each_iter(|mut it, row, _| {
-        let e = it.entity(row).unwrap();
-        assert_eq!(e, alice);
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i).unwrap();
+                assert_eq!(e, alice);
 
-        it.targets(0, |tgt| {
-            if tgt_count == 0 {
-                assert_eq!(tgt, pizza);
-            }
-            if tgt_count == 1 {
-                assert_eq!(tgt, salad);
-            }
-            tgt_count += 1;
-        });
+                it.targets(0, |tgt| {
+                    if tgt_count == 0 {
+                        assert_eq!(tgt, pizza);
+                    }
+                    if tgt_count == 1 {
+                        assert_eq!(tgt, salad);
+                    }
+                    tgt_count += 1;
+                });
 
-        count += 1;
+                count += 1;
+            }
+        }
     });
 
     assert_eq!(count, 1);
@@ -206,7 +210,7 @@ fn query_iter_targets_second_field() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add(id::<Position>())
+        .add(Position::id())
         .add((likes, pizza))
         .add((likes, salad));
 
@@ -218,21 +222,24 @@ fn query_iter_targets_second_field() {
     let mut count = 0;
     let mut tgt_count = 0;
 
-    q.each_iter(|mut it, row, _| {
-        let e = it.entity(row).unwrap();
-        assert_eq!(e, alice);
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i).unwrap();
+                assert_eq!(e, alice);
 
-        it.targets(1, |tgt| {
-            if tgt_count == 0 {
-                assert_eq!(tgt, pizza);
+                it.targets(1, |tgt| {
+                    if tgt_count == 0 {
+                        assert_eq!(tgt, pizza);
+                    }
+                    if tgt_count == 1 {
+                        assert_eq!(tgt, salad);
+                    }
+                    tgt_count += 1;
+                });
+                count += 1;
             }
-            if tgt_count == 1 {
-                assert_eq!(tgt, salad);
-            }
-            tgt_count += 1;
-        });
-
-        count += 1;
+        }
     });
 
     assert_eq!(count, 1);
@@ -255,11 +262,16 @@ fn query_iter_targets_field_out_of_range() {
         .with((likes, id::<flecs::Any>()))
         .build();
 
-    q.each_iter(|mut it, row, _| {
-        let e = it.entity(row).unwrap();
-        assert_eq!(e, alice);
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i).unwrap();
+                assert_eq!(e, alice);
 
-        it.targets(1, |_| {});
+                // This should panic because the index 1 is out of range
+                it.targets(1, |_| {});
+            }
+        }
     });
 }
 
@@ -274,17 +286,21 @@ fn query_iter_targets_field_not_a_pair() {
     let salad = world.entity();
     let alice = world
         .entity()
-        .add(id::<Position>())
+        .add(Position::id())
         .add((likes, pizza))
         .add((likes, salad));
 
     let q = world.query::<&Position>().build();
 
-    q.each_iter(|mut it, row, _| {
-        let e = it.entity(row).unwrap();
-        assert_eq!(e, alice);
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i).unwrap();
+                assert_eq!(e, alice);
 
-        it.targets(1, |_| {});
+                it.targets(1, |_| {});
+            }
+        }
     });
 }
 
@@ -295,7 +311,7 @@ fn query_iter_targets_field_not_set() {
     let world = World::new();
 
     let likes = world.entity();
-    let alice = world.entity().add(id::<Position>());
+    let alice = world.entity().add(Position::id());
 
     let q = world
         .query::<&Position>()
@@ -303,11 +319,14 @@ fn query_iter_targets_field_not_set() {
         .optional()
         .build();
 
-    q.each_iter(|mut it, row, _| {
-        let e = it.entity(row).unwrap();
-        assert_eq!(e, alice);
-        assert!(!it.is_set(1));
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.entity(i).unwrap();
+                assert_eq!(e, alice);
 
-        it.targets(1, |_| {});
+                it.targets(1, |_| {});
+            }
+        }
     });
 }

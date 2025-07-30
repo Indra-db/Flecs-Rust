@@ -43,9 +43,9 @@ fn update_transforms(mut it: TableIter<true, ()>) {
 
         println!("non-skip archetype: {:?}", it.archetype().unwrap());
 
-        let pos = it.field::<&Position>(0).unwrap();
-        let parent_pos = it.field::<&Position>(1); // Optional
-        let mut world_pos = it.field::<&mut WorldPosition>(2).unwrap();
+        let pos = it.field_mut::<Position>(0);
+        let parent_pos = it.get_field::<Position>(1); // Optional
+        let mut world_pos = it.field_mut::<WorldPosition>(2);
 
         match parent_pos {
             None => {
@@ -96,7 +96,7 @@ fn main() {
         .set(Position { x: 50.0, y: 30.0 })
         .set(WorldPosition { x: 0.0, y: 0.0 })
         // this is to make sure independent entity is in a different archetype
-        .add(id::<DummyTag>());
+        .add(DummyTag);
 
     // Since this is the first time the query is iterated, all tables
     // will show up as changed and not skipped

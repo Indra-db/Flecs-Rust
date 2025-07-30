@@ -30,11 +30,11 @@ fn main() {
     let john = world.entity_named("John");
     let jane = world.entity_named("Jane");
 
-    bob.add((id::<Likes>(), alice));
-    alice.add((id::<Likes>(), bob));
-    john.add((id::<Likes>(), jane));
-    jane.add((id::<Likes>(), john));
-    bob.add((id::<Likes>(), jane)); // inserting a bit of drama
+    bob.add((Likes, alice));
+    alice.add((Likes, bob));
+    john.add((Likes, jane));
+    jane.add((Likes, john));
+    bob.add((Likes, jane)); // inserting a bit of drama
 
     // Create a rule that checks if two entities like each other. By itself this
     // rule is not a fact, but we can use it to check facts by populating both
@@ -49,9 +49,9 @@ fn main() {
 
     let mut friends = world
         .query::<()>()
-        .with((id::<Likes>(), "$Y"))
+        .with((Likes, "$Y"))
         .set_src("$X")
-        .with((id::<Likes>(), "$X"))
+        .with((Likes, "$X"))
         .set_src("$Y")
         .build();
 

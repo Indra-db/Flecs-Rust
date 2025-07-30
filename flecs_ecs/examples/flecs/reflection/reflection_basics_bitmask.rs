@@ -65,7 +65,7 @@ fn main() {
 
     world
         .component::<Sandwich>()
-        .member(id::<Toppings>(), "toppings");
+        .member(Toppings::id(), "toppings");
 
     // Create entity with Sandwich
     let e = world.entity().set(Sandwich {

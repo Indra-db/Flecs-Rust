@@ -15,16 +15,18 @@ fn main() {
     let world = World::new();
 
     // Create an observer for the custom event
-    world
-        .observer::<MyEvent, &Position>()
-        .each_iter(|it, index, _pos| {
-            println!(
-                " - {}: {}: {}",
-                it.event().name(),
-                it.event_id().to_str(),
-                it.entity(index).unwrap()
-            );
-        });
+    world.observer::<MyEvent, &Position>().run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                println!(
+                    " - {}: {}: {}",
+                    it.event().name(),
+                    it.event_id().to_str(),
+                    it.entity_id(i)
+                );
+            }
+        }
+    });
 
     // The observer query can be matched against the entity, so make sure it
     // has the Position component before emitting the event. This does not
@@ -34,7 +36,7 @@ fn main() {
     // Emit the custom event. This triggers the observer.
     world
         .event()
-        .add(id::<Position>())
+        .add(Position::id())
         .entity(entity)
         .emit(&MyEvent);
 

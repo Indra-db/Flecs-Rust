@@ -32,7 +32,7 @@ fn main() {
 
     // This operation changes the entity's archetype, which invokes a move
     // add is used for adding tags.
-    entity.add(id::<Tag>());
+    entity.add(Tag);
 
     entity.destruct();
 

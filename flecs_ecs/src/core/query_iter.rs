@@ -9,7 +9,7 @@ where
     T: QueryTuple,
 {
     iter: sys::ecs_iter_t,
-    iter_next: unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool,
+    iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
     _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -19,7 +19,7 @@ where
 {
     pub fn new(
         iter: sys::ecs_iter_t,
-        iter_next: unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool,
+        iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
     ) -> Self {
         Self {
             iter,
@@ -73,8 +73,8 @@ where
     pub fn set_var_expr(&mut self, name: &str, value: impl Into<Entity>) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 
-        let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
+        let query = self.iter.query;
+        let var_id = unsafe { sys::ecs_query_find_var(query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
@@ -93,8 +93,8 @@ where
     pub fn set_var_table_expr(&mut self, name: &str, table: impl IntoTableRange) -> &mut Self {
         let name = compact_str::format_compact!("{}\0", name);
 
-        let qit = unsafe { &mut self.iter.priv_.iter.query };
-        let var_id = unsafe { sys::ecs_query_find_var(qit.query, name.as_ptr() as *const _) };
+        let query = self.iter.query;
+        let var_id = unsafe { sys::ecs_query_find_var(query, name.as_ptr() as *const _) };
         ecs_assert!(
             var_id != -1,
             FlecsErrorCode::InvalidParameter,
@@ -110,6 +110,7 @@ impl<P, T> IterOperations for QueryIter<'_, P, T>
 where
     T: QueryTuple,
 {
+    #[inline(always)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t {
         self.iter
     }
@@ -128,7 +129,7 @@ where
         self.iter.query
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         self.iter_next
     }
 }

@@ -125,7 +125,7 @@ where
     ///
     /// * `ecs_alert_desc_t::message`
     pub fn message(&mut self, message: &str) -> &mut Self {
-        let message = ManuallyDrop::new(format!("{}\0", message));
+        let message = ManuallyDrop::new(format!("{message}\0"));
         self.desc.message = message.as_ptr() as *const _;
         self.str_ptrs_to_free.push(message);
         self
@@ -141,7 +141,7 @@ where
     ///
     /// * `ecs_alert_desc_t::brief`
     pub fn brief(&mut self, brief: &str) -> &mut Self {
-        let brief = ManuallyDrop::new(format!("{}\0", brief));
+        let brief = ManuallyDrop::new(format!("{brief}\0"));
         self.desc.brief = brief.as_ptr() as *const _;
         self.str_ptrs_to_free.push(brief);
         self
@@ -157,7 +157,7 @@ where
     ///
     /// * `ecs_alert_desc_t::doc_name`
     pub fn doc_name(&mut self, doc_name: &str) -> &mut Self {
-        let doc_name = ManuallyDrop::new(format!("{}\0", doc_name));
+        let doc_name = ManuallyDrop::new(format!("{doc_name}\0"));
         self.desc.doc_name = doc_name.as_ptr() as *const _;
         self.str_ptrs_to_free.push(doc_name);
         self
@@ -218,7 +218,7 @@ where
         filter.severity = *severity.into_entity(self.world);
         filter.with = *with.into_id(self.world);
         if let Some(var) = var {
-            let var = ManuallyDrop::new(format!("{}\0", var));
+            let var = ManuallyDrop::new(format!("{var}\0"));
             filter.var = var.as_ptr() as *const _;
             self.str_ptrs_to_free.push(var);
         }
@@ -244,8 +244,8 @@ where
         Severity: ComponentId,
         With: ComponentId + ComponentType<Struct>,
     {
-        let severity_id = Severity::id(self.world());
-        let with_id = With::id(self.world());
+        let severity_id = Severity::entity_id(self.world());
+        let with_id = With::entity_id(self.world());
         self.severity_filter(severity_id, with_id, var)
     }
 
@@ -274,8 +274,8 @@ where
         With: EnumComponentInfo + ComponentType<Enum>,
     {
         let world = self.world();
-        let severity_id = Severity::id(world);
-        let with_id = With::id(world);
+        let severity_id = Severity::entity_id(world);
+        let with_id = With::entity_id(world);
         let constant_id = with.id_variant(world);
         let pair_id = ecs_pair(with_id, *constant_id.id());
         self.severity_filter(severity_id, pair_id, var)
@@ -330,7 +330,7 @@ where
     {
         let member_name = compact_str::format_compact!("{}\0", member_name);
         let world = self.world();
-        let id = With::id(world);
+        let id = With::entity_id(world);
         let member_id = unsafe {
             sys::ecs_lookup_path_w_sep(
                 world.world_ptr_mut(),
@@ -351,7 +351,7 @@ where
         );
 
         if let Some(var) = var {
-            let var = ManuallyDrop::new(format!("{}\0", var));
+            let var = ManuallyDrop::new(format!("{var}\0"));
             self.desc.var = var.as_ptr() as *const _;
             self.str_ptrs_to_free.push(var);
         }
@@ -369,7 +369,7 @@ where
     ///
     /// * `ecs_alert_desc_t::var`
     pub fn var(&mut self, var: &str) -> &mut Self {
-        let var = ManuallyDrop::new(format!("{}\0", var));
+        let var = ManuallyDrop::new(format!("{var}\0"));
         self.desc.var = var.as_ptr() as *const _;
         self.str_ptrs_to_free.push(var);
         self

@@ -16,7 +16,7 @@ fn main() {
     world.component::<TypeWithEntity>().meta();
 
     /* Alternatively, you can do it manually like so (without the derive macro)
-    .member(id::<Entity>(),"e", 1, core::mem::offset_of!(TypeWithEntity, e));
+    .member(Entity::id(),"e", 1, core::mem::offset_of!(TypeWithEntity, e));
     */
 
     let bar = world.entity_named("bar");
@@ -27,7 +27,7 @@ fn main() {
     // Convert TypeWithEntity component to flecs expression string
     e.get::<&TypeWithEntity>(|p| {
         let expr: String = world.to_expr(p);
-        println!("TypeWithEntity: {}", expr);
+        println!("TypeWithEntity: {expr}");
     });
 
     // Output:

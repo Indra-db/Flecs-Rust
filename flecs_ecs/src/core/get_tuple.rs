@@ -213,7 +213,7 @@ where
                 #[cfg(feature = "flecs_meta")]
                 {
                     let id_underlying_type = world.component_id::<i32>();
-                    let pair_id = ecs_pair(flecs::meta::Constant::ID, *id_underlying_type);
+                    let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
                     let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
 
                     ecs_assert!(
@@ -230,7 +230,7 @@ where
                #[cfg(not(feature = "flecs_meta"))]
                {
                  // get constant value from constant entity
-                 let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+                 let constant_value = unsafe { sys::ecs_get_id(world_ptr, entity, id) } as *mut c_void;
 
                  ecs_assert!(
                      !constant_value.is_null(),
@@ -243,12 +243,12 @@ where
                }
             } else {
                 // if there is no matching pair for (r,*), try just r
-                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
             }
         } else if A::IS_IMMUTABLE { 
-            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
          } else {
-           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
          };
          
         
@@ -372,7 +372,7 @@ macro_rules! impl_get_tuple {
                             #[cfg(feature = "flecs_meta")]
                             {
                                 let id_underlying_type = world_ref.component_id::<i32>();
-                                let pair_id = ecs_pair(flecs::meta::Constant::ID, *id_underlying_type);
+                                let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
                                 let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
 
                                 ecs_assert!(
@@ -402,12 +402,12 @@ macro_rules! impl_get_tuple {
                            }
                         } else {
                             // if there is no matching pair for (r,*), try just r
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
                         }
                     } else if $t::IS_IMMUTABLE {
-                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,table,id) }
+                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
                      } else {
-                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,table,id)}
+                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
                      };
 
 

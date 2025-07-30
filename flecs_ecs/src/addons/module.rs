@@ -76,12 +76,17 @@ impl World {
     pub fn import<T: Module>(&self) -> EntityView {
         // Reset scope
         let prev_scope = self.set_scope(0);
-
-        let module = if T::is_registered_with_world(self) {
+        let world = self.world();
+        let raw_world = self.raw_world.as_ptr();
+        let symbol_name = core::any::type_name::<T>();
+        let symbol = compact_str::format_compact!("{}\0", symbol_name);
+        let m =
+            unsafe { sys::ecs_lookup_symbol(raw_world, symbol.as_ptr() as *const i8, true, false) };
+        let module = if T::is_registered_with_world(self) && m != 0 {
             self.component::<T>().entity
         } else {
             let id = self.entity_from_id(register_componment_data_explicit::<T, true>(
-                self.raw_world.as_ptr(),
+                world,
                 core::ptr::null(),
             ));
             let id_u64 = *id.id();
@@ -109,6 +114,10 @@ impl World {
         // Set scope to our module
         self.set_scope(module);
 
+        let module_id = *module.id();
+        unsafe { sys::ecs_add_id(raw_world, module_id, module_id) };
+        unsafe { sys::ecs_modified_id(raw_world, module_id, module_id) };
+
         // Build the module
         T::module(self);
 
@@ -116,7 +125,7 @@ impl World {
         self.set_scope(prev_scope);
 
         // Initialise component for the module and add Module tag
-        module.add(flecs::Module::ID);
+        unsafe { module.add_id_unchecked(flecs::Module::ID) };
 
         module
     }

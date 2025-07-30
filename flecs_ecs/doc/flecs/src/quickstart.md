@@ -88,7 +88,7 @@ let e = world.entity();
 // Add a component. This creates the component in the ECS storage, but does not
 // assign it with a value. To add a component, it needs to be derived with the
 // Default trait otherwise it will panic at compile time.
-e.add(id::<Velocity>());
+e.add(Velocity::id());
 
 // Set the value for the Position & Velocity components. A component will be
 // added if the entity doesn't have it yet.
@@ -101,7 +101,7 @@ e.get::<&Position>(|p| {
 });
 
 // Remove component
-e.remove(id::<Position>());
+e.remove(Position::id());
 # }
 ```
 
@@ -123,7 +123,7 @@ let pos_e = world.entity_from::<Position>();
 println!("Name: {}", pos_e.name()); // outputs 'Name: Position'
 
 // It's possible to add components like you would for any entity
-pos_e.add(id::<Serializable>());
+pos_e.add(Serializable::id());
 # }
 ```
 
@@ -162,11 +162,11 @@ A tag is a component that does not have any data. In Flecs tags are empty types 
 struct Enemy;
 
 // Create entity, add Enemy tag
-let e = world.entity().add(id::<Enemy>());
-e.has(id::<Enemy>()); // true!
+let e = world.entity().add(Enemy::id());
+e.has(Enemy::id()); // true!
 
-e.remove(id::<Enemy>());
-e.has(id::<Enemy>()); // false!
+e.remove(Enemy::id());
+e.has(Enemy::id()); // false!
 
 // Option 2: create Tag as entity
 let enemy = world.entity();
@@ -201,12 +201,12 @@ struct Likes;
 let bob = world.entity();
 let alice = world.entity();
 
-bob.add((id::<Likes>(), alice)); // bob likes alice
-alice.add((id::<Likes>(), bob)); // alice likes bob
-bob.has((id::<Likes>(), alice)); // true!
+bob.add((Likes::id(), alice)); // bob likes alice
+alice.add((Likes::id(), bob)); // alice likes bob
+bob.has((Likes::id(), alice)); // true!
 
-bob.remove((id::<Likes>(), alice));
-bob.has((id::<Likes>(), alice)); // false!
+bob.remove((Likes::id(), alice));
+bob.has((Likes::id(), alice)); // false!
 # }
 ```
 
@@ -222,7 +222,7 @@ A pair can be encoded in a single 64 bit identifier using the `world.id_first` f
 # fn main() {
 # let world = World::new();
 # let bob = world.entity();
-let id = world.id_view_from(id::<Likes>(),bob);
+let id = world.id_view_from(Likes::id(),bob);
 # }
 ```
 
@@ -239,7 +239,7 @@ The following examples show how to get back the elements from a pair:
 # 
 # fn main() {
 # let world = World::new();
-let id = world.id_view_from((id::<Likes>(), id::<Apples>()));
+let id = world.id_view_from((Likes::id(), Apples::id()));
 if id.is_pair() {
     let relationship = id.first_id();
     let target = id.second_id();
@@ -282,8 +282,8 @@ The `target` function can be used to get the object for a relationship:
 # fn main() {
 # let world = World::new();
 # let bob = world.entity();
-let alice = world.entity().add((id::<Likes>(), bob));
-let o = alice.target(id::<Likes>(),0); // Returns bob
+let alice = world.entity().add((Likes::id(), bob));
+let o = alice.target(Likes::id(),0); // Returns bob
 # }
 ```
 
@@ -364,7 +364,7 @@ The type (often referred to as "archetype") is the list of ids an entity has. Ty
 # 
 # fn main() {
 # let world = World::new();
-let e = world.entity().add(id::<Position>()).add(id::<Velocity>());
+let e = world.entity().add(Position::id()).add(Velocity::id());
 
 println!("Components: {}", e.archetype().to_string().unwrap()); // output: 'Position,Velocity'
 # }
@@ -381,7 +381,7 @@ A type can also be iterated by an application:
 # 
 # fn main() {
 # let world = World::new();
-# let e = world.entity().add(id::<Position>());
+# let e = world.entity().add(Position::id());
 e.each_component(|id| {
     if id == world.component_id::<Position>() {
         // Found Position component!
@@ -494,7 +494,7 @@ q.each_entity(|e, p| {
 // Option 2: the run() callback offers more control over the iteration
 q.run(|mut it| {
     while it.next() {
-        let p = it.field::<Position>(0).unwrap();
+        let p = it.field::<Position>(0);
 
         for i in it.iter() {
             println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
@@ -520,7 +520,7 @@ The following example shows a query that matches all entities with a parent that
 let q = world
     .query::<()>()
     .with::<(flecs::ChildOf, flecs::Wildcard)>()
-    .with(id::<Position>())
+    .with(Position::id())
     .set_oper(OperKind::Not)
     .build();
 

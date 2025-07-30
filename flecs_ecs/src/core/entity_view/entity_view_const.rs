@@ -53,7 +53,7 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 ///     .entity_named("Player")
 ///     .set(Position { x: 10.0, y: 20.0 })
 ///     .set(Velocity { x: 1.0, y: 0.0 })
-///     .add(id::<Walking>());
+///     .add(Walking);
 ///
 /// // Get component data
 /// player.get::<&Position>(|pos| {
@@ -61,10 +61,10 @@ use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToStrin
 /// });
 ///
 /// // Check for components
-/// assert!(player.has(id::<Walking>()));
+/// assert!(player.has(Walking::id()));
 ///
 /// // Remove components
-/// player.remove(id::<Walking>());
+/// player.remove(Walking::id());
 /// ```
 ///
 /// Working with hierarchies:
@@ -209,10 +209,24 @@ impl<'a> EntityView<'a> {
     /// * [`Entity::entity_view()`] - Convert Entity to EntityView
     /// * [`World::entity_from_id()`] - Get entity view from ID
     #[doc(hidden)] //public due to macro newtype_of and world.entity_from_id has lifetime issues.
+    #[inline(always)]
     pub fn new_from(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
         let world = world.world();
         let id = id.into_entity(world);
         Self { world, id }
+    }
+
+    pub(crate) fn new_from_raw(world: &'a WorldRef<'a>, id: u64) -> Self {
+        Self {
+            world: *world,
+            id: Entity(id),
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn replace_id(&mut self, id: u64) -> &mut Self {
+        self.id = Entity(id);
+        self
     }
 
     /// Create a named entity.
@@ -239,6 +253,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`World::entity_named()`] - Preferred way to create named entities
+    /// * [`World::entity_named_scoped()`]
     /// * [`EntityView::name()`] - Get entity name
     /// * [`EntityView::path()`] - Get full hierarchical path
     /// * [`World::lookup()`] - Look up named entities
@@ -249,6 +264,66 @@ impl<'a> EntityView<'a> {
             name: name.as_ptr() as *const _,
             sep: SEPARATOR.as_ptr(),
             root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: core::ptr::null(),
+            use_low_id: false,
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    /// Create a named entity with a custom scope resolution.
+    ///
+    /// Creates a new entity with the specified name. Named entities can be looked up using
+    /// lookup functions. Entity names may be scoped with a custom separator.
+    /// Parts of the hierarchy that don't exist will be automatically created.
+    ///
+    /// # Parameters
+    ///
+    /// * `name` - The name of the entity, which can include hierarchical elements.
+    /// * `sep` - The separator used to separate hierarchical elements in the name.
+    /// * `root_sep` - The separator used to indicate the root of the hierarchy.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// // Create entity with hierarchical name
+    /// let weapon = world.entity_named_scoped("Characters-Bob-Weapon", "-", "-");
+    /// assert_eq!(weapon.path(), Some("::Characters::Bob::Weapon".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity_named()`] - Preferred way to create named entities
+    /// * [`World::entity_named_scoped()`]
+    /// * [`EntityView::name()`] - Get entity name
+    /// * [`EntityView::path()`] - Get full hierarchical path
+    /// * [`World::lookup()`] - Look up named entities
+    pub(crate) fn new_named_scoped(
+        world: impl WorldProvider<'a>,
+        name: &str,
+        sep: &str,
+        root_sep: &str,
+    ) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+        let sep = compact_str::format_compact!("{}\0", sep);
+        let root_sep = compact_str::format_compact!("{}\0", root_sep);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: sep.as_ptr() as *const _,
+            root_sep: root_sep.as_ptr() as *const _,
             _canary: 0,
             id: 0,
             parent: 0,
@@ -712,7 +787,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add(id::<Position>());
+    /// let entity = world.entity().add(Position::id());
     ///
     /// if let Some(table) = entity.table() {
     ///     println!(
@@ -734,8 +809,8 @@ impl<'a> EntityView<'a> {
     /// * [`Table::count()`] - Get number of entities in table
     #[inline(always)]
     pub fn table(self) -> Option<Table<'a>> {
-        NonNull::new(unsafe { sys::ecs_get_table(self.world.world_ptr(), *self.id) })
-            .map(|t| Table::new(self.world, t))
+        let table = unsafe { sys::ecs_get_table(self.world.world_ptr(), *self.id) };
+        NonNull::new(table).map(|t| Table::new(self.world, t))
     }
 
     /// Get table range for the entity.
@@ -755,7 +830,7 @@ impl<'a> EntityView<'a> {
     /// }
     ///
     /// let world = World::new();
-    /// let entity = world.entity().add(id::<Position>());
+    /// let entity = world.entity().add(Position::id());
     ///
     /// if let Some(range) = entity.range() {
     ///     println!("Entity is at row {} in its table", range.offset());
@@ -844,8 +919,8 @@ impl<'a> EntityView<'a> {
     ///
     /// let entity = world
     ///     .entity()
-    ///     .add((id::<Likes>(), apple))
-    ///     .add((id::<Likes>(), banana));
+    ///     .add((Likes, apple))
+    ///     .add((Likes, banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -993,8 +1068,8 @@ impl<'a> EntityView<'a> {
     /// let banana = world.entity_named("Banana");
     ///
     /// entity
-    ///     .add((id::<Likes>(), apple))
-    ///     .add((id::<Likes>(), banana));
+    ///     .add((Likes, apple))
+    ///     .add((Likes, banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```
@@ -1013,7 +1088,7 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId,
     {
-        self.target_id_count(T::id(self.world))
+        self.target_id_count(T::entity_id(self.world))
     }
 
     /// Iterate children for entity
@@ -1036,19 +1111,31 @@ impl<'a> EntityView<'a> {
             return false;
         }
 
-        let mut it: sys::ecs_iter_t = unsafe {
-            sys::ecs_each_id(
-                self.world_ptr(),
-                ecs_pair(*relationship.into_entity(self.world), *self.id),
-            )
-        };
-        while unsafe { sys::ecs_each_next(&mut it) } {
-            count += it.count;
-            for i in 0..it.count as usize {
-                unsafe {
-                    let id = it.entities.add(i);
-                    let ent = EntityView::new_from(self.world, *id);
-                    func(ent);
+        let relationship = relationship.into_entity(self.world);
+
+        if relationship == ECS_CHILD_OF {
+            let mut it: sys::ecs_iter_t = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
+            while unsafe { sys::ecs_children_next(&mut it) } {
+                count += it.count;
+                for i in 0..it.count as usize {
+                    unsafe {
+                        let id = it.entities.add(i);
+                        let ent = EntityView::new_from(self.world, *id);
+                        func(ent);
+                    }
+                }
+            }
+        } else {
+            let mut it: sys::ecs_iter_t =
+                unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship, *self.id)) };
+            while unsafe { sys::ecs_each_next(&mut it) } {
+                count += it.count;
+                for i in 0..it.count as usize {
+                    unsafe {
+                        let id = it.entities.add(i);
+                        let ent = EntityView::new_from(self.world, *id);
+                        func(ent);
+                    }
                 }
             }
         }
@@ -1536,7 +1623,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(First::id(self.world), *second.into()),
+                ecs_pair(First::entity_id(self.world), *second.into()),
             )
         }
     }
@@ -1568,7 +1655,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(*first.into(), Second::id(self.world)),
+                ecs_pair(*first.into(), Second::entity_id(self.world)),
             )
         }
     }
@@ -1621,7 +1708,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_mut_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(First::id(self.world), *second.into()),
+                ecs_pair(First::entity_id(self.world), *second.into()),
             )
         }
     }
@@ -1652,7 +1739,7 @@ impl<'a> EntityView<'a> {
             sys::ecs_get_mut_id(
                 self.world.world_ptr(),
                 *self.id,
-                ecs_pair(*first.into(), Second::id(self.world)),
+                ecs_pair(*first.into(), Second::entity_id(self.world)),
             )
         }
     }
@@ -1744,7 +1831,7 @@ impl<'a> EntityView<'a> {
         &self,
         second: impl Into<Entity>,
     ) -> *const First {
-        let comp_id = First::id(self.world);
+        let comp_id = First::entity_id(self.world);
         ecs_assert!(
             core::mem::size_of::<First>() != 0,
             FlecsErrorCode::InvalidParameter,
@@ -1788,7 +1875,12 @@ impl<'a> EntityView<'a> {
     /// * The parent of the entity.
     #[inline(always)]
     pub fn parent(self) -> Option<EntityView<'a>> {
-        self.target(ECS_CHILD_OF, 0)
+        let id = unsafe { sys::ecs_get_parent(self.world.world_ptr(), *self.id) };
+        if id == 0 {
+            None
+        } else {
+            Some(EntityView::new_from(self.world, id))
+        }
     }
 
     /// Lookup an entity by name.
@@ -1913,7 +2005,7 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {} not found, when unsure, use try_lookup", name))
+            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Test if an entity has an id.
@@ -1940,10 +2032,11 @@ impl<'a> EntityView<'a> {
     }
 
     // this is pub(crate) because it's used for development purposes only
-    pub(crate) fn has_enum<T>(self, enum_id: impl IntoEntity, constant: T) -> bool
+    pub fn has_enum<T>(self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
+        let enum_id = T::entity_id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         ecs_assert!(
@@ -1952,7 +2045,7 @@ impl<'a> EntityView<'a> {
             "Constant was not found in Enum reflection data. Did you mean to use has<E>() instead of has(E)?"
         );
 
-        self.has((enum_id.into_entity(self.world), enum_constant_entity_id))
+        self.has((enum_id, enum_constant_entity_id))
     }
 
     /// Check if entity has the provided pair with an enum constant.
@@ -1973,10 +2066,74 @@ impl<'a> EntityView<'a> {
         &self,
         constant: U,
     ) -> bool {
-        let component_id: sys::ecs_id_t = T::id(self.world);
+        let component_id: sys::ecs_id_t = T::entity_id(self.world);
         let enum_constant_entity_id = constant.id_variant(self.world);
 
         self.has((component_id, enum_constant_entity_id))
+    }
+
+    /*
+
+        inline E entity_view::to_constant() const {
+    #ifdef FLECS_META
+        using U = typename std::underlying_type<E>::type;
+        const E* ptr = static_cast<const E*>(ecs_get_id(world_, id_,
+            ecs_pair(flecs::Constant, _::type<U>::id(world_))));
+        ecs_assert(ptr != NULL, ECS_INVALID_PARAMETER, "entity is not a constant");
+        return ptr[0];
+    #else
+        ecs_assert(false, ECS_UNSUPPORTED,
+            "operation not supported without FLECS_META addon");
+        return E();
+    #endif
+
+                        #[cfg(feature = "flecs_meta")]
+                    {
+                        let id_underlying_type = world.component_id::<i32>();
+                        let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+                        let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
+
+                        ecs_assert!(
+                            !constant_value.is_null(),
+                            FlecsErrorCode::InternalError,
+                            "missing enum constant value {}",
+                            core::any::type_name::<A>()
+                        );
+
+                        unsafe { constant_value }
+                    }
+         */
+
+    pub fn to_constant<T>(&self) -> T
+    where
+        T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
+    {
+        #[cfg(feature = "flecs_meta")]
+        {
+            let id_underlying_type = self.world.component_id::<i32>();
+            let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+            let constant_value =
+                unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
+
+            ecs_assert!(
+                !constant_value.is_null(),
+                FlecsErrorCode::InternalError,
+                "missing enum constant value {}",
+                core::any::type_name::<T>()
+            );
+
+            unsafe { (constant_value.add(0) as *mut T).read() }
+        }
+
+        #[cfg(not(feature = "flecs_meta"))]
+        {
+            ecs_assert!(
+                false,
+                FlecsErrorCode::Unsupported,
+                "operation not supported without FLECS_META addon"
+            );
+            unsafe { std::mem::zeroed() }
+        }
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).
@@ -2036,6 +2193,20 @@ impl<'a> EntityView<'a> {
             )
         };
         dest_entity
+    }
+
+    #[inline(always)]
+    pub fn child(self) -> EntityView<'a> {
+        let w = self.world();
+        let e = unsafe { sys::ecs_new_w_id(w.ptr_mut(), ecs_pair(ECS_CHILD_OF, *self.id)) };
+        EntityView::new_from(w, e)
+    }
+
+    #[inline(always)]
+    pub fn child_named(self, name: &str) -> EntityView<'a> {
+        let w = self.world();
+        let e = w.entity_named(name).child_of(self.id);
+        EntityView::new_from(self.world(), *e)
     }
 
     /// Clones the current entity to a new or specified entity.
@@ -2286,10 +2457,10 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty::<Func> as unsafe extern "C-unwind" fn(_)),
+            Some(Self::run_empty::<Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2336,10 +2507,10 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty_entity::<Func> as unsafe extern "C-unwind" fn(_)),
+            Some(Self::run_empty_entity::<Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2386,10 +2557,10 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload::<C, Func> as unsafe extern "C-unwind" fn(_)),
+            Some(Self::run_payload::<C, Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2436,10 +2607,10 @@ impl EntityView<'_> {
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
-            C::id(self.world),
+            C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload_entity::<C, Func> as unsafe extern "C-unwind" fn(_)),
+            Some(Self::run_payload_entity::<C, Func> as extern "C" fn(_)),
         );
         self
     }
@@ -2471,7 +2642,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C-unwind" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(),
     {
@@ -2496,7 +2667,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C-unwind" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView),
     {
@@ -2525,7 +2696,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C-unwind" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&C),
     {
@@ -2552,7 +2723,7 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) unsafe extern "C-unwind" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
+    pub(crate) extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView, &C),
     {
@@ -2579,7 +2750,7 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `empty` callback
-    pub(crate) extern "C-unwind" fn on_free_empty(ptr: *mut c_void) {
+    pub(crate) extern "C" fn on_free_empty(ptr: *mut c_void) {
         let ptr_func: *mut fn() = ptr as *mut fn();
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2587,7 +2758,7 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `empty_entity` callback
-    pub(crate) extern "C-unwind" fn on_free_empty_entity(ptr: *mut c_void) {
+    pub(crate) extern "C" fn on_free_empty_entity(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView) = ptr as *mut fn(&mut EntityView);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2595,7 +2766,7 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `payload` callback
-    pub(crate) extern "C-unwind" fn on_free_payload<C>(ptr: *mut c_void) {
+    pub(crate) extern "C" fn on_free_payload<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut C) = ptr as *mut fn(&mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2603,7 +2774,7 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `payload_entity` callback
-    pub(crate) extern "C-unwind" fn on_free_payload_entity<C>(ptr: *mut c_void) {
+    pub(crate) extern "C" fn on_free_payload_entity<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView, &mut C) = ptr as *mut fn(&mut EntityView, &mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2611,7 +2782,7 @@ impl EntityView<'_> {
     }
 
     /// Executes the drop for the system binding context, meant to be used as a callback
-    pub(crate) extern "C-unwind" fn binding_entity_ctx_drop(ptr: *mut c_void) {
+    pub(crate) extern "C" fn binding_entity_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ObserverEntityBindingCtx = ptr as *mut ObserverEntityBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);

@@ -29,11 +29,27 @@ impl<'a> EntityView<'a> {
         let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
+        const {
+            if T::IS_PAIR
+                && T::IS_TYPED
+                && !T::IF_ID_IS_DEFAULT
+                && T::IS_TYPED_SECOND
+                && !T::IF_ID_IS_DEFAULT_SECOND
+                && !<T as IntoId>::IS_TYPE_TAG
+            {
+                panic!("none implement default, use `set_pair` instead to ensure valid data");
+            }
+        }
+
+        const {
+            if !T::IS_PAIR && T::IS_TYPED && !T::IF_ID_IS_DEFAULT && !<T as IntoId>::IS_TYPE_TAG {
+                panic!("Default hook not implemented for non ZST type");
+            }
+        }
+
         if !T::IS_PAIR {
             if !T::IS_TYPED {
                 check_add_id_validity(world, id);
-            } else if !T::IF_ID_IS_DEFAULT && !<T as IntoId>::IS_TYPE_TAG {
-                panic!("Default hook not implemented for non ZST type");
             }
         } else if T::IS_TYPED {
             if !T::IF_ID_IS_DEFAULT && !T::IS_TYPED_SECOND {
@@ -117,7 +133,7 @@ impl<'a> EntityView<'a> {
         }
         let world = self.world;
         let enum_id = enum_value.id_variant(world);
-        unsafe { self.add_id_unchecked((First::id(world), enum_id)) }
+        unsafe { self.add_id_unchecked((First::entity_id(world), enum_id)) }
     }
 
     /// Adds a pair to the entity where the first element is the enumeration type,
@@ -137,7 +153,7 @@ impl<'a> EntityView<'a> {
         enum_value: T,
     ) -> Self {
         let world = self.world;
-        let first = T::id(world);
+        let first = T::entity_id(world);
         // SAFETY: we know that the enum_value is a valid because of the T::id call
         let second = unsafe { enum_value.id_variant_unchecked(world) };
         ecs_assert!(
@@ -198,7 +214,7 @@ impl<'a> EntityView<'a> {
         let world = self.world;
         // SAFETY: we know that the enum_value is a valid because of the T::id call
         self.add_if(
-            (T::id(world), unsafe {
+            (T::entity_id(world), unsafe {
                 enum_value.id_variant_unchecked(world)
             }),
             condition,
@@ -223,26 +239,6 @@ impl<'a> EntityView<'a> {
         self
     }
 
-    /// Remove a pair.
-    /// This operation removes a pair to the entity.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T`: The type of the first element of the pair.
-    /// * `U`: The type of the second element of the pair.
-    ///
-    /// # Arguments
-    ///
-    /// * `enum_value`: the enum constant.
-    pub fn remove_enum_tag<First, Second>(self, enum_value: Second) -> Self
-    where
-        First: ComponentId,
-        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
-    {
-        let world = self.world;
-        self.remove((First::id(world), enum_value.id_variant(world)))
-    }
-
     /// Shortcut for `add((flecs::IsA, id))`.
     ///
     /// # Arguments
@@ -257,6 +253,7 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `parent`: The parent entity to establish the relationship with.
+    #[inline(always)]
     pub fn child_of(self, parent: impl IntoEntity) -> Self {
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into_entity(self.world))) }
     }
@@ -325,7 +322,7 @@ impl<'a> EntityView<'a> {
         self,
         component: T,
     ) -> Self {
-        self.auto_override(id::<T>()).set(component)
+        self.auto_override(T::id()).set(component)
     }
 
     /// Sets a pair, mark component for auto-overriding.
@@ -357,7 +354,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let second_id = *second.into();
-        let first_id = First::id(self.world);
+        let first_id = First::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         self.auto_override(pair_id).set_id(first, pair_id)
     }
@@ -376,7 +373,7 @@ impl<'a> EntityView<'a> {
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
         let first_id = first.into();
-        let second_id = Second::id(self.world);
+        let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(*first_id, second_id);
         self.auto_override(pair_id).set_id(second, pair_id)
     }
@@ -386,13 +383,18 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `component` - The component to set on the entity.
-    pub fn set<T: ComponentId + DataComponent>(self, component: T) -> Self {
-        set_helper(
-            self.world.world_ptr_mut(),
-            *self.id,
-            component,
-            T::id(self.world),
-        );
+    pub fn set<T: ComponentId>(self, component: T) -> Self {
+        let id = T::entity_id(self.world);
+        if T::IS_TAG {
+            unsafe { self.add_id_unchecked(id) };
+        } else {
+            set_helper(
+                self.world.world_ptr_mut(),
+                *self.id,
+                component,
+                T::entity_id(self.world),
+            );
+        }
         self
     }
 
@@ -442,7 +444,7 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world.world_ptr_mut();
         let id = *id.into_id(self.world);
-        let data_id = T::id(self.world);
+        let data_id = T::entity_id(self.world);
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
@@ -499,7 +501,7 @@ impl<'a> EntityView<'a> {
             );
         };
 
-        let pair_id = ecs_pair(First::id(self.world), Second::id(self.world));
+        let pair_id = ecs_pair(First::entity_id(self.world), Second::entity_id(self.world));
 
         ecs_assert!(
             unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
@@ -517,7 +519,7 @@ impl<'a> EntityView<'a> {
         First: ComponentId + DataComponent,
     {
         let world_ptr = self.world.world_ptr_mut();
-        let first_id = First::id(self.world);
+        let first_id = First::entity_id(self.world);
         let second_id = *second.into();
         let pair_id = ecs_pair(first_id, second_id);
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
@@ -543,7 +545,7 @@ impl<'a> EntityView<'a> {
     {
         let world = self.world.world_ptr_mut();
         let first_id = *first.into();
-        let second_id = Second::id(self.world);
+        let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
@@ -580,7 +582,10 @@ impl<'a> EntityView<'a> {
             self.world.world_ptr_mut(),
             *self.id,
             first,
-            ecs_pair(First::id(self.world), **enum_variant.id_variant(self.world)),
+            ecs_pair(
+                First::entity_id(self.world),
+                **enum_variant.id_variant(self.world),
+            ),
         );
         self
     }
@@ -636,6 +641,126 @@ impl<'a> EntityView<'a> {
 
             self.set_ptr_w_size(id, (*cptr).size as usize, ptr)
         }
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign<T: ComponentId + DataComponent>(self, value: T) -> Self {
+        assign_helper(
+            self.world.world_ptr_mut(),
+            *self.id,
+            value,
+            T::entity_id(self.world),
+        );
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_id<T: ComponentId + DataComponent>(self, value: T, id: impl IntoId) -> Self {
+        let id = *id.into_id(self.world);
+        assign_helper(self.world.world_ptr_mut(), *self.id, value, id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair<First, Second>(
+        self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) -> Self
+    where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        const {
+            assert!(
+                !<(First, Second) as ComponentOrPairId>::IS_TAGS,
+                "setting tag relationships is not possible with `set_pair`. use `add::<(Tag1, Tag2)()` instead."
+            );
+        };
+
+        let pair_id = ecs_pair(First::entity_id(self.world), Second::entity_id(self.world));
+
+        ecs_assert!(
+            unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
+            FlecsErrorCode::InvalidOperation,
+            "Pair is not a (data) component. Possible cause: PairIsTag trait"
+        );
+
+        assign_helper(self.world.world_ptr_mut(), *self.id, value, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    where
+        First: ComponentId + DataComponent,
+    {
+        let world_ptr = self.world.world_ptr_mut();
+        let first_id = First::entity_id(self.world);
+        let second_id = *second.into();
+        let pair_id = ecs_pair(first_id, second_id);
+        let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
+
+        if data_id != first_id {
+            panic!(
+                "First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        assign_helper(world_ptr, *self.id, first, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let world = self.world.world_ptr_mut();
+        let first_id = *first.into();
+        let second_id = Second::entity_id(self.world);
+        let pair_id = ecs_pair(first_id, second_id);
+        // NOTE: we could this safety check optional
+        let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
+
+        if data_id != second_id {
+            panic!(
+                "Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        assign_helper(world, *self.id, second, pair_id);
+        self
+    }
+
+    /// assign a component for an entity.
+    /// This operation sets the component value. If the entity did not yet have
+    /// the component the operation will panic.
+    pub fn assign_pair_enum<First, Second>(self, enum_variant: Second, first: First) -> Self
+    where
+        First: ComponentId + ComponentType<Struct> + DataComponent,
+        Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
+    {
+        assign_helper(
+            self.world.world_ptr_mut(),
+            *self.id,
+            first,
+            ecs_pair(
+                First::entity_id(self.world),
+                **enum_variant.id_variant(self.world),
+            ),
+        );
+        self
     }
 
     /// Sets the name of the entity.
@@ -891,7 +1016,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::get_ref()`]
     /// * [`EntityView::get_ref_first()`]
     /// * [`EntityView::get_ref_second()`]
-    //TODO: can this be shrunk to just one function like with add,add_id
     pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
     where
         T: ComponentOrPairId,
@@ -936,7 +1060,7 @@ impl<'a> EntityView<'a> {
         self,
         second: impl Into<Entity>,
     ) -> CachedRef<'a, First> {
-        let first = First::id(self.world);
+        let first = First::entity_id(self.world);
         let second = *second.into();
         let pair = ecs_pair(first, second);
         ecs_assert!(
@@ -973,7 +1097,7 @@ impl<'a> EntityView<'a> {
         first: impl Into<Entity>,
     ) -> CachedRef<Second> {
         let first = *first.into();
-        let second = Second::id(self.world);
+        let second = Second::entity_id(self.world);
         let pair = ecs_pair(first, second);
         ecs_assert!(
             !(unsafe { sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.is_null()),
@@ -1004,5 +1128,64 @@ impl<'a> EntityView<'a> {
     /// entity object goes out of scope.
     pub fn destruct(self) {
         unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
+    }
+
+    /// Set child order.
+    /// Changes the order of children as returned by [`EntityView::each_child()`].
+    /// Only applicable to entities with the [`flecs::OrderedChildren`] trait.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Default)]
+    /// struct Position {
+    ///    x: f32,
+    ///    y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let parent = world.entity().add(flecs::OrderedChildren);
+    /// let child_a = world.entity().child_of(parent).add(Position::id());
+    /// let child_b = world.entity().child_of(parent).add(Position::id());
+    /// let child_c = world.entity().child_of(parent).add(Position::id());
+    ///
+    /// let mut vec : Vec<Entity> = vec![];
+    /// parent.each_child(|e| {
+    ///    vec.push(*e);
+    /// });
+    ///
+    /// assert!(vec[0] == child_a);
+    /// assert!(vec[1] == child_b);
+    /// assert!(vec[2] == child_c);
+    ///
+    /// let children = [*child_c, *child_a, *child_b];
+    /// parent.set_child_order(&children);
+    ///
+    /// vec.clear();
+    ///
+    /// parent.each_child(|e| {
+    ///    vec.push(*e);
+    /// });
+    ///
+    /// assert!(vec[0] == child_c);
+    /// assert!(vec[1] == child_a);
+    /// assert!(vec[2] == child_b);
+    ///
+    /// ```
+    pub fn set_child_order(self, children: &[Entity]) -> Self {
+        let world_ptr = self.world.world_ptr_mut();
+        let child_count = children.len() as i32;
+        let children_ptr = if child_count > 0 {
+            children.as_ptr() as *const sys::ecs_entity_t
+        } else {
+            core::ptr::null()
+        };
+
+        unsafe {
+            sys::ecs_set_child_order(world_ptr, *self.id, children_ptr, child_count);
+        }
+        self
     }
 }

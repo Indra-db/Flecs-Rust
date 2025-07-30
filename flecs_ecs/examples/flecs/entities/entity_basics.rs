@@ -17,6 +17,7 @@ pub struct Velocity {
 #[derive(Component)]
 pub struct Walking;
 
+#[test]
 fn main() {
     let world = World::new();
 
@@ -28,14 +29,14 @@ fn main() {
         .set(Position { x: 10.0, y: 20.0 })
         // The add operation adds a component without setting a value. This is
         // useful for tags, or when adding a component with its default value.
-        .add(id::<Walking>());
+        .add(Walking);
 
     // Get the value for the Position component
     // - get panics if the component is not present, use try_get for a non-panicking version which does not run the callback.
     // - or use Option to handle the individual component missing.
     bob.get::<Option<&Position>>(|pos| {
         if let Some(pos) = pos {
-            println!("Bob's position: {:?}", pos);
+            println!("Bob's position: {pos:?}");
         }
     });
 
@@ -48,14 +49,14 @@ fn main() {
         .set(Position { x: 10.0, y: 20.0 });
 
     // Add a tag after entity is created
-    alice.add(id::<Walking>());
+    alice.add(Walking);
 
     // Print all of the components the entity has. This will output:
     //    Position, Walking, (Identifier,Name)
     println!("[{}]", alice.archetype());
 
     // Remove tag
-    alice.remove(id::<Walking>());
+    alice.remove(Walking);
 
     // Iterate all entities with position
     world.each_entity::<&Position>(|entity, pos| {

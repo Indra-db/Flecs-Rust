@@ -27,8 +27,8 @@ fn main() {
     // Create query to find all waiters without a plate
     let mut q_waiter = world
         .query::<()>()
-        .with(id::<Waiter>())
-        .without((id::<Plate>(), id::<flecs::Wildcard>()))
+        .with(Waiter)
+        .without((Plate, id::<flecs::Wildcard>()))
         .build();
 
     // System that assigns plates to waiter. By making this system no_readonly
@@ -36,49 +36,52 @@ fn main() {
     // ensures that we won't assign plates to the same waiter more than once.
     world
         .system_named::<()>("AssignPlate")
-        .with(id::<Plate>())
-        .without((id::<Waiter>(), id::<flecs::Wildcard>()))
+        .with(Plate)
+        .without((Waiter, id::<flecs::Wildcard>()))
         .immediate(true)
-        .each_iter(move |mut it, index, plate| {
+        .run(move |mut it| {
             let world = it.world();
-            let plate = it.entity(index).unwrap();
+            while it.next() {
+                for i in it.iter() {
+                    let plate = it.entity(i).unwrap();
+                    // Find an available waiter
+                    if let Some(waiter) = q_waiter.try_first_entity() {
+                        // An available waiter was found, assign a plate to it so
+                        // that the next plate will no longer find it.
+                        // The defer_suspend function temporarily suspends deferring
+                        // operations, which ensures that our plate is assigned
+                        // immediately. Even though this is a no_readonly system,
+                        // deferring is still enabled by default as adding/removing
+                        // components to the entities being iterated would interfere
+                        // with the system iterator.
+                        world.defer_suspend();
+                        waiter.add((Plate, plate));
+                        world.defer_resume();
 
-            // Find an available waiter
-            if let Some(waiter) = q_waiter.try_first_entity() {
-                // An available waiter was found, assign a plate to it so
-                // that the next plate will no longer find it.
-                // The defer_suspend function temporarily suspends deferring
-                // operations, which ensures that our plate is assigned
-                // immediately. Even though this is a no_readonly system,
-                // deferring is still enabled by default as adding/removing
-                // components to the entities being iterated would interfere
-                // with the system iterator.
-                it.world().defer_suspend();
-                waiter.add((id::<&Plate>(), plate));
-                it.world().defer_resume();
+                        // Now that deferring is resumed, we can safely also add the
+                        // waiter to the plate. We can't do this while deferring is
+                        // suspended, because the plate is the entity we're
+                        // currently iterating, and we don't want to move it to a
+                        // different table while we're iterating it.
 
-                // Now that deferring is resumed, we can safely also add the
-                // waiter to the plate. We can't do this while deferring is
-                // suspended, because the plate is the entity we're
-                // currently iterating, and we don't want to move it to a
-                // different table while we're iterating it.
+                        plate.add((Waiter, waiter));
 
-                plate.add((id::<&Waiter>(), waiter));
-
-                println!("Assigned {} to {}!", waiter.name(), plate.name());
+                        println!("Assigned {} to {}!", waiter.name(), plate.name());
+                    }
+                }
             }
         });
 
-    let waiter_1 = world.entity_named("waiter_1").add(id::<Waiter>());
-    world.entity_named("waiter_2").add(id::<Waiter>());
-    world.entity_named("waiter_3").add(id::<Waiter>());
+    let waiter_1 = world.entity_named("waiter_1").add(Waiter);
+    world.entity_named("waiter_2").add(Waiter);
+    world.entity_named("waiter_3").add(Waiter);
 
-    world.entity_named("plate_1").add(id::<Plate>());
-    let plate_2 = world.entity_named("plate_2").add(id::<Plate>());
-    world.entity_named("plate_3").add(id::<Plate>());
+    world.entity_named("plate_1").add(Plate);
+    let plate_2 = world.entity_named("plate_2").add(Plate);
+    world.entity_named("plate_3").add(Plate);
 
-    waiter_1.add((id::<&Plate>(), plate_2));
-    plate_2.add((id::<&Waiter>(), waiter_1));
+    waiter_1.add((Plate, plate_2));
+    plate_2.add((Waiter, waiter_1));
 
     // run systems
     world.progress();

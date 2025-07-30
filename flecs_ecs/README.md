@@ -131,7 +131,7 @@ fn main() {
         .entity_named("Bob")
         .set(Position { x: 0.0, y: 0.0 })
         .set(Velocity { x: 1.0, y: 2.0 })
-        .add((id::<Eats>(), id::<Apples>()));
+        .add((Eats::id(), Apples::id()));
 
     // Show us what you got
     println!("{}'s got [{:?}]", bob.name(), bob.archetype());
@@ -172,7 +172,7 @@ Some of the features that make Flecs stand out are:
     * [Builder API]
     ```rust
     world.system::<&A>()
-    .with(id::<B>())
+    .with(B::id())
     .each(|| { });
     ```
     * [DSL API]

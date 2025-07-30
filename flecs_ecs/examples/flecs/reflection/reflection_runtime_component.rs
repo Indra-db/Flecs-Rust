@@ -7,8 +7,8 @@ fn main() {
 
     let position = world
         .component_untyped_named("Position")
-        .member(id::<f32>(), "x")
-        .member(id::<f32>(), "y");
+        .member(f32::id(), "x")
+        .member(f32::id(), "y");
 
     // Create entity
     let e = world.entity();

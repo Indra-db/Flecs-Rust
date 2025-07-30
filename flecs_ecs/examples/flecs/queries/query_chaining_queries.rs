@@ -39,7 +39,7 @@ fn main() {
             });
 
         if i % 2 == 0 {
-            creature.add(id::<Enchanted>());
+            creature.add(Enchanted);
         }
     }
 
@@ -54,7 +54,7 @@ fn main() {
 
         if i % 2 != 0 {
             // Differentiate enchantment condition to diversify
-            artifact.add(id::<Enchanted>());
+            artifact.add(Enchanted);
         }
     }
 
@@ -62,26 +62,30 @@ fn main() {
     let query_creatures = forest.query::<(&Location, &Ability)>().set_cached().build();
 
     // Filter specifically for enchanted things in the world
-    let mut query_enchanted = forest.query::<()>().with(id::<&Enchanted>()).build();
+    let mut query_enchanted = forest.query::<()>().with(&Enchanted).build();
 
     // Iterate over creatures to find the enchanted ones
     query_creatures.run(|mut iter| {
 
         while iter.next() {
 
-            let loc = iter.field::<Location>(0).unwrap();
-            let ability = iter.field::<Ability>(1).unwrap();
+            let loc = iter.field::<Location>(0);
+            let ability = iter.field::<Ability>(1);
             // Filter for enchanted creatures within the current iteration
             query_enchanted
             .set_var_table(0, iter.range().unwrap())
-            .each_iter( |it, index ,_| {
-                let pos = &loc[index];
-                let abil_power = ability[index].power;
-                let entity = it.entity(index).unwrap();
-                println!(
-                    "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
-                    , pos.x, pos.y, abil_power
-                );
+            .run(|mut it| {
+                while it.next() {
+                    for i in it.iter() {
+                        let pos = &loc[i];
+                        let abil_power = ability[i].power;
+                        let entity = it.entity(i).unwrap();
+                        println!(
+                            "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} ",
+                            pos.x, pos.y, abil_power
+                        );
+                    }
+                }
             });
         }
     });

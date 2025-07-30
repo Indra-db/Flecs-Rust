@@ -101,6 +101,16 @@ impl<'a> System<'a> {
         unsafe { Query::<()>::new_from(query) }
     }
 
+    /// returns whether the system is immediate
+    pub fn immediate(&self) -> bool {
+        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).immediate }
+    }
+
+    /// returns whether the system is multi-threaded
+    pub fn multi_threaded(&self) -> bool {
+        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).multi_threaded }
+    }
+
     /// Run the system
     ///
     /// # Arguments

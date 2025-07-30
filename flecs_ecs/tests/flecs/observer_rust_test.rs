@@ -11,7 +11,7 @@ fn observer_panic_on_add_1() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<&Position>())
+        .with(&Position::id())
         .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });
@@ -24,7 +24,7 @@ fn observer_panic_on_add_2() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<&mut Position>())
+        .with(&mut Position::id())
         .each_entity(|_, _| {});
 
     world.entity().set(Position { x: 10, y: 20 });

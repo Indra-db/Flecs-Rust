@@ -13,40 +13,44 @@ fn main() {
 
     world
         .observer::<flecs::OnAdd, ()>()
-        .with(id::<Position>())
-        .each_iter(|it, index, _| {
-            // We use .with(id::<Position>()) because we cannot safely access the component
-            // value here. The component value is uninitialized when the OnAdd event
-            // is emitted, which is UB in Rust. To work around this, we use .with::<T>
-            println!(
-                " - OnAdd: {}: {}",
-                it.event_id().to_str(),
-                it.entity(index).unwrap()
-            );
+        // We use .with(Position::id()) because we cannot safely access the component
+        // value here. The component value is uninitialized when the OnAdd event
+        // is emitted, which is UB in Rust. To work around this, we use .with::<T>
+        .with(Position::id())
+        .run(|mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity_id(i));
+                }
+            }
         });
 
     // Create an observer for three events
     world
         .observer::<flecs::OnSet, &Position>()
-        .add_event(id::<flecs::OnRemove>())
-        .each_iter(|it, index, pos| {
-            println!(
-                " - {}: {}: {}: with {:?}",
-                it.event().name(),
-                it.event_id().to_str(),
-                it.entity(index).unwrap(),
-                pos
-            );
+        .add_event(flecs::OnRemove)
+        .run(|mut it| {
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                for i in it.iter() {
+                    println!(
+                        " - {}: {}: with {:?}",
+                        it.event().name(),
+                        it.entity_id(i),
+                        pos[i]
+                    );
+                }
+            }
         });
 
     // Create entity, set Position (emits EcsOnAdd and EcsOnSet)
     let entity = world.entity_named("e1").set(Position { x: 10.0, y: 20.0 });
 
     // Remove Position (emits EcsOnRemove)
-    entity.remove(id::<Position>());
+    entity.remove(Position::id());
 
     // Remove Position again (no event emitted)
-    entity.remove(id::<Position>());
+    entity.remove(Position::id());
 
     // Output:
     //  - OnAdd: Position: e1

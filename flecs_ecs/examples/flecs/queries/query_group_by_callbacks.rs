@@ -32,8 +32,8 @@ pub struct Third;
 #[derive(Component)]
 pub struct Group;
 
-// Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
-extern "C-unwind" fn callback_group_create(
+// TODO: Callbacks should be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
+extern "C" fn callback_group_create(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _group_by_ctx: *mut c_void,
@@ -55,8 +55,8 @@ extern "C-unwind" fn callback_group_create(
     Box::into_raw(ctx) as *mut core::ffi::c_void // Cast to make sure function type matches
 }
 
-// Callbacks need to be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
-extern "C-unwind" fn callback_group_delete(
+// TODO: Callbacks should be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
+extern "C" fn callback_group_delete(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _ctx: *mut c_void,
@@ -83,7 +83,7 @@ fn main() {
     // Grouped query
     let query = world
         .query::<(&Position,)>()
-        .group_by(id::<Group>())
+        .group_by(Group)
         // Callback invoked when a new group is created
         .on_group_create(Some(callback_group_create))
         // Callback invoked when a group is deleted
@@ -93,32 +93,32 @@ fn main() {
     // Create entities in 6 different tables with 3 group ids
     world
         .entity()
-        .add((id::<Group>(), id::<Third>()))
+        .add((Group, Third))
         .set(Position { x: 1.0, y: 1.0 });
     world
         .entity()
-        .add((id::<Group>(), id::<Second>()))
+        .add((Group, Second))
         .set(Position { x: 2.0, y: 2.0 });
     world
         .entity()
-        .add((id::<Group>(), id::<First>()))
+        .add((Group, First))
         .set(Position { x: 3.0, y: 3.0 });
 
     world
         .entity()
-        .add((id::<Group>(), id::<Third>()))
+        .add((Group, Third))
         .set(Position { x: 4.0, y: 4.0 })
-        .add(id::<Tag>());
+        .add(Tag);
     world
         .entity()
-        .add((id::<Group>(), id::<Second>()))
+        .add((Group, Second))
         .set(Position { x: 5.0, y: 5.0 })
-        .add(id::<Tag>());
+        .add(Tag);
     world
         .entity()
-        .add((id::<Group>(), id::<First>()))
+        .add((Group, First))
         .set(Position { x: 6.0, y: 6.0 })
-        .add(id::<Tag>());
+        .add(Tag);
 
     println!();
 
@@ -138,9 +138,9 @@ fn main() {
 
     query.run(|mut it| {
         while it.next() {
-            let pos = it.field::<Position>(0).unwrap();
-
             let group = world.entity_from_id(it.group_id());
+            let pos = it.field_mut::<Position>(0);
+
             let ctx = unsafe { &*(query.group_context(group) as *mut GroupCtx) };
             println!(
                 "Group: {:?} - Table: [{:?}] - Counter: {}",

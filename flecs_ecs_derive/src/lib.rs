@@ -93,8 +93,8 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
             ));
         }
         Data::Enum(_) => {
-            let is_tag = generate_tag_trait(!has_repr_c);
-            if !has_repr_c {
+            let is_tag = generate_tag_trait(!has_repr_c.0);
+            if !has_repr_c.0 {
                 generated_impls.push(impl_cached_component_data_struct(
                     &mut input,
                     true,
@@ -105,6 +105,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 generated_impls.push(impl_cached_component_data_enum(
                     &mut input,
                     has_on_registration,
+                    has_repr_c.1,
                 ));
             }
         }
@@ -113,7 +114,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     input.generics.make_where_clause();
 
-    let meta_impl = impl_meta(&input, has_repr_c, input.ident.clone());
+    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone());
 
     // Combine the generated code with the original struct definition
     let output = quote! {
@@ -179,7 +180,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
                     let variant_name = &variant.ident;
 
                     meta_fields_impl.push(quote! {
-                        .constant(stringify!(#variant_name), id, #struct_name::#variant_name)
+                        .constant(stringify!(#variant_name), #struct_name::#variant_name)
                     });
                 }
             }
@@ -242,6 +243,8 @@ struct GenericTypeInfo {
     contains_generic_type: bool,
     is_bound_default: bool,
     is_bound_clone: bool,
+    is_bound_partial_ord: bool,
+    is_bound_partial_eq: bool,
 }
 
 impl GenericTypeInfo {
@@ -259,6 +262,14 @@ impl GenericTypeInfo {
 
     pub fn set_is_bound_clone(&mut self) {
         self.is_bound_clone = true;
+    }
+
+    pub fn set_contains_partial_ord_bound(&mut self) {
+        self.is_bound_partial_ord = true;
+    }
+
+    pub fn set_contains_partial_eq_bound(&mut self) {
+        self.is_bound_partial_eq = true;
     }
 }
 
@@ -307,6 +318,10 @@ fn impl_cached_component_data_struct(
                                 type_info.set_is_bound_default();
                             } else if trait_bound.path.is_ident("Clone") {
                                 type_info.set_is_bound_clone();
+                            } else if trait_bound.path.is_ident("PartialOrd") {
+                                type_info.set_contains_partial_ord_bound();
+                            } else if trait_bound.path.is_ident("PartialEq") {
+                                type_info.set_contains_partial_eq_bound();
                             }
                         }
                     });
@@ -338,6 +353,18 @@ fn impl_cached_component_data_struct(
                                     {
                                         gtype_info.set_is_bound_clone();
                                     }
+                                } else if trait_bound.path.is_ident("PartialOrd") {
+                                    if let Some((_, gtype_info)) =
+                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                    {
+                                        gtype_info.set_contains_partial_ord_bound();
+                                    }
+                                } else if trait_bound.path.is_ident("PartialEq") {
+                                    if let Some((_, gtype_info)) =
+                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                    {
+                                        gtype_info.set_contains_partial_eq_bound();
+                                    }
                                 }
                             }
                         }
@@ -351,6 +378,8 @@ fn impl_cached_component_data_struct(
     let mut contains_any_generic_type = false;
     let mut contains_all_default_bound = true;
     let mut contains_all_clone_bound = true;
+    let mut contains_all_partial_ord_bound = true;
+    let mut contains_all_partial_eq_bound = true;
 
     type_info_vec.iter().for_each(|(_, type_info)| {
         if type_info.contains_type_bound {
@@ -361,6 +390,10 @@ fn impl_cached_component_data_struct(
         }
         contains_all_default_bound &= type_info.is_bound_default;
         contains_all_clone_bound &= type_info.is_bound_clone;
+        contains_all_partial_ord_bound &=
+            type_info.contains_type_bound && type_info.is_bound_partial_ord;
+        contains_all_partial_eq_bound &=
+            type_info.contains_type_bound && type_info.is_bound_partial_eq;
     });
 
     let mut contains_where_bound = false;
@@ -397,6 +430,36 @@ fn impl_cached_component_data_struct(
                     );
                 }
             }
+
+            fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_ORD: bool = #name::IMPLS_PARTIAL_ORD;
+
+                if IMPLS_PARTIAL_ORD {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
+
+            fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_EQ: bool = #name::IMPLS_PARTIAL_EQ;
+
+                if IMPLS_PARTIAL_EQ {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
         }
     } else if contains_lifetime_bound && !contains_any_generic_type {
         quote! {
@@ -423,6 +486,36 @@ fn impl_cached_component_data_struct(
                     flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
                 } else {
                     flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
+
+            fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_ORD: bool = #name::<'_>::IMPLS_PARTIAL_ORD;
+
+                if IMPLS_PARTIAL_ORD {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_panic_lifecycle_action::<#name #type_generics>(
+                        type_hooks,
+                    );
+                }
+            }
+
+            fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_EQ: bool = #name::<'_>::IMPLS_PARTIAL_EQ;
+
+                if IMPLS_PARTIAL_EQ {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_panic_lifecycle_action::<#name #type_generics>(
                         type_hooks,
                     );
                 }
@@ -547,6 +640,39 @@ fn impl_cached_component_data_struct(
             const IMPLS_DEFAULT: bool = false;
         }
     };
+
+    let partial_ord_bound = if !is_generic
+        || (contains_lifetime_bound && !contains_any_generic_type)
+        || (contains_any_generic_type && contains_all_partial_ord_bound)
+    {
+        quote! {
+            const IMPLS_PARTIAL_ORD: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsPartialOrd::<#name #type_generics>::IMPLS
+            };
+        }
+    } else {
+        quote! {
+            const IMPLS_PARTIAL_ORD: bool = false;
+        }
+    };
+
+    let partial_eq_bound = if !is_generic
+        || (contains_lifetime_bound && !contains_any_generic_type)
+        || (contains_any_generic_type && contains_all_partial_eq_bound)
+    {
+        quote! {
+            const IMPLS_PARTIAL_EQ: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsPartialEq::<#name #type_generics>::IMPLS
+            };
+        }
+    } else {
+        quote! {
+            const IMPLS_PARTIAL_EQ: bool = false;
+        }
+    };
+
     // Common trait implementation for ComponentType and ComponentId
     let common_traits = {
         quote! {
@@ -558,6 +684,8 @@ fn impl_cached_component_data_struct(
 
                 #is_tag
                 #clone_default
+                #partial_ord_bound
+                #partial_eq_bound
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -578,7 +706,7 @@ fn impl_cached_component_data_struct(
         {
             type UnderlyingType = #name #type_generics;
             type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-
+            type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
             #component_info_impl
         }
     };
@@ -587,7 +715,64 @@ fn impl_cached_component_data_struct(
     let is_empty_component_trait = if has_fields {
         quote! { impl #impl_generics flecs_ecs::core::DataComponent for #name #type_generics #where_clause{} }
     } else {
-        quote! { impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {} }
+        quote! {
+            impl #impl_generics flecs_ecs::core::TagComponent for #name #type_generics #where_clause {}
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = false;
+                const IS_TYPED_MUT_REF: bool = false;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for &'static #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = true;
+                const IS_TYPED_MUT_REF: bool = false;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+            impl #impl_generics flecs_ecs::core::IntoEntity for &'static mut #name #type_generics #where_clause {
+                const IS_TYPED_PAIR: bool = false;
+                const IS_TYPED: bool = true;
+                const IF_ID_IS_DEFAULT: bool = true;
+                const IS_TYPED_SECOND: bool = false;
+                const IF_ID_IS_DEFAULT_SECOND: bool = false;
+                const IS_ENUM: bool = false;
+                const IS_TYPE_TAG: bool = true;
+                const IS_TYPED_REF: bool = false;
+                const IS_TYPED_MUT_REF: bool = true;
+                fn into_entity<'a>(
+                    self,
+                    world: impl flecs_ecs::core::WorldProvider<'a>,
+                ) -> flecs_ecs::core::Entity {
+                    world.world().component_id::<Self>()
+                }
+            }
+
+        }
     };
 
     let on_component_registration = if has_on_registration {
@@ -688,6 +873,7 @@ fn generate_variant_match_arm(
 fn impl_cached_component_data_enum(
     ast: &mut syn::DeriveInput,
     has_on_registration: bool,
+    underlying_enum_type: TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -738,7 +924,7 @@ fn impl_cached_component_data_enum(
         }
 
         fn enum_index(&self) -> usize {
-            const _: () = assert!(core::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
+            //const _: () = assert!(core::mem::size_of::<#name>()  == 4, "Enum size is not 4 bytes. For Flecs enum behaviour, the enum size must be 4 bytes");
             match self {
                 #(#variant_index_arms),*
             }
@@ -798,6 +984,36 @@ fn impl_cached_component_data_enum(
                     );
                 }
             }
+
+            fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_ORD: bool = #name::IMPLS_PARTIAL_ORD;
+
+                if IMPLS_PARTIAL_ORD {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
+
+            fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                const IMPLS_PARTIAL_EQ: bool = #name::IMPLS_PARTIAL_EQ;
+
+                if IMPLS_PARTIAL_EQ {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                        type_hooks,
+                    );
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_panic_lifecycle_action::<#name>(
+                        type_hooks,
+                    );
+                }
+            }
     };
 
     let component_id = if !is_generic {
@@ -805,6 +1021,7 @@ fn impl_cached_component_data_enum(
             impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
                 type UnderlyingType = #name;
                 type UnderlyingEnumType = #name;
+                type UnderlyingTypeOfEnum = #underlying_enum_type;
 
                 #component_info_impl
             }
@@ -829,6 +1046,14 @@ fn impl_cached_component_data_enum(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
                 };
+                const IMPLS_PARTIAL_ORD: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsPartialOrd::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_PARTIAL_EQ: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsPartialEq::<#name #type_generics>::IMPLS
+                };
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -848,6 +1073,14 @@ fn impl_cached_component_data_enum(
                 const IMPLS_DEFAULT: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsDefault::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_PARTIAL_ORD: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsPartialOrd::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_PARTIAL_EQ: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsPartialEq::<#name #type_generics>::IMPLS
                 };
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
@@ -901,7 +1134,9 @@ fn impl_cached_component_data_enum(
     }
 }
 
-fn check_repr_c(input: &syn::DeriveInput) -> bool {
+fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
+    let mut token_stream = TokenStream::new();
+
     for attr in &input.attrs {
         if attr.path().is_ident("repr") {
             let result = attr.parse_args_with(|input: ParseStream| {
@@ -909,8 +1144,30 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
                 while !input.is_empty() {
                     let path = input.call(syn::Path::parse_mod_style)?;
 
-                    if path.is_ident("C") || path.is_ident("i32") || path.is_ident("u32") {
+                    if path.is_ident("C") {
                         found_repr_c = true;
+
+                        // get the underlying ident type as tokenstream
+                        token_stream = quote! {
+                            i32
+                        };
+                        break;
+                    } else if path.is_ident("i8")
+                        || path.is_ident("u8")
+                        || path.is_ident("i16")
+                        || path.is_ident("u16")
+                        || path.is_ident("i32")
+                        || path.is_ident("u32")
+                        || path.is_ident("i64")
+                        || path.is_ident("u64")
+                    {
+                        found_repr_c = true;
+
+                        // get the underlying ident type as tokenstream
+                        let ident = path.get_ident().cloned().unwrap();
+                        token_stream = quote! {
+                            #ident
+                        };
                         break;
                     }
                 }
@@ -919,13 +1176,16 @@ fn check_repr_c(input: &syn::DeriveInput) -> bool {
 
             if let Ok(found_repr_c) = result {
                 if found_repr_c {
-                    return true; // Return true immediately if `#[repr(C)]` is found
+                    return (true, token_stream); // Return true immediately if `#[repr(C)]` is found
                 }
             }
         }
     }
 
-    false // Return false if no `#[repr(C)]` is found
+    (
+        false,
+        quote! { flecs_ecs::core::component_registration::NoneEnum },
+    ) // Return false if no `#[repr(C)]` and variants is found
 }
 
 struct Tuples {
@@ -1719,17 +1979,17 @@ fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
 /// let mut world = World::new();
 ///
 /// // Basic
-/// let builder = world.query::<(&Foo, &mut Bar)>().with(id::<Bazz>()).build();
+/// let builder = world.query::<(&Foo, &mut Bar)>().with(Bazz::id()).build();
 /// let dsl = query!(&mut world, &Foo, &mut Bar, Bazz).build();
 /// assert_eq!(builder.to_string(), dsl.to_string());
 ///
 /// // Logical modifiers
 /// let builder = world
 ///     .query::<()>()
-///     .with(id::<Foo>())
+///     .with(Foo::id())
 ///     .or()
-///     .with(id::<Bar>())
-///     .without(id::<Bazz>())
+///     .with(Bar::id())
+///     .without(Bazz::id())
 ///     .build();
 ///
 /// let dsl = query!(&mut world, Foo || Bar, !Bazz).build();
@@ -1943,7 +2203,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// world.entity_named("square").set(Square { side: 5.0 });
 /// world.entity_named("triangle").set(Triangle { side: 5.0 });
 ///
-/// let query = world.query::<()>().with(id::<ShapesTrait>()).build();
+/// let query = world.query::<()>().with(ShapesTrait::id()).build();
 ///
 /// query.run(|mut it| {
 ///     it.next();
@@ -2002,6 +2262,17 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
             pub fn cast<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
                 let data_ptr = entity.get_untyped(derived_id) as usize;
+                let vtable_ptr = entity
+                    .world()
+                    .component_untyped_from(*derived_id)
+                    .cloned::<&(Self,Self)>()
+                    .vtable;
+
+                unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
+            }
+
+            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
+                let data_ptr = entity.get_untyped_mut(derived_id) as usize;
                 let vtable_ptr = entity
                     .world()
                     .component_untyped_from(*derived_id)

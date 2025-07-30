@@ -22,7 +22,7 @@ pub mod table;
 pub mod term;
 pub mod utility;
 mod world;
-pub(crate) mod world_ctx;
+pub mod world_ctx;
 
 pub use archetype::Archetype;
 #[doc(hidden)]

@@ -11,23 +11,23 @@ struct Healthy;
 fn main() {
     let world = World::new();
 
-    let apples = world.entity_named("Apples").add(id::<Healthy>());
-    let salad = world.entity_named("Salad").add(id::<Healthy>());
+    let apples = world.entity_named("Apples").add(Healthy);
+    let salad = world.entity_named("Salad").add(Healthy);
     let burgers = world.entity_named("Burgers");
     let pizza = world.entity_named("Pizza");
     let chocolate = world.entity_named("Chocolate");
 
     world
         .entity_named("Bob")
-        .add((id::<Eats>(), apples))
-        .add((id::<Eats>(), burgers))
-        .add((id::<Eats>(), pizza));
+        .add((Eats, apples))
+        .add((Eats, burgers))
+        .add((Eats, pizza));
 
     world
         .entity_named("Alice")
-        .add((id::<Eats>(), salad))
-        .add((id::<Eats>(), chocolate))
-        .add((id::<Eats>(), apples));
+        .add((Eats, salad))
+        .add((Eats, chocolate))
+        .add((Eats, apples));
 
     // Here we're creating a rule that in the query DSL would look like this:
     //   Eats($This, $Food), Healthy($Food)
@@ -46,8 +46,8 @@ fn main() {
         //
         // By replacing * with _Food, both terms are constrained to use the
         // same entity.
-        .with((id::<Eats>(), "$food"))
-        .with(id::<&Healthy>())
+        .with((Eats, "$food"))
+        .with(&Healthy)
         .set_src("$food")
         .build();
 
@@ -56,12 +56,14 @@ fn main() {
     let food_var = rule.find_var("food");
 
     // Iterate the rule
-    rule.each_iter(|it, index, ()| {
-        println!(
-            "{} eats {}",
-            it.entity(index).unwrap().name(),
-            it.get_var(food_var.unwrap()).name()
-        );
+    rule.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let food = it.get_var(food_var.unwrap());
+                let entity = it.entity(i).unwrap();
+                println!("{entity} eats {food}");
+            }
+        }
     });
 
     // Output:

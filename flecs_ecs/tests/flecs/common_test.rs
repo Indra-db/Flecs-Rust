@@ -130,7 +130,7 @@ pub struct Obj2 {}
 #[derive(Component)]
 pub struct Rel {}
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct RelFoo {
     pub foo: u32,
 }
@@ -142,7 +142,7 @@ pub struct Alice {}
 pub struct Bob {}
 
 #[derive(Component)]
-pub struct Tag {}
+pub struct Tag;
 
 #[derive(Component)]
 pub struct TagA {}

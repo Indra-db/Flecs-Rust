@@ -49,15 +49,15 @@ fn main() {
     query.each(|(pos, vel)| {
         pos.x += vel.x;
         pos.y += vel.y;
-        println!("[{:?}]", pos);
+        println!("[{pos:?}]");
     });
 
     // Run is a bit more verbose, but allows for more control over how entities
     // are iterated as it provides multiple entities in the same callback.
     query.run(|mut it| {
         while it.next() {
-            let mut p = it.field::<Position>(0).unwrap();
-            let v = it.field::<Velocity>(1).unwrap();
+            let mut p = it.field_mut::<Position>(0);
+            let v = it.field::<Velocity>(1);
 
             for i in it.iter() {
                 p[i].x += v[i].x;

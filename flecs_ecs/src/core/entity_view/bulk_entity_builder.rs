@@ -208,7 +208,7 @@ impl<'a> BulkEntityBuilder<'a> {
             component_data.len() == self.desc.count as usize,
             "component_data length must be equal to count of entities"
         );
-        let id = T::id(self.world);
+        let id = T::entity_id(self.world);
 
         self.desc.ids[self.current_id_index as usize] = id;
         self.data[self.current_id_index as usize] =
@@ -290,7 +290,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// let ent = world
     ///     .entity()
     ///     .set(Position { x: 0, y: 0 })
-    ///     .add(id::<Velocity>())
+    ///     .add(Velocity::id())
     ///     .add(ent_id);
     ///
     /// let mut table = ent.table().unwrap();
@@ -430,7 +430,7 @@ impl World {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component, Default)]

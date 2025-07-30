@@ -168,7 +168,8 @@ fn check_term_access_validity<'a>(term: &impl TermBuilderImpl<'a>) {
         && term.current_term_ref_mode() != TermRefMode::Src
     {
         panic!(
-            "This function should only be used on terms that are not part of the generic type signature. "
+            "This function should only be used on terms that are not part of the generic type signature. Use `.with` instead. Term index: {}",
+            term.current_term_index()
         )
     }
 }
@@ -184,12 +185,14 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     where
         T: IntoId,
     {
-        let id = id.into_id(self.world());
+        let world = self.world();
+        let id = id.into_id(world);
         let term = self.current_term_mut();
 
         #[allow(clippy::collapsible_else_if)]
         if T::IS_PAIR {
-            term.id = *id;
+            term.first.id = *id.get_id_first(world);
+            term.second.id = *id.get_id_second(world);
         } else {
             if id & RUST_ecs_id_FLAGS_MASK != 0 {
                 term.id = *id;
@@ -206,12 +209,12 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * `T` - The type of component to use.
     fn init_term_from<T: ComponentOrPairId>(&mut self) {
         if !T::IS_PAIR {
-            let id: sys::ecs_id_t = T::First::id(self.world());
+            let id: sys::ecs_id_t = T::First::entity_id(self.world());
             self.init_current_term(id);
         } else {
             let world = self.world();
-            let id_rel = T::First::id(world);
-            let id_target = T::Second::id(world);
+            let id_rel = T::First::entity_id(world);
+            let id_target = T::Second::entity_id(world);
             self.init_current_term((id_rel, id_target));
         }
     }
@@ -320,7 +323,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     ///
     /// * `name` - The name to set.
     fn name(&mut self, name: &'a str) -> &mut Self {
-        let name = core::mem::ManuallyDrop::new(format!("{}\0", name));
+        let name = core::mem::ManuallyDrop::new(format!("{name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
         term_ref.id |= flecs::IsEntity::ID;
@@ -336,7 +339,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     fn set_var(&mut self, var_name: &'a str) -> &mut Self {
         check_term_access_validity(self);
 
-        let var_name = core::mem::ManuallyDrop::new(format!("{}\0", var_name));
+        let var_name = core::mem::ManuallyDrop::new(format!("{var_name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.id |= flecs::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut _;
@@ -768,7 +771,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * [`OperKind`]
     #[inline(always)]
     fn optional(&mut self) -> &mut Self {
-        if self.current_term_index() < self.count_generic_terms() {
+        if dbg!(self.current_term_index()) < dbg!(self.count_generic_terms()) {
             panic!(
                 "This function should only be used on terms that are not part of the generic type signature. Use Option<> instead."
             )

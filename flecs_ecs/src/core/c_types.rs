@@ -2,6 +2,7 @@
 #![allow(non_upper_case_globals)]
 
 use core::ffi::CStr;
+use core::fmt::Display;
 
 use crate::sys;
 
@@ -193,6 +194,7 @@ impl From<OperKind> for i16 {
 /// - `None`: No caching
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum QueryCacheKind {
     Default = sys::ecs_query_cache_kind_t_EcsQueryCacheDefault as u32,
     Auto = sys::ecs_query_cache_kind_t_EcsQueryCacheAuto as u32,
@@ -230,6 +232,17 @@ impl From<sys::ecs_query_cache_kind_t> for QueryCacheKind {
     }
 }
 
+impl Display for QueryCacheKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            QueryCacheKind::Default => write!(f, "Default"),
+            QueryCacheKind::Auto => write!(f, "Auto"),
+            QueryCacheKind::All => write!(f, "All"),
+            QueryCacheKind::None => write!(f, "None"),
+        }
+    }
+}
+
 // Id flags
 
 /// Indicates that the id is a pair.
@@ -245,11 +258,6 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ECS_IDENTIFIER: u64 = 2;
 pub(crate) const ECS_POLY: u64 = 3;
-
-// Poly target components
-pub(crate) const ECS_QUERY: u64 = 5;
-pub(crate) const ECS_OBSERVER: u64 = 6;
-pub(crate) const ECS_SYSTEM: u64 = 7;
 
 // Term id flags
 
@@ -310,8 +318,8 @@ pub(crate) const IS_MEMBER: u64 = 1 << 9;
 pub(crate) const IS_TOGGLE: u64 = 1 << 10;
 pub(crate) const KEEP_ALIVE: u64 = 1 << 11;
 pub(crate) const IS_SPARSE: u64 = 1 << 12;
-pub(crate) const IS_UNION: u64 = 1 << 13;
-pub(crate) const IS_OR: u64 = 1 << 14;
+pub(crate) const IS_OR: u64 = 1 << 13;
+pub(crate) const IS_DONT_FRAGMENT: u64 = 1 << 14;
 
 // Query flags
 // Query flags discovered & set during query creation.
@@ -336,104 +344,111 @@ pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
+// Poly target components
+pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID;
+pub(crate) const ECS_OBSERVER: u64 = FLECS_HI_COMPONENT_ID + 1;
+pub(crate) const ECS_SYSTEM: u64 = FLECS_HI_COMPONENT_ID + 2;
+
 // Core scopes & entities
-pub(crate) const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID;
-pub(crate) const ECS_FLECS: u64 = FLECS_HI_COMPONENT_ID + 1;
-pub(crate) const ECS_FLECS_CORE: u64 = FLECS_HI_COMPONENT_ID + 2;
-pub(crate) const ECS_FLECS_INTERNALS: u64 = FLECS_HI_COMPONENT_ID + 3;
-pub(crate) const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 4;
-pub(crate) const ECS_PRIVATE: u64 = FLECS_HI_COMPONENT_ID + 5;
-pub(crate) const ECS_PREFAB: u64 = FLECS_HI_COMPONENT_ID + 6;
-pub(crate) const ECS_DISABLED: u64 = FLECS_HI_COMPONENT_ID + 7;
-pub(crate) const ECS_NOT_QUERYABLE: u64 = FLECS_HI_COMPONENT_ID + 8;
-pub(crate) const ECS_SLOT_OF: u64 = FLECS_HI_COMPONENT_ID + 9;
-pub(crate) const ECS_FLAG: u64 = FLECS_HI_COMPONENT_ID + 10;
+pub(crate) const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID + 3;
+pub(crate) const ECS_FLECS: u64 = FLECS_HI_COMPONENT_ID + 4;
+pub(crate) const ECS_FLECS_CORE: u64 = FLECS_HI_COMPONENT_ID + 5;
+pub(crate) const ECS_FLECS_INTERNALS: u64 = FLECS_HI_COMPONENT_ID + 6;
+pub(crate) const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 7;
+pub(crate) const ECS_PRIVATE: u64 = FLECS_HI_COMPONENT_ID + 8;
+pub(crate) const ECS_PREFAB: u64 = FLECS_HI_COMPONENT_ID + 9;
+pub(crate) const ECS_DISABLED: u64 = FLECS_HI_COMPONENT_ID + 10;
+pub(crate) const ECS_NOT_QUERYABLE: u64 = FLECS_HI_COMPONENT_ID + 11;
+pub(crate) const ECS_SLOT_OF: u64 = FLECS_HI_COMPONENT_ID + 12;
+pub(crate) const ECS_FLAG: u64 = FLECS_HI_COMPONENT_ID + 13;
 
 // Marker entities for query encoding
 
-pub(crate) const ECS_WILDCARD: u64 = FLECS_HI_COMPONENT_ID + 11;
-pub(crate) const ECS_ANY: u64 = FLECS_HI_COMPONENT_ID + 12;
-pub(crate) const ECS_THIS: u64 = FLECS_HI_COMPONENT_ID + 13;
-pub(crate) const ECS_VARIABLE: u64 = FLECS_HI_COMPONENT_ID + 14;
+pub(crate) const ECS_WILDCARD: u64 = FLECS_HI_COMPONENT_ID + 14;
+pub(crate) const ECS_ANY: u64 = FLECS_HI_COMPONENT_ID + 15;
+pub(crate) const ECS_THIS: u64 = FLECS_HI_COMPONENT_ID + 16;
+pub(crate) const ECS_VARIABLE: u64 = FLECS_HI_COMPONENT_ID + 17;
 
 // query traits
-pub(crate) const ECS_TRANSITIVE: u64 = FLECS_HI_COMPONENT_ID + 15;
-pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 16;
-pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 17;
-pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 18;
-pub(crate) const ECS_ON_INSTANTIATE: u64 = FLECS_HI_COMPONENT_ID + 19;
-pub(crate) const ECS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 20;
-pub(crate) const ECS_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 21;
-pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 22;
-pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 23;
-pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 24;
-pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 25;
-pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 26;
-pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 27;
-pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 28;
-pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 29;
-pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 30;
-pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 31;
-pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_TRANSITIVE: u64 = FLECS_HI_COMPONENT_ID + 18;
+pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 19;
+pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 20;
+pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 21;
+pub(crate) const ECS_INHERITABLE: u64 = FLECS_HI_COMPONENT_ID + 22;
+pub(crate) const ECS_ON_INSTANTIATE: u64 = FLECS_HI_COMPONENT_ID + 23;
+pub(crate) const ECS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 24;
+pub(crate) const ECS_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 25;
+pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 26;
+pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 27;
+pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 28;
+pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 30;
+pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 31;
+pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 33;
+pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 34;
+pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 35;
+pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 36;
 
 // Builtin relationships
-pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 33;
-pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 34;
-pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 35;
+pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 37;
+pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 38;
+pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 39;
 
 // Identifier tags
-pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 36;
-pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 37;
-pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 38;
+pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 40;
+pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 41;
+pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 42;
 
 // Events
-pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 39;
-pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 40;
-pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 43;
-pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 44;
-pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 45;
-pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 43;
+pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 44;
+pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 45;
+pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 47;
+pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 48;
+pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 49;
 
 // Timers
-pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 49;
-pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 50;
-pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 51;
+pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 50;
+pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 51;
+pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 52;
 
 // Actions
-pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 52;
-pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 53;
-pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 54;
+pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 53;
+pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 54;
+pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 55;
 
-pub(crate) const ECS_SPARSE: u64 = FLECS_HI_COMPONENT_ID + 55;
-pub(crate) const ECS_UNION: u64 = FLECS_HI_COMPONENT_ID + 56;
+pub(crate) const ECS_SPARSE: u64 = FLECS_HI_COMPONENT_ID + 56;
+pub(crate) const ECS_DONT_FRAGMENT: u64 = FLECS_HI_COMPONENT_ID + 57;
 
 // Misc
-pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 57;
+pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 58;
+pub(crate) const ECS_ORDERED_CHILDREN: u64 = FLECS_HI_COMPONENT_ID + 59;
 
 // Builtin predicate ids (used by rule engine)
-pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 58;
-pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 59;
-pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 60;
-pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 61;
-pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 62;
+pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 60;
+pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 61;
+pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 62;
+pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 63;
+pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 64;
 
 // Systems
-pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 63;
-pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 64;
-pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 65;
-pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 66;
-pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 67;
-pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 68;
-pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 69;
-pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 70;
-pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 71;
-pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 72;
-pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 73;
-pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 74;
-pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 75;
-pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 76;
-pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 77;
+pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 65;
+pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 66;
+pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 67;
+pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 68;
+pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 69;
+pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 70;
+pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 71;
+pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 72;
+pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 73;
+pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 74;
+pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 75;
+pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 76;
+pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 77;
+pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 78;
+pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 79;
 
 // Meta primitive components (don't use low ids to save id space)
 pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
@@ -456,35 +471,62 @@ pub(crate) const ECS_ENTITY_T: u64 = FLECS_HI_COMPONENT_ID + 96;
 pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 97;
 
 // Meta module component ids
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 98;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 99;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 100;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 101;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 102;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 103;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 104;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 105;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 106;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 107;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 108;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 109;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 110;
-pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 111;
+#[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 112;
 
+pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 111;
+
 // Doc module components
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 113;
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 114;
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 115;
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 116;
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
+#[cfg(feature = "flecs_doc")]
 pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 118;
 
 // REST module components
+#[cfg(feature = "flecs_rest")]
 pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 119;
 
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {
+        impl From<$name> for crate::core::Entity {
+            fn from(_: $name) -> Self {
+                crate::core::Entity($id)
+            }
+        }
         impl FlecsConstantId for $name {
             const ID: u64 = $id;
         }
@@ -499,6 +541,8 @@ macro_rules! impl_component_traits_binding_type_w_id {
             type TagType = FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -506,6 +550,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -539,7 +584,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
         }
@@ -566,6 +611,8 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             type TagType = FlecsFirstIsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -573,6 +620,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
         impl ComponentId for $name {
             type UnderlyingType = $name;
             type UnderlyingEnumType = NoneEnum;
+            type UnderlyingTypeOfEnum = NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -606,7 +654,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
                 true
             }
 
-            fn id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $id }
             }
         }

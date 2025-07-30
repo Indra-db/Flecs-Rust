@@ -103,7 +103,6 @@ impl Default for ecs_observer_desc_t {
 impl Default for ecs_header_t {
     fn default() -> Self {
         Self {
-            magic: Default::default(),
             type_: Default::default(),
             mixins: core::ptr::null_mut(),
             refcount: Default::default(),
@@ -250,6 +249,8 @@ impl Default for EcsOpaque {
         Self {
             as_type: Default::default(),
             serialize: Default::default(),
+            serialize_element: Default::default(),
+            serialize_member: Default::default(),
             assign_bool: Default::default(),
             assign_char: Default::default(),
             assign_int: Default::default(),
@@ -289,6 +290,8 @@ impl Default for ecs_type_hooks_t {
             move_ctor: None,
             ctor_move_dtor: None,
             move_dtor: None,
+            cmp: None,
+            equals: None,
             on_add: None,
             on_set: None,
             on_remove: None,

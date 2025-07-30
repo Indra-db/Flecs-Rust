@@ -20,7 +20,7 @@ fn main() {
     // to discover which systems it should run.
     let physics = world
         .entity()
-        .add(id::<flecs::pipeline::Phase>())
+        .add(flecs::pipeline::Phase)
         .depends_on(id::<flecs::pipeline::OnUpdate>());
 
     let collisions = world

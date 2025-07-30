@@ -33,7 +33,7 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
         self.set_desc_callback(Some(
-            Self::execute_each::<false, Func> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -56,70 +56,7 @@ where
         self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
         self.set_desc_callback(Some(
-            Self::execute_each_entity::<false, Func> as unsafe extern "C-unwind" fn(_),
-        ));
-
-        self.build()
-    }
-
-    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
-    /// which contains more information about the object being iterated.
-    /// The `usize` argument contains the index of the entity being iterated,
-    /// which can be used to obtain entity-specific data from the `TableIter` object.
-    ///
-    /// # Example
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Position {
-    ///     x: i32,
-    ///     y: i32,
-    /// }
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Likes;
-    ///
-    /// let world = World::new();
-    ///
-    /// let eva = world.entity_named("eva");
-    ///
-    /// world
-    ///     .entity_named("adam")
-    ///     .set(Position { x: 10, y: 20 })
-    ///     .add((id::<Likes>(), eva));
-    ///
-    /// world
-    ///     .system::<&Position>()
-    ///     .with((id::<Likes>(), id::<flecs::Wildcard>()))
-    ///     .each_iter(|it, index, p| {
-    ///         let e = it.entity(index).unwrap();
-    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
-    ///     })
-    ///     .run();
-    ///
-    /// // Output:
-    /// //  "adam": Position2 { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
-    /// ```
-    fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
-    where
-        Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>) + 'static,
-    {
-        const {
-            assert!(
-                !T::CONTAINS_ANY_TAG_TERM,
-                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-            );
-        }
-
-        let each_iter_func = Box::new(func);
-        let each_iter_static_ref = Box::leak(each_iter_func);
-
-        self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
-
-        self.set_desc_callback(Some(
-            Self::execute_each_iter::<Func> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -158,13 +95,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag)
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
     /// let count_entities = Rc::new(RefCell::new(0));
     /// let count_tables = Rc::new(RefCell::new(0));
@@ -176,7 +113,7 @@ where
     ///     println!("start operations");
     ///     while it.next() {
     ///         *count_tables_ref.borrow_mut() += 1;
-    ///         let pos = it.field::<&Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
+    ///         let pos = it.field::<Position>(1); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
     ///             let entity = it.entity(i).unwrap();
@@ -208,9 +145,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
         self.build()
     }
 
@@ -248,13 +183,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag)
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
     ///
     ///
@@ -264,7 +199,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with(id::<Tag>())
+    /// let system = world.system::<(&Position)>().with(Tag)
     /// .run_each(
     ///     move |mut it| {
     ///         println!("start operations");
@@ -307,9 +242,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
 
         let each_func = Box::new(func_each);
         let each_static_ref = Box::leak(each_func);
@@ -318,7 +251,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
         self.set_desc_callback(Some(
-            Self::execute_each::<true, FuncEach> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -358,13 +291,13 @@ where
     ///
     /// let world = World::new();
     ///
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
-    /// world.entity().add(id::<Tag>()).add(id::<Position>());
+    /// world.entity().add(Tag).add(Position::id());
+    /// world.entity().add(Tag).add(Position::id());
     /// world
     ///     .entity()
-    ///     .add(id::<Tag>())
-    ///     .add(id::<Position>())
-    ///     .add(id::<Velocity>());
+    ///     .add(Tag)
+    ///     .add(Position::id())
+    ///     .add(Velocity::id());
     ///
     ///
     ///
@@ -374,7 +307,7 @@ where
     /// let count_entities_ref = count_entities.clone();
     /// let count_tables_ref = count_tables.clone();
     ///
-    /// let system = world.system::<(&Position)>().with(id::<Tag>())
+    /// let system = world.system::<(&Position)>().with(Tag)
     /// .run_each_entity(
     ///     move |mut it| {
     ///         println!("start operations");
@@ -417,9 +350,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run::<Func> as unsafe extern "C-unwind" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
 
         let each_entity_func = Box::new(func_each_entity);
         let each_entity_static_ref = Box::leak(each_entity_func);
@@ -428,7 +359,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
         self.set_desc_callback(Some(
-            Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C-unwind" fn(_),
+            Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
         ));
 
         self.build()
@@ -568,14 +499,14 @@ macro_rules! implement_reactor_api {
 
             fn set_desc_callback(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
             ) {
                 self.desc.callback = callback;
             }
 
             fn set_desc_run(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
             ) {
                 self.desc.run = callback;
             }
@@ -629,14 +560,14 @@ macro_rules! implement_reactor_api {
 
             fn set_desc_callback(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
             ) {
                 self.desc.callback = callback;
             }
 
             fn set_desc_run(
                 &mut self,
-                callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
             ) {
                 self.desc.run = callback;
             }

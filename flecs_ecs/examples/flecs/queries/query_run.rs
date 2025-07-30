@@ -45,8 +45,8 @@ fn main() {
     // of information on the entities currently being iterated.
     query.run(|mut it| {
         while it.next() {
-            let mut position = it.field::<Position>(0).unwrap();
-            let velocity = it.field::<Velocity>(1).unwrap();
+            let mut position = it.field_mut::<Position>(0);
+            let velocity = it.field::<Velocity>(1);
 
             println!();
             // Print the table & number of entities matched in current callback
@@ -56,7 +56,7 @@ fn main() {
 
             // Print information about the components being matched
             for i in 0..it.field_count() {
-                println!(" - term {} : ", i);
+                println!(" - term {i} : ");
                 println!("   - component: {}", it.id(i).to_str());
                 println!("   - type size: {}", it.size(i));
             }

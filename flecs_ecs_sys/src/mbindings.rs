@@ -5,25 +5,23 @@
 
 use super::*;
 
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     pub fn ecs_rust_mut_get_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         record: *const ecs_record_t,
-        table: *mut ecs_table_t,
         id: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     pub fn ecs_rust_get_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         record: *const ecs_record_t,
-        table: *mut ecs_table_t,
         id: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     pub fn ecs_rust_rel_count(
         world: *const ecs_world_t,
         id: ecs_id_t,
@@ -69,7 +67,7 @@ pub struct ecs_alert_desc_t {
     pub var: *const ::core::ffi::c_char,
 }
 
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     /// Enable/disable logging time since last log.
     ///
     /// By default, deltatime is disabled. Note that enabling timestamps introduces
@@ -93,7 +91,7 @@ unsafe extern "C-unwind" {
     pub fn ecs_log_enable_timedelta(enabled: bool) -> bool;
 }
 
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     /// Emulate a request.
     ///
     /// The request string must be a valid HTTP request. A minimal example:
@@ -219,7 +217,7 @@ pub struct WorldInfoCmd {
     pub batched_command_count: i64,
 }
 
-unsafe extern "C-unwind" {
+unsafe extern "C" {
     #[doc = "Get world info.\n\n @param world The world.\n @return Pointer to the world info. Valid for as long as the world exists."]
     pub fn ecs_get_world_info(world: *const ecs_world_t) -> *const WorldInfo;
 }

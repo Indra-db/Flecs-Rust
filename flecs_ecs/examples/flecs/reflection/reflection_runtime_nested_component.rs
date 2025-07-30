@@ -2,13 +2,14 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
+#[test]
 fn main() {
     let world = World::new();
 
     let point = world
         .component_untyped_named("Point")
-        .member(id::<f32>(), "x")
-        .member(id::<f32>(), "y");
+        .member(f32::id(), "x")
+        .member(f32::id(), "y");
 
     let line = world
         .component_untyped_named("Line")
@@ -16,7 +17,7 @@ fn main() {
         .member(point, "stop");
 
     // Create entity, set value of line using reflection API
-    let e = world.entity().add(line);
+    let e = unsafe { world.entity().add_id_unchecked(line) };
 
     let ptr = e.get_untyped_mut(line);
 

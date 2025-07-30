@@ -32,7 +32,7 @@ fn iterate_tree(entity: EntityView, position_parent: &Position) {
     });
 
     // Print the position
-    println!("{:?}", pos_actual);
+    println!("{pos_actual:?}");
 
     entity.each_child(|child| {
         iterate_tree(child, &pos_actual);
@@ -51,32 +51,32 @@ fn main() {
     world
         .entity_named("Mercury")
         .set(Position { x: 1.0, y: 1.0 })
-        .add(id::<Planet>())
+        .add(Planet)
         .child_of(sun); // Shortcut for add(flecs::ChildOf, sun)
 
     world
         .entity_named("Venus")
         .set(Position { x: 2.0, y: 2.0 })
-        .add(id::<Planet>())
+        .add(Planet)
         .child_of(sun);
 
     let earth = world
         .entity_named("Earth")
         .set(Position { x: 3.0, y: 3.0 })
-        .add(id::<Planet>())
+        .add(Planet)
         .child_of(sun);
 
     let moon = world
         .entity_named("Moon")
         .set(Position { x: 0.1, y: 0.1 })
-        .add(id::<Moon>())
+        .add(Moon)
         .child_of(earth);
 
     // Is the Moon a child of the Earth?
     println!(
         "Is the Moon a child of the Earth? {} / {}",
-        moon.has((flecs::ChildOf::ID, earth)), //or you can do
-        moon.has((id::<flecs::ChildOf>(), earth))
+        moon.has((flecs::ChildOf, earth)), //or you can do
+        moon.has((flecs::ChildOf, earth))
     );
 
     println!();

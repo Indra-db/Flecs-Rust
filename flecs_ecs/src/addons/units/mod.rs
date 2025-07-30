@@ -6,11 +6,10 @@ use crate::core::World;
 use flecs_ecs_derive::Component;
 
 #[derive(Clone, Copy, Component, Default)]
-pub struct UnitsModule;
+pub struct Units;
 
-impl Module for UnitsModule {
+impl Module for Units {
     fn module(world: &World) {
-        world.module::<UnitsModule>("::flecs::units");
         unsafe { flecs_ecs_sys::FlecsUnitsImport(world.ptr_mut()) };
     }
 }

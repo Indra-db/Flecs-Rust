@@ -135,6 +135,8 @@ pub trait ComponentId:
     type UnderlyingType: ComponentId;
     #[doc(hidden)]
     type UnderlyingEnumType: ComponentId + EnumComponentInfo;
+    #[doc(hidden)]
+    type UnderlyingTypeOfEnum: ComponentId + Copy;
 
     /// attempts to register the component with the world. If it's already registered, it does nothing.
     #[doc(hidden)]
@@ -149,7 +151,8 @@ pub trait ComponentId:
             let len = components_array.len();
 
             if len > index {
-                if components_array[index] == 0 {
+                let component_id = components_array[index];
+                if component_id == 0 || !world.is_alive(component_id) {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -207,8 +210,34 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
 
-            *match components_map.entry(core::any::TypeId::of::<Self>()) {
-                Entry::Occupied(entry) => entry.into_mut(),
+            match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(mut entry) => {
+                    if !world.is_alive(*entry.get()) {
+                        if MANUAL_REGISTRATION_CHECK {
+                            #[cfg(feature = "flecs_manual_registration")]
+                            {
+                                ecs_assert!(
+                                    false,
+                                    FlecsErrorCode::InvalidOperation,
+                                    "Component {} is not registered with the world before usage",
+                                    Self::name()
+                                );
+                            }
+                        }
+
+                        let id = registration_traits::try_register_component::<
+                            MANUAL_REGISTRATION_CHECK,
+                            Self,
+                        >(world);
+
+                        let id = entry.insert(id);
+
+                        Self::on_component_registration(world, Entity::new(id));
+                        id
+                    } else {
+                        *entry.into_mut()
+                    }
+                }
                 Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -230,7 +259,7 @@ pub trait ComponentId:
                     let id = entry.insert(id);
 
                     Self::on_component_registration(world, Entity::new(*id));
-                    id
+                    *id
                 }
             }
         }
@@ -250,7 +279,8 @@ pub trait ComponentId:
             let len = components_array.len();
 
             if len > index {
-                if components_array[index] == 0 {
+                let component_id = components_array[index];
+                if components_array[index] == 0 || !world.is_alive(component_id) {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
                         {
@@ -308,8 +338,34 @@ pub trait ComponentId:
             let world = world.world();
             let components_map = world.components_map();
 
-            *match components_map.entry(core::any::TypeId::of::<Self>()) {
-                Entry::Occupied(entry) => entry.into_mut(),
+            match components_map.entry(core::any::TypeId::of::<Self>()) {
+                Entry::Occupied(mut entry) => {
+                    if !world.is_alive(*entry.get()) {
+                        if MANUAL_REGISTRATION_CHECK {
+                            #[cfg(feature = "flecs_manual_registration")]
+                            {
+                                ecs_assert!(
+                                    false,
+                                    FlecsErrorCode::InvalidOperation,
+                                    "Component {} is not registered with the world before usage",
+                                    Self::name()
+                                );
+                            }
+                        }
+
+                        let id = registration_traits::try_register_component_named::<
+                            MANUAL_REGISTRATION_CHECK,
+                            Self,
+                        >(world, name);
+
+                        let id = entry.insert(id);
+
+                        Self::on_component_registration(world, Entity::new(id));
+                        id
+                    } else {
+                        *entry.into_mut()
+                    }
+                }
                 Entry::Vacant(entry) => {
                     if MANUAL_REGISTRATION_CHECK {
                         #[cfg(feature = "flecs_manual_registration")]
@@ -331,7 +387,7 @@ pub trait ComponentId:
                     let id = entry.insert(id);
 
                     Self::on_component_registration(world, Entity::new(*id));
-                    id
+                    *id
                 }
             }
         }
@@ -359,11 +415,17 @@ pub trait ComponentId:
         }
     }
 
+    /// utility function to returning an Id object which is used for fn's that take `IntoEntity` or `IntoId` variable
+    #[inline(always)]
+    fn id() -> utility::id::Id<Self> {
+        utility::id::Id::<Self>::new()
+    }
+
     /// returns the component id registered with a particular world. If the component is not registered, it will register it.
     /// # Note
     /// Each world has it's own unique id for the component.
     #[inline(always)]
-    fn id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t {
+    fn entity_id<'a>(world: impl WorldProvider<'a>) -> sys::ecs_entity_t {
         Self::UnderlyingType::__register_or_get_id::<true>(world)
     }
 
@@ -379,6 +441,14 @@ pub trait ComponentId:
     #[doc(hidden)]
     fn __register_clone_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
+    // Not public API.
+    #[doc(hidden)]
+    fn __register_compare_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
+
+    // Not public API.
+    #[doc(hidden)]
+    fn __register_equals_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
+
     fn register_ctor_hook<'a>(world: impl WorldProvider<'a>)
     where
         Self: Default,
@@ -389,7 +459,7 @@ pub trait ComponentId:
             "There is no need to register default hooks for non generic components. This is done automatically if a type has Default implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();
@@ -412,7 +482,7 @@ pub trait ComponentId:
             "There is no need to register clone hooks for non generic components. This is done automatically if a type has Clone implemented"
         );
         let world_ptr = world.world_ptr_mut();
-        let id = Self::id(world);
+        let id = Self::entity_id(world);
         let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
         if hooks.is_null() {
             let mut hooks = Default::default();
@@ -421,6 +491,52 @@ pub trait ComponentId:
         } else {
             let hooks = &mut unsafe { *hooks };
             register_copy_lifecycle_action::<Self>(hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, hooks) }
+        }
+    }
+
+    fn register_compare_hook<'a>(world: impl WorldProvider<'a>)
+    where
+        Self: PartialOrd,
+    {
+        ecs_assert!(
+            Self::IS_GENERIC,
+            FlecsErrorCode::InvalidOperation,
+            "There is no need to register compare hooks for non generic components. This is done automatically if a type has PartialEq implemented"
+        );
+        let world_ptr = world.world_ptr_mut();
+        let id = Self::entity_id(world);
+        let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
+        if hooks.is_null() {
+            let mut hooks = Default::default();
+            register_partial_ord_lifecycle_action::<Self>(&mut hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, &hooks) }
+        } else {
+            let hooks = &mut unsafe { *hooks };
+            register_partial_ord_lifecycle_action::<Self>(hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, hooks) }
+        }
+    }
+
+    fn register_equals_hook<'a>(world: impl WorldProvider<'a>)
+    where
+        Self: PartialEq,
+    {
+        ecs_assert!(
+            Self::IS_GENERIC,
+            FlecsErrorCode::InvalidOperation,
+            "There is no need to register equals hooks for non generic components. This is done automatically if a type has PartialEq implemented"
+        );
+        let world_ptr = world.world_ptr_mut();
+        let id = Self::entity_id(world);
+        let hooks = unsafe { flecs_ecs_sys::ecs_get_hooks_id(world_ptr, id) };
+        if hooks.is_null() {
+            let mut hooks = Default::default();
+            register_partial_eq_lifecycle_action::<Self>(&mut hooks);
+            unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, &hooks) }
+        } else {
+            let hooks = &mut unsafe { *hooks };
+            register_partial_eq_lifecycle_action::<Self>(hooks);
             unsafe { flecs_ecs_sys::ecs_set_hooks_id(world_ptr, id, hooks) }
         }
     }
@@ -459,6 +575,8 @@ pub trait ComponentInfo: Sized {
     const NEEDS_DROP: bool = core::mem::needs_drop::<Self>();
     const IMPLS_CLONE: bool;
     const IMPLS_DEFAULT: bool;
+    const IMPLS_PARTIAL_ORD: bool;
+    const IMPLS_PARTIAL_EQ: bool;
     #[doc(hidden)]
     const IS_REF: bool;
     #[doc(hidden)]
@@ -553,6 +671,8 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
+    const IMPLS_PARTIAL_ORD: bool = T::IMPLS_PARTIAL_ORD;
+    const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
     const IS_REF: bool = true;
     const IS_MUT: bool = false;
     type TagType = T::TagType;
@@ -565,6 +685,8 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IS_TAG: bool = T::IS_TAG;
     const IMPLS_CLONE: bool = T::IMPLS_CLONE;
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
+    const IMPLS_PARTIAL_ORD: bool = T::IMPLS_PARTIAL_ORD;
+    const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
     const IS_REF: bool = false;
     const IS_MUT: bool = true;
     type TagType = T::TagType;
@@ -592,8 +714,8 @@ impl<T: ComponentId> ComponentId for &'static T {
     }
 
     type UnderlyingType = T::UnderlyingType;
-
     type UnderlyingEnumType = T::UnderlyingEnumType;
+    type UnderlyingTypeOfEnum = T::UnderlyingTypeOfEnum;
 }
 
 #[doc(hidden)]
@@ -604,8 +726,8 @@ impl<T: ComponentId> ComponentId for &'static mut T {
     }
 
     type UnderlyingType = T::UnderlyingType;
-
     type UnderlyingEnumType = T::UnderlyingEnumType;
+    type UnderlyingTypeOfEnum = T::UnderlyingTypeOfEnum;
 }
 
 #[doc(hidden)]
@@ -617,6 +739,16 @@ pub trait FlecsDefaultType {
 #[doc(hidden)]
 pub trait FlecsCloneType {
     type Type: Clone;
+}
+
+#[doc(hidden)]
+pub trait FlecsPartialEqType {
+    type Type: PartialEq;
+}
+
+#[doc(hidden)]
+pub trait FlecsPartialOrdType {
+    type Type: PartialOrd;
 }
 
 #[doc(hidden)]
@@ -647,6 +779,32 @@ impl<T> FlecsCloneType for ConditionalTypeSelector<false, T> {
 impl<T> FlecsCloneType for ConditionalTypeSelector<true, T>
 where
     T: Clone,
+{
+    type Type = T;
+}
+
+#[doc(hidden)]
+impl<T> FlecsPartialEqType for ConditionalTypeSelector<false, T> {
+    type Type = FlecsNonePartialEqDummy;
+}
+
+#[doc(hidden)]
+impl<T> FlecsPartialEqType for ConditionalTypeSelector<true, T>
+where
+    T: PartialEq,
+{
+    type Type = T;
+}
+
+#[doc(hidden)]
+impl<T> FlecsPartialOrdType for ConditionalTypeSelector<false, T> {
+    type Type = FlecsNonePartialOrdDummy;
+}
+
+#[doc(hidden)]
+impl<T> FlecsPartialOrdType for ConditionalTypeSelector<true, T>
+where
+    T: PartialOrd,
 {
     type Type = T;
 }

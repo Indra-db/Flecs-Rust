@@ -55,8 +55,11 @@ fn main() {
     println!();
 
     // Check if the entity has the Tile relationship and the Tile::Stone pair
-    println!("has tile enum: {}", tile.has(id::<Tile>())); // true
-    println!("is the enum from tile stone?: {}", tile.has(Tile::Stone)); // true
+    println!("has tile enum: {}", tile.has(Tile::id())); // true
+    println!(
+        "is the enum from tile stone?: {}",
+        tile.has_enum(Tile::Stone)
+    ); // true
 
     // Get the current value of the enum
     tile.try_get::<&Tile>(|tile| {
@@ -81,10 +84,15 @@ fn main() {
         .query::<()>()
         .with_enum_wildcard::<&Tile>()
         .build()
-        .each_iter(|it, _, _| {
-            let pair = it.pair(0).unwrap();
-            let tile_constant = pair.second_id();
-            println!("{}", tile_constant.path().unwrap());
+        .run(|mut it| {
+            while it.next() {
+                let pair = it.pair(0).unwrap();
+                let tile_constant = pair.second_id();
+                let path = tile_constant.path().unwrap();
+                for i in it.iter() {
+                    println!("{path}");
+                }
+            }
         });
 
     // Output:s:
@@ -100,10 +108,15 @@ fn main() {
         .with_enum_wildcard::<&Tile>()
         .with_enum(TileStatus::Occupied)
         .build()
-        .each_iter(|it, _, _| {
-            let pair = it.pair(0).unwrap();
-            let tile_constant = pair.second_id();
-            println!("{}", tile_constant.path().unwrap());
+        .run(|mut it| {
+            while it.next() {
+                let pair = it.pair(0).unwrap();
+                let tile_constant = pair.second_id();
+                let path = tile_constant.path().unwrap();
+                for i in it.iter() {
+                    println!("{path}");
+                }
+            }
         });
 
     // Output:s:
@@ -113,7 +126,7 @@ fn main() {
     println!();
 
     // Remove any instance of the TileStatus relationship
-    tile.remove(id::<TileStatus>());
+    tile.remove(TileStatus::id());
 
     // (Tile, Tile.Stone)
     println!("{:?}", tile.archetype());

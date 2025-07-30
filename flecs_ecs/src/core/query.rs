@@ -52,7 +52,7 @@ pub struct Query<T>
 where
     T: QueryTuple,
 {
-    pub(crate) query: NonNull<sys::ecs_query_t>,
+    pub query: NonNull<sys::ecs_query_t>,
     // this is a leaked box, which is valid during the lifecycle of the query object.
     world_ctx: NonNull<WorldCtx>,
     _phantom: PhantomData<T>,
@@ -127,11 +127,12 @@ where
         unsafe { sys::ecs_query_next(iter) }
     }
 
+    #[inline(always)]
     fn query_ptr(&self) -> *const sys::ecs_query_t {
         self.query.as_ptr()
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool {
+    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
         sys::ecs_query_next
     }
 }

@@ -2,28 +2,28 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Attack {
     pub value: f32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Defence {
     pub value: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct FreightCapacity {
     pub value: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct ImpulseSpeed {
     pub value: f32,
 }
@@ -61,14 +61,14 @@ fn main() {
         // By default components in an inheritance hierarchy are shared between
         // entities. The override function ensures that instances have a private
         // copy of the component.
-        .auto_override(id::<Position>());
+        .auto_override(Position::id());
 
     let freighter = world
         .prefab_named("Freighter")
         .is_a(spaceship)
         .set(FreightCapacity { value: 100.0 })
         .set(Defence { value: 100.0 })
-        .add(id::<HasFlt>());
+        .add(HasFlt);
 
     let mammoth_freighter = world
         .prefab_named("MammothFreighter")
@@ -79,7 +79,7 @@ fn main() {
     world
         .prefab_named("Frigate")
         .is_a(spaceship)
-        .add(id::<HasFlt>())
+        .add(HasFlt)
         .set(Attack { value: 100.0 })
         .set(Defence { value: 75.0 })
         .set(ImpulseSpeed { value: 125.0 });

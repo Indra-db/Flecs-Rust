@@ -21,14 +21,8 @@ pub struct Stats;
 #[cfg(feature = "flecs_module")]
 impl Module for Stats {
     fn module(world: &World) {
-        // TODO UNITS addon
-        /*
-        #ifdef FLECS_UNITS
-        world.import<flecs::units>();
-        #endif
-         */
-
-        world.module::<Stats>("flecs::rust::stats");
+        #[cfg(feature = "flecs_units")]
+        world.import::<super::units::Units>();
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();
         world.component::<WorldStats>();
@@ -55,6 +49,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -65,6 +61,8 @@ where
 {
     type UnderlyingType = sys::EcsWorldStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -116,6 +114,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -126,6 +126,8 @@ where
 {
     type UnderlyingType = sys::EcsPipelineStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -177,6 +179,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -187,6 +191,8 @@ where
 {
     type UnderlyingType = sys::EcsWorldSummary;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -238,6 +244,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -248,6 +256,8 @@ where
 {
     type UnderlyingType = sys::EcsSystemStats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
@@ -297,6 +307,8 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
+    const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_PARTIAL_EQ: bool = false;
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
 }
@@ -306,6 +318,8 @@ where
 {
     type UnderlyingType = Stats;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
     #[inline(always)]
     fn index() -> u32 {
         static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);

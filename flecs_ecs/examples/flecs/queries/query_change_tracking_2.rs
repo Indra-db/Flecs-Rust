@@ -21,7 +21,6 @@ struct Dirty {
     value: bool,
 }
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -36,7 +35,11 @@ fn main() {
     // Each query has its own private dirty state which is reset only when the
     // query is iterated.
 
-    let query_read = world.query::<&Position>().set_cached().build();
+    let query_read = world
+        .query::<&Position>()
+        .detect_changes()
+        .set_cached()
+        .build();
 
     // Create a query that writes the component based on a Dirty state.
     let query_write = world
@@ -109,8 +112,8 @@ fn main() {
     // iterating the query will write to the dirty state of iterated tables.
     query_write.run(|mut it| {
         while it.next() {
-            let dirty = it.field::<Dirty>(0).unwrap();
-            let mut pos = it.field::<Position>(1).unwrap();
+            let dirty = it.field::<Dirty>(0);
+            let mut pos = it.field_mut::<Position>(1);
 
             println!("iterate table [{}]", it.archetype().unwrap());
 

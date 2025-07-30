@@ -44,13 +44,13 @@ fn main() {
 
     // Make the ECS aware of the inheritance relationships. Note that IsA
     // relationship used here is the same as in the prefab example.
-    world.component::<CombatUnit>().is_a(id::<Unit>());
-    world.component::<MeleeUnit>().is_a(id::<CombatUnit>());
-    world.component::<RangedUnit>().is_a(id::<CombatUnit>());
+    world.component::<CombatUnit>().is_a(Unit);
+    world.component::<MeleeUnit>().is_a(CombatUnit);
+    world.component::<RangedUnit>().is_a(CombatUnit);
 
-    world.component::<Warrior>().is_a(id::<MeleeUnit>());
-    world.component::<Wizard>().is_a(id::<RangedUnit>());
-    world.component::<Marksman>().is_a(id::<RangedUnit>());
+    world.component::<Warrior>().is_a(MeleeUnit);
+    world.component::<Wizard>().is_a(RangedUnit);
+    world.component::<Marksman>().is_a(RangedUnit);
 
     // Populate store with players and platoons
     for p in 0..PLAYER_COUNT {
@@ -62,28 +62,19 @@ fn main() {
         };
 
         // Add player tag so we can query for all players if we want to
-        player.add(id::<Player>());
+        player.add(Player);
 
         for _ in 0..PLATOONS_PER_PLAYER {
             let platoon = world
                 .entity()
-                .add((id::<Player>(), player))
+                .add((Player, player))
                 // Add platoon tag so we can query for all platoons if we want to
-                .add(id::<Platoon>());
+                .add(Platoon);
 
             // Add warriors, wizards and marksmen to the platoon
-            world
-                .entity()
-                .add(id::<Warrior>())
-                .add((id::<Platoon>(), platoon));
-            world
-                .entity()
-                .add(id::<Marksman>())
-                .add((id::<Platoon>(), platoon));
-            world
-                .entity()
-                .add(id::<Wizard>())
-                .add((id::<Platoon>(), platoon));
+            world.entity().add(Warrior).add((Platoon, platoon));
+            world.entity().add(Marksman).add((Platoon, platoon));
+            world.entity().add(Wizard).add((Platoon, platoon));
         }
     }
 
@@ -96,10 +87,10 @@ fn main() {
     // - check if _Platoon has (Player, *), store * in _Player
     let mut query = world
         .query::<()>()
-        .with(id::<RangedUnit>())
-        .with(id::<&Platoon>())
+        .with(RangedUnit)
+        .with(&Platoon)
         .set_second("$platoon")
-        .with((id::<Player>(), "$player"))
+        .with((Player, "$player"))
         .set_src("$platoon")
         .build();
 
@@ -114,15 +105,18 @@ fn main() {
     // Iterate query, limit the results to units of MyPlayer
     query
         .set_var(player_var, world.lookup_recursive("MyPlayer"))
-        .each_iter(|it, index, _| {
-            let unit = it.entity(index).unwrap();
-            println!(
-                "Unit id: {} of class {} in platoon id: {} for player {}",
-                unit,
-                it.id(0).to_str(),
-                it.get_var(platoon_var),
-                it.get_var(player_var)
-            );
+        .run(|mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    let unit = it.entity(i).unwrap();
+                    println!(
+                        "Unit id: {unit} of class {} in platoon id: {} for player {}",
+                        it.id(0).to_str(),
+                        it.get_var(platoon_var),
+                        it.get_var(player_var)
+                    );
+                }
+            }
         });
 
     // Output:

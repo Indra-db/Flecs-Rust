@@ -288,7 +288,7 @@ impl<'a, T: 'static> Component<'a, T> {
 
 impl<T: EnumComponentInfo + 'static> Component<'_, T> {
     /// Add constant.
-    pub fn constant(&self, name: &str, id: impl Into<Entity>, value: T) -> &Self {
+    pub fn constant(&self, name: &str, value: T) -> &Self {
         unsafe { sys::ecs_add_id(self.world_ptr_mut(), *self.id, flecs::meta::EcsEnum::ID) };
 
         let name = compact_str::format_compact!("{}\0", name);
@@ -307,11 +307,14 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
             "failed to create entity"
         );
 
-        let pair = ecs_pair(flecs::meta::Constant::ID, *id.into());
+        let id = self.world().component_id::<T::UnderlyingTypeOfEnum>();
+
+        let pair = ecs_pair(flecs::Constant::ID, *id);
 
         unsafe {
-            let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut i32 as *mut T;
-            *ptr = value;
+            let ptr =
+                sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut T::UnderlyingTypeOfEnum;
+            *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }
         self
@@ -320,9 +323,8 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
 
 impl UntypedComponent<'_> {
     /// Add constant.
-    pub fn constant(&self, name: &str, value: impl Into<i32>) -> &Self {
+    pub fn constant<T: ComponentId>(&self, name: &str, value: T) -> &Self {
         let name = compact_str::format_compact!("{}\0", name);
-        let value: i32 = value.into();
         let world = self.world_ptr_mut();
         let id = *self.id;
 
@@ -344,9 +346,9 @@ impl UntypedComponent<'_> {
             sys::ecs_set_id(
                 world,
                 eid,
-                ecs_pair(flecs::meta::Constant::ID, flecs::meta::I32::ID),
-                core::mem::size_of::<i32>(),
-                &value as *const i32 as *const c_void,
+                ecs_pair(flecs::Constant::ID, *self.world.component_id::<T>()),
+                core::mem::size_of::<T>(),
+                &value as *const T as *const c_void,
             );
         };
         self
@@ -445,7 +447,7 @@ impl UntypedComponent<'_> {
              */
 
     /// Add bitmask constant
-    pub fn bit(self, name: &str, value: u32) -> Self {
+    pub fn bit<T: ComponentId>(self, name: &str, value: T) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
         let world = self.world_ptr_mut();
         let id = *self.id;
@@ -470,9 +472,9 @@ impl UntypedComponent<'_> {
             sys::ecs_set_id(
                 world,
                 eid,
-                ecs_pair(flecs::meta::Constant::ID, flecs::meta::U32::ID),
-                core::mem::size_of::<u32>(),
-                &value as *const u32 as *const c_void,
+                ecs_pair(flecs::Constant::ID, *self.world.component_id::<T>()),
+                core::mem::size_of::<T>(),
+                &value as *const T as *const c_void,
             );
         };
         self
@@ -654,7 +656,7 @@ impl EntityView<'_> {
 mod tests {
     use crate::prelude::*;
 
-    // pub type SerializeFn<T> = extern "C-unwind" fn(*const Serializer, *const T) -> i32;
+    // pub type SerializeFn<T> = extern "C" fn(*const Serializer, *const T) -> i32;
 
     #[derive(Debug, Clone, Component)]
     struct Int {

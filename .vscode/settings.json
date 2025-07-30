@@ -1,4 +1,8 @@
 {
+    "files.associations": {
+        "*.rs": "rust",
+        "string": "c"
+    }
     // "rust-analyzer.linkedProjects": [
     //     "./flecs_ecs/Cargo.toml"
     // ],
