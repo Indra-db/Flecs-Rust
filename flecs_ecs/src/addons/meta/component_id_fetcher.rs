@@ -62,8 +62,9 @@ impl<T: 'static> ExternalComponent<T> for &ComponentIdFetcher<T> {
         let world = world.world();
         let map = world.components_map();
         let id = *(map.entry(core::any::TypeId::of::<T>()).or_insert_with(|| {
-            let type_name = get_only_type_name::<T>();
-            let name = compact_str::format_compact!("external_components::{}\0", type_name);
+            let type_name = get_only_type_name_generic::<T>();
+            let name =
+                compact_str::format_compact!("external_components::{}\0", type_name.as_str());
             external_register_component::<true, T>(world, name.as_ptr() as *const _)
         }));
         FetchedId::new(id)

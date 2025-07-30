@@ -222,8 +222,13 @@ where
         return c;
     }
 
-    let only_type_name = crate::core::get_only_type_name::<T>();
-    let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
+    let only_type_name = if T::IS_GENERIC {
+        crate::core::get_only_type_name_generic::<T>()
+    } else {
+        crate::core::get_only_type_name::<T>()
+    };
+
+    let only_type_name = compact_str::format_compact!("{}\0", only_type_name.as_str());
 
     let type_name = crate::core::type_name_cstring::<T>();
     let type_name_ptr = type_name.as_ptr();
@@ -322,8 +327,8 @@ pub(crate) fn external_register_componment_data_explicit<T>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t {
-    let only_type_name = crate::core::get_only_type_name::<T>();
-    let only_type_name = compact_str::format_compact!("{}\0", only_type_name);
+    let only_type_name = crate::core::get_only_type_name_generic::<T>();
+    let only_type_name = compact_str::format_compact!("{}\0", only_type_name.as_str());
 
     // If no name was provided first check if a type with the provided
     // symbol was already registered.

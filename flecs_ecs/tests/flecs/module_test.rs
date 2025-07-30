@@ -594,3 +594,38 @@ fn module_component_name_w_module_name() {
     assert_eq!(c.get_name().unwrap(), "ModuleAComponent");
     assert_eq!(c.parent().unwrap().get_name().unwrap(), "ModuleA");
 }
+
+#[test]
+fn module_import_generic_and_non_generics() {
+    let world = World::new();
+    world.import::<DummyModule>();
+
+    let foo = world.try_lookup("DummyModule::Foo");
+    assert!(foo.is_some());
+    let foo = foo.unwrap();
+    assert_eq!(foo.name(), "Foo");
+
+    let dummy_foo = world.try_lookup("DummyModule::Dummy<Foo>");
+    assert!(dummy_foo.is_some());
+    let dummy_foo = dummy_foo.unwrap();
+    assert_eq!(dummy_foo.name(), "Dummy<Foo>");
+    #[derive(Component, Clone, Default)]
+    pub struct Foo(u32, u32);
+
+    #[derive(Component, Clone, Default)]
+    pub struct Dummy<T: 'static + Send + Sync> {
+        value: u32,
+        marker: core::marker::PhantomData<T>,
+    }
+
+    #[derive(Component)]
+    pub struct DummyModule;
+
+    impl Module for DummyModule {
+        fn module(world: &World) {
+            world.module::<DummyModule>("::DummyModule");
+            world.component::<Foo>();
+            world.component::<Dummy<Foo>>();
+        }
+    }
+}

@@ -176,6 +176,40 @@ pub fn type_name_cstring<T>() -> CString {
     CString::new(core::any::type_name::<T>()).unwrap()
 }
 
+#[derive(Debug, Clone)]
+pub enum OnlyTypeName {
+    NonGeneric(&'static str),
+    Generic(String),
+}
+
+impl OnlyTypeName {
+    /// Get the type name as a string slice.
+    pub fn as_str(&self) -> &str {
+        match self {
+            OnlyTypeName::NonGeneric(name) => name,
+            OnlyTypeName::Generic(name) => name,
+        }
+    }
+}
+
+impl PartialEq for OnlyTypeName {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<&str> for OnlyTypeName {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl PartialEq<String> for OnlyTypeName {
+    fn eq(&self, other: &String) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
 /// Get the type name of the given type.
 ///
 /// # Type Parameters
@@ -189,9 +223,11 @@ pub fn type_name_cstring<T>() -> CString {
 /// # Example
 ///
 /// ```
-/// use flecs_ecs::core::get_only_type_name;
+/// use flecs_ecs::prelude::*;
 ///
 /// pub mod Bar {
+///     use flecs_ecs::prelude::*;
+///     #[derive(Component)]
 ///     pub struct Foo;
 /// }
 ///
@@ -199,12 +235,79 @@ pub fn type_name_cstring<T>() -> CString {
 /// assert_eq!(name, "Foo");
 /// ```
 #[inline(always)]
-pub fn get_only_type_name<T>() -> &'static str {
-    use core::any::type_name;
-    let name = type_name::<T>();
-    let split_name = name.split("::").last().unwrap_or(name);
-    //for nested types like vec<String> we need to remove the last `>`
-    split_name.split(">").next().unwrap_or(split_name)
+pub fn get_only_type_name<T: ComponentId>() -> OnlyTypeName {
+    ecs_assert!(
+        !T::IS_GENERIC,
+        FlecsErrorCode::InvalidParameter,
+        "get_only_type_name() cannot be used with generic types"
+    );
+    let name = T::name();
+    OnlyTypeName::NonGeneric(name.split("::").last().unwrap_or(name))
+}
+
+/// Get the type name of the given type.
+///
+/// # Type Parameters
+///
+/// * `T`: The type to get the name of.
+///
+/// # Returns
+///
+/// `[Type]` string slice.
+///
+/// # Example
+///
+/// ```
+/// use flecs_ecs::core::get_only_type_name_generic;
+///
+/// pub mod Bar {
+///     pub struct Foo;
+/// }
+///
+/// let name = get_only_type_name_generic::<Bar::Foo>();
+/// assert_eq!(name, "Foo");
+/// ```
+#[inline(always)]
+pub fn get_only_type_name_generic<T>() -> OnlyTypeName {
+    fn split_top_level(s: &str) -> Vec<&str> {
+        let mut parts = Vec::new();
+        let mut depth = 0;
+        let mut start = 0;
+        for (i, c) in s.char_indices() {
+            match c {
+                '<' => depth += 1,
+                '>' => depth -= 1,
+                ',' if depth == 0 => {
+                    parts.push(&s[start..i]);
+                    start = i + 1;
+                }
+                _ => {}
+            }
+        }
+        parts.push(&s[start..]);
+        parts
+    }
+
+    fn strip_paths(name: &str) -> String {
+        if let Some(lt) = name.find('<') {
+            // has generics
+            let base = &name[..lt];
+            let args = &name[lt + 1..name.len() - 1]; // skip final '>'
+            let base_name = base.rsplit("::").next().unwrap_or(base);
+            let args_strs = split_top_level(args);
+            let stripped_args: Vec<String> = args_strs
+                .into_iter()
+                .map(|arg| strip_paths(arg.trim()))
+                .collect();
+            format!("{}<{}>", base_name, stripped_args.join(", "))
+        } else {
+            // no generics
+            name.rsplit("::").next().unwrap_or(name).to_string()
+        }
+    }
+
+    let full = core::any::type_name::<T>();
+    OnlyTypeName::Generic(strip_paths(full))
 }
 
 /// Returns true if the given type is an empty type.
@@ -558,4 +661,101 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::get_only_type_name_generic;
+
+    struct MyStruct;
+    enum MyEnum {
+        A,
+        B,
+    }
+
+    #[test]
+    fn simple_type() {
+        assert_eq!(get_only_type_name_generic::<i32>(), "i32");
+        assert_eq!(get_only_type_name_generic::<bool>(), "bool");
+    }
+
+    #[test]
+    fn single_generic() {
+        assert_eq!(get_only_type_name_generic::<Vec<String>>(), "Vec<String>");
+        assert_eq!(get_only_type_name_generic::<Option<u8>>(), "Option<u8>");
+    }
+
+    #[test]
+    fn multi_generic() {
+        assert_eq!(
+            get_only_type_name_generic::<Result<i32, f64>>(),
+            "Result<i32, f64>"
+        );
+    }
+
+    #[test]
+    fn nested_generics() {
+        type Deep = Option<Result<Vec<MyStruct>, MyEnum>>;
+        assert_eq!(
+            get_only_type_name_generic::<Deep>(),
+            "Option<Result<Vec<MyStruct>, MyEnum>>"
+        );
+    }
+
+    #[test]
+    fn custom_struct_and_enum() {
+        assert_eq!(get_only_type_name_generic::<MyStruct>(), "MyStruct");
+        assert_eq!(get_only_type_name_generic::<MyEnum>(), "MyEnum");
+    }
+
+    #[test]
+    fn pointer_and_reference() {
+        assert_eq!(get_only_type_name_generic::<&str>(), "&str");
+        assert_eq!(get_only_type_name_generic::<*const i32>(), "*const i32");
+    }
+
+    // nested modules used to exercise path stripping
+    mod outer {
+        pub mod inner {
+            pub struct Deep;
+            pub struct Wrap<T>(pub T);
+            pub enum E {
+                A,
+                B,
+            }
+        }
+    }
+
+    mod a {
+        pub mod b {
+            pub mod c {
+                pub struct Z;
+            }
+        }
+    }
+
+    #[test]
+    fn nested_modules_simple() {
+        assert_eq!(get_only_type_name_generic::<outer::inner::Deep>(), "Deep");
+        assert_eq!(get_only_type_name_generic::<a::b::c::Z>(), "Z");
+        assert_eq!(get_only_type_name_generic::<outer::inner::E>(), "E");
+    }
+
+    #[test]
+    fn nested_modules_with_generics() {
+        type T1 = outer::inner::Wrap<outer::inner::Deep>;
+        type T2 = outer::inner::Wrap<outer::inner::Wrap<outer::inner::Deep>>;
+        assert_eq!(get_only_type_name_generic::<T1>(), "Wrap<Deep>");
+        assert_eq!(get_only_type_name_generic::<T2>(), "Wrap<Wrap<Deep>>");
+    }
+
+    #[test]
+    fn long_std_path_nested_generics() {
+        type LongNested = ::alloc::collections::BTreeMap<String, Vec<Vec<String>>>;
+        assert_eq!(
+            get_only_type_name_generic::<LongNested>(),
+            "BTreeMap<String, Vec<Vec<String>>>"
+        );
+    }
 }
