@@ -1179,4 +1179,11 @@ pub(crate) fn table_unlock(_world_ptr: *mut sys::ecs_world_t, _table_ptr: *mut s
     unsafe {
         sys::ecs_table_unlock(_world_ptr, _table_ptr);
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let c = self.iter.count();
+        (c, Some(c))
+    }
 }
+
+impl<const IS_RUN: bool, P> ExactSizeIterator for TableRowIter<'_, IS_RUN, P> where P: ComponentId {}

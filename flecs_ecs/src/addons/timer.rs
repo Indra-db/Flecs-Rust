@@ -275,20 +275,17 @@ impl<T: QueryTuple> SystemBuilder<'_, T> {
         self
     }
 
-    /// Set system rate.
-    /// This operation will cause the system to be ran at a multiple of the
-    /// provided tick source. The tick source may be any entity, including
-    /// another system.
+    /// Sets a rate filter on the system, causing it to run once every `rate` 
+    /// ticks. The tick source may be any entity, including another system.
     pub fn set_tick_source_rate(&mut self, tick_source: impl Into<Entity>, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self.desc.tick_source = *tick_source.into();
         self
     }
 
-    /// Set system rate.
-    /// This operation will cause the system to be ran at a multiple of the
-    /// frame tick frequency. If a tick source was provided, this just updates
-    /// the rate of the system.
+    /// Sets a rate filter on the system, causing it to run once every `rate` 
+    /// ticks. If a tick source was provided, this just updates the rate of the
+    /// system.
     pub fn set_rate(&mut self, rate: i32) -> &mut Self {
         self.desc.rate = rate;
         self
