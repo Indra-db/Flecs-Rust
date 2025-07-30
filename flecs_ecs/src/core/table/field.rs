@@ -53,6 +53,7 @@ pub struct Field<'a, T> {
 }
 
 impl<'a, T> Field<'a, T> {
+    #[inline(always)]
     pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -61,8 +62,35 @@ impl<'a, T> Field<'a, T> {
         }
     }
 
+    /// whether the column / component is shared.
+    ///
+    /// # Returns
+    /// `true` if the column is shared, `false` otherwise.
+    #[inline(always)]
     pub fn is_shared(&self) -> bool {
         self.is_shared
+    }
+
+    /// Get the length of the column.
+    ///
+    /// # Returns
+    /// The number of elements in the column.
+    #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.slice_components.len()
+    }
+
+    /// Get element at the specified index.
+    ///
+    /// # Arguments
+    /// * `index`: The index of the element to retrieve.
+    ///
+    /// # Returns
+    /// Option of reference to the element at the specified index.
+    #[inline(always)]
+    pub fn get(&self, index: usize) -> Option<&T> {
+        self.slice_components.get(index)
     }
 }
 
@@ -113,6 +141,7 @@ impl<'a, T> FieldMut<'a, T> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
+    #[inline(always)]
     pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -122,8 +151,43 @@ impl<'a, T> FieldMut<'a, T> {
     }
 
     /// whether the column / component is shared.
+    #[inline(always)]
     pub fn is_shared(&self) -> bool {
         self.is_shared
+    }
+
+    /// Get the length of the column.
+    ///
+    /// # Returns
+    /// The number of elements in the column.
+    #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.slice_components.len()
+    }
+
+    /// Get Reference to the element at the specified index.
+    ///
+    /// # Arguments
+    /// * `index`: The index of the element to retrieve.
+    ///
+    /// # Returns
+    /// Option of reference to the element at the specified index.
+    #[inline(always)]
+    pub fn get(&self, index: usize) -> Option<&T> {
+        self.slice_components.get(index)
+    }
+
+    /// Get mutable reference to the element at the specified index.
+    ///
+    /// # Arguments
+    /// * `index`: The index of the element to retrieve.
+    ///
+    /// # Returns
+    /// Option of mutable reference to the element at the specified index.
+    #[inline(always)]
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        self.slice_components.get_mut(index)
     }
 }
 
