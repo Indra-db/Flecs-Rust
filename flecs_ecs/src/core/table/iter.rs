@@ -485,10 +485,26 @@ where
     ///
     /// Returns a column object that can be used to access the field data.
     #[inline(always)]
-    pub fn field_untyped(&self, index: i8) -> Option<FieldUntyped> {
+    pub fn field_untyped(&self, index: i8) -> FieldUntyped {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<(), true, false>(index);
         self.field_untyped_internal(index)
+    }
+
+    /// Get immutable access to untyped field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field_untyped(&self, index: i8) -> Option<FieldUntyped> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), true, false>(index);
+        self.get_field_untyped_internal(index)
     }
 
     /// Get mutable access to untyped field data.
@@ -501,10 +517,26 @@ where
     ///
     /// Returns a column object that can be used to access the field data.
     #[inline(always)]
-    pub fn field_untyped_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+    pub fn field_untyped_mut(&self, index: i8) -> FieldUntypedMut {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<(), false, false>(index);
         self.field_untyped_internal_mut(index)
+    }
+
+    /// Get mutable access to untyped field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field_untyped_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), false, false>(index);
+        self.get_field_untyped_internal_mut(index)
     }
 
     /// Get the typed field data for the specified row
@@ -519,6 +551,36 @@ where
     ///
     /// An option containing a reference to the field data
     pub fn field_at<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
+    ) -> &'a T::UnderlyingType {
+        self.field_safety_checks::<T, true, true>(index);
+        let row = row.into();
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_internal::<T>(index, row);
+            if field.is_null() {
+                panic!("Tried to access field at index {index} for row {row}, but field is null.");
+            }
+            unsafe { &*field }
+        } else {
+            let field = self.field_internal::<T::UnderlyingType>(index);
+            unsafe { &*field.slice_components.add(row) }
+        }
+    }
+
+    /// Get the typed field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index.
+    /// * `row` - The row index.
+    ///
+    /// # Returns
+    ///
+    /// An option containing a reference to the field data
+    pub fn get_field_at<T: ComponentId>(
         &'a self,
         index: i8,
         row: impl Into<usize>,
@@ -545,6 +607,28 @@ where
         &'a self,
         index: i8,
         row: impl Into<usize>,
+    ) -> &'a mut T::UnderlyingType {
+        self.field_safety_checks::<T, false, true>(index);
+        let row = row.into();
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_internal_mut::<T>(index, row);
+            if field.is_null() {
+                panic!("Tried to access field at index {index} for row {row}, but field is null.");
+            }
+            unsafe { &mut *field }
+        } else {
+            let field = self.field_internal_mut::<T::UnderlyingType>(index);
+            unsafe { &mut *field.slice_components.add(row) }
+        }
+    }
+
+    /// Get the mutable typed field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_field_at_mut<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
     ) -> Option<&'a mut T::UnderlyingType> {
         self.field_safety_checks::<T, false, true>(index);
         let row = row.into();
@@ -568,7 +652,7 @@ where
         if self.iter.row_fields & (1u32 << index) != 0 {
             self.field_at_untyped_internal(index, row)
         } else {
-            let field = self.field_untyped_internal(index);
+            let field = self.get_field_untyped_internal(index);
             if field.is_none() {
                 return core::ptr::null();
             }
@@ -584,7 +668,7 @@ where
         if self.iter.row_fields & (1u32 << index) != 0 {
             self.field_at_untyped_internal_mut(index, row)
         } else {
-            let field = self.field_untyped_internal_mut(index);
+            let field = self.get_field_untyped_internal_mut(index);
             if field.is_none() {
                 return core::ptr::null_mut();
             }
@@ -771,6 +855,26 @@ where
         (array, is_shared, count)
     }
 
+    #[inline(always)]
+    fn field_untyped_internal_parts(&self, index: i8) -> (*mut c_void, bool, usize, usize) {
+        let size = unsafe { sys::ecs_field_size(self.iter, index) };
+        let is_shared = !self.is_self(index);
+
+        // If a shared column is retrieved with 'column', there will only be a
+        // single value. Ensure that the application does not accidentally read
+        // out of bounds.
+        let count = if is_shared {
+            1
+        } else {
+            // If column is owned, there will be as many values as there are entities
+            self.count()
+        };
+
+        let array = ecs_field_w_size(self.iter, size, index);
+
+        (array, is_shared, count, size)
+    }
+
     /// the “Option” version
     #[inline(always)]
     pub(crate) fn get_field_internal_mut<T>(&self, index: i8) -> Option<FieldMut<'a, T>> {
@@ -796,56 +900,50 @@ where
         FieldMut::new(array, is_shared)
     }
 
-    pub(crate) fn field_untyped_internal(&self, index: i8) -> Option<FieldUntyped> {
-        let size = unsafe { sys::ecs_field_size(self.iter, index) };
-        let is_shared = !self.is_self(index);
-
-        // If a shared column is retrieved with 'column', there will only be a
-        // single value. Ensure that the application does not accidentally read
-        // out of bounds.
-        let count = if is_shared {
-            1
-        } else {
-            // If column is owned, there will be as many values as there are entities
-            self.count()
-        };
+    pub(crate) fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
         if count == 0 {
-            return None;
+            panic!(
+                "field_untyped_internal: no values at index {} — ensure the field exists and has entries",
+                index
+            );
         }
 
-        Some(FieldUntyped::new(
-            ecs_field_w_size(self.iter, size, index),
-            size,
-            count,
-            is_shared,
-        ))
+        FieldUntyped::new(array, size, count, is_shared)
     }
 
-    pub(crate) fn field_untyped_internal_mut(&self, index: i8) -> Option<FieldUntypedMut> {
-        let size = unsafe { sys::ecs_field_size(self.iter, index) };
-        let is_shared = !self.is_self(index);
-
-        // If a shared column is retrieved with 'column', there will only be a
-        // single value. Ensure that the application does not accidentally read
-        // out of bounds.
-        let count = if is_shared {
-            1
-        } else {
-            // If column is owned, there will be as many values as there are entities
-            self.count()
-        };
+    pub(crate) fn get_field_untyped_internal(&self, index: i8) -> Option<FieldUntyped> {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
         if count == 0 {
             return None;
         }
 
-        Some(FieldUntypedMut::new(
-            ecs_field_w_size(self.iter, size, index),
-            size,
-            count,
-            is_shared,
-        ))
+        Some(FieldUntyped::new(array, size, count, is_shared))
+    }
+
+    pub(crate) fn field_untyped_internal_mut(&self, index: i8) -> FieldUntypedMut {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            panic!(
+                "field_untyped_internal_mut: no values at index {} — ensure the field exists and has entries",
+                index
+            );
+        }
+
+        FieldUntypedMut::new(array, size, count, is_shared)
+    }
+
+    pub(crate) fn get_field_untyped_internal_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            return None;
+        }
+
+        Some(FieldUntypedMut::new(array, size, count, is_shared))
     }
 
     pub(crate) fn field_at_untyped_internal(&self, index: i8, row: usize) -> *const c_void {
