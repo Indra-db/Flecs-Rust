@@ -120,9 +120,9 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `entity` - The target entity to emit for the event
-    pub fn entity(&mut self, entity: impl Into<Entity>) -> &mut Self {
+    pub fn entity(&mut self, entity: impl IntoEntity) -> &mut Self {
         let desc = &mut self.desc;
-        desc.entity = *entity.into();
+        desc.entity = *entity.into_entity(self.world);
         self
     }
 

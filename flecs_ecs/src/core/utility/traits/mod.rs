@@ -18,7 +18,13 @@ pub use query_api::*;
 pub use system_api::*;
 pub use world_provider::*;
 
-use crate::core::{ImplementsClone, ImplementsDefault, ImplementsPartialEq, ImplementsPartialOrd};
+use crate::core::{
+    ComponentId, ComponentPointers, EntityView, ImplementsClone, ImplementsDefault,
+    ImplementsPartialEq, ImplementsPartialOrd, QueryTuple, TableIter, ecs_assert,
+};
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+use crate::core::{FlecsErrorCode, table_lock, table_unlock};
+use crate::sys;
 
 #[doc(hidden)]
 pub mod private {
@@ -75,39 +81,9 @@ pub mod private {
             Func: FnMut(T::TupleType<'_>),
         {
             unsafe {
-                const {
-                    assert!(
-                        !T::CONTAINS_ANY_TAG_TERM,
-                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                    );
-                }
-
                 let iter = &mut *iter;
-                iter.flags |= sys::EcsIterCppEach;
-
                 let each = &mut *(iter.callback_ctx as *mut Func);
-
-                let mut components_data = T::create_ptrs(&*iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                if !CALLED_FROM_RUN {
-                    sys::ecs_table_lock(iter.world, iter.table);
-                }
-
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&*iter, i);
-                    each(tuple);
-                }
-
-                if !CALLED_FROM_RUN {
-                    sys::ecs_table_unlock(iter.world, iter.table);
-                }
+                internal_each_iter_next::<T, CALLED_FROM_RUN>(iter, each);
             }
         }
 
@@ -124,95 +100,10 @@ pub mod private {
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
             unsafe {
-                const {
-                    assert!(
-                        !T::CONTAINS_ANY_TAG_TERM,
-                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                    );
-                }
-
                 let iter = &mut *iter;
-                iter.flags |= sys::EcsIterCppEach;
-
+                let world = WorldRef::from_ptr(iter.world);
                 let each_entity = &mut *(iter.callback_ctx as *mut Func);
-
-                let mut components_data = T::create_ptrs(&*iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        // If query has no This terms, count can be 0. Since each does not
-                        // have an entity parameter, just pass through components
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                ecs_assert!(
-                    !iter.entities.is_null(),
-                    FlecsErrorCode::InvalidOperation,
-                    "System does not return entities ($this variable is not populated).\nSystem: {:?}",
-                    WorldRef::from_ptr(iter.world).entity_from_id(iter.system)
-                );
-
-                if !CALLED_FROM_RUN {
-                    sys::ecs_table_lock(iter.world, iter.table);
-                }
-
-                for i in 0..iter_count {
-                    let world = WorldRef::from_ptr(iter.world);
-                    let entity = EntityView::new_from(world, *iter.entities.add(i));
-                    let tuple = components_data.get_tuple(&*iter, i);
-
-                    each_entity(entity, tuple);
-                }
-
-                if !CALLED_FROM_RUN {
-                    sys::ecs_table_unlock(iter.world, iter.table);
-                }
-            }
-        }
-
-        /// Callback of the `each_iter` functionality
-        ///
-        /// # Arguments
-        ///
-        /// * `iter` - The iterator which gets passed in from `C`
-        ///
-        /// # See also
-        unsafe extern "C" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
-        where
-            Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
-        {
-            unsafe {
-                const {
-                    assert!(
-                        !T::CONTAINS_ANY_TAG_TERM,
-                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                    );
-                }
-
-                let iter = &mut *iter;
-                iter.flags |= sys::EcsIterCppEach;
-
-                let each_iter = &mut *(iter.callback_ctx as *mut Func);
-                let mut components_data = T::create_ptrs(&*iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                sys::ecs_table_lock(iter.world, iter.table);
-
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(&*iter, i);
-                    let iter_t = TableIter::new(iter);
-
-                    each_iter(iter_t, i, tuple);
-                }
-                sys::ecs_table_unlock(iter.world, iter.table);
+                internal_each_entity_iter_next::<T, CALLED_FROM_RUN>(iter, &world, each_entity);
             }
         }
 
@@ -230,14 +121,7 @@ pub mod private {
             unsafe {
                 let iter = &mut *iter;
                 let run = &mut *(iter.run_ctx as *mut Func);
-                let mut iter_t = TableIter::new(&mut *iter);
-                iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
-                run(iter_t);
-                // ecs_assert!(
-                //     iter.flags & sys::EcsIterIsValid == 0,
-                //     FlecsErrorCode::InvalidOperation,
-                //     "iterators must be manually finished with ecs_iter_fini"
-                // );
+                internal_run::<P>(iter, run);
             }
         }
 
@@ -300,4 +184,136 @@ impl<T: PartialOrd> ImplementsPartialOrd<T> {
 
 pub trait FlecsConstantId {
     const ID: u64;
+}
+/// A little “extractor” trait: given the iterator and an index,
+/// produce whatever you want to pass as the first argument to the user‑closure.
+pub(crate) trait EntityExtractor {
+    /// The type of the “extra” first parameter to the callback.
+    type Output;
+
+    /// Called inside the per‑element loop to build that argument.
+    unsafe fn extract(&self, iter: &sys::ecs_iter_t, idx: usize) -> Self::Output;
+}
+
+/// When you don’t want to pass an entity, use this ZST.
+pub(crate) struct NoEntity;
+impl EntityExtractor for NoEntity {
+    type Output = ();
+    #[inline(always)]
+    unsafe fn extract(&self, _iter: &sys::ecs_iter_t, _idx: usize) {}
+}
+
+/// When you do want an `EntityView`, carry your `&WorldRef` here.
+pub(crate) struct WithEntity<'w>(pub &'w WorldRef<'w>);
+impl<'w> EntityExtractor for WithEntity<'w> {
+    type Output = EntityView<'w>;
+    #[inline(always)]
+    unsafe fn extract(&self, iter: &sys::ecs_iter_t, idx: usize) -> EntityView<'w> {
+        // SAFETY: same as your original
+        let raw = unsafe { *iter.entities.add(idx) };
+        EntityView::new_from_raw(self.0, raw)
+    }
+}
+
+#[inline(always)]
+pub(crate) fn internal_run<P: ComponentId>(
+    iter: &mut sys::ecs_iter_t,
+    func: &mut impl FnMut(TableIter<true, P>),
+) {
+    iter.flags &= !sys::EcsIterIsValid;
+    let iter_t = unsafe { TableIter::new(iter) };
+    func(iter_t);
+}
+
+#[inline(always)]
+pub(crate) fn internal_each_generic<
+    T: QueryTuple,
+    E: EntityExtractor,
+    const CALLED_FROM_RUN: bool,
+    F: FnMut(E::Output, T::TupleType<'_>),
+>(
+    iter: &mut sys::ecs_iter_t,
+    extractor: E,
+    mut func: F,
+) {
+    const {
+        assert!(
+            !T::CONTAINS_ANY_TAG_TERM,
+            "a type provided in the query signature is a Tag and cannot be used with \
+             `.each`. use `.run` instead or provide the tag with `.with()`"
+        );
+    }
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    let world_ptr = iter.world;
+    iter.flags |= sys::EcsIterCppEach;
+    let (is_any_array, mut components_data) = T::create_ptrs(iter);
+    let count = if iter.count == 0 && iter.table.is_null() {
+        1_usize
+    } else {
+        iter.count as usize
+    };
+
+    ecs_assert!(
+        !iter.entities.is_null(),
+        FlecsErrorCode::InvalidOperation,
+        "query/system does not return entities ($this variable is not populated).\nSystem: {:?}",
+        {
+            let world = unsafe { WorldRef::from_ptr(iter.world) };
+            let e = world.entity_from_id(iter.system);
+            (e.id(), e.get_name())
+        }
+    );
+
+    // only lock/unlock in debug or forced‑assert builds, and only
+    // if we’re not in the “called from run” path:
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    if !CALLED_FROM_RUN {
+        table_lock(world_ptr, iter.table);
+    }
+
+    if !is_any_array.a_ref && !is_any_array.a_row {
+        for i in 0..count {
+            let extra = unsafe { extractor.extract(iter, i) };
+            let tuple = components_data.get_tuple(i);
+            func(extra, tuple);
+        }
+    } else if is_any_array.a_row {
+        for i in 0..count {
+            let extra = unsafe { extractor.extract(iter, i) };
+            let tuple = components_data.get_tuple_with_row(iter, i);
+            func(extra, tuple);
+        }
+    } else {
+        for i in 0..count {
+            let extra = unsafe { extractor.extract(iter, i) };
+            let tuple = components_data.get_tuple_with_ref(i);
+            func(extra, tuple);
+        }
+    }
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    if !CALLED_FROM_RUN {
+        table_unlock(world_ptr, iter.table);
+    }
+}
+
+#[inline(always)]
+pub(crate) fn internal_each_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool>(
+    iter: &mut sys::ecs_iter_t,
+    func: &mut impl FnMut(T::TupleType<'_>),
+) {
+    // drop the `()` from the call
+    internal_each_generic::<T, NoEntity, CALLED_FROM_RUN, _>(iter, NoEntity, move |(), t| func(t));
+}
+
+#[inline(always)]
+pub(crate) fn internal_each_entity_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool>(
+    iter: &mut sys::ecs_iter_t,
+    world: &WorldRef<'_>,
+    func: &mut impl FnMut(EntityView, T::TupleType<'_>),
+) {
+    // pass a WithEntity extractor so it builds the EntityView
+    let extractor = WithEntity(world);
+    internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, _>(iter, extractor, func);
 }

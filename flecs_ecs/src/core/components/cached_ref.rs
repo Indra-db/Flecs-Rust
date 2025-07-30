@@ -26,6 +26,7 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
         entity: impl Into<Entity>,
         mut id: sys::ecs_id_t,
     ) -> Self {
+        let world = world.world();
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
         let world_ptr = unsafe {
@@ -59,7 +60,7 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
             "Tried to create invalid `CachedRef` type."
         );
         CachedRef {
-            world: unsafe { WorldRef::from_ptr(world_ptr) },
+            world: world.world(),
             component_ref,
             _marker: PhantomData,
         }

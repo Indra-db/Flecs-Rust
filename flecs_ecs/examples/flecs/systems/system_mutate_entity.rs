@@ -11,26 +11,31 @@ fn main() {
     let world = World::new();
 
     // System that deletes an entity after a timeout expires
-    world
-        .system::<&mut Timeout>()
-        .each_iter(|it, index, timeout| {
-            timeout.value -= it.delta_time();
-            if timeout.value <= 0.0 {
-                // Delete the entity
+    world.system::<&mut Timeout>().run(|mut it| {
+        let delta_time = it.delta_time();
+        while it.next() {
+            let mut timeout = it.field_mut::<Timeout>(0);
+            for i in it.iter() {
+                let t = &mut timeout[i];
+                t.value -= delta_time;
+                if t.value <= 0.0 {
+                    // Delete the entity
 
-                // To make sure that the storage doesn't change while a system
-                // is iterating entities, and multiple threads can safely access
-                // the data, mutations (like a delete) are added to a command
-                // queue and executed when it's safe to do so.
+                    // To make sure that the storage doesn't change while a system
+                    // is iterating entities, and multiple threads can safely access
+                    // the data, mutations (like a delete) are added to a command
+                    // queue and executed when it's safe to do so.
 
-                // When the entity to be mutated is not the same as the entity
-                // provided by the system, an additional mut() call is required.
-                // See the mutate_entity_handle example.
-                let e = it.entity(index).unwrap();
-                e.destruct();
-                println!("Expire: {} deleted!", e.name());
+                    // When the entity to be mutated is not the same as the entity
+                    // provided by the system, an additional mut() call is required.
+                    // See the mutate_entity_handle example.
+                    let e = it.entity(i).unwrap();
+                    println!("Expire: {} deleted!", e.name());
+                    e.destruct();
+                }
             }
-        });
+        }
+    });
 
     // System that prints remaining expiry time
     world.system::<&Timeout>().each_entity(|e, timeout| {

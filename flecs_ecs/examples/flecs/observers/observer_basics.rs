@@ -13,30 +13,34 @@ fn main() {
 
     world
         .observer::<flecs::OnAdd, ()>()
+        // We use .with(Position::id()) because we cannot safely access the component
+        // value here. The component value is uninitialized when the OnAdd event
+        // is emitted, which is UB in Rust. To work around this, we use .with::<T>
         .with(Position::id())
-        .each_iter(|it, index, _| {
-            // We use .with(Position::id()) because we cannot safely access the component
-            // value here. The component value is uninitialized when the OnAdd event
-            // is emitted, which is UB in Rust. To work around this, we use .with::<T>
-            println!(
-                " - OnAdd: {}: {}",
-                it.event_id().to_str(),
-                it.entity(index).unwrap()
-            );
+        .run(|mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity_id(i));
+                }
+            }
         });
 
     // Create an observer for three events
     world
         .observer::<flecs::OnSet, &Position>()
         .add_event(flecs::OnRemove)
-        .each_iter(|it, index, pos| {
-            println!(
-                " - {}: {}: {}: with {:?}",
-                it.event().name(),
-                it.event_id().to_str(),
-                it.entity(index).unwrap(),
-                pos
-            );
+        .run(|mut it| {
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                for i in it.iter() {
+                    println!(
+                        " - {}: {}: with {:?}",
+                        it.event().name(),
+                        it.entity_id(i),
+                        pos[i]
+                    );
+                }
+            }
         });
 
     // Create entity, set Position (emits EcsOnAdd and EcsOnSet)

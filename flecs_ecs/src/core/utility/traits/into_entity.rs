@@ -24,6 +24,7 @@ impl<T: ComponentId> IntoEntity for Id<T> {
     const IS_TYPE_TAG: bool = T::IS_TAG;
     const IS_TYPED_REF: bool = <T as ComponentInfo>::IS_REF;
     const IS_TYPED_MUT_REF: bool = <T as ComponentInfo>::IS_MUT;
+    #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         world.world().component_id::<T>()
     }
@@ -39,6 +40,7 @@ impl<T: Into<Entity>> IntoEntity for T {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         self.into()
     }
@@ -70,6 +72,7 @@ impl<T: IntoEntity> InternalIntoEntity for T {
     const IS_TYPE_TAG: bool = <T as IntoEntity>::IS_TYPE_TAG;
     const IS_TYPED_REF: bool = T::IS_TYPED_REF;
     const IS_TYPED_MUT_REF: bool = T::IS_TYPED_MUT_REF;
+    #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         self.into_entity(world)
     }
@@ -88,6 +91,7 @@ impl InternalIntoEntity for crate::core::Id {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity(self.0)
     }
@@ -106,6 +110,7 @@ impl InternalIntoEntity for crate::core::IdView<'_> {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity(*self.id)
     }
@@ -126,6 +131,7 @@ where
     const IS_TYPE_TAG: bool = T::IS_TYPE_TAG & U::IS_TYPE_TAG;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         let world = world.world();
         Entity(crate::core::ecs_pair(

@@ -50,29 +50,38 @@ fn main() {
     let sys = world
         .system::<(&Position, &Radius)>()
         .set_context(&mut query_collide as *mut Query<(&Position, &Radius)> as *mut c_void)
-        .each_iter(|mut it, index, (p1, r1)| {
+        .run(|mut it| {
             let query = unsafe { it.context::<Query<(&Position, &Radius)>>() };
-            let e1 = it.entity(index).unwrap();
+            while it.next() {
+                let p1 = it.field::<Position>(0);
+                let r1 = it.field::<Radius>(1);
 
-            query.each_entity(|e2, (p2, r2)| {
-                if e1 == *e2 {
-                    // don't collide with self
-                    return;
-                }
+                for i in it.iter() {
+                    let e1 = it.entity(i).unwrap();
+                    let p1 = &p1[i];
+                    let r1 = &r1[i];
 
-                if e1 > *e2 {
-                    // Simple trick to prevent collisions from being detected
-                    // twice with the entities reversed.
-                    return;
-                }
+                    query.each_entity(|e2, (p2, r2)| {
+                        if e1 == *e2 {
+                            // don't collide with self
+                            return;
+                        }
 
-                // Check for collision
-                let d_sqr = distance_sqr(p1, p2);
-                let r_sqr = sqr(r1.value + r2.value);
-                if r_sqr > d_sqr {
-                    println!("{e1} and {e2} collided!");
+                        if e1 > *e2 {
+                            // Simple trick to prevent collisions from being detected
+                            // twice with the entities reversed.
+                            return;
+                        }
+
+                        // Check for collision
+                        let d_sqr = distance_sqr(p1, p2);
+                        let r_sqr = sqr(r1.value + r2.value);
+                        if r_sqr > d_sqr {
+                            println!("{e1} and {e2} collided!");
+                        }
+                    });
                 }
-            });
+            }
         });
 
     // Create a few test entities

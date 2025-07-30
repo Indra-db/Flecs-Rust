@@ -26,6 +26,10 @@ flecs_ecs_sys = { workspace = true }
 bitflags = "2.9.1"
 compact_str = { version = "0.9.0", default-features = false }
 hashbrown = "0.15.4"
+seq-macro = "0.3.6"
+rand = "0.9.1"
+libc = "0.2.174"
+seq = "0.5.0"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
@@ -213,3 +217,16 @@ name = "examples"
 path = "examples/flecs/z_ignore_main_test.rs"
 test = true
 doc-scrape-examples = true
+
+######################
+# Benchmarks
+######################
+
+# solves criterion problem for using baseline
+[lib]
+bench = false
+
+[[bench]]
+name = "main"
+path = "benches/flecs/_main.rs"
+harness = false

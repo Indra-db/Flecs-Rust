@@ -253,6 +253,7 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `parent`: The parent entity to establish the relationship with.
+    #[inline(always)]
     pub fn child_of(self, parent: impl IntoEntity) -> Self {
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into_entity(self.world))) }
     }

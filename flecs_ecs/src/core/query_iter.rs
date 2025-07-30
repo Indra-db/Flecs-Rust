@@ -110,6 +110,7 @@ impl<P, T> IterOperations for QueryIter<'_, P, T>
 where
     T: QueryTuple,
 {
+    #[inline(always)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t {
         self.iter
     }

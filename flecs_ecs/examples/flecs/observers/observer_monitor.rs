@@ -29,19 +29,22 @@ fn main() {
     // Create observer for custom event
     world
         .observer::<flecs::Monitor, (&Position, &Velocity)>()
-        .each_iter(|it, index, (_pos, _vel)| {
-            if it.event() == flecs::OnAdd::ID {
-                println!(
-                    " - Enter: {}: {}",
-                    it.event_id().to_str(),
-                    it.entity(index).unwrap().name()
-                );
+        .run(|mut it| {
+            let callback = if it.event() == flecs::OnAdd::ID {
+                "Enter"
             } else if it.event() == flecs::OnRemove::ID {
-                println!(
-                    " - Leave: {}: {}",
-                    it.event_id().to_str(),
-                    it.entity(index).unwrap().name()
-                );
+                "Leave"
+            } else {
+                "Unknown"
+            };
+            while it.next() {
+                for i in it.iter() {
+                    println!(
+                        " - {callback}: {}: {}",
+                        it.event_id().to_str(),
+                        it.entity(i).unwrap().name()
+                    );
+                }
             }
         });
 

@@ -112,8 +112,8 @@ fn main() {
     // iterating the query will write to the dirty state of iterated tables.
     query_write.run(|mut it| {
         while it.next() {
-            let dirty = it.field::<Dirty>(0).unwrap();
-            let mut pos = it.field::<Position>(1).unwrap();
+            let dirty = it.field::<Dirty>(0);
+            let mut pos = it.field_mut::<Position>(1);
 
             println!("iterate table [{}]", it.archetype().unwrap());
 

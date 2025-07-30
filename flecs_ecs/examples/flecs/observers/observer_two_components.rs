@@ -24,17 +24,24 @@ fn main() {
     // Create observer for custom event
     world
         .observer::<flecs::OnSet, (&Position, &Velocity)>()
-        .each_iter(|it, index, (pos, vel)| {
-            println!(
-                " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
-                it.event().name(),
-                it.event_id().to_str(),
-                it.entity(index).unwrap().name(),
-                pos.x,
-                pos.y,
-                vel.x,
-                vel.y
-            );
+        .run(|mut it| {
+            // The observer will iterate over all entities that match the query.
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                let vel = it.field::<Velocity>(1);
+                for i in it.iter() {
+                    println!(
+                        " - {}: {}: {}: p: {{ {}, {} }}, v: {{ {}, {} }}",
+                        it.event().name(),
+                        it.event_id().to_str(),
+                        it.entity(i).unwrap().name(),
+                        pos[i].x,
+                        pos[i].y,
+                        vel[i].x,
+                        vel[i].y
+                    );
+                }
+            }
         });
 
     // Create entity, set Position (emits EcsOnSet, does not yet match observer)

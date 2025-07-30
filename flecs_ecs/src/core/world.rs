@@ -1102,7 +1102,8 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
-    pub(crate) fn components_map(&self) -> &'static mut FlecsIdMap {
+    #[doc(hidden)]
+    pub fn components_map(&self) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(self.components.as_ptr())) }
     }
 
@@ -1114,7 +1115,8 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
-    pub(crate) fn components_array(&self) -> &'static mut FlecsArray {
+    #[doc(hidden)]
+    pub fn components_array(&self) -> &'static mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
     }
 
@@ -2648,6 +2650,7 @@ impl World {
     ///
     /// * [`World::entity_named()`]
     /// * [`World::entity_named_cstr()`]
+    #[inline(always)]
     pub fn entity(&self) -> EntityView {
         EntityView::new(self)
     }
@@ -2766,6 +2769,7 @@ impl World {
 impl World {
     /// Get the id of the provided component type.
     /// This returns the id of a component type which has been registered with [`ComponentId`] trait.
+    #[inline(always)]
     pub fn component_id<T: ComponentId>(&self) -> Entity {
         Entity(T::entity_id(self))
     }
@@ -3122,6 +3126,21 @@ impl World {
         Components: QueryTuple,
     {
         QueryBuilder::<Components>::new_named(self, name)
+    }
+
+    /// Create a query from a query description.
+    ///
+    /// # Safety
+    ///
+    /// Caller needs to ensure the query type is correct of the provided `desc`.
+    pub unsafe fn query_from_desc<Components>(
+        &self,
+        desc: &mut sys::ecs_query_desc_t,
+    ) -> QueryBuilder<Components>
+    where
+        Components: QueryTuple,
+    {
+        QueryBuilder::<Components>::new_from_desc(self, desc)
     }
 
     /// Attempts to convert an entity into a query.

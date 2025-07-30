@@ -105,15 +105,18 @@ fn main() {
     // Iterate query, limit the results to units of MyPlayer
     query
         .set_var(player_var, world.lookup_recursive("MyPlayer"))
-        .each_iter(|it, index, _| {
-            let unit = it.entity(index).unwrap();
-            println!(
-                "Unit id: {} of class {} in platoon id: {} for player {}",
-                unit,
-                it.id(0).to_str(),
-                it.get_var(platoon_var),
-                it.get_var(player_var)
-            );
+        .run(|mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    let unit = it.entity(i).unwrap();
+                    println!(
+                        "Unit id: {unit} of class {} in platoon id: {} for player {}",
+                        it.id(0).to_str(),
+                        it.get_var(platoon_var),
+                        it.get_var(player_var)
+                    );
+                }
+            }
         });
 
     // Output:

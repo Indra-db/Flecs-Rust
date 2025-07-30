@@ -2,11 +2,13 @@
 use core::marker::PhantomData;
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 
+use crate::core::table::field::{FieldIndex, FieldMut, FieldUntypedMut};
 use crate::core::*;
 use crate::sys;
 
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
-    pub(crate) iter: &'a mut sys::ecs_iter_t,
+    pub iter: &'a mut sys::ecs_iter_t,
+    pub(crate) count: usize,
     marker: PhantomData<P>,
 }
 
@@ -37,8 +39,10 @@ where
     /// # Safety
     /// - caller must ensure that iter.param points to type T
     pub unsafe fn new(iter: &'a mut sys::ecs_iter_t) -> Self {
+        let count = iter.count as usize;
         Self {
             iter,
+            count,
             marker: PhantomData,
         }
     }
@@ -67,18 +71,17 @@ where
     ///         //for each different table
     ///         for i in it.iter() {
     ///             //for each entity in the table
-    ///             let pos = it.field::<Position>(0).unwrap();
+    ///             let pos = it.field::<Position>(0);
     ///             assert_eq!(pos[0].x, 1.0);
     ///             assert_eq!(pos[0].y, 2.0);
     ///         }
     ///     }
     /// });
     /// ```
-    pub fn iter(&self) -> TableRowIter<IS_RUN, P> {
-        TableRowIter {
-            iter: self,
-            index: 0,
-        }
+    #[inline(always)]
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = FieldIndex> {
+        // Range has no bounds checks, .map(FieldIndex) is inlined out to a single `add+load`
+        (0..self.count).map(FieldIndex)
     }
 
     /// Wrap the system id in the iterator in an [`EntityView`] object.
@@ -101,12 +104,27 @@ where
     /// # Arguments
     ///
     /// * `row` - Row being iterated over
-    pub fn entity(&self, row: usize) -> Option<EntityView<'a>> {
-        let ptr = unsafe { self.iter.entities.add(row) };
+    pub fn entity(&self, row: impl Into<usize>) -> Option<EntityView<'a>> {
+        let ptr = unsafe { self.iter.entities.add(row.into()) };
         if ptr.is_null() {
             return None;
         }
         Some(unsafe { EntityView::new_from(self.real_world(), *ptr) })
+    }
+
+    /// Obtain entity id being iterated over. Can return Entity with id 0 if the entity at the specified row is not found.
+    ///
+    /// # Arguments
+    ///
+    /// * `row` - Row being iterated over
+    #[inline(always)]
+    pub fn entity_id(&self, row: impl Into<usize>) -> Entity {
+        let ptr = unsafe { self.iter.entities.add(row.into()) };
+
+        if ptr.is_null() {
+            return Entity::null();
+        }
+        unsafe { Entity(*ptr) }
     }
 
     /// Return a mut reference to the raw iterator object.
@@ -115,11 +133,12 @@ where
     }
 
     /// Return the count of entities in the iterator.
+    #[inline(always)]
     pub fn count(&self) -> usize {
         //TODO soft assert
         // ecs_check(iter_->flags & EcsIterIsValid, ECS_INVALID_PARAMETER,
         //     "operation invalid before calling next()");
-        self.iter.count as usize
+        self.count
     }
 
     /// Return the delta time stored in the iterator.
@@ -159,7 +178,7 @@ where
 
     pub fn range(&self) -> Option<TableRange<'a>> {
         self.table()
-            .map(|t| TableRange::new(t, self.iter.offset, self.iter.count))
+            .map(|t| TableRange::new(t, self.iter.offset, self.count as i32))
     }
 
     /// Get the variable of the iterator
@@ -254,8 +273,9 @@ where
     /// # Returns
     ///
     /// Returns whether field is matched on self
+    #[inline(always)]
     pub fn is_self(&self, index: i8) -> bool {
-        unsafe { sys::ecs_field_is_self(self.iter, index) }
+        self.iter.sources.is_null() || unsafe { (*self.iter.sources.add(index as usize)) == 0 }
     }
 
     /// # Arguments
@@ -266,7 +286,7 @@ where
     ///
     /// Returns whether field is set
     pub fn is_set(&self, index: i8) -> bool {
-        unsafe { sys::ecs_field_is_set(self.iter, index) }
+        self.iter.set_fields & (1u32 << (index as usize)) != 0
     }
 
     /// # Arguments
@@ -350,240 +370,310 @@ where
         unsafe { CStr::from_ptr(c_str) }
     }
 
-    /// Get read/write access to field data.
-    /// If the matched id for the specified field does not match with the provided
-    /// type or if the field is readonly, the function will assert.
-    ///
-    /// # Safety
-    ///
-    /// This function is unsafe because it casts `c_void` data to a type T expecting
-    /// The user to pass the correct index + the index being within bounds + optional data
-    /// to be valid.
-    ///
-    /// This function should not be used in `each()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each()`, use
-    /// `field_at`.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of component to get the field data for
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The field index.
-    ///
-    /// # Returns
-    ///
-    /// Returns a column object that can be used to access the field data.
-    // TODO? in C++ API there is a mutable and immutable version of this function
-    // Maybe we should create a ColumnView struct that is immutable and use the Column struct for mutable access?
-    pub unsafe fn field_unchecked<T>(&self, index: i8) -> Field<T> {
-        unsafe {
-            ecs_assert!(
-                index < self.iter.field_count,
-                FlecsErrorCode::InvalidParameter,
-                index
-            );
-            ecs_assert!(
-                (self.iter.flags & sys::EcsIterCppEach == 0)
-                    || sys::ecs_field_src(self.iter, index) != 0,
-                FlecsErrorCode::InvalidOperation,
-                "cannot .field from .each, use .field_at instead",
-            );
-            self.field_internal::<T>(index).unwrap()
-        }
-    }
-
-    fn field_checked<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
-        let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
-
-        if index > self.iter.field_count {
-            return None;
-        }
-
-        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
-        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
-        let is_id_correct = id == term_id;
-
-        if is_id_correct || is_pair {
-            return unsafe { self.field_internal::<T::UnderlyingType>(index) };
-        }
-
-        None
-    }
-    /// Get read/write access to field data.
-    /// If the matched id for the specified field does not match with the provided
-    /// type or if the field is readonly, the function will assert.
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure that the field at `index` is accessible as `T`
-    ///
-    /// This function should not be used in `each()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each()`, use
-    /// `field_at`.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of component to get the field data for
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The field index.
-    ///
-    /// # Returns
-    ///
-    /// Returns a column object that can be used to access the field data.
-    pub fn field<T: ComponentId>(&self, index: i8) -> Option<Field<T::UnderlyingType>> {
+    #[inline(always)]
+    #[allow(clippy::extra_unused_type_parameters)] //release build clippy warning
+    fn field_safety_checks<T: ComponentId, const READONLY: bool, const TYPED: bool>(
+        &self,
+        _index: i8,
+    ) {
         ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, index) != 0 },
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field from .each, use .field_at instead",
-        );
-
-        self.field_checked::<T>(index)
-    }
-
-    /// Get unchecked access to field data.
-    /// Unchecked access is required when a system does not know the type of a field at compile time.
-    /// This function may be used to access shared fields when row is set to 0.
-    ///
-    /// # Safety
-    ///
-    /// This function should not be used in `each()` callbacks, unless it is to
-    /// access a shared field. For access to non-shared fields in `each()`, use
-    /// `field_at`.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The field index.
-    ///
-    /// # Returns
-    ///
-    /// Returns an `FieldUntyped` object that can be used to access the field data.
-    pub fn field_untyped(&self, index: i8) -> FieldUntyped {
-        ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, index) } != 0,
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field from .each, use .field_at instead",
-        );
-        ecs_assert!(
-            index < self.iter.field_count,
+            _index < self.iter.field_count,
             FlecsErrorCode::InvalidParameter,
-            index
+            _index
         );
+        ecs_assert!(
+            (self.iter.flags & sys::EcsIterCppEach == 0)
+                || unsafe { sys::ecs_field_src(self.iter, _index) != 0 },
+            FlecsErrorCode::InvalidOperation,
+            "cannot .field_handle from .each, use .field_at instead",
+        );
+
+        if !READONLY {
+            ecs_assert!(
+                !unsafe { sys::ecs_field_is_readonly(self.iter, _index) },
+                FlecsErrorCode::AccessViolation,
+                "field is readonly, check if your specified query terms are set &mut"
+            );
+        }
+        if TYPED {
+            ecs_assert!(
+                {
+                    let term_id = unsafe { sys::ecs_field_id(self.iter, _index) };
+                    let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
+                    id == term_id || unsafe { sys::ecs_id_is_pair(term_id) }
+                },
+                FlecsErrorCode::InvalidParameter,
+                "id mismatch: expected {id}, got {term_id} or term_id is not a pair",
+            );
+        }
+    }
+
+    /// Get immutable access to field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, true, true>(index);
+        self.field_internal::<T::UnderlyingType>(index)
+    }
+
+    /// Get immutable access to field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field<T: ComponentId>(&self, index: i8) -> Option<Field<'a, T::UnderlyingType>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, true, true>(index);
+        self.get_field_internal::<T::UnderlyingType>(index)
+    }
+
+    /// Get mutable access to field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, false, true>(index);
+        self.field_internal_mut::<T::UnderlyingType>(index)
+    }
+
+    /// Get mutable access to field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field_mut<T: ComponentId>(
+        &'a self,
+        index: i8,
+    ) -> Option<FieldMut<'a, T::UnderlyingType>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, false, true>(index);
+        self.get_field_internal_mut::<T::UnderlyingType>(index)
+    }
+
+    /// Get immutable access to untyped field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn field_untyped(&self, index: i8) -> FieldUntyped {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), true, false>(index);
         self.field_untyped_internal(index)
     }
 
-    /// Get pointer to field data for the specified index.
-    /// Unchecked access is required when a system does not know the type of a field at compile time.
-    /// This function may be used to access shared fields when row is set to 0.
+    /// Get immutable access to untyped field data.
     ///
     /// # Arguments
     ///
-    /// * `index` - The field index.
-    /// * `row` - The row index.
+    /// * `field_handle` - The field handle.
     ///
     /// # Returns
     ///
-    /// Returns a pointer to the field data.
-    pub fn field_at_untyped(&self, index: i8, row: i32) -> *mut c_void {
-        ecs_assert!(
-            index < self.iter.field_count,
-            FlecsErrorCode::InvalidParameter,
-            index
-        );
-        if self.iter.row_fields & (1u32 << index) != 0 {
-            let field = self.field_at_untyped_internal(index, row);
-            return unsafe { field.array.add(0) };
-        }
-        let field = self.field_untyped_internal(index);
-        unsafe { &mut *(field.array.add(row as usize * field.size)) }
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field_untyped(&self, index: i8) -> Option<FieldUntyped> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), true, false>(index);
+        self.get_field_untyped_internal(index)
     }
 
-    /// Get field data for the specified index.
-    /// This function may be used to access shared fields when row is set to 0.
+    /// Get mutable access to untyped field data.
     ///
     /// # Arguments
     ///
-    /// * `index` - The field index.
-    /// * `row` - The row index.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of component to get the field data for
+    /// * `field_handle` - The field handle.
     ///
     /// # Returns
     ///
-    /// An option containing a mutable reference to the field data
-    #[allow(clippy::mut_from_ref)]
-    pub fn field_at_mut<T>(&self, index: i8, row: usize) -> Option<&mut T::UnderlyingType>
-    where
-        T: ComponentId,
-    {
-        ecs_assert!(
-            index < self.iter.field_count,
-            FlecsErrorCode::InvalidParameter,
-            index
-        );
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
-            FlecsErrorCode::AccessViolation,
-            "field is readonly, check if your specified query terms are set &mut"
-        );
-        if self.iter.row_fields & (1u32 << index) != 0 {
-            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                Some(&mut field.slice_components[0])
-            } else {
-                None
-            }
-        } else if let Some(field) = self.field_checked::<T>(index) {
-            Some(&mut field.slice_components[row])
-        } else {
-            None
-        }
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn field_untyped_mut(&self, index: i8) -> FieldUntypedMut {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), false, false>(index);
+        self.field_untyped_internal_mut(index)
     }
 
-    /// Get field data for the specified index.
+    /// Get mutable access to untyped field data.
+    ///
+    /// # Arguments
+    ///
+    /// * `field_handle` - The field handle.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    #[inline(always)]
+    pub fn get_field_untyped_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<(), false, false>(index);
+        self.get_field_untyped_internal_mut(index)
+    }
+
+    /// Get the typed field data for the specified row
     /// This function may be used to access shared fields when row is set to 0.
     ///
     /// # Arguments
     ///
-    /// * `index` - The field index.
+    /// * `index` - The index.
     /// * `row` - The row index.
-    ///
-    /// # Type parameters
-    ///
-    /// * `T` - The type of component to get the field data for
     ///
     /// # Returns
     ///
     /// An option containing a reference to the field data
-    pub fn field_at<T>(&self, index: i8, row: usize) -> Option<&T::UnderlyingType>
-    where
-        T: ComponentId,
-    {
-        ecs_assert!(
-            index < self.iter.field_count,
-            FlecsErrorCode::InvalidParameter,
-            index
-        );
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_readonly(self.iter, index) },
-            FlecsErrorCode::AccessViolation,
-        );
+    pub fn field_at<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
+    ) -> &'a T::UnderlyingType {
+        self.field_safety_checks::<T, true, true>(index);
+        let row = row.into();
         if self.iter.row_fields & (1u32 << index) != 0 {
-            if let Some(field) = self.get_field_at_internal::<T>(index, row as i32) {
-                Some(&field.slice_components[0])
-            } else {
-                None
+            let field = self.field_at_internal::<T>(index, row);
+            if field.is_null() {
+                panic!("Tried to access field at index {index} for row {row}, but field is null.");
             }
-        } else if let Some(field) = self.field_checked::<T>(index) {
-            Some(&field.slice_components[row])
+            unsafe { &*field }
         } else {
-            None
+            let field = self.field_internal::<T::UnderlyingType>(index);
+            unsafe { field.slice_components.get_unchecked(row) }
+        }
+    }
+
+    /// Get the typed field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index.
+    /// * `row` - The row index.
+    ///
+    /// # Returns
+    ///
+    /// An option containing a reference to the field data
+    pub fn get_field_at<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
+    ) -> Option<&'a T::UnderlyingType> {
+        self.field_safety_checks::<T, true, true>(index);
+        let row = row.into();
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_internal::<T>(index, row);
+            if field.is_null() {
+                None
+            } else {
+                Some(unsafe { &*field })
+            }
+        } else {
+            let field = self.get_field_internal::<T::UnderlyingType>(index)?;
+            Some(unsafe { field.slice_components.get_unchecked(row) })
+        }
+    }
+
+    /// Get the mutable typed field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    #[allow(clippy::mut_from_ref)]
+    pub fn field_at_mut<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
+    ) -> &'a mut T::UnderlyingType {
+        self.field_safety_checks::<T, false, true>(index);
+        let row = row.into();
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_internal_mut::<T>(index, row);
+            if field.is_null() {
+                panic!("Tried to access field at index {index} for row {row}, but field is null.");
+            }
+            unsafe { &mut *field }
+        } else {
+            let field = self.field_internal_mut::<T::UnderlyingType>(index);
+            unsafe { &mut *field.slice_components.get_unchecked_mut(row) }
+        }
+    }
+
+    /// Get the mutable typed field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_field_at_mut<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: impl Into<usize>,
+    ) -> Option<&'a mut T::UnderlyingType> {
+        self.field_safety_checks::<T, false, true>(index);
+        let row = row.into();
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            let field = self.field_at_internal_mut::<T>(index, row);
+            if field.is_null() {
+                None
+            } else {
+                Some(unsafe { &mut *field })
+            }
+        } else {
+            let field = self.get_field_internal_mut::<T::UnderlyingType>(index)?;
+            Some(unsafe { &mut *field.slice_components.get_unchecked_mut(row) })
+        }
+    }
+
+    /// Get the untyped field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    pub fn field_at_untyped(&self, index: i8, row: usize) -> *const c_void {
+        self.field_safety_checks::<(), true, false>(index);
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            self.field_at_untyped_internal(index, row)
+        } else {
+            let field = self.get_field_untyped_internal(index);
+            if field.is_none() {
+                return core::ptr::null();
+            }
+            let field = field.unwrap();
+            unsafe { field.array.add(row * field.size) }
+        }
+    }
+
+    /// Get the mutable untyped field data for the specified row
+    /// This function may be used to access shared fields when row is set to 0.
+    pub fn field_at_untyped_mut(&self, index: i8, row: usize) -> *mut c_void {
+        self.field_safety_checks::<(), false, false>(index);
+        if self.iter.row_fields & (1u32 << index) != 0 {
+            self.field_at_untyped_internal_mut(index, row)
+        } else {
+            let field = self.get_field_untyped_internal_mut(index);
+            if field.is_none() {
+                return core::ptr::null_mut();
+            }
+            let field = field.unwrap();
+            unsafe { field.array.add(row * field.size) }
         }
     }
 
@@ -656,10 +746,7 @@ where
     /// The entity ids.
     pub fn entities(&self) -> Field<Entity> {
         let slice = unsafe {
-            core::slice::from_raw_parts_mut(
-                self.iter.entities as *mut Entity,
-                self.iter.count as usize,
-            )
+            core::slice::from_raw_parts_mut(self.iter.entities as *mut Entity, self.count)
         };
         Field::<Entity>::new(slice, false)
     }
@@ -722,13 +809,39 @@ where
     ///
     /// grouped queries only
     // TODO: this should be &self after I upgrade flecs
-    pub fn group_id(&mut self) -> sys::ecs_id_t {
+    pub fn group_id(&self) -> sys::ecs_id_t {
         unsafe { sys::ecs_iter_get_group(self.iter) }
     }
 
-    unsafe fn field_internal<T>(&self, index: i8) -> Option<Field<T>> {
-        let is_shared = !self.is_self(index);
+    #[inline(always)]
+    pub(crate) fn get_field_internal<T>(&self, index: i8) -> Option<Field<'a, T>> {
+        let (array, is_shared, count) = self.field_internal_parts::<T>(index);
+        if count == 0 {
+            return None;
+        }
 
+        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
+        // SAFETY: we already validated index/type before calling
+        Some(Field::new(slice, is_shared))
+    }
+
+    #[inline(always)]
+    pub(crate) fn field_internal<T>(&self, index: i8) -> Field<'a, T> {
+        let (array, is_shared, count) = self.field_internal_parts::<T>(index);
+        if count == 0 {
+            panic!(
+                "field_internal: no values at index {index} — ensure the field exists and has entries"
+            );
+        }
+
+        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
+        // SAFETY: we already validated index/type before calling
+        Field::new(slice, is_shared)
+    }
+
+    #[inline(always)]
+    fn field_internal_parts<T>(&self, index: i8) -> (*mut T, bool, usize) {
+        let is_shared = !self.is_self(index);
         // If a shared column is retrieved with 'column', there will only be a
         // single value. Ensure that the application does not accidentally read
         // out of bounds.
@@ -739,18 +852,14 @@ where
             // entities.
             self.count()
         };
-        let array =
-            unsafe { sys::ecs_field_w_size(self.iter, core::mem::size_of::<T>(), index) as *mut T };
 
-        if array.is_null() {
-            return None;
-        }
-        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
+        let array = flecs_field::<T>(self.iter, index);
 
-        Some(Field::<T>::new(slice, is_shared))
+        (array, is_shared, count)
     }
 
-    fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
+    #[inline(always)]
+    fn field_untyped_internal_parts(&self, index: i8) -> (*mut c_void, bool, usize, usize) {
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
         let is_shared = !self.is_self(index);
 
@@ -764,56 +873,121 @@ where
             self.count()
         };
 
-        FieldUntyped::new(
-            unsafe { sys::ecs_field_w_size(self.iter, 0, index) },
-            size,
-            count,
-            is_shared,
-        )
+        let array = flecs_field_w_size(self.iter, size, index);
+
+        (array, is_shared, count, size)
     }
 
-    fn field_at_untyped_internal(&self, index: i8, row: i32) -> FieldUntyped {
-        let size = unsafe { sys::ecs_field_size(self.iter, index) };
-
-        FieldUntyped::new(
-            unsafe { sys::ecs_field_at_w_size(self.iter, 0, index, row) },
-            size,
-            1,
-            false,
-        )
-    }
-
-    // get field, check if correct type is used
-    fn get_field_at_internal<T>(&self, index: i8, row: i32) -> Option<Field<T::UnderlyingType>>
-    where
-        T: ComponentId,
-    {
-        let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
-
-        if index > self.iter.field_count {
+    /// the “Option” version
+    #[inline(always)]
+    pub(crate) fn get_field_internal_mut<T>(&self, index: i8) -> Option<FieldMut<'a, T>> {
+        let (array, is_shared, count) = self.field_internal_parts::<T>(index);
+        if count == 0 {
             return None;
         }
 
-        let term_id = unsafe { sys::ecs_field_id(self.iter, index) };
-        let is_pair = unsafe { sys::ecs_id_is_pair(term_id) };
-        let is_id_correct = id == term_id;
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
+        Some(FieldMut::new(slice, is_shared))
+    }
 
-        if is_id_correct || is_pair {
-            let array = unsafe {
-                sys::ecs_field_at_w_size(
-                    self.iter,
-                    core::mem::size_of::<T::UnderlyingType>(),
-                    index,
-                    row,
-                ) as *mut T::UnderlyingType
-            };
-
-            let slice = unsafe { core::slice::from_raw_parts_mut(array, self.count()) };
-
-            return Some(Field::<T::UnderlyingType>::new(slice, false));
+    /// the “panic” version
+    #[inline(always)]
+    pub(crate) fn field_internal_mut<T>(&self, index: i8) -> FieldMut<'a, T> {
+        let (array, is_shared, count) = self.field_internal_parts::<T>(index);
+        if count == 0 {
+            panic!(
+                "field_internal: no values at index {index} — ensure the field exists and has entries"
+            );
         }
 
-        None
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
+        FieldMut::new(slice, is_shared)
+    }
+
+    pub(crate) fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            panic!(
+                "field_untyped_internal: no values at index {index} — ensure the field exists and has entries"
+            );
+        }
+
+        FieldUntyped::new(array, size, count, is_shared)
+    }
+
+    pub(crate) fn get_field_untyped_internal(&self, index: i8) -> Option<FieldUntyped> {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            return None;
+        }
+
+        Some(FieldUntyped::new(array, size, count, is_shared))
+    }
+
+    pub(crate) fn field_untyped_internal_mut(&self, index: i8) -> FieldUntypedMut {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            panic!(
+                "field_untyped_internal_mut: no values at index {index} — ensure the field exists and has entries"
+            );
+        }
+
+        FieldUntypedMut::new(array, size, count, is_shared)
+    }
+
+    pub(crate) fn get_field_untyped_internal_mut(&self, index: i8) -> Option<FieldUntypedMut> {
+        let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
+
+        if count == 0 {
+            return None;
+        }
+
+        Some(FieldUntypedMut::new(array, size, count, is_shared))
+    }
+
+    pub(crate) fn field_at_untyped_internal(&self, index: i8, row: usize) -> *const c_void {
+        let size = unsafe { sys::ecs_field_size(self.iter, index) };
+        unsafe { sys::ecs_field_at_w_size(self.iter, size, index, row as i32) }
+    }
+
+    pub(crate) fn field_at_untyped_internal_mut(&self, index: i8, row: usize) -> *mut c_void {
+        let size = unsafe { sys::ecs_field_size(self.iter, index) };
+        unsafe { sys::ecs_field_at_w_size(self.iter, size, index, row as i32) }
+    }
+
+    pub(crate) fn field_at_internal<T>(&'a self, index: i8, row: usize) -> *const T::UnderlyingType
+    where
+        T: ComponentId,
+    {
+        unsafe {
+            sys::ecs_field_at_w_size(
+                self.iter,
+                const { core::mem::size_of::<T::UnderlyingType>() },
+                index,
+                row as i32,
+            ) as *mut T::UnderlyingType
+        }
+    }
+
+    pub(crate) fn field_at_internal_mut<T>(
+        &'a self,
+        index: i8,
+        row: usize,
+    ) -> *mut T::UnderlyingType
+    where
+        T: ComponentId,
+    {
+        unsafe {
+            sys::ecs_field_at_w_size(
+                self.iter,
+                const { core::mem::size_of::<T::UnderlyingType>() },
+                index,
+                row as i32,
+            ) as *mut T::UnderlyingType
+        }
     }
 
     /// Forward to each.
@@ -854,27 +1028,32 @@ where
     /// let mut count = 0;
     /// let mut tgt_count = 0;
     ///
-    /// q.each_iter(|mut it, row, _| {
-    ///     let e = it.entity(row).unwrap();
-    ///     assert_eq!(e, alice);
+    /// q.run(|mut it| {
     ///
-    ///     it.targets(0, |tgt| {
-    ///         if tgt_count == 0 {
-    ///             assert_eq!(tgt, pizza);
-    ///         }
-    ///         if tgt_count == 1 {
-    ///             assert_eq!(tgt, salad);
-    ///         }
-    ///         tgt_count += 1;
-    ///     });
-    ///
-    ///     count += 1;
+    ///     while it.next() {
+    ///        for row in it.iter() {
+    ///             let e = it.entity(row).unwrap();
+    ///             assert_eq!(e, alice);
+    ///     
+    ///             it.targets(0, |tgt| {
+    ///                 if tgt_count == 0 {
+    ///                     assert_eq!(tgt, pizza);
+    ///                 }
+    ///                 if tgt_count == 1 {
+    ///                     assert_eq!(tgt, salad);
+    ///                 }
+    ///                 tgt_count += 1;
+    ///             });
+    ///     
+    ///             count += 1;
+    ///        }
+    ///     }
     /// });
     ///
     /// assert_eq!(count, 1);
     /// assert_eq!(tgt_count, 2);
     /// ```
-    pub fn targets(&mut self, index: i8, mut func: impl FnMut(EntityView)) {
+    pub fn targets(&self, index: i8, mut func: impl FnMut(EntityView)) {
         ecs_assert!(!self.iter.table.is_null(), FlecsErrorCode::InvalidOperation);
         ecs_assert!(
             index < self.iter.field_count,
@@ -910,34 +1089,38 @@ where
     P: ComponentId,
 {
     /// Progress iterator.
-    ///
-    /// # Safety
-    ///
-    /// This operation is valid inside a `run()` callback. An example of an
-    /// invalid context is inside an `each()` callback.
+    /// this operation is not available on functions where the iterator is not from `.run()`
     #[allow(clippy::should_implement_trait)]
+    #[inline(always)]
     pub fn next(&mut self) -> bool {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
             unsafe {
                 sys::ecs_table_unlock(self.iter.world, self.iter.table);
             };
         }
 
-        let result = {
-            if let Some(next) = self.iter.next {
-                //sets flag invalid
-                unsafe { next(self.iter) }
-            } else {
+        let result = match self.iter.next {
+            Some(next) => {
+                let r = unsafe { next(self.iter) };
+                self.count = self.iter.count as usize;
+                r
+            }
+            None => {
+                // no more items → clear valid and return
                 self.iter.flags &= !sys::EcsIterIsValid;
                 return false;
             }
         };
 
         self.iter.flags |= sys::EcsIterIsValid;
-        if result && !self.iter.table.is_null() {
-            unsafe {
-                sys::ecs_table_lock(self.iter.world, self.iter.table);
-            };
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        {
+            if result && !self.iter.table.is_null() {
+                unsafe {
+                    sys::ecs_table_lock(self.iter.world, self.iter.table);
+                };
+            }
         }
 
         result
@@ -969,6 +1152,7 @@ where
     /// });
     /// ```
     pub fn fini(self) {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
             unsafe {
                 sys::ecs_table_unlock(self.iter.world, self.iter.table);
@@ -981,25 +1165,18 @@ where
     }
 }
 
-/// Iterator to iterate over rows in a table
-pub struct TableRowIter<'a, const IS_RUN: bool, P> {
-    iter: &'a TableIter<'a, IS_RUN, P>,
-    index: usize,
+#[inline(always)]
+pub(crate) fn table_lock(_world_ptr: *mut sys::ecs_world_t, _table_ptr: *mut sys::ecs_table_t) {
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    unsafe {
+        sys::ecs_table_lock(_world_ptr, _table_ptr);
+    }
 }
 
-impl<const IS_RUN: bool, P> Iterator for TableRowIter<'_, IS_RUN, P>
-where
-    P: ComponentId,
-{
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.iter.count() {
-            let result = self.index;
-            self.index += 1;
-            Some(result)
-        } else {
-            None
-        }
+#[inline(always)]
+pub(crate) fn table_unlock(_world_ptr: *mut sys::ecs_world_t, _table_ptr: *mut sys::ecs_table_t) {
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    unsafe {
+        sys::ecs_table_unlock(_world_ptr, _table_ptr);
     }
 }

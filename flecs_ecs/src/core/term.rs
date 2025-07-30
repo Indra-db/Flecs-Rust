@@ -771,7 +771,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * [`OperKind`]
     #[inline(always)]
     fn optional(&mut self) -> &mut Self {
-        if self.current_term_index() < self.count_generic_terms() {
+        if dbg!(self.current_term_index()) < dbg!(self.count_generic_terms()) {
             panic!(
                 "This function should only be used on terms that are not part of the generic type signature. Use Option<> instead."
             )
