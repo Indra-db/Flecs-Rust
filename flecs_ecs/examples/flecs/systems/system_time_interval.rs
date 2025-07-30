@@ -19,11 +19,16 @@ fn main() {
 
     world.set(Timeout { value: 3.5 });
 
-    world
-        .system::<&mut Timeout>()
-        .each_iter(|it, _index, timeout| {
-            timeout.value -= it.delta_time();
-        });
+    world.system::<&mut Timeout>().run(|mut it| {
+        let delta_time = it.delta_time();
+        while it.next() {
+            let mut timeout = it.field_mut::<Timeout>(0);
+            for i in it.iter() {
+                let t = &mut timeout[i];
+                t.value -= delta_time;
+            }
+        }
+    });
 
     world.system_named::<()>("Tick").set_interval(1.0).run(tick);
 

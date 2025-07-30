@@ -62,69 +62,6 @@ where
         self.build()
     }
 
-    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
-    /// which contains more information about the object being iterated.
-    /// The `usize` argument contains the index of the entity being iterated,
-    /// which can be used to obtain entity-specific data from the `TableIter` object.
-    ///
-    /// # Example
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Position {
-    ///     x: i32,
-    ///     y: i32,
-    /// }
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Likes;
-    ///
-    /// let world = World::new();
-    ///
-    /// let eva = world.entity_named("eva");
-    ///
-    /// world
-    ///     .entity_named("adam")
-    ///     .set(Position { x: 10, y: 20 })
-    ///     .add((Likes::id(), eva));
-    ///
-    /// world
-    ///     .system::<&Position>()
-    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
-    ///     .each_iter(|it, index, p| {
-    ///         let e = it.entity(index).unwrap();
-    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
-    ///     })
-    ///     .run();
-    ///
-    /// // Output:
-    /// //  "adam": Position2 { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
-    /// ```
-    fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
-    where
-        Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>) + 'static,
-    {
-        const {
-            assert!(
-                !T::CONTAINS_ANY_TAG_TERM,
-                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-            );
-        }
-
-        let each_iter_func = Box::new(func);
-        let each_iter_static_ref = Box::leak(each_iter_func);
-
-        self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
-
-        self.set_desc_callback(Some(
-            Self::execute_each_iter::<Func> as unsafe extern "C" fn(_),
-        ));
-
-        self.build()
-    }
-
     /// Run iterator. This operation expects manual iteration over the tables with `iter.next()` and `iter.iter()`.
     ///
     /// The "run" iterator accepts a function that is invoked for each matching
@@ -176,7 +113,7 @@ where
     ///     println!("start operations");
     ///     while it.next() {
     ///         *count_tables_ref.borrow_mut() += 1;
-    ///         let pos = it.field::<Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
+    ///         let pos = it.field::<Position>(1); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
     ///             let entity = it.entity(i).unwrap();

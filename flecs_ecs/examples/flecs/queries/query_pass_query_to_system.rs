@@ -36,8 +36,8 @@ fn main() {
         let world = it.world();
         query.run(|mut it| {
             while it.next() {
-                let pos = &it.field::<Position>(0).unwrap()[0]; //singleton
-                let vel = it.field::<Velocity>(1).unwrap();
+                let pos = &it.field::<Position>(0)[0]; //singleton
+                let vel = it.field::<Velocity>(1);
                 for i in it.iter() {
                     println!("{:?}, {:?}", pos, vel[i]);
                 }

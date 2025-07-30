@@ -5,7 +5,7 @@ mod flags;
 mod iter;
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
-pub use field::{Field, FieldUntyped, ecs_field, ecs_field_w_size};
+pub use field::{Field, FieldIndex, FieldUntyped, ecs_field, ecs_field_w_size};
 pub use flags::TableFlags;
 pub use iter::TableIter;
 pub(crate) use iter::{table_lock, table_unlock};
@@ -261,6 +261,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// # Returns
     ///
     /// Some(Pointer) to the column, or `None` if not found
+    //TODO this should return a field IMO
     fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
         self.get_mut_untyped(T::entity_id(self.world()))
             .map(|ptr| unsafe {

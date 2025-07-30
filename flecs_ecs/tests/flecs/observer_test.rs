@@ -134,14 +134,18 @@ fn observer_10_terms() {
         .with(TagH::id())
         .with(TagI::id())
         .with(TagJ::id())
-        .each_iter(move |it, _i, _| {
+        .run(move |mut it| {
             let world = it.world();
-            assert_eq!(it.count(), 1);
-            assert!(it.entity(0).unwrap() == e_id);
-            assert_eq!(it.field_count(), 10);
-            world.get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+            while it.next() {
+                for i in it.iter() {
+                    assert_eq!(it.count(), 1);
+                    assert!(it.entity_id(i) == e_id);
+                    assert_eq!(it.field_count(), 10);
+                    world.get::<&mut Count>(|count| {
+                        count.0 += 1;
+                    });
+                }
+            }
         });
 
     e.add(TagA::id())
@@ -187,14 +191,18 @@ fn observer_16_terms() {
         .with(TagN::id())
         .with(TagO::id())
         .with(TagP::id())
-        .each_iter(move |it, _i, _| {
+        .run(move |mut it| {
             let world = it.world();
-            assert_eq!(it.count(), 1);
-            assert!(it.entity(0).unwrap() == e_id);
-            assert_eq!(it.field_count(), 16);
-            world.get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+            while it.next() {
+                for i in it.iter() {
+                    assert_eq!(it.count(), 1);
+                    assert!(it.entity_id(i) == e_id);
+                    assert_eq!(it.field_count(), 16);
+                    world.get::<&mut Count>(|count| {
+                        count.0 += 1;
+                    });
+                }
+            }
         });
 
     e.add(TagA::id())
@@ -241,7 +249,7 @@ fn observer_2_entities_iter() {
         .run(move |mut it| {
             let world = it.world();
             while it.next() {
-                let p = it.field::<Position>(0).unwrap();
+                let p = it.field::<Position>(0);
 
                 for i in it.iter() {
                     world.get::<&mut Count>(|count| {
@@ -303,6 +311,7 @@ fn observer_2_entities_table_column() {
                 let p = table_range.get_mut::<Position>().unwrap();
 
                 for i in it.iter() {
+                    let i: usize = i.into();
                     world.get::<&mut Count>(|count| {
                         count.0 += 1;
                     });
@@ -739,9 +748,9 @@ fn observer_get_query() {
     let q = o.query();
     q.run(|mut it| {
         while it.next() {
-            let pos = it.field::<Position>(0).unwrap();
+            let pos = it.field::<Position>(0);
             for i in it.iter() {
-                assert_eq!(i as i32, pos[i].x);
+                assert_eq!(<FieldIndex as Into<usize>>::into(i) as i32, pos[i].x);
                 world.get::<&mut Count>(|count| {
                     count.0 += 1;
                 });
@@ -851,13 +860,18 @@ fn observer_on_add_singleton() {
         .observer::<flecs::OnSet, &Position>()
         .term_at(0)
         .singleton()
-        .each_iter(|it, _i, pos| {
-            assert_eq!(pos.x, 10);
-            assert_eq!(pos.y, 20);
-            it.world().get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                assert_eq!(pos[0].x, 10);
+                assert_eq!(pos[0].y, 20);
+                world.get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
+            }
         });
+
     world.set(Position { x: 10, y: 20 });
 
     world.get::<&mut Count>(|count| {
@@ -878,7 +892,7 @@ fn observer_on_add_pair_singleton() {
         .run(|mut it| {
             let world = it.world();
             while it.next() {
-                let pos = it.field::<Position>(0).unwrap();
+                let pos = it.field::<Position>(0);
                 assert_eq!(pos[0].x, 10);
                 assert_eq!(pos[0].y, 20);
                 world.get::<&mut Count>(|count| {
@@ -903,12 +917,16 @@ fn observer_on_add_pair_wildcard_singleton() {
         .observer::<flecs::OnSet, &(Position, flecs::Wildcard)>()
         .term_at(0)
         .singleton()
-        .each_iter(|it, _i, pos| {
-            assert_eq!(pos.x, 10);
-            assert_eq!(pos.y, 20);
-            it.world().get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                assert_eq!(pos[0].x, 10);
+                assert_eq!(pos[0].y, 20);
+                world.get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
+            }
         });
 
     world.set_first::<Position>(tgt_1, Position { x: 10, y: 20 });
@@ -934,11 +952,15 @@ fn observer_on_add_with_pair_singleton() {
         .observer::<flecs::OnSet, ()>()
         .with((Position::id(), tgt))
         .singleton()
-        .each_iter(|it, _, _| {
-            it.world().get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+        .run(|mut it| {
+            let world = it.world();
+            while it.next() {
+                world.get::<&mut Count>(|count| {
+                    count.0 += 1;
+                });
+            }
         });
+
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
     world.get::<&mut Count>(|count| {
         assert_eq!(count, 1);

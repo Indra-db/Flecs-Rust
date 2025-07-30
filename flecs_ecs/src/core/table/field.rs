@@ -12,10 +12,17 @@ use core::ops::IndexMut;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FieldIndex(pub(crate) usize);
 
-impl Into<usize> for FieldIndex {
+impl From<usize> for FieldIndex {
     #[inline(always)]
-    fn into(self) -> usize {
-        self.0
+    fn from(value: usize) -> Self {
+        Self(value)
+    }
+}
+
+impl From<FieldIndex> for usize {
+    #[inline(always)]
+    fn from(value: FieldIndex) -> Self {
+        value.0
     }
 }
 
@@ -65,7 +72,6 @@ impl<'a, T> Index<usize> for Field<'a, T> {
 
     #[inline(always)]
     fn index(&self, idx: usize) -> &Self::Output {
-        // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
             !(self.is_shared && idx > 0),
             FlecsErrorCode::InvalidParameter,
@@ -114,7 +120,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
     fn index(&self, idx: FieldIndex) -> &T {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx.0 == 0,
+            !(self.is_shared && idx.0 > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
@@ -127,7 +133,7 @@ impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
     fn index_mut(&mut self, idx: FieldIndex) -> &mut T {
         // Safety: This index can only be obtained from `it.iter`
         ecs_assert!(
-            self.is_shared && idx.0 == 0,
+            !(self.is_shared && idx.0 > 0),
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
@@ -279,7 +285,7 @@ impl FieldUntypedMut {
 
 // no impl Index/IndexMut for FieldUntyped because it's untyped and it does not support returning ptrs well
 
-/// copy of `ecs_field_w_size` from flecs_sys. Rewriting in rust for inlining.
+/// copy of `ecs_field_w_size` from `flecs_sys`. Rewriting in rust for inlining.
 /// Gets the component data from the iterator.
 /// Retrieves a pointer to the data array for a specified query field.
 ///
@@ -406,7 +412,7 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     {
         ecs_assert!(
-            (unsafe { sys::ecs_id_get_flags(it.world, sys::ecs_field_id(it, index)) }
+            (unsafe { sys::ecs_id_get_flags(it.real_world, sys::ecs_field_id(it, index)) }
                 & sys::EcsIdIsSparse)
                 == 0,
             FlecsErrorCode::InvalidOperation,

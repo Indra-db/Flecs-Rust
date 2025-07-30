@@ -208,10 +208,10 @@ fn bench_query_iter_components_4_term_run(
             for _ in 0..iters {
                 f.run(|mut it| {
                     while it.next() {
-                        let c1 = it.field::<C1>(0).unwrap();
-                        let c2 = it.field::<C2>(1).unwrap();
-                        let c3 = it.field::<C3>(2).unwrap();
-                        let c4 = it.field::<C4>(3).unwrap();
+                        let c1 = it.field::<C1>(0);
+                        let c2 = it.field::<C2>(1);
+                        let c3 = it.field::<C3>(2);
+                        let c4 = it.field::<C4>(3);
                         for i in it.iter() {
                             result +=
                                 *it.entity_id(i) as u32 + c1[i].0 + c2[i].0 + c3[i].0 + c4[i].0;
@@ -277,48 +277,48 @@ pub fn query_iter(criterion: &mut Criterion) {
     #[rustfmt::skip]
     let benchmarks = [
 
-    //    // Uncached query iter
-    //    BenchmarkConfig { name: "uncach_6_tags_1_term", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_6_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_10_tags_1_term", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_10_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_10_tags_8_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_6_comps_1_term", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "uncach_6_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "uncach_10_comps_1_term", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "uncach_10_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "uncach_10_comps_8_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: true },
+    // Uncached query iter
+       BenchmarkConfig { name: "uncach_6_tags_1_term", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_6_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_10_tags_1_term", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_10_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_10_tags_8_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_6_comps_1_term", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_6_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_10_comps_1_term", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_10_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_10_comps_8_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: true },
 
-    //    BenchmarkConfig { name: "uncach_10_sparse_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_10_sparse_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "uncach_10_nofrag_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: false },
-    //    BenchmarkConfig { name: "uncach_10_nofrag_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_10_sparse_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_10_sparse_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "uncach_10_nofrag_tags_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: false },
+       BenchmarkConfig { name: "uncach_10_nofrag_comps_4_terms", cache_kind: QueryCacheKind::Default, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: true },
 
-    //    // Cached query iter
-    //    BenchmarkConfig { name: "cached_6_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_6_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_8_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_8_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_10_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_10_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_10_tags_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_16_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_16_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
-    //    BenchmarkConfig { name: "cached_16_tags_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
+    // Cached query iter
+       BenchmarkConfig { name: "cached_6_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_6_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_8_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_8_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_10_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_10_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_10_tags_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_16_tags_1_term", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 1, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_16_tags_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 4, sparse: false, fragment: true, component_benchmark: false },
+       BenchmarkConfig { name: "cached_16_tags_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 8, sparse: false, fragment: true, component_benchmark: false },
 
-    //    BenchmarkConfig { name: "cached_6_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_6_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_8_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_8_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_10_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_10_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_10_comps_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_16_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_16_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_6_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_6_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 6, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_8_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_8_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 8, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_10_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_10_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_10_comps_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 8, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_16_comps_1_term", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 1, sparse: false, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_16_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 4, sparse: false, fragment: true, component_benchmark: true },
        BenchmarkConfig { name: "cached_16_comps_8_terms", cache_kind: QueryCacheKind::Auto, id_count: 16, term_count: 8, sparse: false, fragment: true, component_benchmark: true },
 
-    //    BenchmarkConfig { name: "cached_10_sparse_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: true },
-    //    BenchmarkConfig { name: "cached_10_nofrag_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: true },
+       BenchmarkConfig { name: "cached_10_sparse_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: true, fragment: true, component_benchmark: true },
+       BenchmarkConfig { name: "cached_10_nofrag_comps_4_terms", cache_kind: QueryCacheKind::Auto, id_count: 10, term_count: 4, sparse: true, fragment: false, component_benchmark: true },
     ];
 
     for benchmark in benchmarks {

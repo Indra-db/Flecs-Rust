@@ -44,14 +44,14 @@ fn ecs_default_criterion() -> Criterion {
 }
 
 criterion_main!(
-    // g_add_remove,
-    // g_commands,
-    // g_create_delete_entities,
-    // g_get,
-    // g_parenting,
-    // g_has,
-    // g_set,
-    // g_observers,
+    g_add_remove,
+    g_commands,
+    g_create_delete_entities,
+    g_get,
+    g_parenting,
+    g_has,
+    g_set,
+    g_observers,
     g_query
 );
 

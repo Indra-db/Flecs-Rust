@@ -121,40 +121,6 @@ where
         }
     }
 
-    fn each_iter(&self, mut func: impl FnMut(Iter<false, P>, usize, T::TupleType<'_>))
-    where
-        P: ComponentId,
-    {
-        unsafe {
-            let world = self.world_ptr_mut();
-            let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterIsInstanced;
-            iter.flags |= sys::EcsIterCppEach;
-
-            while self.iter_next(&mut iter) {
-                let mut components_data = T::create_ptrs(&iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                sys::ecs_table_lock(world, iter.table);
-
-                for i in 0..iter_count {
-                    let iter_t = Iter::new(&mut iter);
-                    let tuple = components_data.get_tuple(i);
-
-                    func(iter_t, i, tuple);
-                }
-
-                sys::ecs_table_unlock(world, iter.table);
-            }
-        }
-    }
-
     /// find iterator to find an entity
     /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
     /// if it is, it returns that entity.

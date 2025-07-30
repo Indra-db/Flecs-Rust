@@ -53,48 +53,10 @@ where
     ///
     /// * [`World::each()`]
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
-        const {
-            assert!(
-                !T::CONTAINS_ANY_TAG_TERM,
-                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-            );
-        }
-
-        let world = self.world();
-        let world_ptr = world.ptr_mut();
         let mut iter = self.retrieve_iter();
 
         while self.iter_next(&mut iter) {
-            iter.flags |= sys::EcsIterCppEach;
-            let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-            let iter_count = {
-                if iter.count == 0 && iter.table.is_null() {
-                    1_usize
-                } else {
-                    iter.count as usize
-                }
-            };
-
-            table_lock(world_ptr, iter.table);
-
-            if !is_any_array.a_ref && !is_any_array.a_row {
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple(i);
-                    func(tuple);
-                }
-            } else if is_any_array.a_row {
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple_with_row(&iter, i);
-                    func(tuple);
-                }
-            } else {
-                for i in 0..iter_count {
-                    let tuple = components_data.get_tuple_with_ref(i);
-                    func(tuple);
-                }
-            }
-
-            table_unlock(world_ptr, iter.table);
+            internal_each_iter_next::<T, false>(&mut iter, &mut func);
         }
     }
 
@@ -107,160 +69,11 @@ where
     ///
     /// * [`World::each_entity()`]
     fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
-        const {
-            assert!(
-                !T::CONTAINS_ANY_TAG_TERM,
-                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-            );
-        }
+        let world = self.world();
+        let mut iter = self.retrieve_iter();
 
-        unsafe {
-            let world = self.world();
-            let world_ptr = world.ptr_mut();
-            let mut iter = self.retrieve_iter();
-
-            while self.iter_next(&mut iter) {
-                iter.flags |= sys::EcsIterCppEach;
-
-                ecs_assert!(
-                    !iter.entities.is_null(),
-                    FlecsErrorCode::InvalidParameter,
-                    "Query does not return entities ($this variable is not populated).\nQuery: {:?}",
-                    world.entity_from_id((*iter.query).entity)
-                );
-
-                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-                table_lock(world_ptr, iter.table);
-
-                // TODO random thought, I think I can determine the elements is a ref or not before the for loop and then pass two arrays with the indices of the ref and non ref elements
-                // I will come back to this in the future, my thoughts are somewhere else right now. If my assumption is correct, this will get rid of the branch in the for loop
-                // and potentially allow for more conditions for vectorization to happen. This could potentially offer a (small) performance boost since the branch predictor avoids probably
-                // most of the cost since the branch is almost always the same.
-                // update: I believe it's not possible due to not knowing the order of the components in the tuple. I will leave this here for now, maybe I will come back to it in the future.
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-                        let tuple = components_data.get_tuple(i);
-                        func(entity, tuple);
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-                        let tuple = components_data.get_tuple_with_row(&iter, i);
-                        func(entity, tuple);
-                    }
-                } else {
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        func(entity, tuple);
-                    }
-                }
-
-                table_unlock(world_ptr, iter.table);
-            }
-        }
-    }
-
-    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
-    /// which contains more information about the object being iterated.
-    /// The `usize` argument contains the index of the entity being iterated,
-    /// which can be used to obtain entity-specific data from the `TableIter` object.
-    ///
-    /// # Example
-    /// ```
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Position {
-    ///     x: i32,
-    ///     y: i32,
-    /// }
-    ///
-    /// #[derive(Component, Debug)]
-    /// struct Likes;
-    ///
-    /// let world = World::new();
-    ///
-    /// let eva = world.entity_named("eva");
-    ///
-    /// world
-    ///     .entity_named("adam")
-    ///     .set(Position { x: 10, y: 20 })
-    ///     .add((Likes::id(), eva));
-    ///
-    /// world
-    ///     .query::<&Position>()
-    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
-    ///     .build()
-    ///     .each_iter(|it, index, p| {
-    ///         let e = it.entity(index).unwrap();
-    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
-    ///     });
-    ///
-    /// // Output:
-    /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
-    /// ```
-    fn each_iter(&self, mut func: impl FnMut(TableIter<false, P>, usize, T::TupleType<'_>))
-    where
-        P: ComponentId,
-    {
-        const {
-            assert!(
-                !T::CONTAINS_ANY_TAG_TERM,
-                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-            );
-        }
-
-        unsafe {
-            let world_ptr = self.world_ptr_mut();
-            let mut iter = self.retrieve_iter();
-            iter.flags |= sys::EcsIterCppEach;
-
-            while self.iter_next(&mut iter) {
-                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                table_lock(world_ptr, iter.table);
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple(i);
-                        let iter_t = TableIter::new(&mut iter);
-                        func(iter_t, i, tuple);
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_row(&iter, i);
-                        let iter_t = TableIter::new(&mut iter);
-                        func(iter_t, i, tuple);
-                    }
-                } else {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        let iter_t = TableIter::new(&mut iter);
-                        func(iter_t, i, tuple);
-                    }
-                }
-
-                table_unlock(world_ptr, iter.table);
-            }
+        while self.iter_next(&mut iter) {
+            internal_each_entity_iter_next::<T, false>(&mut iter, &world, &mut func);
         }
     }
 
@@ -504,7 +317,7 @@ where
     ///     println!("start operations");
     ///     while it.next() {
     ///         count_tables += 1;
-    ///         let pos = it.field::<Position>(1).unwrap(); //at index 1 in (&Tag, &Position)
+    ///         let pos = it.field::<Position>(1); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             count_entities += 1;
     ///             let entity = it.entity(i).unwrap();
@@ -529,9 +342,7 @@ where
         P: ComponentId,
     {
         let mut iter = self.retrieve_iter();
-        iter.flags &= !sys::EcsIterIsValid;
-        let iter_t = unsafe { TableIter::new(&mut iter) };
-        func(iter_t);
+        internal_run::<P>(&mut iter, &mut func);
     }
 
     /// Run iterator with each forwarding.
@@ -614,9 +425,7 @@ where
             __internal_query_execute_each::<T, FuncEach>
                 as unsafe extern "C" fn(*mut sys::ecs_iter_t),
         );
-        let mut iter_t = unsafe { TableIter::new(&mut iter) };
-        iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
-        func(iter_t);
+        internal_run::<P>(&mut iter, &mut func);
         iter.callback = None;
         iter.callback_ctx = core::ptr::null_mut();
     }
@@ -1300,29 +1109,8 @@ where
     Func: FnMut(T::TupleType<'_>),
 {
     let iter = unsafe { &mut *iter };
-    unsafe {
-        let func = &mut *(iter.callback_ctx as *mut Func);
-
-        let (is_any_array, mut components_data) = T::create_ptrs(iter);
-        let iter_count = iter.count as usize;
-
-        if !is_any_array.a_row && !is_any_array.a_ref {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple(i);
-                func(tuple);
-            }
-        } else if is_any_array.a_row {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple_with_row(iter, i);
-                func(tuple);
-            }
-        } else if is_any_array.a_ref {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple_with_ref(i);
-                func(tuple);
-            }
-        }
-    }
+    let func = unsafe { &mut *(iter.callback_ctx as *mut Func) };
+    internal_each_iter_next::<T, true>(iter, func);
 }
 
 unsafe extern "C" fn __internal_query_execute_each_entity<T, Func>(iter: *mut sys::ecs_iter_t)
@@ -1333,26 +1121,7 @@ where
     unsafe {
         let iter = &mut *iter;
         let func = &mut *(iter.callback_ctx as *mut Func);
-
-        let (is_any_array, mut components_data) = T::create_ptrs(iter);
-        let iter_count = iter.count as usize;
         let world = WorldRef::from_ptr(iter.world);
-
-        if !is_any_array.a_row && !is_any_array.a_ref {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple(i);
-                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
-            }
-        } else if is_any_array.a_row {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple_with_row(iter, i);
-                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
-            }
-        } else if is_any_array.a_ref {
-            for i in 0..iter_count {
-                let tuple = components_data.get_tuple_with_ref(i);
-                func(EntityView::new_from(world, *iter.entities.add(i)), tuple);
-            }
-        }
+        internal_each_entity_iter_next::<T, true>(iter, &world, func);
     }
 }

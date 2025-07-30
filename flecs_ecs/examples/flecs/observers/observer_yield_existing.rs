@@ -23,15 +23,21 @@ fn main() {
     world
         .observer::<flecs::OnSet, &Position>()
         .yield_existing()
-        .each_iter(|it, index, pos| {
-            println!(
-                " - {}: {}: {}: {{ {}, {} }}",
-                it.event().name(),
-                it.event_id().to_str(),
-                it.entity(index).unwrap(),
-                pos.x,
-                pos.y
-            );
+        .run(|mut it| {
+            // The observer will iterate over all entities that match the query.
+            while it.next() {
+                let pos = it.field::<Position>(0);
+                for i in it.iter() {
+                    println!(
+                        " - {}: {}: {}: {{ {}, {} }}",
+                        it.event().name(),
+                        it.event_id().to_str(),
+                        it.entity(i).unwrap().name(),
+                        pos[i].x,
+                        pos[i].y
+                    );
+                }
+            }
         });
 
     // Output:

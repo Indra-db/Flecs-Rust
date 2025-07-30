@@ -301,14 +301,20 @@ where
 
     let component_desc = create_component_desc(entity, type_info);
 
-    let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    {
+        let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
+        ecs_assert!(
+            entity != 0 && unsafe { sys::ecs_exists(world, entity) },
+            FlecsErrorCode::InternalError
+        );
 
-    ecs_assert!(
-        entity != 0 && unsafe { sys::ecs_exists(world, entity) },
-        FlecsErrorCode::InternalError
-    );
-
-    entity
+        entity
+    }
+    #[cfg(not(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts")))]
+    {
+        unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) }
+    }
 }
 
 /// registers the component with the world.
@@ -348,12 +354,18 @@ pub(crate) fn external_register_componment_data_explicit<T>(
 
     let component_desc = create_component_desc(entity, type_info);
 
-    let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    {
+        let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
+        ecs_assert!(
+            entity != 0 && unsafe { sys::ecs_exists(world, entity) },
+            FlecsErrorCode::InternalError
+        );
 
-    ecs_assert!(
-        entity != 0 && unsafe { sys::ecs_exists(world, entity) },
-        FlecsErrorCode::InternalError
-    );
-
-    entity
+        entity
+    }
+    #[cfg(not(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts")))]
+    {
+        unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) }
+    }
 }

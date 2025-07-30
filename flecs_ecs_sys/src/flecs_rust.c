@@ -4,12 +4,13 @@
 
 void* ecs_rust_mut_get_id(
     const ecs_world_t *world,
-    ecs_entity_t entity,
+    ecs_entity_t _entity,
     const ecs_record_t* r,
     ecs_id_t id)
 {
+    (void)_entity;
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(ecs_is_alive(world, entity), ECS_INVALID_PARAMETER, NULL);
+    ecs_check(ecs_is_alive(world, _entity), ECS_INVALID_PARAMETER, NULL);
     ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
 
     world = ecs_get_world(world);
