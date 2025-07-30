@@ -33,13 +33,13 @@ impl From<FieldIndex> for usize {
 /// * `T`: The type of the column.
 #[derive(Debug)]
 pub struct Field<'a, T> {
-    pub(crate) slice_components: *const T,
+    pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
     pub(crate) _marker: core::marker::PhantomData<&'a T>,
 }
 
 impl<'a, T> Field<'a, T> {
-    pub(crate) fn new(slice_components: *const T, is_shared: bool) -> Self {
+    pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
@@ -63,7 +63,7 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { &*self.slice_components.add(idx.0) }
+        unsafe { &*self.slice_components.get_unchecked(idx.0) }
     }
 }
 
@@ -77,7 +77,7 @@ impl<'a, T> Index<usize> for Field<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.add(idx).as_ref().unwrap() }
+        &self.slice_components[idx]
     }
 }
 
@@ -87,7 +87,7 @@ impl<'a, T> Index<usize> for Field<'a, T> {
 ///
 /// * `T`: The type of the column.
 pub struct FieldMut<'a, T> {
-    pub(crate) slice_components: *mut T,
+    pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
     pub(crate) _marker: core::marker::PhantomData<&'a mut T>,
 }
@@ -99,7 +99,7 @@ impl<'a, T> FieldMut<'a, T> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    pub fn new(slice_components: *mut T, is_shared: bool) -> Self {
+    pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
@@ -124,7 +124,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { &*self.slice_components.add(idx.0) }
+        unsafe { &*self.slice_components.get_unchecked(idx.0) }
     }
 }
 
@@ -137,7 +137,7 @@ impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { &mut *self.slice_components.add(idx.0) }
+        unsafe { &mut *self.slice_components.get_unchecked_mut(idx.0) }
     }
 }
 
@@ -152,7 +152,7 @@ impl<'a, T> Index<usize> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.add(idx).as_ref().unwrap() }
+        &self.slice_components[idx]
     }
 }
 
@@ -165,7 +165,7 @@ impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { self.slice_components.add(idx).as_mut().unwrap() }
+        &mut self.slice_components[idx]
     }
 }
 

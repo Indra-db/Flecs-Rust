@@ -565,7 +565,7 @@ where
             unsafe { &*field }
         } else {
             let field = self.field_internal::<T::UnderlyingType>(index);
-            unsafe { &*field.slice_components.add(row) }
+            unsafe { &*field.slice_components.get_unchecked(row) }
         }
     }
 
@@ -596,7 +596,7 @@ where
             }
         } else {
             let field = self.get_field_internal::<T::UnderlyingType>(index)?;
-            Some(unsafe { &*field.slice_components.add(row) })
+            Some(unsafe { &*field.slice_components.get_unchecked(row) })
         }
     }
 
@@ -618,7 +618,7 @@ where
             unsafe { &mut *field }
         } else {
             let field = self.field_internal_mut::<T::UnderlyingType>(index);
-            unsafe { &mut *field.slice_components.add(row) }
+            unsafe { &mut *field.slice_components.get_unchecked_mut(row) }
         }
     }
 
@@ -641,7 +641,7 @@ where
             }
         } else {
             let field = self.get_field_internal_mut::<T::UnderlyingType>(index)?;
-            Some(unsafe { &mut *field.slice_components.add(row) })
+            Some(unsafe { &mut *field.slice_components.get_unchecked_mut(row) })
         }
     }
 
@@ -745,10 +745,10 @@ where
     ///
     /// The entity ids.
     pub fn entities(&self) -> Field<Entity> {
-        // let slice = unsafe {
-        //     core::slice::from_raw_parts_mut(, self.count)
-        // };
-        Field::<Entity>::new(self.iter.entities as *mut Entity, false)
+        let slice = unsafe {
+            core::slice::from_raw_parts_mut(self.iter.entities as *mut Entity, self.count)
+        };
+        Field::<Entity>::new(slice, false)
     }
 
     /// Check if the current table has changed since the last iteration.
@@ -819,8 +819,10 @@ where
         if count == 0 {
             return None;
         }
+
+        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
         // SAFETY: we already validated index/type before calling
-        Some(Field::new(array, is_shared))
+        Some(Field::new(slice, is_shared))
     }
 
     #[inline(always)]
@@ -832,8 +834,10 @@ where
                 index
             );
         }
+
+        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
         // SAFETY: we already validated index/type before calling
-        Field::new(array, is_shared)
+        Field::new(slice, is_shared)
     }
 
     #[inline(always)]
@@ -882,8 +886,9 @@ where
         if count == 0 {
             return None;
         }
-        // SAFETY: we already validated index/type before calling
-        Some(FieldMut::new(array, is_shared))
+
+        let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
+        Some(FieldMut::new(slice, is_shared))
     }
 
     /// the “panic” version
@@ -896,8 +901,9 @@ where
                 index
             );
         }
-        // SAFETY: same as above
-        FieldMut::new(array, is_shared)
+
+        let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
+        FieldMut::new(slice, is_shared)
     }
 
     pub(crate) fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
