@@ -853,7 +853,7 @@ where
             self.count()
         };
 
-        let array = ecs_field::<T>(self.iter, index);
+        let array = flecs_field::<T>(self.iter, index);
 
         (array, is_shared, count)
     }
@@ -873,7 +873,7 @@ where
             self.count()
         };
 
-        let array = ecs_field_w_size(self.iter, size, index);
+        let array = flecs_field_w_size(self.iter, size, index);
 
         (array, is_shared, count, size)
     }

@@ -395,12 +395,12 @@ where
         indexes: &mut [i8],
     ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
-            // Need to fetch the value with ecs_field_at()
+            // Need to fetch the value with flecs_field_at()
             is_ref[0] = true;
             is_row[0] = true;
             indexes[0] = 0;
         } else {
-            components[0] = ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
+            components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
         IsAnyArray {
@@ -415,7 +415,7 @@ where
         components: &mut [*mut u8],
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-        components[0] = ecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
+        components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
 
     #[inline(always)]
@@ -447,7 +447,7 @@ where
 
         if is_row_array_components[0] {
             let ptr_to_first_index_array = &mut array_components[0];
-            *ptr_to_first_index_array = unsafe { ecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
+            *ptr_to_first_index_array = unsafe { flecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
         }
 
         A::create_tuple_with_ref_data(
@@ -586,13 +586,13 @@ macro_rules! impl_iterable {
                 let mut any_row = false;
                 $(
                     if (it.row_fields & (1u32 << index)) != 0 {
-                        // Need to fetch the value with ecs_field_at()
+                        // Need to fetch the value with flecs_field_at()
                         is_ref[index ] =  true;
                         is_row[index ] = true;
                         indexes[index ] = index as i8;
                     } else {
                         components[index ] =
-                            ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
+                            flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                         is_ref[index ] = unsafe { *it.sources.add(index ) != 0 };
                     }
                     any_ref |= is_ref[index ];
@@ -615,7 +615,7 @@ macro_rules! impl_iterable {
                 $(
                     ecs_assert!(unsafe { *it.sources.add(index ) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index] =
-                        ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
+                        flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                     index += 1;
                 )*
 
@@ -662,7 +662,7 @@ macro_rules! impl_iterable {
                     if is_row {
                         let ptr_to_first_index_array = unsafe { &mut *array_components.get_unchecked_mut(column) };
                         let index_array_component = unsafe { *indexes_array_components.get_unchecked(column) };
-                        *ptr_to_first_index_array = unsafe { ecs_field_at::<$t::OnlyPairType>(iter, index_array_component, index_row_entity as i32) } as *mut $t::OnlyPairType as *mut u8;
+                        *ptr_to_first_index_array = unsafe { flecs_field_at::<$t::OnlyPairType>(iter, index_array_component, index_row_entity as i32) } as *mut $t::OnlyPairType as *mut u8;
                     }
                     let data_ptr = unsafe { *array_components.get_unchecked(column) };
                     let is_ref = unsafe { *is_ref_array_components.get_unchecked(column) };

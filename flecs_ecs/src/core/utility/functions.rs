@@ -378,7 +378,7 @@ pub fn get_generation(entity: impl Into<Entity>) -> u32 {
 }
 
 #[inline(always)]
-pub(crate) unsafe fn ecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
+pub(crate) unsafe fn flecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, row: i32) -> *mut T {
     unsafe {
         let size = core::mem::size_of::<T>();
         sys::ecs_field_at_w_size(it, size, index, row) as *mut T

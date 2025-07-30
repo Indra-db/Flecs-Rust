@@ -12,6 +12,20 @@ use core::ops::IndexMut;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FieldIndex(pub(crate) usize);
 
+impl FieldIndex {
+    /// Constructs a new `FieldIndex` from a `usize` value.
+    ///
+    /// This is useful when you need a more efficient indexing mechanism for fields than usize as it avoids unnecessary bounds checks.
+    ///
+    /// # Safety
+    /// The caller must ensure that `value` is a valid field index.
+    /// This function does *not* perform any bounds or validity checks.
+    #[inline(always)]
+    pub unsafe fn new(value: usize) -> Self {
+        Self(value)
+    }
+}
+
 impl From<usize> for FieldIndex {
     #[inline(always)]
     fn from(value: usize) -> Self {
@@ -57,7 +71,7 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
 
     #[inline(always)]
     fn index(&self, idx: FieldIndex) -> &'a Self::Output {
-        // Safety: This index can only be obtained from `it.iter`
+        // Safety: This index can only be obtained from `it.iter` or unsafe FieldIndex::new
         ecs_assert!(
             !(self.is_shared && idx.0 > 0),
             FlecsErrorCode::InvalidParameter,
@@ -118,7 +132,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
 
     #[inline(always)]
     fn index(&self, idx: FieldIndex) -> &T {
-        // Safety: This index can only be obtained from `it.iter`
+        // Safety: This index can only be obtained from `it.iter` or unsafe FieldIndex::new
         ecs_assert!(
             !(self.is_shared && idx.0 > 0),
             FlecsErrorCode::InvalidParameter,
@@ -325,7 +339,7 @@ impl FieldUntypedMut {
 /// let velocity_ptr: *mut Velocity = ecs_field(it, 1);
 /// ```
 #[inline(always)]
-pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
+pub(crate) fn flecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let _size = const { core::mem::size_of::<T>() };
 
     const {
@@ -394,7 +408,6 @@ pub fn ecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     p as *mut T
 }
 
-#[cold]
 #[inline(never)]
 fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let index_usize = index as usize;
@@ -472,9 +485,7 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     unsafe { sys::ecs_table_get_column(table, column_index as i32, row as i32) as *mut T }
 }
 
-#[inline(never)]
-#[unsafe(no_mangle)]
-pub fn ecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
+pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
     let index_usize = index as usize;
     //TODO should be soft asserts
     ecs_assert!(

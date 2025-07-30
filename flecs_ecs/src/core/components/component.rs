@@ -286,7 +286,7 @@ impl<'a, T> Component<'a, T> {
             let on_add = &mut *on_add;
             let world = WorldRef::from_ptr(iter.world);
             let entity = EntityView::new_from(world, *iter.entities);
-            let component: *mut T = ecs_field::<T>(iter, 0);
+            let component: *mut T = flecs_field::<T>(iter, 0);
             on_add(entity, &mut *component);
         }
     }
@@ -303,7 +303,7 @@ impl<'a, T> Component<'a, T> {
         let on_set = unsafe { &mut *on_set };
         let world = unsafe { WorldRef::from_ptr(iter.world) };
         let entity = EntityView::new_from(world, unsafe { *iter.entities });
-        let component: *mut T = ecs_field::<T>(iter, 0);
+        let component: *mut T = flecs_field::<T>(iter, 0);
         on_set(entity, unsafe { &mut *component });
     }
 
@@ -320,7 +320,7 @@ impl<'a, T> Component<'a, T> {
             let on_remove = &mut *on_remove;
             let world = WorldRef::from_ptr(iter.world);
             let entity = EntityView::new_from(world, *iter.entities);
-            let component: *mut T = ecs_field::<T>(iter, 0);
+            let component: *mut T = flecs_field::<T>(iter, 0);
             on_remove(entity, &mut *component);
         }
     }

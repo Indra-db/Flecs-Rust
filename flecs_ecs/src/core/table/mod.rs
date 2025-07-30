@@ -5,7 +5,9 @@ mod flags;
 mod iter;
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
-pub use field::{Field, FieldIndex, FieldUntyped, ecs_field, ecs_field_w_size};
+pub use field::{Field, FieldIndex, FieldUntyped};
+pub(crate) use field::{flecs_field, flecs_field_w_size};
+
 pub use flags::TableFlags;
 pub use iter::TableIter;
 pub(crate) use iter::{table_lock, table_unlock};
