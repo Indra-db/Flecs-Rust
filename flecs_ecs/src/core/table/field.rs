@@ -63,7 +63,7 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { &*self.slice_components.get_unchecked(idx.0) }
+        unsafe { self.slice_components.get_unchecked(idx.0) }
     }
 }
 
@@ -124,7 +124,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
             FlecsErrorCode::InvalidParameter,
             "Field is shared, cannot index above index 0"
         );
-        unsafe { &*self.slice_components.get_unchecked(idx.0) }
+        unsafe { self.slice_components.get_unchecked(idx.0) }
     }
 }
 

@@ -78,10 +78,7 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     }
 
     #[inline(always)]
-    fn get_tuple(
-        &mut self,
-        index: usize,
-    ) -> T::TupleType<'_> {
+    fn get_tuple(&mut self, index: usize) -> T::TupleType<'_> {
         T::create_tuple(&self.array_components[..], index)
     }
 
@@ -100,10 +97,7 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
         )
     }
 
-    fn get_tuple_with_ref(
-        &mut self,
-        index: usize,
-    ) -> T::TupleType<'_> {
+    fn get_tuple_with_ref(&mut self, index: usize) -> T::TupleType<'_> {
         T::create_tuple_with_ref(
             &self.array_components[..],
             &self.is_ref_array_components[..],
@@ -353,7 +347,7 @@ pub trait QueryTuple: Sized {
 impl<A> QueryTuple for A
 where
     A: IterableTypeOperation,
-{ 
+{
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
@@ -596,7 +590,7 @@ macro_rules! impl_iterable {
                         is_ref[index ] =  true;
                         is_row[index ] = true;
                         indexes[index ] = index as i8;
-                    } else { 
+                    } else {
                         components[index ] =
                             ecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                         is_ref[index ] = unsafe { *it.sources.add(index ) != 0 };

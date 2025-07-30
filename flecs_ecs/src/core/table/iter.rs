@@ -565,7 +565,7 @@ where
             unsafe { &*field }
         } else {
             let field = self.field_internal::<T::UnderlyingType>(index);
-            unsafe { &*field.slice_components.get_unchecked(row) }
+            unsafe { field.slice_components.get_unchecked(row) }
         }
     }
 
@@ -596,7 +596,7 @@ where
             }
         } else {
             let field = self.get_field_internal::<T::UnderlyingType>(index)?;
-            Some(unsafe { &*field.slice_components.get_unchecked(row) })
+            Some(unsafe { field.slice_components.get_unchecked(row) })
         }
     }
 
@@ -830,8 +830,7 @@ where
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
         if count == 0 {
             panic!(
-                "field_internal: no values at index {} — ensure the field exists and has entries",
-                index
+                "field_internal: no values at index {index} — ensure the field exists and has entries"
             );
         }
 
@@ -887,7 +886,7 @@ where
             return None;
         }
 
-        let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
         Some(FieldMut::new(slice, is_shared))
     }
 
@@ -897,12 +896,11 @@ where
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
         if count == 0 {
             panic!(
-                "field_internal: no values at index {} — ensure the field exists and has entries",
-                index
+                "field_internal: no values at index {index} — ensure the field exists and has entries"
             );
         }
 
-        let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
         FieldMut::new(slice, is_shared)
     }
 
@@ -911,8 +909,7 @@ where
 
         if count == 0 {
             panic!(
-                "field_untyped_internal: no values at index {} — ensure the field exists and has entries",
-                index
+                "field_untyped_internal: no values at index {index} — ensure the field exists and has entries"
             );
         }
 
@@ -934,8 +931,7 @@ where
 
         if count == 0 {
             panic!(
-                "field_untyped_internal_mut: no values at index {} — ensure the field exists and has entries",
-                index
+                "field_untyped_internal_mut: no values at index {index} — ensure the field exists and has entries"
             );
         }
 
