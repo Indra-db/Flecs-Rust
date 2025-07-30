@@ -107,67 +107,6 @@ pub mod private {
             }
         }
 
-        /// Callback of the `each_iter` functionality
-        ///
-        /// # Arguments
-        ///
-        /// * `iter` - The iterator which gets passed in from `C`
-        ///
-        /// # See also
-        unsafe extern "C" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
-        where
-            Func: FnMut(TableIter<false, P>, usize, T::TupleType<'_>),
-        {
-            unsafe {
-                const {
-                    assert!(
-                        !T::CONTAINS_ANY_TAG_TERM,
-                        "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
-                    );
-                }
-
-                let iter = &mut *iter;
-                iter.flags |= sys::EcsIterCppEach;
-
-                let each_iter = &mut *(iter.callback_ctx as *mut Func);
-                let (is_any_array, mut components_data) = T::create_ptrs(iter);
-                let iter_count = {
-                    if iter.count == 0 && iter.table.is_null() {
-                        1_usize
-                    } else {
-                        iter.count as usize
-                    }
-                };
-
-                sys::ecs_table_lock(iter.world, iter.table);
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    // If query has no This terms, count can be 0. Since each does not
-                    // have an entity parameter, just pass through components
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple(i);
-                        //TODO we should move this out the loop
-                        let iter_t = TableIter::new(iter);
-                        each_iter(iter_t, i, tuple);
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_row(iter, i);
-                        let iter_t = TableIter::new(iter);
-                        each_iter(iter_t, i, tuple);
-                    }
-                } else {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        let iter_t = TableIter::new(iter);
-                        each_iter(iter_t, i, tuple);
-                    }
-                }
-
-                sys::ecs_table_unlock(iter.world, iter.table);
-            }
-        }
-
         /// Callback of the `iter_only` functionality
         ///
         /// # Arguments
