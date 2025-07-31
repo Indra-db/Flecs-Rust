@@ -631,14 +631,23 @@ where
     fn plan(&self) -> String {
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_plan(query as *const _) };
-        let rust_string =
-            String::from(unsafe { core::ffi::CStr::from_ptr(result).to_str().unwrap() });
+
+        if result.is_null() {
+            return String::new();
+        }
+
+        // Safe now: non-null and assumed NUL-terminated by the C API.
+        let plan = unsafe { core::ffi::CStr::from_ptr(result) }
+            .to_string_lossy() // avoid panic on invalid UTF-8
+            .into_owned();
+
         unsafe {
             if let Some(free_func) = sys::ecs_os_api.free_ {
-                free_func(result as *mut _);
+                free_func(result as *mut core::ffi::c_void);
             }
         }
-        rust_string
+
+        plan
     }
 
     fn iterable(&self) -> QueryIter<P, T> {
