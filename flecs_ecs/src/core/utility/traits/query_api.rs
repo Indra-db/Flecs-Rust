@@ -97,6 +97,7 @@ where
                 let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
@@ -125,6 +126,7 @@ where
                     }
                 }
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_unlock(world_ptr, iter.table);
             }
             entity
@@ -154,6 +156,7 @@ where
                 let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
@@ -187,6 +190,7 @@ where
                     }
                 }
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_unlock(world_ptr, iter.table);
             }
             entity_result
@@ -225,6 +229,7 @@ where
                     }
                 };
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_lock(world_ptr, iter.table);
 
                 if !is_any_array.a_ref && !is_any_array.a_row {
@@ -262,6 +267,7 @@ where
                     }
                 }
 
+                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_unlock(world_ptr, iter.table);
             }
             entity_result
