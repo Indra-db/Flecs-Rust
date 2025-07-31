@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "*.rs": "rust",
-        "string": "c"
+        "string": "c",
+        "__locale": "c",
+        "locale": "c"
     }
     // "rust-analyzer.linkedProjects": [
     //     "./flecs_ecs/Cargo.toml"

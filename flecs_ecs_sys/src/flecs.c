@@ -497,6 +497,11 @@ struct ecs_component_record_t {
      * it is not 0, an application attempted to delete an id that was still
      * queried for. */
     int32_t keep_alive;
+
+#ifdef FLECS_SAFETY_LOCKS
+    /* lock for when sparse components are read or written to */
+    int32_t sparse_lock;
+#endif
 };
 
 /* Bootstrap cached id records */
@@ -850,7 +855,9 @@ struct ecs_table_t {
                                       *  - 0..count(T):        type index -> column
                                       *  - count(T)..count(C): column -> type index
                                       */
-
+#ifdef FLECS_SAFETY_LOCKS
+    int32_t *column_lock;            /* Lock columns for writing and reading */
+#endif
     ecs_table__t *_;                 /* Infrequently accessed table metadata */
 };
 
@@ -994,6 +1001,13 @@ uint64_t flecs_table_bloom_filter_add(
 bool flecs_table_bloom_filter_test(
     const ecs_table_t *table,
     uint64_t filter);
+
+#ifdef FLECS_SAFETY_LOCKS
+void flecs_tables_resize_column_locks(
+    ecs_world_t *world,
+    int32_t previous_stage_count,
+    int32_t new_stage_count);
+#endif
 
 #endif
 
@@ -18226,6 +18240,10 @@ void ecs_set_stage_count(
     /* World must have at least one default stage */
     ecs_assert(stage_count >= 1 || (world->flags & EcsWorldFini), 
         ECS_INTERNAL_ERROR, NULL);
+
+#ifdef FLECS_SAFETY_LOCKS
+    flecs_tables_resize_column_locks(world,world->stage_count,stage_count);
+#endif
 
     const ecs_entity_t *lookup_path = NULL;
     if (world->stage_count >= 1) {
@@ -38851,12 +38869,193 @@ void flecs_table_init_columns(
 #endif
 }
 
+#ifdef FLECS_SAFETY_LOCKS
+
+/* init column locks */
+void flecs_table_init_column_locks(
+    ecs_world_t *world,
+    ecs_table_t *table,
+    int32_t stage_count)
+{
+    flecs_poly_assert(world, ecs_world_t);
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    if (!table->column_lock) {
+        int32_t column_count = table->column_count;
+        table->column_lock = flecs_alloc_n(&world->allocator,
+              int32_t, column_count * stage_count);
+        ecs_assert(
+            (column_count != 0 && table->column_lock != NULL) ||
+            (column_count == 0 && table->column_lock == NULL)
+            , ECS_INTERNAL_ERROR, NULL);
+        for (int i = 0; i < column_count * stage_count; i ++) {
+            table->column_lock[i] = 0;
+        }
+    }
+}
+
+void flecs_table_resize_column_locks(
+    ecs_world_t *world,
+    ecs_table_t *table,
+    int32_t previous_stage_count,
+    int32_t new_stage_count)
+{
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    if (table->column_lock) {
+        int32_t column_count = table->column_count;
+        table->column_lock = flecs_realloc_n(&world->allocator,
+            int32_t, column_count * new_stage_count, column_count * previous_stage_count, table->column_lock);
+        ecs_assert(
+            ((column_count != 0 && new_stage_count != 0) && table->column_lock != NULL) ||
+            ((column_count == 0 || new_stage_count == 0) && table->column_lock == NULL)
+            , ECS_INTERNAL_ERROR, NULL);
+        for (int i = 0; i < column_count * new_stage_count; i ++) {
+            table->column_lock[i] = 0;
+        }
+    } else if(new_stage_count > 0) {
+        flecs_table_init_column_locks(world, table,new_stage_count);
+    }
+}
+
+/* resize column locks for all tables. */
+void flecs_tables_resize_column_locks(
+    ecs_world_t *world,
+    int32_t previous_stage_count,
+    int32_t new_stage_count)
+{
+        flecs_poly_assert(world, ecs_world_t);
+        //no need to resize, or world not initialized yet, or being destroyed, or the same stage count
+        if (world->flags & (EcsWorldInit|EcsWorldFini) || previous_stage_count == new_stage_count) {
+            return;
+        }
+
+        ecs_query_t *q = ecs_query(world, {
+            .terms = {{ .id = EcsAny }}
+        });
+
+        ecs_iter_t it = ecs_query_iter(world, q);
+
+        while (ecs_query_next(&it)) {
+            ecs_table_t *table = it.table;
+            flecs_table_resize_column_locks(world, table, previous_stage_count, new_stage_count);
+        }
+        ecs_query_fini(q);
+}
+
+ecs_id_t ecs_id_from_component_record(
+    const ecs_component_record_t *idr)
+{
+    ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return idr->id;
+}
+
+int32_t flecs_sparse_id_record_lock_inc(
+    ecs_component_record_t *idr)
+{
+    ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ecs_os_ainc(&idr->sparse_lock);
+}
+
+int32_t flecs_sparse_id_record_lock_dec(
+    ecs_component_record_t *idr)
+{
+    ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ecs_os_adec(&idr->sparse_lock);
+}
+
+bool ecs_sparse_id_record_lock_read_begin(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_inc(idr) <= 0;
+}
+
+bool ecs_sparse_id_record_lock_read_end(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_dec(idr) < 0;
+}
+
+bool ecs_sparse_id_record_lock_write_begin(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_dec(idr) != -1;
+}
+
+bool ecs_sparse_id_record_lock_write_end(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_inc(idr) != 0;
+}
+
+int32_t flecs_table_column_lock_inc(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table->column_lock != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ecs_os_ainc(&table->column_lock[ column_index + (stage_id * table->column_count) ]);
+}
+
+int32_t flecs_table_column_lock_dec(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table->column_lock != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ecs_os_adec(&table->column_lock[ column_index + (stage_id * table->column_count) ]);
+}
+
+bool ecs_table_column_lock_read_begin(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    return flecs_table_column_lock_inc(table, column_index, stage_id) <= 0;
+}
+
+bool ecs_table_column_lock_read_end(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    return flecs_table_column_lock_dec(table, column_index, stage_id) < 0;
+}
+
+bool ecs_table_column_lock_write_begin(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    return flecs_table_column_lock_dec(table, column_index, stage_id) != -1;
+}
+
+bool ecs_table_column_lock_write_end(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    return flecs_table_column_lock_inc(table, column_index, stage_id) != 0;
+}
+
+#endif
+
 /* Initialize table storage */
 void flecs_table_init_data(
     ecs_world_t *world,
     ecs_table_t *table)
 {
     flecs_table_init_columns(world, table, table->column_count);
+
+#ifdef FLECS_SAFETY_LOCKS
+    flecs_table_init_column_locks(world, table,ecs_get_stage_count(world));
+#endif
 
     ecs_table__t *meta = table->_;
     int32_t i, bs_count = meta->bs_count;
@@ -39595,6 +39794,14 @@ void flecs_table_fini_data(
 
             flecs_wfree_n(world, ecs_column_t, table->column_count, columns);
             table->data.columns = NULL;
+
+        #ifdef FLECS_SAFETY_LOCKS
+            if(table->column_lock)
+            {
+                flecs_wfree_n(world, int32_t, ecs_get_stage_count(world) * column_count, table->column_lock);
+                table->column_lock = NULL;
+            }
+        #endif
         }
     }
 

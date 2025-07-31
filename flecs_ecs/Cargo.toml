@@ -30,13 +30,16 @@ seq-macro = "0.3.6"
 rand = "0.9.1"
 libc = "0.2.174"
 seq = "0.5.0"
+dashmap = "6.1.0"
+smallvec = "1.15.1"
+foldhash = "0.1.5"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
 test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
 
 [dev-dependencies]
-criterion = "0.6.0"
+criterion = "0.7.0"
 seq-macro = "0.3.6"
 rand = "0.9.1"
 ctor = "0.4.2"
@@ -55,6 +58,9 @@ getrandom = { version = "0.3.3", features = ["wasm_js"] }
 ######################
 # sys feature flags
 ######################
+
+# Read write locks for components
+flecs_safety_readwrite_locks = ["flecs_ecs_sys/flecs_safety_readwrite_locks"]
 
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
@@ -186,10 +192,11 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
+    "flecs_safety_readwrite_locks",
 ]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",

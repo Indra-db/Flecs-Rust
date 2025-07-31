@@ -9899,6 +9899,53 @@ void ecs_table_clear_entities(
     ecs_world_t* world,
     ecs_table_t* table);
 
+#ifdef FLECS_SAFETY_LOCKS
+FLECS_API
+ecs_id_t ecs_id_from_component_record(
+    const ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_read_begin(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_read_end(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_write_begin(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_write_end(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_table_column_lock_read_begin(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+FLECS_API
+bool ecs_table_column_lock_read_end(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+FLECS_API
+bool ecs_table_column_lock_write_begin(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+FLECS_API
+bool ecs_table_column_lock_write_end(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+#endif
+
 /** @} */
 
 /**

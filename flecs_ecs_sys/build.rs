@@ -30,7 +30,6 @@ fn generate_bindings() {
 
     let mut bindings = bindgen::Builder::default()
         .header("src/flecs_rust.h")
-        .header("src/flecs.h")
         // Only keep things that we've allowlisted rather than
         // recursively keeping nested uses around.
         .allowlist_file("src/flecs.h")
@@ -192,6 +191,11 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_JOURNAL");
     }
 
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    {
+        bindings = bindings.clang_arg("-DFLECS_SAFETY_LOCKS");
+    }
+
     let term_count_max = if cfg!(feature = "flecs_term_count_64") {
         64
     } else {
@@ -293,6 +297,9 @@ fn main() {
 
         #[cfg(feature = "flecs_journal")]
         build.define("FLECS_JOURNAL", None);
+
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        build.define("FLECS_SAFETY_LOCKS", None);
 
         #[cfg(any(
             all(not(debug_assertions), not(feature = "force_build_debug"),),
