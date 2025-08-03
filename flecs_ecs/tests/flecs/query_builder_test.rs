@@ -642,7 +642,7 @@ fn query_builder_expr_w_var() {
     r.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), e);
+                assert_eq!(it.get_entity(i).unwrap(), e);
                 assert_eq!(it.pair(0).unwrap().second_id(), obj);
                 count += 1;
             }
@@ -963,7 +963,7 @@ fn query_builder_singleton_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
+                assert_eq!(it.get_entity(i).unwrap(), it.get_entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1007,7 +1007,7 @@ fn query_builder_isa_superset_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
+                assert_eq!(it.get_entity(i).unwrap(), it.get_entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1064,7 +1064,7 @@ fn query_builder_isa_self_superset_term() {
             }
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
+                assert_eq!(it.get_entity(i).unwrap(), it.get_entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1105,7 +1105,7 @@ fn query_builder_childof_superset_term() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
+                assert_eq!(it.get_entity(i).unwrap(), it.get_entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1158,7 +1158,7 @@ fn query_builder_childof_self_superset_term() {
             }
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), it.entity(i).unwrap().id());
+                assert_eq!(it.get_entity(i).unwrap(), it.get_entity(i).unwrap().id());
                 count += 1;
             }
         }
@@ -1977,11 +1977,11 @@ fn query_builder_optional_tag_is_set() {
 
             count += it.count();
 
-            if it.entity(0usize).unwrap() == e_1 {
+            if it.get_entity(0usize).unwrap() == e_1 {
                 assert!(it.is_set(0));
                 assert!(it.is_set(1));
             } else {
-                assert_eq!(it.entity(0usize).unwrap(), e_2);
+                assert_eq!(it.get_entity(0usize).unwrap(), e_2);
                 assert!(it.is_set(0));
                 assert!(!it.is_set(1));
             }
@@ -2029,7 +2029,7 @@ fn query_builder_10_terms() {
     f.run(|mut it| {
         while it.next() {
             assert_eq!(it.field_count(), 10);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.count(), 1);
             count += 1;
         }
@@ -2092,7 +2092,7 @@ fn query_builder_16_terms() {
     f.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.field_count(), 16);
             count += 1;
         }
@@ -2153,11 +2153,11 @@ fn query_builder_group_by_raw() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0usize).unwrap() == e1);
+                assert!(it.get_entity(0usize).unwrap() == e1);
             } else if count == 1 {
-                assert!(it.entity(0usize).unwrap() == e2);
+                assert!(it.get_entity(0usize).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0usize).unwrap() == e3);
+                assert!(it.get_entity(0usize).unwrap() == e3);
             } else {
                 panic!();
             }
@@ -2171,11 +2171,11 @@ fn query_builder_group_by_raw() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0usize).unwrap() == e3);
+                assert!(it.get_entity(0usize).unwrap() == e3);
             } else if count == 1 {
-                assert!(it.entity(0usize).unwrap() == e2);
+                assert!(it.get_entity(0usize).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0usize).unwrap() == e1);
+                assert!(it.get_entity(0usize).unwrap() == e1);
             } else {
                 panic!();
             }
@@ -2216,11 +2216,11 @@ fn query_builder_group_by_template() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0usize).unwrap() == e1);
+                assert!(it.get_entity(0usize).unwrap() == e1);
             } else if count == 1 {
-                assert!(it.entity(0usize).unwrap() == e2);
+                assert!(it.get_entity(0usize).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0usize).unwrap() == e3);
+                assert!(it.get_entity(0usize).unwrap() == e3);
             } else {
                 panic!();
             }
@@ -2234,11 +2234,11 @@ fn query_builder_group_by_template() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.entity(0usize).unwrap() == e3);
+                assert!(it.get_entity(0usize).unwrap() == e3);
             } else if count == 1 {
-                assert!(it.entity(0usize).unwrap() == e2);
+                assert!(it.get_entity(0usize).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.entity(0usize).unwrap() == e1);
+                assert!(it.get_entity(0usize).unwrap() == e1);
             } else {
                 panic!();
             }
@@ -2295,7 +2295,7 @@ fn query_builder_group_by_iter_one() {
     q.iterable().set_group(tgt_b).run(|mut it| {
         while it.next() {
             for i in 0..it.count() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(it.group_id(), tgt_b.id());
 
                 if e == e2 {
@@ -2339,7 +2339,7 @@ fn query_builder_group_by_iter_one_template() {
     q.iterable().set_group(TagB::id()).run(|mut it| {
         while it.next() {
             for i in 0..it.count() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(it.group_id(), world.id_view_from(TagB::id()));
 
                 if e == e2 {
@@ -2394,7 +2394,7 @@ fn query_builder_group_by_iter_one_all_groups() {
     let func = |mut it: TableIter<true>| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 if it.group_id() == group_id.get() {
                     if e == e1 {
                         e1_found.set(true);
@@ -2467,7 +2467,7 @@ fn query_builder_group_by_default_func_w_id() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 if e == e1 {
                     assert_eq!(it.group_id(), tgt_c);
                     assert!(!e1_found);
@@ -2526,7 +2526,7 @@ fn query_builder_group_by_default_func_w_type() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 if e == e1 {
                     assert_eq!(it.group_id(), tgt_c);
                     assert!(!e1_found);
@@ -2619,7 +2619,7 @@ fn query_builder_group_by_callbacks() {
     q.run(|mut it| {
         while it.next() {
             for i in 0..it.count() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 if e == e1 {
                     assert_eq!(it.group_id(), tgt_c);
                     assert!(!e1_found);
@@ -2916,7 +2916,7 @@ fn query_builder_up_w_type() {
             assert_eq!(o.value, 10);
 
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), s[i].value);
+                assert_eq!(it.get_entity(i).unwrap(), s[i].value);
                 count += 1;
             }
         }
@@ -3066,7 +3066,7 @@ fn query_builder_iter_w_stage() {
     //    let mut count = 0;
     //     q.each(stage, [&](flecs::iter& it, size_t i, Position&) {
     //         assert_eq!(it.world(), stage);
-    //         assert_eq!(it.entity(i).unwrap(), e1);
+    //         assert_eq!(it.get_entity(i).unwrap(), e1);
     //         count += 1;
     //     });
 
@@ -3362,7 +3362,7 @@ fn query_builder_term_after_arg() {
     f.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                assert_eq!(it.entity(i).unwrap(), e_1);
+                assert_eq!(it.get_entity(i).unwrap(), e_1);
                 count += 1;
             }
         }
@@ -3484,7 +3484,7 @@ fn query_builder_2_terms_w_expr() {
     f.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                if it.entity(i).unwrap() == e1 {
+                if it.get_entity(i).unwrap() == e1 {
                     assert_eq!(it.id(0), a);
                     assert_eq!(it.id(1), b);
                     count += 1;
@@ -4983,7 +4983,7 @@ fn query_builder_var_first_w_prefixed_name() {
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), world.id_view_from(Foo::id()));
             count += 1;
         }
@@ -5010,7 +5010,7 @@ fn query_builder_var_second_w_prefixed_name() {
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }
@@ -5038,7 +5038,7 @@ fn query_builder_term_w_second_var_string() {
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }
@@ -5064,7 +5064,7 @@ fn query_builder_term_type_w_second_var_string() {
     r.run(|mut it| {
         while it.next() {
             assert_eq!(it.count(), 1);
-            assert_eq!(it.entity(0usize).unwrap(), e);
+            assert_eq!(it.get_entity(0usize).unwrap(), e);
             assert_eq!(it.get_var_by_name("Var"), t);
             count += 1;
         }

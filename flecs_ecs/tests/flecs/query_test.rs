@@ -79,7 +79,7 @@ fn query_run_sparse() {
             let v = it.field::<Velocity>(1);
 
             for i in it.iter() {
-                let p = it.field_at_mut::<Position>(0, i);
+                let mut p = it.field_at_mut::<Position>(0, i);
                 p.x += v[i].x;
                 p.y += v[i].y;
             }
@@ -179,7 +179,7 @@ fn query_iter_targets() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(e, alice);
 
                 it.targets(0, |tgt| {
@@ -225,7 +225,7 @@ fn query_iter_targets_second_field() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(e, alice);
 
                 it.targets(1, |tgt| {
@@ -265,7 +265,7 @@ fn query_iter_targets_field_out_of_range() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(e, alice);
 
                 // This should panic because the index 1 is out of range
@@ -295,7 +295,7 @@ fn query_iter_targets_field_not_a_pair() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(e, alice);
 
                 it.targets(1, |_| {});
@@ -322,7 +322,7 @@ fn query_iter_targets_field_not_set() {
     q.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 assert_eq!(e, alice);
 
                 it.targets(1, |_| {});

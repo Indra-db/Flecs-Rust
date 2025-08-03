@@ -43,7 +43,7 @@ fn main() {
             let world = it.world();
             while it.next() {
                 for i in it.iter() {
-                    let plate = it.entity(i).unwrap();
+                    let plate = it.get_entity(i).unwrap();
                     // Find an available waiter
                     if let Some(waiter) = q_waiter.try_first_entity() {
                         // An available waiter was found, assign a plate to it so

@@ -57,7 +57,7 @@ fn main() {
                 let r1 = it.field::<Radius>(1);
 
                 for i in it.iter() {
-                    let e1 = it.entity(i).unwrap();
+                    let e1 = it.get_entity(i).unwrap();
                     let p1 = &p1[i];
                     let r1 = &r1[i];
 

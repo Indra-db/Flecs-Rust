@@ -60,7 +60,7 @@ fn main() {
         while it.next() {
             for i in it.iter() {
                 let food = it.get_var(food_var.unwrap());
-                let entity = it.entity(i).unwrap();
+                let entity = it.get_entity(i).unwrap();
                 println!("{entity} eats {food}");
             }
         }

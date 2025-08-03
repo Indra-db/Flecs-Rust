@@ -32,7 +32,7 @@ fn main() {
                         " - {}: {}: {}: {{ {}, {} }}",
                         it.event().name(),
                         it.event_id().to_str(),
-                        it.entity(i).unwrap().name(),
+                        it.get_entity(i).unwrap().name(),
                         pos[i].x,
                         pos[i].y
                     );

@@ -8,9 +8,55 @@ use crate::sys;
 use flecs_ecs_derive::tuples;
 use sys::ecs_record_t;
 
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[derive(Debug, Copy, Clone)]
+#[doc(hidden)]
+pub enum ReadWriteId {
+    Read(u64),
+    Write(u64),
+}
+
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+impl Default for ReadWriteId {
+    #[inline]
+    fn default() -> Self {
+        ReadWriteId::Read(0)
+    }
+}
+
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+impl core::ops::Deref for ReadWriteId {
+    type Target = u64;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        match self {
+            ReadWriteId::Read(id) => id,
+            ReadWriteId::Write(id) => id,
+        }
+    }
+}
+
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+pub trait ColumnIndexArray {
+    fn init() -> Self;
+    fn column_indices_mut(&mut self) -> &mut [ComponentTypeRWLock];
+}
+#[cfg(feature = "flecs_safety_readwrite_locks")]
+impl<const LEN: usize> ColumnIndexArray for [ComponentTypeRWLock; LEN] {
+    fn init() -> Self {
+        [ComponentTypeRWLock::Dense((0, ReadWriteId::default())); LEN]
+    }
+    fn column_indices_mut(&mut self) -> &mut [ComponentTypeRWLock] {
+        self
+    }
+}
+
 pub struct ComponentsData<T: GetTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) read_write_ids: [ReadWriteId; LEN],
     _marker: PhantomData<T>,
 }
 
@@ -24,6 +70,9 @@ pub trait GetComponentPointers<T: GetTuple> {
     fn get_tuple<'a>(&self) -> T::TupleType<'a>;
 
     fn has_all_components(&self) -> bool;
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    fn read_write_ids(&self) -> &[ReadWriteId];
 }
 
 impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T, LEN> {
@@ -34,16 +83,23 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
     ) -> Self {
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
+        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        let mut read_write_ids = [ReadWriteId::Read(0); LEN];
+
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
             entity,
             record,
             &mut array_components[..],
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            &mut read_write_ids,
         );
 
         Self {
             array_components,
             has_all_components,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            read_write_ids,
             _marker: PhantomData::<T>,
         }
     }
@@ -54,6 +110,11 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
 
     fn has_all_components(&self) -> bool {
         self.has_all_components
+    }
+
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    fn read_write_ids(&self) -> &[ReadWriteId] {
+        &self.read_write_ids
     }
 }
 
@@ -147,6 +208,8 @@ where
 pub trait GetTuple: Sized {
     type Pointers: GetComponentPointers<Self>;
     type TupleType<'a>;
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    type ArrayColumnIndex: ColumnIndexArray;
     const ALL_IMMUTABLE: bool;
 
     fn create_ptrs<'a, const SHOULD_PANIC: bool>(
@@ -162,6 +225,7 @@ pub trait GetTuple: Sized {
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
+        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
     ) -> bool;
 
     fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a>;
@@ -178,23 +242,58 @@ where
 {
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'e> = A::ActualType<'e>;
+     #[cfg(feature = "flecs_safety_readwrite_locks")]
+    type ArrayColumnIndex = [ComponentTypeRWLock; 1];
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_readwrite_locks")] ids : &mut [ReadWriteId]
     ) -> bool {
         let world = world.world();
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
         let table = unsafe { (*record).table };
         let entity = *entity;
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
+
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+        { 
+            if A::IS_IMMUTABLE {
+                ids[0] = ReadWriteId::Read(id);
+            } else {
+                ids[0] = ReadWriteId::Write(id);
+            }
+        }
         
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
-            ecs_assert!(
-                unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
-                FlecsErrorCode::InvalidOperation,
-                "Pair is not a (data) component. Possible cause: PairIsTag trait"
+            assert!(
+                {
+                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                    let cast_id = world.component_id::<<A::OnlyType as ComponentOrPairId>::CastType>();
+                    //TODO: this seems bugged with (flecs::wildcard, bar) where it matches (foo,bar), but says bar is the typeid when it should be foo
+                    id != 0 && id == cast_id
+                },
+                "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
             );
+            assert!(
+                {
+                    let first = ecs_first(id,world); 
+                    first != flecs::Wildcard::ID && first != flecs::Any::ID
+                }, "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+            );
+
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            { 
+                let first_id = *ecs_first(id,world);
+                let second_id = *ecs_second(id,world);
+                if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                    let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                    if A::IS_IMMUTABLE {
+                        ids[0] = ReadWriteId::Read(ecs_pair(first_id, target_id));
+                    } else {
+                        ids[0] = ReadWriteId::Write(ecs_pair(first_id, target_id));
+                    }
+                }
+            }
         }
 
         let mut has_all_components = true;
@@ -333,11 +432,14 @@ macro_rules! impl_get_tuple {
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            type ArrayColumnIndex = [ComponentTypeRWLock; { tuple_count!($($t),*) }];
+
             const ALL_IMMUTABLE: bool = { $($t::IS_IMMUTABLE &&)* true };
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_readwrite_locks")] ids : &mut [ReadWriteId]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
@@ -350,12 +452,46 @@ macro_rules! impl_get_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
+                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    {
+                        if $t::IS_IMMUTABLE {
+                            ids[index] = ReadWriteId::Read(id);
+                        } else {
+                            ids[index] = ReadWriteId::Write(id);
+                        }
+                    }
+
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
-                        ecs_assert!(
-                            unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
-                            FlecsErrorCode::InvalidOperation,
+                        assert!(
+                            {
+                                let id = unsafe { sys::ecs_rust_get_typeid(world_ptr, id, (*record).cr) };
+                                let cast_id = world_ref.component_id::<<$t::OnlyType as ComponentOrPairId>::CastType>();
+                                id != 0 && id == cast_id
+                            },
                             "Pair is not a (data) component. Possible cause: PairIsTag trait"
                         );
+
+                        assert!(
+                            {
+                                let first = ecs_first(id,world_ref);
+                                first != flecs::Wildcard::ID && first != flecs::Any::ID
+                            },
+                            "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+                        );
+
+                        #[cfg(feature = "flecs_safety_readwrite_locks")]
+                        {
+                            let first_id = *ecs_first(id, world_ref);
+                            let second_id = *ecs_second(id,world_ref);
+                            if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                                let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                                if $t::IS_IMMUTABLE {
+                                    ids[index] = ReadWriteId::Read(ecs_pair(first_id, target_id));
+                                } else {
+                                    ids[index] = ReadWriteId::Write(ecs_pair(first_id, target_id));
+                                }
+                            }
+                        }
                     }
 
                     let component_ptr = if $t::OnlyType::IS_ENUM {

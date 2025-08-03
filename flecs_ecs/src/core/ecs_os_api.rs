@@ -47,9 +47,11 @@ pub fn ensure_initialized() {
         flecs_ecs::sys::ecs_os_set_api_defaults();
         flecs_ecs::sys::ecs_os_get_api()
     };
+
     for h in hooks {
         (h.0)(&mut api);
     }
+
     unsafe {
         flecs_ecs::sys::ecs_os_set_api(&mut api as *mut _);
     };

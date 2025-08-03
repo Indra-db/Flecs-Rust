@@ -464,7 +464,7 @@ fn flecs_query_docs_compile_test() {
     q.each_iter(|it, index, p| {
         println!(
             "Entity: {}: {}",
-            it.entity(index).unwrap().name(),
+            it.get_entity(index).unwrap().name(),
             it.id(1).to_str()
         );
     });
@@ -489,7 +489,7 @@ fn flecs_query_docs_compile_test() {
             for i in it.iter() {
                 p[i].x += v[i].x;
                 p[i].y += v[i].y;
-                println!("Entity: {}", it.entity(i).unwrap().name());
+                println!("Entity: {}", it.get_entity(i).unwrap().name());
             }
         }
     });
@@ -598,7 +598,7 @@ fn flecs_query_docs_compile_test() {
     q.each_iter(|it, index, _| {
         let pair = it.pair(0).unwrap();
         let second = pair.second_id();
-        let e = it.entity(index).unwrap();
+        let e = it.get_entity(index).unwrap();
 
         println!("Entity {} likes {}", e.name(), second.name());
     });
@@ -1521,7 +1521,7 @@ fn flecs_docs_relationships_compile_test() {
         .build()
         .each_iter(|it, i, _| {
             let food = it.pair(0).unwrap().second_id(); // Apples, ...
-            let e = it.entity(i).unwrap();
+            let e = it.get_entity(i).unwrap();
             // Iterate as usual
         });
 
@@ -1568,7 +1568,7 @@ fn flecs_docs_relationships_compile_test() {
     q.each_iter(|it, i, _| {
         println!(
             "entity {} has relationship {} {}",
-            it.entity(i).unwrap(),
+            it.get_entity(i).unwrap(),
             it.pair(0).unwrap().first_id().name(),
             it.pair(0).unwrap().second_id().name()
         );
@@ -1848,7 +1848,12 @@ fn flecs_docs_quick_start_compile_test() {
             let p = it.field_mut::<Position>(0);
 
             for i in it.iter() {
-                println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
+                println!(
+                    "{}: ({}, {})",
+                    it.get_entity(i).unwrap().name(),
+                    p[i].x,
+                    p[i].y
+                );
             }
         }
     });

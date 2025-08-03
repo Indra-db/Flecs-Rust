@@ -25929,7 +25929,7 @@ E to_constant() const;
 void emit(flecs::entity_t evt) const {
     flecs::world(world_)
         .event(evt)
-        .entity(id_)
+        .get_entity(id_)
         .emit();
 }
 
@@ -25962,7 +25962,7 @@ template <typename Evt, if_not_t<is_empty<Evt>::value> = 0>
 void emit(const Evt& payload) const {
     flecs::world(world_)
         .event(_::type<Evt>::id(world_))
-        .entity(id_)
+        .get_entity(id_)
         .ctx(&payload)
         .emit();
 }
@@ -25977,7 +25977,7 @@ void emit(const Evt& payload) const {
 void enqueue(flecs::entity_t evt) const {
     flecs::world(world_)
         .event(evt)
-        .entity(id_)
+        .get_entity(id_)
         .enqueue();
 }
 
@@ -26010,7 +26010,7 @@ template <typename Evt, if_not_t<is_empty<Evt>::value> = 0>
 void enqueue(const Evt& payload) const {
     flecs::world(world_)
         .event(_::type<Evt>::id(world_))
-        .entity(id_)
+        .get_entity(id_)
         .ctx(&payload)
         .enqueue();
 }
@@ -31433,7 +31433,7 @@ struct term_builder_i : term_ref_builder_i<Base> {
         this->assert_term();
         term_->inout = static_cast<int16_t>(inout);
         if (term_->oper != EcsNot) {
-            this->src().entity(0);
+            this->src().get_entity(0);
         }
         return *this;
     }
@@ -31970,11 +31970,11 @@ struct query_builder_i : term_builder_i<Base> {
 
     /* Scope_open/scope_close shorthand notation. */
     Base& scope_open() {
-        return this->with(flecs::ScopeOpen).entity(0);
+        return this->with(flecs::ScopeOpen).get_entity(0);
     }
 
     Base& scope_close() {
-        return this->with(flecs::ScopeClose).entity(0);
+        return this->with(flecs::ScopeClose).get_entity(0);
     }
 
     /* Term notation for more complex query features */

@@ -68,6 +68,8 @@ pub struct WorldRef<'a> {
     raw_world: NonNull<sys::ecs_world_t>,
     components: NonNull<FlecsIdMap>,
     pub(crate) components_array: NonNull<FlecsArray>,
+    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    pub(crate) component_access: NonNull<ReadWriteComponentsMap>,
     _marker: PhantomData<&'a ()>,
 }
 
@@ -94,6 +96,10 @@ impl<'a> WorldRef<'a> {
                 components_array: NonNull::new_unchecked(World::get_components_array_ptr(
                     raw_world,
                 )),
+                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                component_access: NonNull::new_unchecked(World::get_components_access_map(
+                    raw_world,
+                )),
                 _marker: PhantomData,
             }
         }
@@ -107,6 +113,8 @@ impl<'a> From<&'a World> for WorldRef<'a> {
             raw_world: world.raw_world,
             components: world.components,
             components_array: world.components_array,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            component_access: world.component_access,
             _marker: PhantomData,
         }
     }
@@ -119,6 +127,8 @@ impl<'a> From<&'a mut World> for WorldRef<'a> {
             raw_world: world.raw_world,
             components: world.components,
             components_array: world.components_array,
+            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            component_access: world.component_access,
             _marker: PhantomData,
         }
     }

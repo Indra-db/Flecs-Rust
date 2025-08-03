@@ -29,7 +29,7 @@ fn main() {
                     // When the entity to be mutated is not the same as the entity
                     // provided by the system, an additional mut() call is required.
                     // See the mutate_entity_handle example.
-                    let e = it.entity(i).unwrap();
+                    let e = it.get_entity(i).unwrap();
                     println!("Expire: {} deleted!", e.name());
                     e.destruct();
                 }

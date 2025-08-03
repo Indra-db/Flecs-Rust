@@ -125,7 +125,7 @@ const ecs_type_info_t* ecs_rust_get_type_info_from_record(
 
     if (!idr && ECS_IS_PAIR(id)) {
         world = ecs_get_world(world);
-        idr = flecs_components_ensure(world, 
+        idr = flecs_components_get(world, 
             ecs_pair(ECS_PAIR_FIRST(id), EcsWildcard));
         if (!idr || !idr->type_info) {
             idr = NULL;
@@ -133,7 +133,7 @@ const ecs_type_info_t* ecs_rust_get_type_info_from_record(
         if (!idr) {
             ecs_entity_t first = ecs_pair_first(world, id);
             if (!first || !ecs_has_id(world, first, EcsPairIsTag)) {
-                idr = flecs_components_ensure(world, 
+                idr = flecs_components_get(world, 
                     ecs_pair(EcsWildcard, ECS_PAIR_SECOND(id)));
                 if (!idr || !idr->type_info) {
                     idr = NULL;
@@ -166,12 +166,6 @@ ecs_entity_t ecs_rust_get_typeid(
 error:
     return 0;
 } 
-
-uint64_t ecs_rust_table_id(
-    const ecs_table_t* table)
-{
-    return table->id;
-}
 
 bool ecs_rust_is_sparse_idr(
     const ecs_component_record_t* idr)

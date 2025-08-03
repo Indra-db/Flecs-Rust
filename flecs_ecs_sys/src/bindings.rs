@@ -8331,9 +8331,6 @@ unsafe extern "C" {
     pub fn ecs_rust_is_sparse_idr(idr: *const ecs_component_record_t) -> bool;
 }
 unsafe extern "C" {
-    pub fn ecs_rust_table_id(table: *const ecs_table_t) -> u64;
-}
-unsafe extern "C" {
     pub fn ecs_rust_get_typeid(
         world: *mut ecs_world_t,
         id: ecs_id_t,

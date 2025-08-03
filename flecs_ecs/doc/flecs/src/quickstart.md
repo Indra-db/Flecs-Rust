@@ -497,7 +497,7 @@ q.run(|mut it| {
         let p = it.field::<Position>(0);
 
         for i in it.iter() {
-            println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
+            println!("{}: ({}, {})", it.get_entity(i).unwrap().name(), p[i].x, p[i].y);
         }
     }
 });

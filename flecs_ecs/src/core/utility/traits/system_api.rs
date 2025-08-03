@@ -116,7 +116,7 @@ where
     ///         let pos = it.field::<Position>(1); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
-    ///             let entity = it.entity(i).unwrap();
+    ///             let entity = it.get_entity(i).unwrap();
     ///             println!("{:?}: {:?}", entity, pos[i]);
     ///         }
     ///     }

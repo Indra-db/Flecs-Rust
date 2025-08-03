@@ -38,7 +38,7 @@ fn main() {
             let pair = it.pair(0).unwrap();
             let food = pair.second_id().name();
             for i in it.iter() {
-                let entity = it.entity(i).unwrap().name();
+                let entity = it.get_entity(i).unwrap().name();
                 let amount = eats[i].amount;
                 println!("{entity} eats {amount} {food}");
             }

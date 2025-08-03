@@ -139,7 +139,7 @@ fn main() {
         while it.next() {
             for i in it.iter() {
                 let location = it.get_var(location_var);
-                let entity = it.entity(i).unwrap();
+                let entity = it.get_entity(i).unwrap();
                 println!("{entity} lives in {location}");
             }
         }

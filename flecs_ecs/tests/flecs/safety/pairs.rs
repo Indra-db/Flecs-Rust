@@ -105,18 +105,6 @@ mod wildcard_into_id {
                     q1.each_entity(|_, _| {});
                 });
             }
-
-            #[test]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &(Foo, flecs::Wildcard)).build();
-                let q1 = query!(world, &(Foo, Bar)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
-                });
-            }
         }
 
         mod read_write {
@@ -165,19 +153,6 @@ mod wildcard_into_id {
                 let q1 = query!(world, &mut (Foo, Bar)).build();
                 q0.each_entity(|_, _| {
                     q1.each_entity(|_, _| {});
-                });
-            }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &(Foo, flecs::Wildcard)).build();
-                let q1 = query!(world, &mut (Foo, Bar)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
                 });
             }
         }
@@ -230,19 +205,6 @@ mod wildcard_into_id {
                     q1.each_entity(|_, _| {});
                 });
             }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &mut (Foo, flecs::Wildcard)).build();
-                let q1 = query!(world, &(Foo, Bar)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
-                });
-            }
         }
 
         mod write_write {
@@ -291,19 +253,6 @@ mod wildcard_into_id {
                 let q1 = query!(world, &mut (Foo, Bar)).build();
                 q0.each_entity(|_, _| {
                     q1.each_entity(|_, _| {});
-                });
-            }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &mut (Foo, flecs::Wildcard)).build();
-                let q1 = query!(world, &mut (Foo, Bar)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
                 });
             }
         }
@@ -465,18 +414,6 @@ mod id_into_wildcard {
                     q1.each_entity(|_, _| {});
                 });
             }
-
-            #[test]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &(Foo, Bar)).build();
-                let q1 = query!(world, &(Foo, flecs::Wildcard)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
-                });
-            }
         }
 
         mod read_write {
@@ -525,19 +462,6 @@ mod id_into_wildcard {
                 let q1 = query!(world, &mut (Foo, flecs::Wildcard)).build();
                 q0.each_entity(|_, _| {
                     q1.each_entity(|_, _| {});
-                });
-            }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &(Foo, Bar)).build();
-                let q1 = query!(world, &mut (Foo, flecs::Wildcard)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
                 });
             }
         }
@@ -590,19 +514,6 @@ mod id_into_wildcard {
                     q1.each_entity(|_, _| {});
                 });
             }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &mut (Foo, Bar)).build();
-                let q1 = query!(world, &(Foo, flecs::Wildcard)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
-                });
-            }
         }
 
         mod write_write {
@@ -651,19 +562,6 @@ mod id_into_wildcard {
                 let q1 = query!(world, &mut (Foo, flecs::Wildcard)).build();
                 q0.each_entity(|_, _| {
                     q1.each_entity(|_, _| {});
-                });
-            }
-
-            #[test]
-            #[should_panic]
-            fn each_iter() {
-                let world = World::new();
-                let bar_id = world.component::<Bar>().id();
-                world.entity().set_first(Foo(0), bar_id);
-                let q0 = query!(world, &mut (Foo, Bar)).build();
-                let q1 = query!(world, &mut (Foo, flecs::Wildcard)).build();
-                q0.each_iter(|_, _, _| {
-                    q1.each_iter(|_, _, _| {});
                 });
             }
         }

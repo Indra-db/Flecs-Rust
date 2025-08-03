@@ -44,7 +44,7 @@ fn main() {
                     //
                     // The current entity can also be used to provide context. This
                     // is useful for functions that accept a flecs::entity:
-                    //   t.to_delete.mut(it.entity(index).unwrap()).destruct();
+                    //   t.to_delete.mut(it.get_entity(index).unwrap()).destruct();
                     //
                     // A shortcut is to use the iterator directly:
                     let world = it.world();

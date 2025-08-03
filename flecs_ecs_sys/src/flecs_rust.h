@@ -27,10 +27,6 @@ bool ecs_rust_is_sparse_idr(
     const ecs_component_record_t* idr);
 
 FLECS_API
-uint64_t ecs_rust_table_id(
-    const ecs_table_t* table);
-
-FLECS_API
 ecs_entity_t ecs_rust_get_typeid(
     ecs_world_t *world,
     ecs_id_t id,

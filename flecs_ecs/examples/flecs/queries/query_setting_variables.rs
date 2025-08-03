@@ -108,7 +108,7 @@ fn main() {
         .run(|mut it| {
             while it.next() {
                 for i in it.iter() {
-                    let unit = it.entity(i).unwrap();
+                    let unit = it.get_entity(i).unwrap();
                     println!(
                         "Unit id: {unit} of class {} in platoon id: {} for player {}",
                         it.id(0).to_str(),

@@ -79,7 +79,7 @@ fn main() {
                     for i in it.iter() {
                         let pos = &loc[i];
                         let abil_power = ability[i].power;
-                        let entity = it.entity(i).unwrap();
+                        let entity = it.get_entity(i).unwrap();
                         println!(
                             "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} ",
                             pos.x, pos.y, abil_power

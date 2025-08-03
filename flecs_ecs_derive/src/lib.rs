@@ -2210,7 +2210,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///     while it.next() {
 ///         let world = it.world();
 ///         for i in it.iter() {
-///             let e = it.entity(i).unwrap();
+///             let e = it.get_entity(i).unwrap();
 ///             let id = it.id(0);
 ///             let shape = ShapesTrait::cast(e, id);
 ///             let calc = shape.calculate();
