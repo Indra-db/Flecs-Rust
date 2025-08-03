@@ -1,6 +1,6 @@
 //! Table column API.
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 use super::iter::FieldError;
 use crate::core::*;
 use crate::sys;
@@ -8,7 +8,7 @@ use core::ffi::c_void;
 use core::ops::Index;
 use core::ops::IndexMut;
 use core::ops::{Deref, DerefMut};
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 use core::ptr::NonNull;
 
 // TODO I can probably return two different field types, one for shared and one for non-shared
@@ -53,13 +53,13 @@ impl From<FieldIndex> for usize {
 pub struct Field<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) table: NonNull<sys::ecs_table_t>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) stage_id: i32,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) column_index: i16,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) field_index: i8,
 }
 
@@ -72,7 +72,7 @@ where
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
     fn drop(&mut self) {
         if LOCK {
@@ -84,7 +84,7 @@ impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
 }
 
 impl<'a, T> Field<'a, T, false> {
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn new_lockless(
         slice_components: &'a [T],
@@ -105,7 +105,7 @@ impl<'a, T> Field<'a, T, false> {
     }
 
     #[inline(always)]
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     pub(crate) fn new_lockless(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -115,7 +115,7 @@ impl<'a, T> Field<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
@@ -135,7 +135,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new(
         slice_components: &'a [T],
         is_shared: bool,
@@ -169,7 +169,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result(
         slice_components: &'a [T],
         is_shared: bool,
@@ -192,7 +192,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         })
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn lock_table(&self, world: &WorldRef) {
         get_table_column_lock_read_begin(
             world,
@@ -202,13 +202,13 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         );
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn unlock_table(&self) {
         table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
     }
 
     //// Get the table id of the column.
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub fn table_id(&self) -> u64 {
         unsafe { sys::flecs_table_id(self.table.as_ptr()) }
     }
@@ -284,13 +284,13 @@ impl<'a, T, const LOCK: bool> Index<usize> for Field<'a, T, LOCK> {
 pub struct FieldMut<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) table: NonNull<sys::ecs_table_t>,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) stage_id: i32,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) column_index: i16,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) field_index: i8,
 }
 
@@ -303,7 +303,7 @@ where
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
     fn drop(&mut self) {
         if LOCK {
@@ -315,7 +315,7 @@ impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
 }
 
 impl<'a, T> FieldMut<'a, T, false> {
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn new_lockless(
         slice_components: &'a mut [T],
@@ -335,7 +335,7 @@ impl<'a, T> FieldMut<'a, T, false> {
         }
     }
 
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new_lockless(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
@@ -353,7 +353,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
     #[inline(always)]
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
@@ -372,7 +372,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new(
         slice_components: &'a mut [T],
         is_shared: bool,
@@ -406,7 +406,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result(
         slice_components: &'a mut [T],
         is_shared: bool,
@@ -430,7 +430,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         })
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn lock_table(&self, world: &WorldRef) {
         get_table_column_lock_write_begin(
             world,
@@ -440,13 +440,13 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         );
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn unlock_table(&self) {
         table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
     }
 
     //// Get the table id of the column.
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub fn table_id(&self) -> u64 {
         unsafe { flecs_ecs_sys::flecs_table_id(self.table.as_ptr()) }
     }
@@ -552,7 +552,7 @@ impl<'a, T, const LOCK: bool> IndexMut<usize> for FieldMut<'a, T, LOCK> {
 
 pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) idr: NonNull<sys::ecs_component_record_t>,
 }
 
@@ -565,7 +565,7 @@ where
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
         unsafe {
@@ -584,12 +584,12 @@ impl<T: ComponentId> Deref for FieldAt<'_, T> {
 }
 
 impl<'a, T> FieldAt<'a, T> {
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     pub(crate) fn new(component: &'a T) -> Self {
         Self { component }
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new(
         component: &'a T,
         world: &WorldRef,
@@ -602,7 +602,7 @@ impl<'a, T> FieldAt<'a, T> {
 
 pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) idr: NonNull<sys::ecs_component_record_t>,
 }
 
@@ -615,7 +615,7 @@ where
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
         unsafe {
@@ -641,13 +641,13 @@ impl<T: ComponentId> DerefMut for FieldAtMut<'_, T> {
 }
 
 impl<'a, T> FieldAtMut<'a, T> {
-    #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new(component: &'a mut T) -> Self {
         Self { component }
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn new(
         component: &'a mut T,

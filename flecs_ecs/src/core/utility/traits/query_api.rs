@@ -91,14 +91,14 @@ where
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
             let world_ptr = iter.world;
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             let world = WorldRef::from_ptr(world_ptr);
 
             while self.iter_next(&mut iter) {
                 let (is_any_array, mut components_data) = T::create_ptrs(&iter);
                 let iter_count = iter.count as usize;
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
                 }
@@ -135,7 +135,7 @@ where
                 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_unlock(world_ptr, iter.table);
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
                 }
@@ -161,7 +161,7 @@ where
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
             let world_ptr = iter.world;
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             let world = WorldRef::from_ptr(world_ptr);
 
             while self.iter_next(&mut iter) {
@@ -171,7 +171,7 @@ where
                 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_lock(world_ptr, iter.table);
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
                 }
@@ -210,7 +210,7 @@ where
                 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
                 table_unlock(world_ptr, iter.table);
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
                 }
@@ -747,12 +747,12 @@ where
     fn try_first<R>(&self, func: impl FnOnce(T::TupleType<'_>) -> R) -> Option<R> {
         let mut it = self.retrieve_iter();
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         let world = self.world();
 
         // Proceed only if there is at least one entity in the iterator
         if self.iter_next(&mut it) && it.count > 0 {
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             {
                 do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
             }
@@ -768,7 +768,7 @@ where
 
             let result = Some(func(tuple));
 
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             {
                 do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
             }
@@ -873,13 +873,13 @@ where
     ) -> Result<R, FirstOnlyError> {
         let mut it = self.retrieve_iter();
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         let world = self.world();
 
         // Proceed only if we can iterate
         if self.iter_next(&mut it) {
             if it.count == 1 {
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
                 }
@@ -897,7 +897,7 @@ where
                 // Clean up iterator resources safely
                 let result = func(tuple);
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
                 {
                     do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
                 }

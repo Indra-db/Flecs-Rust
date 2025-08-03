@@ -8,7 +8,7 @@ use crate::sys;
 use flecs_ecs_derive::tuples;
 use sys::ecs_record_t;
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 #[derive(Debug, Copy, Clone)]
 #[doc(hidden)]
 pub enum ReadWriteId {
@@ -16,7 +16,7 @@ pub enum ReadWriteId {
     Write(u64),
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl Default for ReadWriteId {
     #[inline]
     fn default() -> Self {
@@ -24,7 +24,7 @@ impl Default for ReadWriteId {
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl core::ops::Deref for ReadWriteId {
     type Target = u64;
 
@@ -37,12 +37,12 @@ impl core::ops::Deref for ReadWriteId {
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 pub trait ColumnIndexArray {
     fn init() -> Self;
     fn column_indices_mut(&mut self) -> &mut [ComponentTypeRWLock];
 }
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 impl<const LEN: usize> ColumnIndexArray for [ComponentTypeRWLock; LEN] {
     fn init() -> Self {
         [ComponentTypeRWLock::Dense((0, ReadWriteId::default())); LEN]
@@ -55,7 +55,7 @@ impl<const LEN: usize> ColumnIndexArray for [ComponentTypeRWLock; LEN] {
 pub struct ComponentsData<T: GetTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     pub(crate) read_write_ids: [ReadWriteId; LEN],
     _marker: PhantomData<T>,
 }
@@ -71,7 +71,7 @@ pub trait GetComponentPointers<T: GetTuple> {
 
     fn has_all_components(&self) -> bool;
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     fn read_write_ids(&self) -> &[ReadWriteId];
 }
 
@@ -83,7 +83,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
     ) -> Self {
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         let mut read_write_ids = [ReadWriteId::Read(0); LEN];
 
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
@@ -91,14 +91,14 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
             entity,
             record,
             &mut array_components[..],
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             &mut read_write_ids,
         );
 
         Self {
             array_components,
             has_all_components,
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             read_write_ids,
             _marker: PhantomData::<T>,
         }
@@ -112,7 +112,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
         self.has_all_components
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     fn read_write_ids(&self) -> &[ReadWriteId] {
         &self.read_write_ids
     }
@@ -208,7 +208,7 @@ where
 pub trait GetTuple: Sized {
     type Pointers: GetComponentPointers<Self>;
     type TupleType<'a>;
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     type ArrayColumnIndex: ColumnIndexArray;
     const ALL_IMMUTABLE: bool;
 
@@ -225,7 +225,7 @@ pub trait GetTuple: Sized {
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_readwrite_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
     ) -> bool;
 
     fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a>;
@@ -242,12 +242,12 @@ where
 {
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'e> = A::ActualType<'e>;
-     #[cfg(feature = "flecs_safety_readwrite_locks")]
+     #[cfg(feature = "flecs_safety_locks")]
     type ArrayColumnIndex = [ComponentTypeRWLock; 1];
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_readwrite_locks")] ids : &mut [ReadWriteId]
+        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_locks")] ids : &mut [ReadWriteId]
     ) -> bool {
         let world = world.world();
         let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
@@ -255,7 +255,7 @@ where
         let entity = *entity;
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
 
-                #[cfg(feature = "flecs_safety_readwrite_locks")]
+                #[cfg(feature = "flecs_safety_locks")]
         { 
             if A::IS_IMMUTABLE {
                 ids[0] = ReadWriteId::Read(id);
@@ -281,7 +281,7 @@ where
                 }, "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
             );
 
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             { 
                 let first_id = *ecs_first(id,world);
                 let second_id = *ecs_second(id,world);
@@ -432,14 +432,14 @@ macro_rules! impl_get_tuple {
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             type ArrayColumnIndex = [ComponentTypeRWLock; { tuple_count!($($t),*) }];
 
             const ALL_IMMUTABLE: bool = { $($t::IS_IMMUTABLE &&)* true };
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_readwrite_locks")] ids : &mut [ReadWriteId]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_locks")] ids : &mut [ReadWriteId]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
@@ -452,7 +452,7 @@ macro_rules! impl_get_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    #[cfg(feature = "flecs_safety_readwrite_locks")]
+                    #[cfg(feature = "flecs_safety_locks")]
                     {
                         if $t::IS_IMMUTABLE {
                             ids[index] = ReadWriteId::Read(id);
@@ -479,7 +479,7 @@ macro_rules! impl_get_tuple {
                             "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
                         );
 
-                        #[cfg(feature = "flecs_safety_readwrite_locks")]
+                        #[cfg(feature = "flecs_safety_locks")]
                         {
                             let first_id = *ecs_first(id, world_ref);
                             let second_id = *ecs_second(id,world_ref);

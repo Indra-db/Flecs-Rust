@@ -22,7 +22,7 @@ use crate::core::{
     ComponentId, ComponentPointers, EntityView, ImplementsClone, ImplementsDefault,
     ImplementsPartialEq, ImplementsPartialOrd, QueryTuple, TableIter, ecs_assert,
 };
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 use crate::core::{DECREMENT, INCREMENT, do_read_write_locks};
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 use crate::core::{FlecsErrorCode, table_lock, table_unlock};
@@ -69,7 +69,10 @@ pub mod private {
             callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
         );
 
-        fn set_desc_run(&mut self, callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>);
+        fn set_desc_run(
+            &mut self,
+            callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
+        );
 
         /// Callback of the each functionality
         ///
@@ -257,7 +260,7 @@ pub(crate) fn internal_each_generic<
         );
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     let world = unsafe { WorldRef::from_ptr((*iter).world) };
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     let world_ptr = iter.world;
@@ -280,7 +283,7 @@ pub(crate) fn internal_each_generic<
         }
     );
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
 
     // only lock/unlock in debug or forced‑assert builds, and only
@@ -315,7 +318,7 @@ pub(crate) fn internal_each_generic<
         table_unlock(world_ptr, iter.table);
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
 }
 

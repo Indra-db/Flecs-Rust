@@ -50,7 +50,7 @@ disable_build_c = []
 ###############################
 
 # Read write locks for components
-flecs_safety_readwrite_locks = []
+flecs_safety_locks = []
 
  # When set, this will cause queries with the EcsQueryCacheDefault policy
  # to default to EcsQueryCacheNone. This can reduce the memory footprint of

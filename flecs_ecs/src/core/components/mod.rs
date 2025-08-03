@@ -14,7 +14,7 @@ pub use component_untyped::*;
 #[doc(hidden)]
 pub use lifecycle_traits::*;
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 #[derive(Clone, Copy)]
 #[doc(hidden)]
 pub enum ComponentTypeRWLock {

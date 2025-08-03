@@ -327,12 +327,12 @@ impl ReadWriteComponentsMap {
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 pub(super) const INCREMENT: bool = true;
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 pub(super) const DECREMENT: bool = false;
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     iter: &sys::ecs_iter_t,
     count: usize,

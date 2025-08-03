@@ -870,13 +870,13 @@ where
         // SAFETY: we already validated index/type before calling
         let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
             Ok(Field::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -907,13 +907,13 @@ where
         // SAFETY: we already validated index/type before calling
         let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
             Ok(Field::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -943,13 +943,13 @@ where
         // SAFETY: we already validated index/type before calling
         let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
             Some(Field::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -978,13 +978,13 @@ where
         // SAFETY: we already validated index/type before calling
         let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
             Some(Field::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -1053,12 +1053,12 @@ where
 
         let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             Some(FieldMut::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -1091,12 +1091,12 @@ where
 
         let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             Some(FieldMut::<T, LOCK>::new(slice, is_shared))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
@@ -1191,12 +1191,12 @@ where
 
         let component_ref = unsafe { &*component };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             FieldAt::<T>::new(component_ref)
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
@@ -1231,12 +1231,12 @@ where
 
         let component_ref = unsafe { &*component };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             Some(FieldAt::<T>::new(component_ref))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
@@ -1273,12 +1273,12 @@ where
 
         let component_ref = unsafe { &mut *component };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             FieldAtMut::<T>::new(component_ref)
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
@@ -1313,12 +1313,12 @@ where
 
         let component_ref = unsafe { &mut *component };
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             Some(FieldAtMut::<T>::new(component_ref))
         }
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };

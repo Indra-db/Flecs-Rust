@@ -60,7 +60,7 @@ getrandom = { version = "0.3.3", features = ["wasm_js"] }
 ######################
 
 # Read write locks for components
-flecs_safety_readwrite_locks = ["flecs_ecs_sys/flecs_safety_readwrite_locks"]
+flecs_safety_locks = ["flecs_ecs_sys/flecs_safety_locks"]
 
 # Regenerate the C binding for flecs C
 flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
@@ -192,7 +192,7 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
-    "flecs_safety_readwrite_locks",
+    "flecs_safety_locks",
 ]
 
 default = [

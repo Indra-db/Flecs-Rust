@@ -193,7 +193,7 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_JOURNAL");
     }
 
-    #[cfg(feature = "flecs_safety_readwrite_locks")]
+    #[cfg(feature = "flecs_safety_locks")]
     {
         bindings = bindings.clang_arg("-DFLECS_SAFETY_LOCKS");
     }
@@ -300,7 +300,7 @@ fn main() {
         #[cfg(feature = "flecs_journal")]
         build.define("FLECS_JOURNAL", None);
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         build.define("FLECS_SAFETY_LOCKS", None);
 
         #[cfg(any(

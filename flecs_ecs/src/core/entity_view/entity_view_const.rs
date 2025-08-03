@@ -1239,7 +1239,7 @@ impl<'a> EntityView<'a> {
     }
 }
 
-#[cfg(feature = "flecs_safety_readwrite_locks")]
+#[cfg(feature = "flecs_safety_locks")]
 fn get_rw_lock<T: GetTuple, Return>(
     world: &WorldRef,
     callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
@@ -1496,7 +1496,7 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
 
         if has_all_components {
             let tuple = tuple_data.get_tuple();
-            #[cfg(feature = "flecs_safety_readwrite_locks")]
+            #[cfg(feature = "flecs_safety_locks")]
             {
                 Some(get_rw_lock::<T, Return>(
                     &self.world,
@@ -1507,7 +1507,7 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
                 ))
             }
 
-            #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+            #[cfg(not(feature = "flecs_safety_locks"))]
             {
                 self.world.defer_begin();
                 let ret = callback(tuple);
@@ -1529,12 +1529,12 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             get_rw_lock::<T, Return>(&self.world, callback, record, tuple_data, tuple)
         }
 
-        #[cfg(not(feature = "flecs_safety_readwrite_locks"))]
+        #[cfg(not(feature = "flecs_safety_locks"))]
         {
             self.world.defer_begin();
             let ret = callback(tuple);
@@ -1609,7 +1609,7 @@ impl<'a> EntityView<'a> {
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let world = self.world.real_world();
             let world_ptr = world.ptr_mut();
@@ -1704,7 +1704,7 @@ impl<'a> EntityView<'a> {
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
 
-        #[cfg(feature = "flecs_safety_readwrite_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
             let world = self.world.real_world();
             let world_ptr = world.ptr_mut();
