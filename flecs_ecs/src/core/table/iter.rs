@@ -905,12 +905,12 @@ where
         }
 
         // SAFETY: we already validated index/type before calling
-        let slice = unsafe { core::slice::from_raw_parts_mut(array as *mut T, count) };
+        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
-            Ok(Field::<T, LOCK>::new(slice, is_shared))
+            Ok(FieldMut::<T, LOCK>::new(slice, is_shared))
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -981,7 +981,7 @@ where
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
             //does not actually do any locking
-            Some(Field::<T, LOCK>::new(slice, is_shared))
+            Field::<T, LOCK>::new(slice, is_shared)
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1093,7 +1093,7 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            Some(FieldMut::<T, LOCK>::new(slice, is_shared))
+            FieldMut::<T, LOCK>::new(slice, is_shared)
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1193,7 +1193,7 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            FieldAt::<T>::new(component_ref)
+            FieldAt::<T::UnderlyingType>::new(component_ref)
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1233,7 +1233,7 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            Some(FieldAt::<T>::new(component_ref))
+            Some(FieldAt::<T::UnderlyingType>::new(component_ref))
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1275,7 +1275,7 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            FieldAtMut::<T>::new(component_ref)
+            FieldAtMut::<T::UnderlyingType>::new(component_ref)
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1315,7 +1315,7 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            Some(FieldAtMut::<T>::new(component_ref))
+            Some(FieldAtMut::<T::UnderlyingType>::new(component_ref))
         }
 
         #[cfg(feature = "flecs_safety_locks")]
@@ -1374,7 +1374,7 @@ where
     ///
     ///     while it.next() {
     ///        for row in it.iter() {
-    ///             let e = it.entity(row).unwrap();
+    ///             let e = it.entity(row);
     ///             assert_eq!(e, alice);
     ///     
     ///             it.targets(0, |tgt| {

@@ -91,7 +91,6 @@ where
             let mut iter = self.retrieve_iter();
             let mut entity: Option<EntityView> = None;
             let world_ptr = iter.world;
-            #[cfg(feature = "flecs_safety_locks")]
             let world = WorldRef::from_ptr(world_ptr);
 
             while self.iter_next(&mut iter) {
@@ -161,7 +160,6 @@ where
             let mut iter = self.retrieve_iter();
             let mut entity_result: Option<EntityView> = None;
             let world_ptr = iter.world;
-            #[cfg(feature = "flecs_safety_locks")]
             let world = WorldRef::from_ptr(world_ptr);
 
             while self.iter_next(&mut iter) {
@@ -1139,10 +1137,9 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
 
     let mut read_write = ReadWriteCachedInstructions::default();
 
-    for i in 0..terms_count as usize {
-        let id = ids[i];
+    for (i, id) in ids.iter().enumerate().take(terms_count as usize) {
         let term = unsafe { &*terms.add(i) };
-        if id == 0 {
+        if *id == 0 {
             match term.inout as u32 {
                 sys::ecs_inout_kind_t_EcsIn => {
                     read_write.variable_reads.push(i as u8);

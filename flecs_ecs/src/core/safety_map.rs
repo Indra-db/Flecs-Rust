@@ -218,9 +218,8 @@ impl ReadWriteComponentsMap {
         // we don't expect more than 20 indices
         //TODO we can put this outside the while loop, optimize later
         let mut indices = smallvec![0_u8; 20_usize];
-        for i in 0..terms_count as usize {
-            let id = ids[i];
-            if id == 0 {
+        for (i, id) in ids.iter().enumerate().take(terms_count as usize) {
+            if *id == 0 {
                 indices.push(i as u8);
                 continue;
             }

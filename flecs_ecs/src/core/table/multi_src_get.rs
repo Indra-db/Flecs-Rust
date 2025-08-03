@@ -353,6 +353,7 @@ mod tests {
 
     #[test]
     #[should_panic]
+    #[cfg(feature = "flecs_safety_locks")]
     fn multi_src_same_table_err() {
         let world = World::new();
 

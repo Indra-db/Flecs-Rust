@@ -12,6 +12,7 @@ pub use multi_src_get::*;
 
 pub use flags::TableFlags;
 pub use iter::TableIter;
+#[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 pub(crate) use iter::{table_lock, table_unlock};
 
 use crate::core::*;

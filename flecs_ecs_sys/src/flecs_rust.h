@@ -20,12 +20,6 @@ FLECS_API
     ecs_id_t id,
     ecs_table_t* table);
 
-#ifdef FLECS_SAFETY_LOCKS
-
-FLECS_API
-bool ecs_rust_is_sparse_idr(
-    const ecs_component_record_t* idr);
-
 FLECS_API
 ecs_entity_t ecs_rust_get_typeid(
     const ecs_world_t *world,
@@ -36,6 +30,12 @@ FLECS_API
 const ecs_type_info_t* ecs_rust_get_type_info_from_record(
     const ecs_world_t *world,
     ecs_id_t id,
+    const ecs_component_record_t* idr);
+
+#ifdef FLECS_SAFETY_LOCKS
+
+FLECS_API
+bool ecs_rust_is_sparse_idr(
     const ecs_component_record_t* idr);
 
 FLECS_API

@@ -113,7 +113,21 @@ error:
     return -1;
 }
 
-#ifdef FLECS_SAFETY_LOCKS
+
+ecs_entity_t ecs_rust_get_typeid(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    const ecs_component_record_t* idr)     
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    const ecs_type_info_t *ti = ecs_rust_get_type_info_from_record(world, id, idr);
+    if (ti) {
+        ecs_assert(ti->component != 0, ECS_INTERNAL_ERROR, NULL);
+        return ti->component;
+    }
+error:
+    return 0;
+} 
 
 const ecs_type_info_t* ecs_rust_get_type_info_from_record(
     const ecs_world_t *world,
@@ -152,20 +166,7 @@ error:
     return NULL;
 }
 
-ecs_entity_t ecs_rust_get_typeid(
-    const ecs_world_t *world,
-    ecs_id_t id,
-    const ecs_component_record_t* idr)     
-{
-    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    const ecs_type_info_t *ti = ecs_rust_get_type_info_from_record(world, id, idr);
-    if (ti) {
-        ecs_assert(ti->component != 0, ECS_INTERNAL_ERROR, NULL);
-        return ti->component;
-    }
-error:
-    return 0;
-} 
+#ifdef FLECS_SAFETY_LOCKS
 
 bool ecs_rust_is_sparse_idr(
     const ecs_component_record_t* idr)
@@ -203,6 +204,7 @@ int32_t ecs_table_get_column_index_w_idr(
     ecs_id_t id,
     ecs_component_record_t* idr)
 {
+    (void)world;
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(table != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(ecs_id_is_valid(world, id), ECS_INVALID_PARAMETER, NULL);

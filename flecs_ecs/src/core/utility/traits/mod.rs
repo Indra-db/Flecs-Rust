@@ -261,7 +261,7 @@ pub(crate) fn internal_each_generic<
     }
 
     #[cfg(feature = "flecs_safety_locks")]
-    let world = unsafe { WorldRef::from_ptr((*iter).world) };
+    let world = unsafe { WorldRef::from_ptr((iter).world) };
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     let world_ptr = iter.world;
     iter.flags |= sys::EcsIterCppEach;
