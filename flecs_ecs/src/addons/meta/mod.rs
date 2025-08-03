@@ -656,7 +656,7 @@ impl EntityView<'_> {
 mod tests {
     use crate::prelude::*;
 
-    // pub type SerializeFn<T> = extern "C" fn(*const Serializer, *const T) -> i32;
+    // pub type SerializeFn<T> = extern "C-unwind" fn(*const Serializer, *const T) -> i32;
 
     #[derive(Debug, Clone, Component)]
     struct Int {

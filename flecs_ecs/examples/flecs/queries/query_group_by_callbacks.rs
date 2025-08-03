@@ -33,7 +33,7 @@ pub struct Third;
 pub struct Group;
 
 // TODO: Callbacks should be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
-extern "C" fn callback_group_create(
+extern "C-unwind" fn callback_group_create(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _group_by_ctx: *mut c_void,
@@ -56,7 +56,7 @@ extern "C" fn callback_group_create(
 }
 
 // TODO: Callbacks should be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
-extern "C" fn callback_group_delete(
+extern "C-unwind" fn callback_group_delete(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     _ctx: *mut c_void,

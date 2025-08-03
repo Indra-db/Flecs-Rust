@@ -478,7 +478,8 @@ mod table_iter {
             query!(world, &Foo).build().run(|mut iter| {
                 while iter.next() {
                     for _ in iter.iter() {
-                        iter.field_at::<Foo>(0, 0usize);
+                        let _x1 = iter.field_at::<Foo>(0, 0usize);
+                        let _x2 = iter.field_at::<Foo>(0, 0usize);
                     }
                 }
             });
@@ -486,14 +487,15 @@ mod table_iter {
 
         #[test]
         #[should_panic]
-        fn query_write() {
+        fn query_read_write() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().run(|mut iter| {
                 while iter.next() {
                     for _ in iter.iter() {
-                        iter.field_at::<Foo>(0, 0usize);
+                        let _x = iter.field_at::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
                     }
                 }
             });
@@ -543,7 +545,8 @@ mod table_iter {
             query!(world, &Foo).build().run(|mut iter| {
                 while iter.next() {
                     for _ in iter.iter() {
-                        iter.field_at_mut::<Foo>(0, 0usize);
+                        let _x = iter.field_at_mut::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
                     }
                 }
             });
@@ -551,14 +554,15 @@ mod table_iter {
 
         #[test]
         #[should_panic]
-        fn query_write() {
+        fn query_read_write() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().run(|mut iter| {
                 while iter.next() {
                     for _ in iter.iter() {
-                        iter.field_at::<Foo>(0, 0usize);
+                        let _x = iter.field_at::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
                     }
                 }
             });

@@ -62,7 +62,7 @@ pub(crate) struct RegistersPanicHooks {
     pub(crate) copy: bool,
 }
 
-pub(crate) unsafe extern "C" fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
+pub(crate) unsafe extern "C-unwind" fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
     let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
 }
 
@@ -124,7 +124,7 @@ pub fn register_partial_eq_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_t
 /// * `ptr` - pointer to the memory to be initialized
 /// * `count` - number of elements to be initialized
 /// * `_type_info` - type info for the type to be initialized
-extern "C" fn ctor<T: Default>(
+extern "C-unwind" fn ctor<T: Default>(
     ptr: *mut c_void,
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
@@ -156,7 +156,11 @@ extern "C" fn ctor<T: Default>(
 /// * `ptr` - pointer to the memory to be destructed
 /// * `count` - number of elements to be destructed
 /// * `_type_info` - type info for the type to be destructed
-extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
+extern "C-unwind" fn dtor<T>(
+    ptr: *mut c_void,
+    count: i32,
+    _type_info: *const sys::ecs_type_info_t,
+) {
     let size = const { core::mem::size_of::<T>() };
     if size == 0 {
         let arr = ptr as *mut u8; // tags with drop are (usually) modules with size 1 and alignment 1 
@@ -184,7 +188,7 @@ extern "C" fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_
 
 /// This is the generic copy for trivial types
 /// It will copy the memory
-extern "C" fn copy<T: Clone>(
+extern "C-unwind" fn copy<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -209,7 +213,7 @@ extern "C" fn copy<T: Clone>(
 
 /// This is the generic copy for trivial types
 /// It will copy the memory
-extern "C" fn copy_ctor<T: Clone>(
+extern "C-unwind" fn copy_ctor<T: Clone>(
     dst_ptr: *mut c_void,
     src_ptr: *const c_void,
     count: i32,
@@ -231,7 +235,7 @@ extern "C" fn copy_ctor<T: Clone>(
     }
 }
 
-extern "C" fn panic_ctor<T>(
+extern "C-unwind" fn panic_ctor<T>(
     _dst_ptr: *mut c_void,
     _count: i32,
     _type_info: *const sys::ecs_type_info_t,
@@ -242,7 +246,7 @@ extern "C" fn panic_ctor<T>(
     );
 }
 
-extern "C" fn panic_copy<T>(
+extern "C-unwind" fn panic_copy<T>(
     _dst_ptr: *mut c_void,
     _src_ptr: *const c_void,
     _count: i32,
@@ -256,7 +260,7 @@ extern "C" fn panic_copy<T>(
 
 /// This is the generic move for non-trivial types
 /// It will move the memory
-extern "C" fn move_dtor<T>(
+extern "C-unwind" fn move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -284,7 +288,7 @@ extern "C" fn move_dtor<T>(
 }
 
 /// a move to from src to dest where src will not be used anymore and dest is in control of the drop.
-extern "C" fn move_ctor<T>(
+extern "C-unwind" fn move_ctor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -305,7 +309,7 @@ extern "C" fn move_ctor<T>(
     }
 }
 
-extern "C" fn ctor_move_dtor<T>(
+extern "C-unwind" fn ctor_move_dtor<T>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -326,7 +330,7 @@ extern "C" fn ctor_move_dtor<T>(
     }
 }
 
-extern "C" fn compare<T: core::cmp::PartialOrd>(
+extern "C-unwind" fn compare<T: core::cmp::PartialOrd>(
     a: *const c_void,
     b: *const c_void,
     _type_info: *const sys::ecs_type_info_t,
@@ -347,7 +351,7 @@ extern "C" fn compare<T: core::cmp::PartialOrd>(
     }
 }
 
-extern "C" fn panic_compare<T>(
+extern "C-unwind" fn panic_compare<T>(
     _a: *const c_void,
     _b: *const c_void,
     _type_info: *const sys::ecs_type_info_t,
@@ -358,7 +362,7 @@ extern "C" fn panic_compare<T>(
     );
 }
 
-extern "C" fn equals<T: core::cmp::PartialEq>(
+extern "C-unwind" fn equals<T: core::cmp::PartialEq>(
     a: *const c_void,
     b: *const c_void,
     _type_info: *const sys::ecs_type_info_t,
@@ -373,7 +377,7 @@ extern "C" fn equals<T: core::cmp::PartialEq>(
     lhs == rhs
 }
 
-extern "C" fn panic_equals<T>(
+extern "C-unwind" fn panic_equals<T>(
     _a: *const c_void,
     _b: *const c_void,
     _type_info: *const sys::ecs_type_info_t,

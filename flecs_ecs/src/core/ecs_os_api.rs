@@ -77,7 +77,7 @@ pub fn ensure_initialized() {
 /// use flecs_ecs::prelude::*;
 ///
 /// ecs_os_api::add_init_hook(Box::new(|api| {
-///     unsafe extern "C" fn abort_() {
+///     unsafe extern "C-unwind" fn abort_() {
 ///         panic!("fatal error in flecs");
 ///     }
 ///

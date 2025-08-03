@@ -116,7 +116,7 @@ error:
 #ifdef FLECS_SAFETY_LOCKS
 
 const ecs_type_info_t* ecs_rust_get_type_info_from_record(
-    ecs_world_t *world,
+    const ecs_world_t *world,
     ecs_id_t id,
     const ecs_component_record_t* idr)
 {
@@ -153,7 +153,7 @@ error:
 }
 
 ecs_entity_t ecs_rust_get_typeid(
-    ecs_world_t *world,
+    const ecs_world_t *world,
     ecs_id_t id,
     const ecs_component_record_t* idr)     
 {
