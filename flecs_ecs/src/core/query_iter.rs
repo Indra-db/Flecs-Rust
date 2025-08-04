@@ -121,14 +121,17 @@ where
         );
     }
 
+    #[inline(always)]
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool {
         unsafe { (self.iter_next)(iter) }
     }
 
+    #[inline(always)]
     fn query_ptr(&self) -> *const sys::ecs_query_t {
         self.iter.query
     }
 
+    #[inline(always)]
     fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool {
         self.iter_next
     }

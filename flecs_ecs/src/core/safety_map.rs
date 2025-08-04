@@ -332,67 +332,103 @@ pub(super) const INCREMENT: bool = true;
 pub(super) const DECREMENT: bool = false;
 
 #[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+fn lock_table<const INCREMENT: bool>(
+    world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    col: i16,
+    stage: i32,
+    readonly: bool,
+) {
+    if readonly {
+        if INCREMENT {
+            get_table_column_lock_read_begin(world, table, col, stage);
+        } else {
+            table_column_lock_read_end(table, col, stage);
+        }
+    } else {
+        if INCREMENT {
+            get_table_column_lock_write_begin(world, table, col, stage);
+        } else {
+            table_column_lock_write_end(table, col, stage);
+        }
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+fn lock_sparse<const INCREMENT: bool>(
+    world: &WorldRef,
+    idr: *mut sys::ecs_component_record_t,
+    readonly: bool,
+) {
+    if readonly {
+        if INCREMENT {
+            sparse_id_record_lock_read_begin(world, idr);
+        } else {
+            sparse_id_record_lock_read_end(idr);
+        }
+    } else {
+        if INCREMENT {
+            sparse_id_record_lock_write_begin(world, idr);
+        } else {
+            sparse_id_record_lock_write_end(idr);
+        }
+    }
+}
+
+#[inline]
+#[cfg(feature = "flecs_safety_locks")]
 pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     iter: &sys::ecs_iter_t,
     count: usize,
     world: &WorldRef,
 ) {
     unsafe {
+        let stage = world.stage_id();
+        let trs = core::slice::from_raw_parts(iter.trs, count);
+        let ids = core::slice::from_raw_parts(iter.ids, count);
+
         for i in 0..count {
             // if !sys::ecs_field_is_set(iter, i as i8) {
             //     continue;
             // }
 
-            let tr = *iter.trs.add(i);
+            let tr = *trs.get_unchecked(i);
 
-            // when it's a `not` term, the table does not have the component
             if tr.is_null() {
                 continue;
             }
 
-            let component_id = *iter.ids.add(i);
+            let component_id = *ids.get_unchecked(i);
 
             if sys::ecs_id_is_wildcard(component_id) {
                 continue;
             }
-            let idr = (*tr).hdr.cache as *mut sys::ecs_component_record_t;
 
-            // don't bother with tags, but we still need to lock the sparse components
-            if (*tr).column == -1 {
-                //sparse components are not stored in tables so check for that
+            // Safe deref, checked for null
+            let tr_ref = &*tr;
+            let col = tr_ref.column;
+            let idr = tr_ref.hdr.cache as *mut sys::ecs_component_record_t;
+
+            // Sparse path
+            if col == -1 {
                 if sys::ecs_rust_is_sparse_idr(idr) {
-                    if sys::ecs_field_is_readonly(iter, i as i8) {
-                        if INCREMENT {
-                            sparse_id_record_lock_read_begin(world, idr);
-                        } else {
-                            sparse_id_record_lock_read_end(idr);
-                        }
-                    } else if INCREMENT {
-                        sparse_id_record_lock_write_begin(world, idr);
-                    } else {
-                        sparse_id_record_lock_write_end(idr);
-                    }
+                    let readonly = sys::ecs_field_is_readonly(iter, i as i8);
+                    lock_sparse::<INCREMENT>(world, idr, readonly);
                 }
                 continue;
             }
 
-            let table = (*tr).hdr.table;
-
-            if sys::ecs_field_is_readonly(iter, i as i8) {
-                if INCREMENT {
-                    get_table_column_lock_read_begin(world, table, (*tr).column, world.stage_id());
-                } else {
-                    table_column_lock_read_end(table, (*tr).column, world.stage_id());
-                }
-            } else if INCREMENT {
-                get_table_column_lock_write_begin(world, table, (*tr).column, world.stage_id());
-            } else {
-                table_column_lock_write_end(table, (*tr).column, world.stage_id());
-            }
+            // Table path
+            let table = tr_ref.hdr.table;
+            let readonly = sys::ecs_field_is_readonly(iter, i as i8);
+            lock_table::<INCREMENT>(world, table, col, stage, readonly);
         }
     }
 }
 
+#[inline(always)]
 fn component_id_from_table_column(table: *mut sys::ecs_table_t, column: i16) -> u64 {
     unsafe {
         *(*sys::ecs_table_get_type(table))
@@ -401,6 +437,7 @@ fn component_id_from_table_column(table: *mut sys::ecs_table_t, column: i16) -> 
     }
 }
 
+#[inline(always)]
 pub(crate) fn sparse_id_record_lock_read_begin(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
@@ -426,12 +463,14 @@ pub(crate) fn sparse_id_record_lock_read_begin(
     }
 }
 
+#[inline(always)]
 pub(crate) fn sparse_id_record_lock_read_end(idr: *mut sys::ecs_component_record_t) {
     unsafe {
         sys::ecs_sparse_id_record_lock_read_end(idr);
     }
 }
 
+#[inline(always)]
 pub(crate) fn sparse_id_record_lock_write_begin(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
@@ -457,12 +496,14 @@ pub(crate) fn sparse_id_record_lock_write_begin(
     }
 }
 
+#[inline(always)]
 pub(crate) fn sparse_id_record_lock_write_end(idr: *mut sys::ecs_component_record_t) {
     unsafe {
         sys::ecs_sparse_id_record_lock_write_end(idr);
     }
 }
 
+#[inline(always)]
 pub(crate) fn get_table_column_lock_read_begin(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
@@ -491,6 +532,7 @@ pub(crate) fn get_table_column_lock_read_begin(
     }
 }
 
+#[inline(always)]
 /// returning true, means write is already set
 pub(crate) fn table_column_lock_read_begin(
     _world: &WorldRef,
@@ -501,12 +543,14 @@ pub(crate) fn table_column_lock_read_begin(
     unsafe { sys::ecs_table_column_lock_read_begin(table, column, stage_id) }
 }
 
+#[inline(always)]
 pub(crate) fn table_column_lock_read_end(table: *mut sys::ecs_table_t, column: i16, stage_id: i32) {
     unsafe {
         sys::ecs_table_column_lock_read_end(table, column, stage_id);
     }
 }
 
+#[inline(always)]
 /// returning true means a read or write is already set
 pub(crate) fn table_column_lock_write_begin(
     _world: &WorldRef,
@@ -545,6 +589,7 @@ pub(crate) fn get_table_column_lock_write_begin(
     }
 }
 
+#[inline(always)]
 pub(crate) fn table_column_lock_write_end(
     table: *mut sys::ecs_table_t,
     column: i16,

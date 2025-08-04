@@ -52,11 +52,13 @@ where
     /// # See also
     ///
     /// * [`World::each()`]
+    #[inline(always)]
     fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         let mut iter = self.retrieve_iter();
+        let world = self.world();
 
         while self.iter_next(&mut iter) {
-            internal_each_iter_next::<T, false>(&mut iter, &mut func);
+            internal_each_iter_next::<T, false>(&mut iter, &world, &mut func);
         }
     }
 
@@ -68,6 +70,7 @@ where
     /// # See also
     ///
     /// * [`World::each_entity()`]
+    #[inline(always)]
     fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
         let world = self.world();
         let mut iter = self.retrieve_iter();
@@ -1094,7 +1097,8 @@ where
 {
     let iter = unsafe { &mut *iter };
     let func = unsafe { &mut *(iter.callback_ctx as *mut Func) };
-    internal_each_iter_next::<T, true>(iter, func);
+    let world = unsafe { WorldRef::from_ptr(iter.world) };
+    internal_each_iter_next::<T, true>(iter, &world, func);
 }
 
 unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(

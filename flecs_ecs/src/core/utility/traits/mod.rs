@@ -89,7 +89,8 @@ pub mod private {
             unsafe {
                 let iter = &mut *iter;
                 let each = &mut *(iter.callback_ctx as *mut Func);
-                internal_each_iter_next::<T, CALLED_FROM_RUN>(iter, each);
+                let world = WorldRef::from_ptr(iter.world);
+                internal_each_iter_next::<T, CALLED_FROM_RUN>(iter, &world, each);
             }
         }
 
@@ -204,6 +205,7 @@ pub trait FlecsConstantId {
 /// A little “extractor” trait: given the iterator and an index,
 /// produce whatever you want to pass as the first argument to the user‑closure.
 pub(crate) trait EntityExtractor {
+    const CONTAINS_ENTITY: bool;
     /// The type of the “extra” first parameter to the callback.
     type Output;
 
@@ -214,6 +216,7 @@ pub(crate) trait EntityExtractor {
 /// When you don’t want to pass an entity, use this ZST.
 pub(crate) struct NoEntity;
 impl EntityExtractor for NoEntity {
+    const CONTAINS_ENTITY: bool = false;
     type Output = ();
     #[inline(always)]
     unsafe fn extract(&self, _iter: &sys::ecs_iter_t, _idx: usize) {}
@@ -222,6 +225,7 @@ impl EntityExtractor for NoEntity {
 /// When you do want an `EntityView`, carry your `&WorldRef` here.
 pub(crate) struct WithEntity<'w>(pub &'w WorldRef<'w>);
 impl<'w> EntityExtractor for WithEntity<'w> {
+    const CONTAINS_ENTITY: bool = true;
     type Output = EntityView<'w>;
     #[inline(always)]
     unsafe fn extract(&self, iter: &sys::ecs_iter_t, idx: usize) -> EntityView<'w> {
@@ -242,6 +246,54 @@ pub(crate) fn internal_run<P: ComponentId>(
 }
 
 #[inline(always)]
+fn each_plain<T: QueryTuple, E: EntityExtractor, F: FnMut(E::Output, T::TupleType<'_>)>(
+    extractor: &E,
+    components_data: &mut <T as QueryTuple>::Pointers,
+    iter: &mut sys::ecs_iter_t,
+    count: usize,
+    func: &mut F,
+) {
+    // No “ref” or “row” – plain case
+    for i in 0..count {
+        let extra = unsafe { extractor.extract(iter, i) };
+        let tuple = components_data.get_tuple(i);
+        func(extra, tuple);
+    }
+}
+
+#[inline(always)]
+fn each_row<T: QueryTuple, E: EntityExtractor, F: FnMut(E::Output, T::TupleType<'_>)>(
+    extractor: &E,
+    components_data: &mut <T as QueryTuple>::Pointers,
+    iter: &mut sys::ecs_iter_t,
+    count: usize,
+    func: &mut F,
+) {
+    // “row” case: sparse components
+    for i in 0..count {
+        let extra = unsafe { extractor.extract(iter, i) };
+        let tuple = components_data.get_tuple_with_row(iter, i);
+        func(extra, tuple);
+    }
+}
+
+#[inline(always)]
+fn each_ref<T: QueryTuple, E: EntityExtractor, F: FnMut(E::Output, T::TupleType<'_>)>(
+    extractor: &E,
+    components_data: &mut <T as QueryTuple>::Pointers,
+    iter: &mut sys::ecs_iter_t,
+    count: usize,
+    func: &mut F,
+) {
+    // “ref” case: singleton and inherited components
+    for i in 0..count {
+        let extra = unsafe { extractor.extract(iter, i) };
+        let tuple = components_data.get_tuple_with_ref(i);
+        func(extra, tuple);
+    }
+}
+
+#[inline(always)]
 pub(crate) fn internal_each_generic<
     T: QueryTuple,
     E: EntityExtractor,
@@ -251,6 +303,7 @@ pub(crate) fn internal_each_generic<
     iter: &mut sys::ecs_iter_t,
     extractor: E,
     mut func: F,
+    world: &WorldRef<'_>,
 ) {
     const {
         assert!(
@@ -260,8 +313,8 @@ pub(crate) fn internal_each_generic<
         );
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
-    let world = unsafe { WorldRef::from_ptr((iter).world) };
+    // #[cfg(feature = "flecs_safety_locks")]
+    // let world = unsafe { WorldRef::from_ptr((iter).world) };
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     let world_ptr = iter.world;
     iter.flags |= sys::EcsIterCppEach;
@@ -273,11 +326,10 @@ pub(crate) fn internal_each_generic<
     };
 
     ecs_assert!(
-        !iter.entities.is_null(),
+        !(E::CONTAINS_ENTITY && iter.entities.is_null()),
         FlecsErrorCode::InvalidOperation,
         "query/system does not return entities ($this variable is not populated).\nSystem: {:?}",
         {
-            let world = unsafe { WorldRef::from_ptr(iter.world) };
             let e = world.entity_from_id(iter.system);
             (e.id(), e.get_name())
         }
@@ -294,23 +346,11 @@ pub(crate) fn internal_each_generic<
     }
 
     if !is_any_array.a_ref && !is_any_array.a_row {
-        for i in 0..count {
-            let extra = unsafe { extractor.extract(iter, i) };
-            let tuple = components_data.get_tuple(i);
-            func(extra, tuple);
-        }
+        each_plain::<T, E, F>(&extractor, &mut components_data, iter, count, &mut func);
     } else if is_any_array.a_row {
-        for i in 0..count {
-            let extra = unsafe { extractor.extract(iter, i) };
-            let tuple = components_data.get_tuple_with_row(iter, i);
-            func(extra, tuple);
-        }
+        each_row::<T, E, F>(&extractor, &mut components_data, iter, count, &mut func);
     } else {
-        for i in 0..count {
-            let extra = unsafe { extractor.extract(iter, i) };
-            let tuple = components_data.get_tuple_with_ref(i);
-            func(extra, tuple);
-        }
+        each_ref::<T, E, F>(&extractor, &mut components_data, iter, count, &mut func);
     }
 
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
@@ -325,10 +365,16 @@ pub(crate) fn internal_each_generic<
 #[inline(always)]
 pub(crate) fn internal_each_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool>(
     iter: &mut sys::ecs_iter_t,
+    world: &WorldRef<'_>,
     func: &mut impl FnMut(T::TupleType<'_>),
 ) {
     // drop the `()` from the call
-    internal_each_generic::<T, NoEntity, CALLED_FROM_RUN, _>(iter, NoEntity, move |(), t| func(t));
+    internal_each_generic::<T, NoEntity, CALLED_FROM_RUN, _>(
+        iter,
+        NoEntity,
+        move |(), t| func(t),
+        world,
+    );
 }
 
 #[inline(always)]
@@ -339,5 +385,5 @@ pub(crate) fn internal_each_entity_iter_next<T: QueryTuple, const CALLED_FROM_RU
 ) {
     // pass a WithEntity extractor so it builds the EntityView
     let extractor = WithEntity(world);
-    internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, _>(iter, extractor, func);
+    internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, _>(iter, extractor, func, world);
 }

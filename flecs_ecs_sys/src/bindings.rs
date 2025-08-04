@@ -4595,6 +4595,49 @@ unsafe extern "C-unwind" {
     pub fn ecs_table_clear_entities(world: *mut ecs_world_t, table: *mut ecs_table_t);
 }
 unsafe extern "C-unwind" {
+    pub fn ecs_id_from_component_record(idr: *const ecs_component_record_t) -> ecs_id_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_read_begin(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_read_end(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_write_begin(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_write_end(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_read_begin(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_read_end(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_write_begin(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_write_end(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
     #[doc = "Construct a value in existing storage\n\n @param world The world.\n @param type The type of the value to create.\n @param ptr Pointer to a value of type 'type'\n @return Zero if success, nonzero if failed."]
     pub fn ecs_value_init(
         world: *const ecs_world_t,
@@ -8331,6 +8374,23 @@ unsafe extern "C-unwind" {
         id: ecs_id_t,
         idr: *const ecs_component_record_t,
     ) -> *const ecs_type_info_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_rust_is_sparse_idr(idr: *const ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_id_record_get(
+        world: *const ecs_world_t,
+        id: ecs_id_t,
+    ) -> *mut ecs_component_record_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_get_column_index_w_idr(
+        world: *const ecs_world_t,
+        table: *const ecs_table_t,
+        id: ecs_id_t,
+        idr: *mut ecs_component_record_t,
+    ) -> i32;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

@@ -496,7 +496,7 @@ where
 
         if is_row_array_components[0] {
             let ptr_to_first_index_array = &mut array_components[0];
-            *ptr_to_first_index_array = unsafe { flecs_field_at::<A::OnlyPairType>(iter, indexes_array_components[0], index_row_entity as i32) } as *mut u8;
+            *ptr_to_first_index_array = unsafe { flecs_field_at::<A::OnlyPairType>(iter, *indexes_array_components.get_unchecked(0), index_row_entity as i32) } as *mut u8;
         }
 
         A::create_tuple_with_ref_data(

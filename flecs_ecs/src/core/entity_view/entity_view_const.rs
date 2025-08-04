@@ -216,6 +216,7 @@ impl<'a> EntityView<'a> {
         Self { world, id }
     }
 
+    #[inline(always)]
     pub(crate) fn new_from_raw(world: &'a WorldRef<'a>, id: u64) -> Self {
         Self {
             world: *world,
