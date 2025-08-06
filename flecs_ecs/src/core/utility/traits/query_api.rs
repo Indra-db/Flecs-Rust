@@ -294,7 +294,7 @@ where
         P: ComponentId,
     {
         let mut iter = self.retrieve_iter();
-        internal_run::<P>(&mut iter, &mut func);
+        internal_run::<P>(&mut iter, &mut func, self.world());
     }
 
     /// Run iterator with each forwarding.
@@ -377,7 +377,7 @@ where
             __internal_query_execute_each::<T, FuncEach>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
-        internal_run::<P>(&mut iter, &mut func);
+        internal_run::<P>(&mut iter, &mut func, self.world());
         iter.callback = None;
         iter.callback_ctx = core::ptr::null_mut();
     }
@@ -466,7 +466,8 @@ where
             __internal_query_execute_each_entity::<T, FuncEachEntity>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
-        let mut iter_t = unsafe { TableIter::new(&mut iter) };
+        let world = self.world();
+        let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
         iter.callback = None;

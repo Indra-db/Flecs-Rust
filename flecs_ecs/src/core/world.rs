@@ -3647,6 +3647,14 @@ impl World {
         unsafe { sys::ecs_get_stage_count(self.raw_world.as_ptr()) }
     }
 
+    /// returns true if the world is currently multithreaded, such as when a system that is multithreaded is running.
+    #[inline(always)]
+    pub fn is_currently_multithreaded(&self) -> bool {
+        unsafe {
+            sys::ecs_world_get_flags(self.raw_world.as_ptr()) & sys::EcsWorldMultiThreaded != 0
+        }
+    }
+
     /// Set number of worker task threads.
     ///
     /// Configures the world to use a specified number of short-lived task threads,

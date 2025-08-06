@@ -128,7 +128,8 @@ pub mod private {
             unsafe {
                 let iter = &mut *iter;
                 let run = &mut *(iter.run_ctx as *mut Func);
-                internal_run::<P>(iter, run);
+                let world = WorldRef::from_ptr(iter.world);
+                internal_run::<P>(iter, run, world);
             }
         }
 
@@ -239,9 +240,10 @@ impl<'w> EntityExtractor for WithEntity<'w> {
 pub(crate) fn internal_run<P: ComponentId>(
     iter: &mut sys::ecs_iter_t,
     func: &mut impl FnMut(TableIter<true, P>),
+    world: WorldRef<'_>,
 ) {
     iter.flags &= !sys::EcsIterIsValid;
-    let iter_t = unsafe { TableIter::new(iter) };
+    let iter_t = unsafe { TableIter::new(iter, world) };
     func(iter_t);
 }
 
@@ -336,7 +338,7 @@ pub(crate) fn internal_each_generic<
     );
 
     #[cfg(feature = "flecs_safety_locks")]
-    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, &world);
+    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, world);
 
     // only lock/unlock in debug or forced‑assert builds, and only
     // if we’re not in the “called from run” path:
@@ -359,7 +361,7 @@ pub(crate) fn internal_each_generic<
     }
 
     #[cfg(feature = "flecs_safety_locks")]
-    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, &world);
+    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, world);
 }
 
 #[inline(always)]

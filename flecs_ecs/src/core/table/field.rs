@@ -56,7 +56,7 @@ pub struct Field<'a, T, const LOCK: bool> {
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) table: NonNull<sys::ecs_table_t>,
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) stage_id: i32,
+    pub(crate) stage_id: Option<i32>,
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) column_index: i16,
     #[cfg(feature = "flecs_safety_locks")]
@@ -77,7 +77,15 @@ impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
     fn drop(&mut self) {
         if LOCK {
             unsafe {
-                table_column_lock_read_end(self.table.as_mut(), self.column_index, self.stage_id);
+                if let Some(stage_id) = self.stage_id {
+                    table_column_lock_read_end::<true>(
+                        self.table.as_mut(),
+                        self.column_index,
+                        stage_id,
+                    );
+                } else {
+                    table_column_lock_read_end::<false>(self.table.as_mut(), self.column_index, 0);
+                }
             }
         }
     }
@@ -93,7 +101,13 @@ impl<'a, T> Field<'a, T, false> {
         column_index: i16,
         field_index: i8,
         table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
     ) -> Self {
+        let stage_id = if world.is_currently_multithreaded() {
+            Some(stage_id)
+        } else {
+            None
+        };
         Self {
             slice_components,
             is_shared,
@@ -136,7 +150,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn new(
+    pub(crate) fn new<const MULTITHREADED: bool>(
         slice_components: &'a [T],
         is_shared: bool,
         stage_id: i32,
@@ -146,8 +160,14 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         world: &WorldRef,
     ) -> Self {
         if LOCK {
-            get_table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id);
+            get_table_column_lock_read_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            );
         }
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
         Self {
             slice_components,
             is_shared,
@@ -170,7 +190,7 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn new_result(
+    pub(crate) fn new_result<const MULTITHREADED: bool>(
         slice_components: &'a [T],
         is_shared: bool,
         stage_id: i32,
@@ -179,9 +199,17 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         table: NonNull<sys::ecs_table_t>,
         world: &WorldRef,
     ) -> Result<Self, FieldError> {
-        if LOCK && table_column_lock_read_begin(world, table.as_ptr(), column_index, stage_id) {
+        if LOCK
+            && table_column_lock_read_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            )
+        {
             return Err(FieldError::Locked);
         }
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
         Ok(Self {
             slice_components,
             is_shared,
@@ -192,20 +220,20 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
         })
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn lock_table(&self, world: &WorldRef) {
-        get_table_column_lock_read_begin(
-            world,
-            self.table.as_ptr(),
-            self.column_index,
-            self.stage_id,
-        );
-    }
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn lock_table(&self, world: &WorldRef) {
+    //     get_table_column_lock_read_begin(
+    //         world,
+    //         self.table.as_ptr(),
+    //         self.column_index,
+    //         self.stage_id,
+    //     );
+    // }
 
-    #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn unlock_table(&self) {
-        table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
-    }
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn unlock_table(&self) {
+    //     table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    // }
 
     //// Get the table id of the column.
     #[cfg(feature = "flecs_safety_locks")]
@@ -287,7 +315,7 @@ pub struct FieldMut<'a, T, const LOCK: bool> {
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) table: NonNull<sys::ecs_table_t>,
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) stage_id: i32,
+    pub(crate) stage_id: Option<i32>,
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) column_index: i16,
     #[cfg(feature = "flecs_safety_locks")]
@@ -307,8 +335,18 @@ where
 impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
     fn drop(&mut self) {
         if LOCK {
-            unsafe {
-                table_column_lock_write_end(self.table.as_mut(), self.column_index, self.stage_id);
+            if let Some(stage_id) = self.stage_id {
+                unsafe {
+                    table_column_lock_write_end::<true>(
+                        self.table.as_mut(),
+                        self.column_index,
+                        stage_id,
+                    );
+                }
+            } else {
+                unsafe {
+                    table_column_lock_write_end::<false>(self.table.as_mut(), self.column_index, 0);
+                }
             }
         }
     }
@@ -324,7 +362,13 @@ impl<'a, T> FieldMut<'a, T, false> {
         column_index: i16,
         field_index: i8,
         table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
     ) -> Self {
+        let stage_id = if world.is_currently_multithreaded() {
+            Some(stage_id)
+        } else {
+            None
+        };
         Self {
             slice_components,
             is_shared,
@@ -373,7 +417,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn new(
+    pub(crate) fn new<const MULTITHREADED: bool>(
         slice_components: &'a mut [T],
         is_shared: bool,
         stage_id: i32,
@@ -383,8 +427,15 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         world: &WorldRef,
     ) -> Self {
         if LOCK {
-            get_table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id);
+            get_table_column_lock_write_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            );
         }
+
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
 
         Self {
             slice_components,
@@ -407,7 +458,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn new_result(
+    pub(crate) fn new_result<const MULTITHREADED: bool>(
         slice_components: &'a mut [T],
         is_shared: bool,
         stage_id: i32,
@@ -416,9 +467,18 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         table: NonNull<sys::ecs_table_t>,
         world: &WorldRef,
     ) -> Result<Self, FieldError> {
-        if LOCK && table_column_lock_write_begin(world, table.as_ptr(), column_index, stage_id) {
+        if LOCK
+            && table_column_lock_write_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            )
+        {
             return Err(FieldError::Locked);
         }
+
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
 
         Ok(Self {
             slice_components,
@@ -430,20 +490,20 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
         })
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn lock_table(&self, world: &WorldRef) {
-        get_table_column_lock_write_begin(
-            world,
-            self.table.as_ptr(),
-            self.column_index,
-            self.stage_id,
-        );
-    }
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn lock_table(&self, world: &WorldRef) {
+    //     get_table_column_lock_write_begin(
+    //         world,
+    //         self.table.as_ptr(),
+    //         self.column_index,
+    //         self.stage_id,
+    //     );
+    // }
 
-    #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn unlock_table(&self) {
-        table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
-    }
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn unlock_table(&self) {
+    //     table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    // }
 
     //// Get the table id of the column.
     #[cfg(feature = "flecs_safety_locks")]
@@ -554,6 +614,8 @@ pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    is_multithreaded: bool,
 }
 
 impl<T> core::fmt::Debug for FieldAt<'_, T>
@@ -568,8 +630,14 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            sparse_id_record_lock_read_end(self.idr.as_mut());
+        if self.is_multithreaded {
+            unsafe {
+                sparse_id_record_lock_read_end::<true>(self.idr.as_mut());
+            }
+        } else {
+            unsafe {
+                sparse_id_record_lock_read_end::<false>(self.idr.as_mut());
+            }
         }
     }
 }
@@ -595,8 +663,18 @@ impl<'a, T> FieldAt<'a, T> {
         world: &WorldRef,
         mut idr: NonNull<sys::ecs_component_record_t>,
     ) -> Self {
-        sparse_id_record_lock_read_begin(world, unsafe { idr.as_mut() });
-        Self { component, idr }
+        let is_multithreaded = world.is_currently_multithreaded();
+        if is_multithreaded {
+            sparse_id_record_lock_read_begin::<true>(world, unsafe { idr.as_mut() });
+        } else {
+            sparse_id_record_lock_read_begin::<false>(world, unsafe { idr.as_mut() });
+        }
+
+        Self {
+            component,
+            idr,
+            is_multithreaded,
+        }
     }
 }
 
@@ -604,6 +682,8 @@ pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    is_multithreaded: bool,
 }
 
 impl<T> core::fmt::Debug for FieldAtMut<'_, T>
@@ -618,8 +698,14 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            sparse_id_record_lock_write_end(self.idr.as_mut());
+        if self.is_multithreaded {
+            unsafe {
+                sparse_id_record_lock_write_end::<true>(self.idr.as_mut());
+            }
+        } else {
+            unsafe {
+                sparse_id_record_lock_write_end::<false>(self.idr.as_mut());
+            }
         }
     }
 }
@@ -654,8 +740,18 @@ impl<'a, T> FieldAtMut<'a, T> {
         world: &WorldRef,
         mut idr: NonNull<sys::ecs_component_record_t>,
     ) -> Self {
-        sparse_id_record_lock_write_begin(world, unsafe { idr.as_mut() });
-        Self { component, idr }
+        let is_multithreaded = world.is_currently_multithreaded();
+        if is_multithreaded {
+            sparse_id_record_lock_write_begin::<true>(world, unsafe { idr.as_mut() });
+        } else {
+            sparse_id_record_lock_write_begin::<false>(world, unsafe { idr.as_mut() });
+        }
+
+        Self {
+            component,
+            idr,
+            is_multithreaded,
+        }
     }
 }
 

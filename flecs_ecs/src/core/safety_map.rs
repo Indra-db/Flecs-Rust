@@ -5,7 +5,6 @@ use super::WorldRef;
 use core::sync::atomic::{AtomicU16, Ordering};
 use dashmap::DashMap;
 use flecs_ecs::sys;
-use flecs_ecs_sys::{ecs_table_column_lock_write_begin, ecs_table_column_lock_write_end};
 use foldhash::fast::RandomState;
 use smallvec::{SmallVec, smallvec};
 
@@ -333,7 +332,7 @@ pub(super) const DECREMENT: bool = false;
 
 #[cfg(feature = "flecs_safety_locks")]
 #[inline(always)]
-fn lock_table<const INCREMENT: bool>(
+fn lock_table<const INCREMENT: bool, const MULTITHREADED: bool>(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
     col: i16,
@@ -342,38 +341,34 @@ fn lock_table<const INCREMENT: bool>(
 ) {
     if readonly {
         if INCREMENT {
-            get_table_column_lock_read_begin(world, table, col, stage);
+            get_table_column_lock_read_begin::<MULTITHREADED>(world, table, col, stage);
         } else {
-            table_column_lock_read_end(table, col, stage);
+            table_column_lock_read_end::<MULTITHREADED>(table, col, stage);
         }
+    } else if INCREMENT {
+        get_table_column_lock_write_begin::<MULTITHREADED>(world, table, col, stage);
     } else {
-        if INCREMENT {
-            get_table_column_lock_write_begin(world, table, col, stage);
-        } else {
-            table_column_lock_write_end(table, col, stage);
-        }
+        table_column_lock_write_end::<MULTITHREADED>(table, col, stage);
     }
 }
 
 #[cfg(feature = "flecs_safety_locks")]
 #[inline(always)]
-fn lock_sparse<const INCREMENT: bool>(
+fn lock_sparse<const INCREMENT: bool, const MULTITHREADED: bool>(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
     readonly: bool,
 ) {
     if readonly {
         if INCREMENT {
-            sparse_id_record_lock_read_begin(world, idr);
+            sparse_id_record_lock_read_begin::<MULTITHREADED>(world, idr);
         } else {
-            sparse_id_record_lock_read_end(idr);
+            sparse_id_record_lock_read_end::<MULTITHREADED>(idr);
         }
+    } else if INCREMENT {
+        sparse_id_record_lock_write_begin::<MULTITHREADED>(world, idr);
     } else {
-        if INCREMENT {
-            sparse_id_record_lock_write_begin(world, idr);
-        } else {
-            sparse_id_record_lock_write_end(idr);
-        }
+        sparse_id_record_lock_write_end::<MULTITHREADED>(idr);
     }
 }
 
@@ -385,14 +380,36 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
     world: &WorldRef,
 ) {
     unsafe {
-        let stage = world.stage_id();
         let trs = core::slice::from_raw_parts(iter.trs, count);
         let ids = core::slice::from_raw_parts(iter.ids, count);
+        let multithreaded = world.is_currently_multithreaded();
 
+        if multithreaded {
+            let stage = world.stage_id();
+            __internal_do_read_write_locks::<INCREMENT, true>(iter, count, world, stage, trs, ids);
+        } else {
+            __internal_do_read_write_locks::<INCREMENT, false>(
+                iter, count, world, 0, /* dummy */
+                trs, ids,
+            );
+        }
+    }
+}
+
+#[inline(always)]
+fn __internal_do_read_write_locks<const INCREMENT: bool, const MULTITHREADED: bool>(
+    iter: &flecs_ecs_sys::ecs_iter_t,
+    count: usize,
+    world: &WorldRef<'_>,
+    stage: i32,
+    trs: &[*const flecs_ecs_sys::ecs_table_record_t],
+    ids: &[u64],
+) {
+    unsafe {
         for i in 0..count {
-            // if !sys::ecs_field_is_set(iter, i as i8) {
-            //     continue;
-            // }
+            if !sys::ecs_field_is_set(iter, i as i8) {
+                continue;
+            }
 
             let tr = *trs.get_unchecked(i);
 
@@ -415,7 +432,7 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
             if col == -1 {
                 if sys::ecs_rust_is_sparse_idr(idr) {
                     let readonly = sys::ecs_field_is_readonly(iter, i as i8);
-                    lock_sparse::<INCREMENT>(world, idr, readonly);
+                    lock_sparse::<INCREMENT, MULTITHREADED>(world, idr, readonly);
                 }
                 continue;
             }
@@ -423,7 +440,7 @@ pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
             // Table path
             let table = tr_ref.hdr.table;
             let readonly = sys::ecs_field_is_readonly(iter, i as i8);
-            lock_table::<INCREMENT>(world, table, col, stage, readonly);
+            lock_table::<INCREMENT, MULTITHREADED>(world, table, col, stage, readonly);
         }
     }
 }
@@ -438,45 +455,62 @@ fn component_id_from_table_column(table: *mut sys::ecs_table_t, column: i16) -> 
 }
 
 #[inline(always)]
-pub(crate) fn sparse_id_record_lock_read_begin(
+pub(crate) fn sparse_id_record_lock_read_begin<const MULTITHREADED: bool>(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
 ) {
-    unsafe {
-        if sys::ecs_sparse_id_record_lock_read_begin(idr) {
-            panic!(
-                "Cannot increment read: write already set for component: {}",
-                {
-                    let id = IdView::new_from_id(world, sys::ecs_id_from_component_record(idr));
-                    if id.is_pair() {
-                        format!(
-                            "({}, {})",
-                            world.entity_from_id(id.first_id()),
-                            world.entity_from_id(id.second_id())
-                        )
-                    } else {
-                        format!("{}", id.entity_view())
-                    }
-                },
-            );
+    let val = if MULTITHREADED {
+        unsafe { sys::ecs_sparse_id_record_lock_read_begin_multithreaded(idr) }
+    } else {
+        unsafe { sys::ecs_sparse_id_record_lock_read_begin(idr) }
+    };
+    if val {
+        panic!(
+            "Cannot increment read: write already set for component: {}",
+            {
+                let id =
+                    IdView::new_from_id(world, unsafe { sys::ecs_id_from_component_record(idr) });
+                if id.is_pair() {
+                    format!(
+                        "({}, {})",
+                        world.entity_from_id(id.first_id()),
+                        world.entity_from_id(id.second_id())
+                    )
+                } else {
+                    format!("{}", id.entity_view())
+                }
+            },
+        );
+    }
+}
+
+#[inline(always)]
+pub(crate) fn sparse_id_record_lock_read_end<const MULTITHREADED: bool>(
+    idr: *mut sys::ecs_component_record_t,
+) {
+    if MULTITHREADED {
+        unsafe {
+            sys::ecs_sparse_id_record_lock_read_end_multithreaded(idr);
+        }
+    } else {
+        unsafe {
+            sys::ecs_sparse_id_record_lock_read_end(idr);
         }
     }
 }
 
 #[inline(always)]
-pub(crate) fn sparse_id_record_lock_read_end(idr: *mut sys::ecs_component_record_t) {
-    unsafe {
-        sys::ecs_sparse_id_record_lock_read_end(idr);
-    }
-}
-
-#[inline(always)]
-pub(crate) fn sparse_id_record_lock_write_begin(
+pub(crate) fn sparse_id_record_lock_write_begin<const MULTITHREADED: bool>(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
 ) {
+    let val = if MULTITHREADED {
+        unsafe { sys::ecs_sparse_id_record_lock_write_begin_multithreaded(idr) }
+    } else {
+        unsafe { sys::ecs_sparse_id_record_lock_write_begin(idr) }
+    };
     unsafe {
-        if sys::ecs_sparse_id_record_lock_write_begin(idr) {
+        if val {
             panic!(
                 "Cannot set write: reads already present or write already set for component: {}",
                 {
@@ -497,107 +531,141 @@ pub(crate) fn sparse_id_record_lock_write_begin(
 }
 
 #[inline(always)]
-pub(crate) fn sparse_id_record_lock_write_end(idr: *mut sys::ecs_component_record_t) {
-    unsafe {
-        sys::ecs_sparse_id_record_lock_write_end(idr);
+pub(crate) fn sparse_id_record_lock_write_end<const MULTITHREADED: bool>(
+    idr: *mut sys::ecs_component_record_t,
+) {
+    if MULTITHREADED {
+        unsafe {
+            sys::ecs_sparse_id_record_lock_write_end_multithreaded(idr);
+        }
+    } else {
+        unsafe {
+            sys::ecs_sparse_id_record_lock_write_end(idr);
+        }
     }
 }
 
 #[inline(always)]
-pub(crate) fn get_table_column_lock_read_begin(
+pub(crate) fn get_table_column_lock_read_begin<const MULTITHREADED: bool>(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
-    stage_id: i32,
+    _stage_id: i32,
 ) {
-    unsafe {
-        if sys::ecs_table_column_lock_read_begin(table, column, stage_id) {
-            panic!(
-                "Cannot increment read: write already set for component: {}",
-                {
-                    let id =
-                        IdView::new_from_id(world, component_id_from_table_column(table, column));
-                    if id.is_pair() {
-                        format!(
-                            "({}, {})",
-                            world.entity_from_id(id.first_id()),
-                            world.entity_from_id(id.second_id())
-                        )
-                    } else {
-                        format!("{}", id.entity_view())
-                    }
-                },
-            );
-        }
+    let val = if MULTITHREADED {
+        unsafe { sys::ecs_table_column_lock_read_begin_multithreaded(table, column, _stage_id) }
+    } else {
+        unsafe { sys::ecs_table_column_lock_read_begin(table, column) }
+    };
+
+    if val {
+        panic!(
+            "Cannot increment read: write already set for component: {}",
+            {
+                let id = IdView::new_from_id(world, component_id_from_table_column(table, column));
+                if id.is_pair() {
+                    format!(
+                        "({}, {})",
+                        world.entity_from_id(id.first_id()),
+                        world.entity_from_id(id.second_id())
+                    )
+                } else {
+                    format!("{}", id.entity_view())
+                }
+            },
+        );
     }
 }
 
 #[inline(always)]
 /// returning true, means write is already set
-pub(crate) fn table_column_lock_read_begin(
+pub(crate) fn table_column_lock_read_begin<const MULTITHREADED: bool>(
     _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
-    stage_id: i32,
+    _stage_id: i32,
 ) -> bool {
-    unsafe { sys::ecs_table_column_lock_read_begin(table, column, stage_id) }
-}
-
-#[inline(always)]
-pub(crate) fn table_column_lock_read_end(table: *mut sys::ecs_table_t, column: i16, stage_id: i32) {
-    unsafe {
-        sys::ecs_table_column_lock_read_end(table, column, stage_id);
+    if MULTITHREADED {
+        unsafe { sys::ecs_table_column_lock_read_begin_multithreaded(table, column, _stage_id) }
+    } else {
+        unsafe { sys::ecs_table_column_lock_read_begin(table, column) }
     }
 }
 
 #[inline(always)]
-/// returning true means a read or write is already set
-pub(crate) fn table_column_lock_write_begin(
-    _world: &WorldRef,
+pub(crate) fn table_column_lock_read_end<const MULTITHREADED: bool>(
     table: *mut sys::ecs_table_t,
     column: i16,
-    stage_id: i32,
-) -> bool {
-    unsafe { ecs_table_column_lock_write_begin(table, column, stage_id) }
-}
-
-pub(crate) fn get_table_column_lock_write_begin(
-    world: &WorldRef,
-    table: *mut sys::ecs_table_t,
-    column: i16,
-    stage_id: i32,
+    _stage_id: i32,
 ) {
-    unsafe {
-        if ecs_table_column_lock_write_begin(table, column, stage_id) {
-            panic!(
-                "Cannot set write: reads already present or write already set for component: {}",
-                {
-                    let id =
-                        IdView::new_from_id(world, component_id_from_table_column(table, column));
-                    if id.is_pair() {
-                        format!(
-                            "({}, {})",
-                            world.entity_from_id(id.first_id()),
-                            world.entity_from_id(id.second_id())
-                        )
-                    } else {
-                        format!("{}", id.entity_view())
-                    }
-                },
-            );
+    if MULTITHREADED {
+        unsafe {
+            sys::ecs_table_column_lock_read_end_multithreaded(table, column, _stage_id);
+        }
+    } else {
+        unsafe {
+            sys::ecs_table_column_lock_read_end(table, column);
         }
     }
 }
 
 #[inline(always)]
-pub(crate) fn table_column_lock_write_end(
+/// returning true means a read or write is already set
+pub(crate) fn table_column_lock_write_begin<const MULTITHREADED: bool>(
+    _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
-    stage_id: i32,
-) {
-    unsafe {
-        ecs_table_column_lock_write_end(table, column, stage_id);
+    _stage_id: i32,
+) -> bool {
+    if MULTITHREADED {
+        unsafe { sys::ecs_table_column_lock_write_begin_multithreaded(table, column, _stage_id) }
+    } else {
+        unsafe { sys::ecs_table_column_lock_write_begin(table, column) }
     }
+}
+
+pub(crate) fn get_table_column_lock_write_begin<const MULTITHREADED: bool>(
+    world: &WorldRef,
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    _stage_id: i32,
+) {
+    let val = if MULTITHREADED {
+        unsafe { sys::ecs_table_column_lock_write_begin_multithreaded(table, column, _stage_id) }
+    } else {
+        unsafe { sys::ecs_table_column_lock_write_begin(table, column) }
+    };
+
+    if val {
+        panic!(
+            "Cannot set write: reads already present or write already set for component: {}",
+            {
+                let id = IdView::new_from_id(world, component_id_from_table_column(table, column));
+                if id.is_pair() {
+                    format!(
+                        "({}, {})",
+                        world.entity_from_id(id.first_id()),
+                        world.entity_from_id(id.second_id())
+                    )
+                } else {
+                    format!("{}", id.entity_view())
+                }
+            },
+        );
+    }
+}
+
+#[inline(always)]
+pub(crate) fn table_column_lock_write_end<const MULTITHREADED: bool>(
+    table: *mut sys::ecs_table_t,
+    column: i16,
+    _stage_id: i32,
+) {
+    if MULTITHREADED {
+        unsafe { sys::ecs_table_column_lock_write_end_multithreaded(table, column, _stage_id) }
+    } else {
+        unsafe { sys::ecs_table_column_lock_write_end(table, column) }
+    };
 }
 
 #[test]

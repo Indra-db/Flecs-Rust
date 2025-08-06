@@ -9923,23 +9923,59 @@ bool ecs_sparse_id_record_lock_write_end(
 FLECS_API
 bool ecs_table_column_lock_read_begin(
     ecs_table_t *table,
-    const int16_t column_index,
-    const int32_t stage_id);
+    const int16_t column_index);
 
 FLECS_API
 bool ecs_table_column_lock_read_end(
     ecs_table_t *table,
-    const int16_t column_index,
-    const int32_t stage_id);
+    const int16_t column_index);
 
 FLECS_API
 bool ecs_table_column_lock_write_begin(
+    ecs_table_t *table,
+    const int16_t column_index);
+
+FLECS_API
+bool ecs_table_column_lock_write_end(
+    ecs_table_t *table,
+    const int16_t column_index);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_read_begin_multithreaded(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_read_end_multithreaded(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_write_begin_multithreaded(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_sparse_id_record_lock_write_end_multithreaded(
+    ecs_component_record_t *idr);
+
+FLECS_API
+bool ecs_table_column_lock_read_begin_multithreaded(
     ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id);
 
 FLECS_API
-bool ecs_table_column_lock_write_end(
+bool ecs_table_column_lock_read_end_multithreaded(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+FLECS_API
+bool ecs_table_column_lock_write_begin_multithreaded(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id);
+
+FLECS_API
+bool ecs_table_column_lock_write_end_multithreaded(
     ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id);

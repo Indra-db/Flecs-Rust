@@ -16,6 +16,8 @@ pub enum FieldError {
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     pub iter: &'a mut sys::ecs_iter_t,
     pub(crate) count: usize,
+    pub(crate) world: WorldRef<'a>,
+    currently_multithreaded: bool,
     marker: PhantomData<P>,
 }
 
@@ -25,7 +27,7 @@ where
 {
     /// The world. Can point to stage when in deferred/readonly mode.
     pub fn world(&self) -> WorldRef<'a> {
-        unsafe { WorldRef::from_ptr(self.iter.world) }
+        self.world
     }
 
     /// Actual world. Never points to a stage.
@@ -45,11 +47,13 @@ where
     ///
     /// # Safety
     /// - caller must ensure that iter.param points to type T
-    pub unsafe fn new(iter: &'a mut sys::ecs_iter_t) -> Self {
+    pub(crate) unsafe fn new(iter: &'a mut sys::ecs_iter_t, world: WorldRef<'a>) -> Self {
         let count = iter.count as usize;
         Self {
             iter,
             count,
+            currently_multithreaded: world.is_currently_multithreaded(),
+            world,
             marker: PhantomData,
         }
     }
@@ -880,16 +884,28 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
-            Field::<T, LOCK>::new_result(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                unsafe { (*tr).column },
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            )
+            let world_ref = &self.world;
+            if world_ref.is_currently_multithreaded() {
+                Field::<T, LOCK>::new_result::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            } else {
+                Field::<T, LOCK>::new_result::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            }
         }
     }
 
@@ -917,16 +933,29 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
-            FieldMut::<T, LOCK>::new_result(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                unsafe { (*tr).column },
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            )
+            let world_ref = &self.world;
+
+            if world_ref.is_currently_multithreaded() {
+                FieldMut::<T, LOCK>::new_result::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            } else {
+                FieldMut::<T, LOCK>::new_result::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            }
         }
     }
 
@@ -953,16 +982,28 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
-            Some(Field::<T, LOCK>::new(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                unsafe { (*tr).column },
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            ))
+            let world_ref = &self.world;
+            if world_ref.is_currently_multithreaded() {
+                Some(Field::<T, LOCK>::new::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                ))
+            } else {
+                Some(Field::<T, LOCK>::new::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                ))
+            }
         }
     }
 
@@ -988,16 +1029,28 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
-            Field::<T, LOCK>::new(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                unsafe { (*tr).column },
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            )
+            let world_ref = &self.world;
+            if world_ref.is_currently_multithreaded() {
+                Field::<T, LOCK>::new::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            } else {
+                Field::<T, LOCK>::new::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    unsafe { (*tr).column },
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            }
         }
     }
 
@@ -1062,17 +1115,29 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
             let column_index = unsafe { (*tr).column };
-            Some(FieldMut::<T, LOCK>::new(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                column_index,
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            ))
+            if world_ref.is_currently_multithreaded() {
+                Some(FieldMut::<T, LOCK>::new::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    column_index,
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                ))
+            } else {
+                Some(FieldMut::<T, LOCK>::new::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    column_index,
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                ))
+            }
         }
     }
 
@@ -1100,17 +1165,29 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
             let column_index = unsafe { (*tr).column };
-            FieldMut::<T, LOCK>::new(
-                slice,
-                is_shared,
-                world_ref.stage_id(),
-                column_index,
-                index,
-                unsafe { NonNull::new_unchecked(table) },
-                &world_ref,
-            )
+            if world_ref.is_currently_multithreaded() {
+                FieldMut::<T, LOCK>::new::<true>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    column_index,
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            } else {
+                FieldMut::<T, LOCK>::new::<false>(
+                    slice,
+                    is_shared,
+                    world_ref.stage_id(),
+                    column_index,
+                    index,
+                    unsafe { NonNull::new_unchecked(table) },
+                    world_ref,
+                )
+            }
         }
     }
 
@@ -1200,9 +1277,9 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
 
-            FieldAt::<T::UnderlyingType>::new(component_ref, &world_ref, unsafe {
+            FieldAt::<T::UnderlyingType>::new(component_ref, world_ref, unsafe {
                 NonNull::new_unchecked(idr)
             })
         }
@@ -1240,11 +1317,11 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
 
             Some(FieldAt::<T::UnderlyingType>::new(
                 component_ref,
-                &world_ref,
+                world_ref,
                 unsafe { NonNull::new_unchecked(idr) },
             ))
         }
@@ -1282,9 +1359,9 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
 
-            FieldAtMut::<T::UnderlyingType>::new(component_ref, &world_ref, unsafe {
+            FieldAtMut::<T::UnderlyingType>::new(component_ref, world_ref, unsafe {
                 NonNull::new_unchecked(idr)
             })
         }
@@ -1322,11 +1399,11 @@ where
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
-            let world_ref = unsafe { WorldRef::from_ptr(self.iter.world) };
+            let world_ref = &self.world;
 
             Some(FieldAtMut::<T::UnderlyingType>::new(
                 component_ref,
-                &world_ref,
+                world_ref,
                 unsafe { NonNull::new_unchecked(idr) },
             ))
         }

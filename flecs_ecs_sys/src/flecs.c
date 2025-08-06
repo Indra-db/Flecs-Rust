@@ -38952,6 +38952,13 @@ int32_t flecs_sparse_id_record_lock_inc(
     ecs_component_record_t *idr)
 {
     ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ++idr->sparse_lock;
+}
+
+int32_t flecs_sparse_id_record_lock_inc_multithreaded(
+    ecs_component_record_t *idr)
+{
+    ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
     return ecs_os_ainc(&idr->sparse_lock);
 }
 
@@ -38959,8 +38966,16 @@ int32_t flecs_sparse_id_record_lock_dec(
     ecs_component_record_t *idr)
 {
     ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return --idr->sparse_lock;
+}
+
+int32_t flecs_sparse_id_record_lock_dec_multithreaded(
+    ecs_component_record_t *idr)
+{
+    ecs_assert(idr != NULL, ECS_INTERNAL_ERROR, NULL);
     return ecs_os_adec(&idr->sparse_lock);
 }
+
 
 bool ecs_sparse_id_record_lock_read_begin(
     ecs_component_record_t *idr)
@@ -38968,11 +38983,27 @@ bool ecs_sparse_id_record_lock_read_begin(
     return flecs_sparse_id_record_lock_inc(idr) <= 0;
 }
 
+
+bool ecs_sparse_id_record_lock_read_begin_multithreaded(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_inc_multithreaded(idr) <= 0;
+}
+
+
 bool ecs_sparse_id_record_lock_read_end(
     ecs_component_record_t *idr)
 {
     return flecs_sparse_id_record_lock_dec(idr) < 0;
 }
+
+
+bool ecs_sparse_id_record_lock_read_end_multithreaded(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_dec_multithreaded(idr) < 0;
+}
+
 
 bool ecs_sparse_id_record_lock_write_begin(
     ecs_component_record_t *idr)
@@ -38980,13 +39011,37 @@ bool ecs_sparse_id_record_lock_write_begin(
     return flecs_sparse_id_record_lock_dec(idr) != -1;
 }
 
+
+bool ecs_sparse_id_record_lock_write_begin_multithreaded(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_dec_multithreaded(idr) != -1;
+}
+
+
 bool ecs_sparse_id_record_lock_write_end(
     ecs_component_record_t *idr)
 {
     return flecs_sparse_id_record_lock_inc(idr) != 0;
 }
 
+
+bool ecs_sparse_id_record_lock_write_end_multithreaded(
+    ecs_component_record_t *idr)
+{
+    return flecs_sparse_id_record_lock_inc_multithreaded(idr) != 0;
+}
+
 int32_t flecs_table_column_lock_inc(
+    ecs_table_t *table,
+    const int16_t column_index)
+{
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table->column_lock != NULL, ECS_INTERNAL_ERROR, NULL);
+    return ++table->column_lock[ column_index ];
+}
+
+int32_t flecs_table_column_lock_inc_multithreaded(
     ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id
@@ -38999,6 +39054,15 @@ int32_t flecs_table_column_lock_inc(
 
 int32_t flecs_table_column_lock_dec(
     ecs_table_t *table,
+    const int16_t column_index)
+{
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table->column_lock != NULL, ECS_INTERNAL_ERROR, NULL);
+    return --table->column_lock[ column_index ];
+}
+
+int32_t flecs_table_column_lock_dec_multithreaded(
+    ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id
     )
@@ -39010,38 +39074,70 @@ int32_t flecs_table_column_lock_dec(
 
 bool ecs_table_column_lock_read_begin(
     ecs_table_t *table,
+    const int16_t column_index
+    )
+{
+    return flecs_table_column_lock_inc(table, column_index) <= 0;
+}
+
+bool ecs_table_column_lock_read_begin_multithreaded(
+    ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id
     )
 {
-    return flecs_table_column_lock_inc(table, column_index, stage_id) <= 0;
+    return flecs_table_column_lock_inc_multithreaded(table, column_index, stage_id) <= 0;
 }
 
 bool ecs_table_column_lock_read_end(
     ecs_table_t *table,
+    const int16_t column_index
+    )
+{
+    return flecs_table_column_lock_dec(table, column_index) < 0;
+}
+
+bool ecs_table_column_lock_read_end_multithreaded(
+    ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id
     )
 {
-    return flecs_table_column_lock_dec(table, column_index, stage_id) < 0;
+    return flecs_table_column_lock_dec_multithreaded(table, column_index, stage_id) < 0;
 }
 
 bool ecs_table_column_lock_write_begin(
     ecs_table_t *table,
-    const int16_t column_index,
-    const int32_t stage_id
+    const int16_t column_index
     )
 {
-    return flecs_table_column_lock_dec(table, column_index, stage_id) != -1;
+    return flecs_table_column_lock_dec(table, column_index) != -1;
 }
 
-bool ecs_table_column_lock_write_end(
+bool ecs_table_column_lock_write_begin_multithreaded(
     ecs_table_t *table,
     const int16_t column_index,
     const int32_t stage_id
     )
 {
-    return flecs_table_column_lock_inc(table, column_index, stage_id) != 0;
+    return flecs_table_column_lock_dec_multithreaded(table, column_index, stage_id) != -1;
+}
+
+bool ecs_table_column_lock_write_end(
+    ecs_table_t *table,
+    const int16_t column_index
+    )
+{
+    return flecs_table_column_lock_inc(table, column_index) != 0;
+}
+
+bool ecs_table_column_lock_write_end_multithreaded(
+    ecs_table_t *table,
+    const int16_t column_index,
+    const int32_t stage_id
+    )
+{
+    return flecs_table_column_lock_inc_multithreaded(table, column_index, stage_id) != 0;
 }
 
 #endif

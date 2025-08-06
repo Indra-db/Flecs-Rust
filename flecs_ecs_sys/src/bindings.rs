@@ -4610,28 +4610,60 @@ unsafe extern "C-unwind" {
     pub fn ecs_sparse_id_record_lock_write_end(idr: *mut ecs_component_record_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_begin(
+    pub fn ecs_table_column_lock_read_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_read_end(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_write_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_write_end(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_read_begin_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_read_end_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_write_begin_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_sparse_id_record_lock_write_end_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_table_column_lock_read_begin_multithreaded(
         table: *mut ecs_table_t,
         column_index: i16,
         stage_id: i32,
     ) -> bool;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_end(
+    pub fn ecs_table_column_lock_read_end_multithreaded(
         table: *mut ecs_table_t,
         column_index: i16,
         stage_id: i32,
     ) -> bool;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_begin(
+    pub fn ecs_table_column_lock_write_begin_multithreaded(
         table: *mut ecs_table_t,
         column_index: i16,
         stage_id: i32,
     ) -> bool;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_end(
+    pub fn ecs_table_column_lock_write_end_multithreaded(
         table: *mut ecs_table_t,
         column_index: i16,
         stage_id: i32,
