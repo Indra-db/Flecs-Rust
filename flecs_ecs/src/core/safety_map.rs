@@ -1,3 +1,5 @@
+#[cfg(feature = "flecs_safety_locks")]
+use crate::core::QueryTuple;
 use crate::core::{IdOperations, IdView};
 
 use super::ReadWriteId;
@@ -332,14 +334,13 @@ pub(super) const DECREMENT: bool = false;
 
 #[cfg(feature = "flecs_safety_locks")]
 #[inline(always)]
-fn lock_table<const INCREMENT: bool, const MULTITHREADED: bool>(
+fn lock_table<const INCREMENT: bool, const READONLY: bool, const MULTITHREADED: bool>(
     world: &WorldRef,
     table: *mut sys::ecs_table_t,
     col: i16,
     stage: i32,
-    readonly: bool,
 ) {
-    if readonly {
+    if READONLY {
         if INCREMENT {
             get_table_column_lock_read_begin::<MULTITHREADED>(world, table, col, stage);
         } else {
@@ -354,12 +355,11 @@ fn lock_table<const INCREMENT: bool, const MULTITHREADED: bool>(
 
 #[cfg(feature = "flecs_safety_locks")]
 #[inline(always)]
-fn lock_sparse<const INCREMENT: bool, const MULTITHREADED: bool>(
+fn lock_sparse<const INCREMENT: bool, const READONLY: bool, const MULTITHREADED: bool>(
     world: &WorldRef,
     idr: *mut sys::ecs_component_record_t,
-    readonly: bool,
 ) {
-    if readonly {
+    if READONLY {
         if INCREMENT {
             sparse_id_record_lock_read_begin::<MULTITHREADED>(world, idr);
         } else {
@@ -374,73 +374,134 @@ fn lock_sparse<const INCREMENT: bool, const MULTITHREADED: bool>(
 
 #[inline]
 #[cfg(feature = "flecs_safety_locks")]
-pub(crate) fn do_read_write_locks<const INCREMENT: bool>(
-    iter: &sys::ecs_iter_t,
-    count: usize,
+pub(crate) fn do_read_write_locks<
+    const INCREMENT: bool,
+    const ANY_SPARSE_TERMS: bool,
+    T: QueryTuple,
+>(
     world: &WorldRef,
+    table_records: &[super::TableColumnSafety],
 ) {
-    unsafe {
-        let trs = core::slice::from_raw_parts(iter.trs, count);
-        let ids = core::slice::from_raw_parts(iter.ids, count);
-        let multithreaded = world.is_currently_multithreaded();
+    let multithreaded = world.is_currently_multithreaded();
 
-        if multithreaded {
-            let stage = world.stage_id();
-            __internal_do_read_write_locks::<INCREMENT, true>(iter, count, world, stage, trs, ids);
-        } else {
-            __internal_do_read_write_locks::<INCREMENT, false>(
-                iter, count, world, 0, /* dummy */
-                trs, ids,
-            );
-        }
+    if multithreaded {
+        let stage = world.stage_id();
+        __internal_do_read_write_locks::<INCREMENT, true, ANY_SPARSE_TERMS, T>(
+            world,
+            stage,
+            table_records,
+        );
+    } else {
+        __internal_do_read_write_locks::<INCREMENT, false, ANY_SPARSE_TERMS, T>(
+            world,
+            0, /* dummy */
+            table_records,
+        );
     }
 }
 
 #[inline(always)]
-fn __internal_do_read_write_locks<const INCREMENT: bool, const MULTITHREADED: bool>(
-    iter: &flecs_ecs_sys::ecs_iter_t,
-    count: usize,
+fn __internal_do_read_write_locks<
+    const INCREMENT: bool,
+    const MULTITHREADED: bool,
+    const ANY_SPARSE_TERMS: bool,
+    T: QueryTuple,
+>(
     world: &WorldRef<'_>,
     stage: i32,
-    trs: &[*const flecs_ecs_sys::ecs_table_record_t],
-    ids: &[u64],
+    table_records: &[super::TableColumnSafety],
 ) {
+    let count_immutable: usize = const { T::COUNT_IMMUTABLE };
+    let start_index_mutable: usize = const { T::COUNT_IMMUTABLE };
+    let start_index_optional_immutable: usize = const { T::COUNT_IMMUTABLE + T::COUNT_MUTABLE };
+    let start_index_optional_mutable: usize =
+        const { T::COUNT_IMMUTABLE + T::COUNT_MUTABLE + T::COUNT_OPTIONAL_IMMUTABLE };
+    let end_index_mutable: usize = const { T::COUNT_IMMUTABLE + T::COUNT_MUTABLE };
+    let end_index_optional_immutable: usize =
+        const { T::COUNT_IMMUTABLE + T::COUNT_MUTABLE + T::COUNT_OPTIONAL_IMMUTABLE };
+    let end_index_optional_mutable: usize = const {
+        T::COUNT_IMMUTABLE
+            + T::COUNT_MUTABLE
+            + T::COUNT_OPTIONAL_IMMUTABLE
+            + T::COUNT_OPTIONAL_MUTABLE
+    };
+
     unsafe {
-        for i in 0..count {
-            if !sys::ecs_field_is_set(iter, i as i8) {
-                continue;
-            }
+        for i in 0..count_immutable {
+            let tr = &*table_records.get_unchecked(i).table_record;
+            let col = tr.column;
 
-            let tr = *trs.get_unchecked(i);
-
-            if tr.is_null() {
-                continue;
-            }
-
-            let component_id = *ids.get_unchecked(i);
-
-            if sys::ecs_id_is_wildcard(component_id) {
-                continue;
-            }
-
-            // Safe deref, checked for null
-            let tr_ref = &*tr;
-            let col = tr_ref.column;
-            let idr = tr_ref.hdr.cache as *mut sys::ecs_component_record_t;
-
-            // Sparse path
-            if col == -1 {
+            if ANY_SPARSE_TERMS && col == -1 {
+                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
                 if sys::ecs_rust_is_sparse_idr(idr) {
-                    let readonly = sys::ecs_field_is_readonly(iter, i as i8);
-                    lock_sparse::<INCREMENT, MULTITHREADED>(world, idr, readonly);
+                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
                 }
                 continue;
             }
 
-            // Table path
-            let table = tr_ref.hdr.table;
-            let readonly = sys::ecs_field_is_readonly(iter, i as i8);
-            lock_table::<INCREMENT, MULTITHREADED>(world, table, col, stage, readonly);
+            let table = tr.hdr.table;
+            lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
+        }
+        for i in start_index_mutable..end_index_mutable {
+            let tr = &*table_records.get_unchecked(i).table_record;
+            let col = tr.column;
+
+            if ANY_SPARSE_TERMS && col == -1 {
+                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
+                if sys::ecs_rust_is_sparse_idr(idr) {
+                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
+                }
+                continue;
+            }
+
+            let table = tr.hdr.table;
+            lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
+        }
+        for i in start_index_optional_immutable..end_index_optional_immutable {
+            //this is done by the tr.null check
+            // if !sys::ecs_field_is_set(iter, i as i8) {
+            //     continue;
+            // }
+            let tr = table_records.get_unchecked(i).table_record;
+            if tr.is_null() {
+                continue;
+            }
+            let tr = &*tr;
+            let col = tr.column;
+
+            if ANY_SPARSE_TERMS && col == -1 {
+                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
+                if sys::ecs_rust_is_sparse_idr(idr) {
+                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
+                }
+                continue;
+            }
+
+            let table = tr.hdr.table;
+            lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
+        }
+        for i in start_index_optional_mutable..end_index_optional_mutable {
+            //this is done by the tr.null check
+            // if !sys::ecs_field_is_set(iter, i as i8) {
+            //     continue;
+            // }
+            let tr = table_records.get_unchecked(i).table_record;
+            if tr.is_null() {
+                continue;
+            }
+            let tr = &*tr;
+            let col = tr.column;
+
+            if ANY_SPARSE_TERMS && col == -1 {
+                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
+                if sys::ecs_rust_is_sparse_idr(idr) {
+                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
+                }
+                continue;
+            }
+
+            let table = tr.hdr.table;
+            lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
         }
     }
 }

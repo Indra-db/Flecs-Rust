@@ -90,7 +90,17 @@ pub mod private {
                 let iter = &mut *iter;
                 let each = &mut *(iter.callback_ctx as *mut Func);
                 let world = WorldRef::from_ptr(iter.world);
-                internal_each_iter_next::<T, CALLED_FROM_RUN>(iter, &world, each);
+                #[cfg(feature = "flecs_safety_locks")]
+                if iter.row_fields == 0 {
+                    internal_each_iter_next::<T, CALLED_FROM_RUN, false>(iter, &world, each);
+                } else {
+                    internal_each_iter_next::<T, CALLED_FROM_RUN, true>(iter, &world, each);
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    internal_each_iter_next::<T, CALLED_FROM_RUN, false>(iter, &world, each);
+                }
             }
         }
 
@@ -110,7 +120,29 @@ pub mod private {
                 let iter = &mut *iter;
                 let world = WorldRef::from_ptr(iter.world);
                 let each_entity = &mut *(iter.callback_ctx as *mut Func);
-                internal_each_entity_iter_next::<T, CALLED_FROM_RUN>(iter, &world, each_entity);
+                #[cfg(feature = "flecs_safety_locks")]
+                if iter.row_fields == 0 {
+                    internal_each_entity_iter_next::<T, CALLED_FROM_RUN, false>(
+                        iter,
+                        &world,
+                        each_entity,
+                    );
+                } else {
+                    internal_each_entity_iter_next::<T, CALLED_FROM_RUN, true>(
+                        iter,
+                        &world,
+                        each_entity,
+                    );
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    internal_each_entity_iter_next::<T, CALLED_FROM_RUN, false>(
+                        iter,
+                        &world,
+                        each_entity,
+                    );
+                }
             }
         }
 
@@ -300,6 +332,7 @@ pub(crate) fn internal_each_generic<
     T: QueryTuple,
     E: EntityExtractor,
     const CALLED_FROM_RUN: bool,
+    const ANY_SPARSE_TERMS: bool,
     F: FnMut(E::Output, T::TupleType<'_>),
 >(
     iter: &mut sys::ecs_iter_t,
@@ -338,7 +371,10 @@ pub(crate) fn internal_each_generic<
     );
 
     #[cfg(feature = "flecs_safety_locks")]
-    do_read_write_locks::<INCREMENT>(iter, T::COUNT as usize, world);
+    do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+        world,
+        components_data.safety_table_records(),
+    );
 
     // only lock/unlock in debug or forced‑assert builds, and only
     // if we’re not in the “called from run” path:
@@ -361,17 +397,24 @@ pub(crate) fn internal_each_generic<
     }
 
     #[cfg(feature = "flecs_safety_locks")]
-    do_read_write_locks::<DECREMENT>(iter, T::COUNT as usize, world);
+    do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+        world,
+        components_data.safety_table_records(),
+    );
 }
 
 #[inline(always)]
-pub(crate) fn internal_each_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool>(
+pub(crate) fn internal_each_iter_next<
+    T: QueryTuple,
+    const CALLED_FROM_RUN: bool,
+    const ANY_SPARSE_TERMS: bool,
+>(
     iter: &mut sys::ecs_iter_t,
     world: &WorldRef<'_>,
     func: &mut impl FnMut(T::TupleType<'_>),
 ) {
     // drop the `()` from the call
-    internal_each_generic::<T, NoEntity, CALLED_FROM_RUN, _>(
+    internal_each_generic::<T, NoEntity, CALLED_FROM_RUN, ANY_SPARSE_TERMS, _>(
         iter,
         NoEntity,
         move |(), t| func(t),
@@ -380,12 +423,18 @@ pub(crate) fn internal_each_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool
 }
 
 #[inline(always)]
-pub(crate) fn internal_each_entity_iter_next<T: QueryTuple, const CALLED_FROM_RUN: bool>(
+pub(crate) fn internal_each_entity_iter_next<
+    T: QueryTuple,
+    const CALLED_FROM_RUN: bool,
+    const ANY_SPARSE_TERMS: bool,
+>(
     iter: &mut sys::ecs_iter_t,
     world: &WorldRef<'_>,
     func: &mut impl FnMut(EntityView, T::TupleType<'_>),
 ) {
     // pass a WithEntity extractor so it builds the EntityView
     let extractor = WithEntity(world);
-    internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, _>(iter, extractor, func, world);
+    internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, ANY_SPARSE_TERMS, _>(
+        iter, extractor, func, world,
+    );
 }

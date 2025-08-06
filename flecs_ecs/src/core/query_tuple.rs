@@ -14,8 +14,14 @@ use flecs_ecs_derive::tuples;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[doc(hidden)]
 pub struct IsAnyArray {
-    pub a_ref: bool, //e.g. singleton
+    pub a_ref: bool, //e.g. singleton, prefab inheritance
     pub a_row: bool, //e.g. sparse
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+#[derive(Debug, Clone, Copy, Default)]
+pub struct TableColumnSafety {
+    pub table_record: *const sys::ecs_table_record_t,
 }
 
 pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
@@ -25,6 +31,8 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub index_array_components: [i8; LEN],
     #[cfg(feature = "flecs_safety_locks")]
     pub ids: [ReadWriteId; LEN],
+    #[cfg(feature = "flecs_safety_locks")]
+    pub safety_table_records: [TableColumnSafety; LEN],
     _marker: PhantomData<T>,
 }
 
@@ -43,6 +51,9 @@ pub trait ComponentPointers<T: QueryTuple> {
 
     #[cfg(feature = "flecs_safety_locks")]
     fn ids(&self) -> &[ReadWriteId];
+
+    #[cfg(feature = "flecs_safety_locks")]
+    fn safety_table_records(&self) -> &[TableColumnSafety];
 }
 
 impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T, LEN> {
@@ -53,6 +64,8 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
         let mut index_array_components = [0; LEN];
         #[cfg(feature = "flecs_safety_locks")]
         let mut ids = [ReadWriteId::Read(0); LEN];
+        #[cfg(feature = "flecs_safety_locks")]
+        let mut safety_table_records = [TableColumnSafety::default(); LEN];
 
         let is_any_array = if (iter.ref_fields | iter.up_fields) != 0 {
             T::populate_array_ptrs(
@@ -63,6 +76,8 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 &mut index_array_components[..],
                 #[cfg(feature = "flecs_safety_locks")]
                 &mut ids[..],
+                #[cfg(feature = "flecs_safety_locks")]
+                &mut safety_table_records[..],
             )
         } else {
             // TODO since we know there is no is_ref and this always return false, we could mitigate a branch if we
@@ -72,6 +87,8 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 &mut array_components[..],
                 #[cfg(feature = "flecs_safety_locks")]
                 &mut ids[..],
+                #[cfg(feature = "flecs_safety_locks")]
+                &mut safety_table_records[..],
             );
             IsAnyArray {
                 a_ref: false,
@@ -88,6 +105,8 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 index_array_components,
                 #[cfg(feature = "flecs_safety_locks")]
                 ids,
+                #[cfg(feature = "flecs_safety_locks")]
+                safety_table_records,
                 _marker: PhantomData::<T>,
             },
         )
@@ -125,9 +144,12 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
     fn ids(&self) -> &[ReadWriteId] {
         &self.ids[..]
     }
-}
 
-struct Singleton<T>(T);
+    #[cfg(feature = "flecs_safety_locks")]
+    fn safety_table_records(&self) -> &[TableColumnSafety] {
+        &self.safety_table_records[..]
+    }
+}
 
 pub trait IterableTypeOperation {
     type CastType;
@@ -136,6 +158,7 @@ pub trait IterableTypeOperation {
     type OnlyType: ComponentOrPairId;
     type OnlyPairType: ComponentId;
     const IS_IMMUTABLE: bool;
+    const IS_OPTIONAL: bool;
 
     fn populate_term(term: &mut sys::ecs_term_t);
 
@@ -158,6 +181,7 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = true;
+    const IS_OPTIONAL: bool = false;
 
     #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
@@ -197,6 +221,7 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = false;
+    const IS_OPTIONAL: bool = false;
 
     #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
@@ -236,6 +261,7 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = true;
+    const IS_OPTIONAL: bool = true;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
         term.inout = InOutKind::In as i16;
@@ -279,6 +305,7 @@ where
     type OnlyType = T;
     type OnlyPairType = <T as ComponentOrPairId>::CastType;
     const IS_IMMUTABLE: bool = false;
+    const IS_OPTIONAL: bool = true;
 
     #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
@@ -318,6 +345,10 @@ pub trait QueryTuple: Sized {
     type TupleType<'a>;
     const CONTAINS_ANY_TAG_TERM: bool;
     const COUNT: i32;
+    const COUNT_IMMUTABLE: usize;
+    const COUNT_MUTABLE: usize;
+    const COUNT_OPTIONAL_IMMUTABLE: usize;
+    const COUNT_OPTIONAL_MUTABLE: usize;
 
     fn create_ptrs(iter: &sys::ecs_iter_t) -> (IsAnyArray, Self::Pointers) {
         Self::Pointers::new(iter)
@@ -343,12 +374,14 @@ pub trait QueryTuple: Sized {
         is_row: &mut [bool],
         indexes: &mut [i8],
         #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     ) -> IsAnyArray;
 
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
         #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     );
 
     fn create_tuple(array_components: &[*mut u8], index: usize) -> Self::TupleType<'_>;
@@ -382,6 +415,10 @@ where
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
     const COUNT : i32 = 1;
+    const COUNT_IMMUTABLE: usize = if A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
+    const COUNT_MUTABLE: usize = if !A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
+    const COUNT_OPTIONAL_IMMUTABLE: usize = if A::IS_IMMUTABLE && A::IS_OPTIONAL { 1 } else { 0 };
+    const COUNT_OPTIONAL_MUTABLE: usize = if !A::IS_IMMUTABLE && A::IS_OPTIONAL { 1 } else { 0 };
 
     #[inline(always)]
     fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
@@ -424,6 +461,7 @@ where
         is_row: &mut [bool],
         indexes: &mut [i8],
         #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     ) -> IsAnyArray {
         if it.row_fields & (1u32 << 0) != 0 {
             // Need to fetch the value with flecs_field_at()
@@ -434,8 +472,9 @@ where
             components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
-                #[cfg(feature = "flecs_safety_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
+            table_records[0].table_record = unsafe { *it.trs.add(0) };
             if A::IS_IMMUTABLE {
                 ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
             } else {
@@ -452,12 +491,14 @@ where
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
-                #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+        #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
 
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
-                #[cfg(feature = "flecs_safety_locks")]
+        #[cfg(feature = "flecs_safety_locks")]
         {
+            table_records[0].table_record = unsafe { *it.trs.add(0) };
             if A::IS_IMMUTABLE {
                 ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
             } else {
@@ -580,6 +621,22 @@ macro_rules! tuple_count {
     ($head:ident, $($tail:ident),*) => { 1 + tuple_count!($($tail),*) };
 }
 
+// macro_rules! count_immutable {
+//     () => { 0 };
+//     ($head:ident) => { if $head::IS_IMMUTABLE && !$head::IS_OPTIONAL { 1 } else { 0 } };
+//     ($head:ident, $($tail:ident),*) => {
+//         (if $head::IS_IMMUTABLE && !$head::IS_OPTIONAL { 1 } else { 0 }) + count_immutable!($($tail),*)
+//     };
+// }
+
+// macro_rules! count_mutable {
+//     () => { 0 };
+//     ($head:ident) => { if !$head::IS_IMMUTABLE && !$head::IS_OPTIONAL { 1 } else { 0 } };
+//     ($head:ident, $($tail:ident),*) => {
+//         (if !$head::IS_IMMUTABLE && !$head::IS_OPTIONAL { 1 } else { 0 }) + count_mutable!($($tail),*)
+//     };
+// }
+
 macro_rules! impl_iterable {
     ($($t:ident),*) => {
         impl<$($t: IterableTypeOperation),*> QueryTuple for ($($t,)*) {
@@ -591,6 +648,10 @@ macro_rules! impl_iterable {
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
+            const COUNT_IMMUTABLE: usize = $((if $t::IS_IMMUTABLE && !$t::IS_OPTIONAL { 1 } else { 0 }) +)* 0;
+            const COUNT_MUTABLE: usize = $((if !$t::IS_IMMUTABLE && !$t::IS_OPTIONAL { 1 } else { 0 }) +)* 0;
+            const COUNT_OPTIONAL_IMMUTABLE: usize = $((if $t::IS_IMMUTABLE && $t::IS_OPTIONAL { 1 } else { 0 }) +)* 0;
+            const COUNT_OPTIONAL_MUTABLE: usize = $((if !$t::IS_IMMUTABLE && $t::IS_OPTIONAL { 1 } else { 0 }) +)* 0;
 
             #[inline(always)]
             fn populate<'a>(query: &mut impl QueryBuilderImpl<'a>) {
@@ -630,27 +691,50 @@ macro_rules! impl_iterable {
                 is_row: &mut [bool],
                 indexes: &mut [i8],
                 #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+                #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
             ) -> IsAnyArray {
                 let mut index : usize = 0;
                 let mut any_ref = false;
                 let mut any_row = false;
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_immutable : usize = 0;
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_mutable : usize = const { Self::COUNT_IMMUTABLE };
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_optional_immutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE };
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_optional_mutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE + Self::COUNT_OPTIONAL_IMMUTABLE };
                 $(
                     if (it.row_fields & (1u32 << index)) != 0 {
                         // Need to fetch the value with flecs_field_at()
-                        is_ref[index ] =  true;
-                        is_row[index ] = true;
-                        indexes[index ] = index as i8;
+                        is_ref[index] =  true;
+                        is_row[index] = true;
+                        indexes[index] = index as i8;
                     } else {
-                        components[index ] =
+                        components[index] =
                             flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
-                        is_ref[index ] = unsafe { *it.sources.add(index ) != 0 };
+                        is_ref[index] = unsafe { *it.sources.add(index ) != 0 };
                     }
                     #[cfg(feature = "flecs_safety_locks")]
                     {
                         if $t::IS_IMMUTABLE {
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index as usize) });
+                            if !$t::IS_OPTIONAL {
+                                table_records[index_immutable].table_record = unsafe { *it.trs.add(index) };
+                                index_immutable += 1;
+                            } else {
+                                table_records[index_optional_immutable].table_record = unsafe { *it.trs.add(index) };
+                                index_optional_immutable += 1;
+                            }
+                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index) });
                         } else {
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index as usize) });
+                            if !$t::IS_OPTIONAL {
+                                table_records[index_mutable].table_record = unsafe { *it.trs.add(index) };
+                                index_mutable += 1;
+                            } else {
+                                table_records[index_optional_mutable].table_record = unsafe { *it.trs.add(index) };
+                                index_optional_mutable += 1;
+                            }
+                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index) });
                         }
                     }
                     any_ref |= is_ref[index ];
@@ -669,8 +753,17 @@ macro_rules! impl_iterable {
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
                 #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
+                #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
             ) {
                 let mut index : usize = 0;
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_immutable : usize = 0;
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_mutable : usize = const { Self::COUNT_IMMUTABLE };
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_optional_immutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE };
+                #[cfg(feature = "flecs_safety_locks")]
+                let mut index_optional_mutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE + Self::COUNT_OPTIONAL_IMMUTABLE };
                 $(
                     ecs_assert!(unsafe { *it.sources.add(index ) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index] =
@@ -678,9 +771,23 @@ macro_rules! impl_iterable {
                     #[cfg(feature = "flecs_safety_locks")]
                     {
                         if $t::IS_IMMUTABLE {
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index as usize) });
+                            if !$t::IS_OPTIONAL {
+                                table_records[index_immutable].table_record = unsafe { *it.trs.add(index) };
+                                index_immutable += 1;
+                            } else {
+                                table_records[index_optional_immutable].table_record = unsafe { *it.trs.add(index) };
+                                index_optional_immutable += 1;
+                            }
+                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index) });
                         } else {
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index as usize) });
+                            if !$t::IS_OPTIONAL {
+                                table_records[index_mutable].table_record = unsafe { *it.trs.add(index) };
+                                index_mutable += 1;
+                            } else {
+                                table_records[index_optional_mutable].table_record = unsafe { *it.trs.add(index) };
+                                index_optional_mutable += 1;
+                            }
+                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index) });
                         }
                     }
                     index += 1;
@@ -742,3 +849,276 @@ macro_rules! impl_iterable {
 }
 
 tuples!(impl_iterable, 0, 32);
+
+// #[cfg(test)]
+// mod count_tests {
+//     use super::*;
+//     use crate::prelude::*;
+
+//     #[derive(Component)]
+//     struct Position {
+//         x: f32,
+//         y: f32,
+//     }
+
+//     #[derive(Component)]
+//     struct Velocity {
+//         x: f32,
+//         y: f32,
+//     }
+
+//     #[derive(Component)]
+//     struct Health(u32);
+
+//     #[test]
+//     fn test_count_immutable() {
+//         // Test single types
+//         assert_eq!(<&Position as QueryTuple>::COUNT_IMMUTABLE, 1);
+//         assert_eq!(<&mut Position as QueryTuple>::COUNT_IMMUTABLE, 0);
+//         assert_eq!(<Option<&Position> as QueryTuple>::COUNT_IMMUTABLE, 0);
+//         assert_eq!(<Option<&mut Position> as QueryTuple>::COUNT_IMMUTABLE, 0);
+
+//         // Test tuple types
+//         assert_eq!(<(&Position, &Velocity) as QueryTuple>::COUNT_IMMUTABLE, 2);
+//         assert_eq!(
+//             <(&Position, &mut Velocity) as QueryTuple>::COUNT_IMMUTABLE,
+//             1
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity) as QueryTuple>::COUNT_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&Velocity>, &Health) as QueryTuple>::COUNT_IMMUTABLE,
+//             2
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&mut Velocity>, &Health) as QueryTuple>::COUNT_IMMUTABLE,
+//             2
+//         );
+
+//         // Test larger tuples
+//         assert_eq!(
+//             <(&Position, &Velocity, &Health) as QueryTuple>::COUNT_IMMUTABLE,
+//             3
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity, &mut Health) as QueryTuple>::COUNT_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(<(Option<&Position>, Option<&Velocity>, Option<&Health>) as QueryTuple>::COUNT_IMMUTABLE, 0);
+//         assert_eq!(
+//             <(&Position, &mut Velocity, &Health, Option<&Position>) as QueryTuple>::COUNT_IMMUTABLE,
+//             2
+//         );
+//     }
+
+//     #[test]
+//     fn test_count_mutable() {
+//         // Test single types
+//         assert_eq!(<&Position as QueryTuple>::COUNT_MUTABLE, 0);
+//         assert_eq!(<&mut Position as QueryTuple>::COUNT_MUTABLE, 1);
+//         assert_eq!(<Option<&Position> as QueryTuple>::COUNT_MUTABLE, 0);
+//         assert_eq!(<Option<&mut Position> as QueryTuple>::COUNT_MUTABLE, 0);
+
+//         // Test tuple types
+//         assert_eq!(<(&Position, &Velocity) as QueryTuple>::COUNT_MUTABLE, 0);
+//         assert_eq!(<(&Position, &mut Velocity) as QueryTuple>::COUNT_MUTABLE, 1);
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity) as QueryTuple>::COUNT_MUTABLE,
+//             2
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&Velocity>, &Health) as QueryTuple>::COUNT_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&mut Velocity>, &Health) as QueryTuple>::COUNT_MUTABLE,
+//             0
+//         );
+
+//         // Test larger tuples
+//         assert_eq!(
+//             <(&Position, &Velocity, &Health) as QueryTuple>::COUNT_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity, &mut Health) as QueryTuple>::COUNT_MUTABLE,
+//             3
+//         );
+//         assert_eq!(
+//             <(Option<&Position>, Option<&Velocity>, Option<&Health>) as QueryTuple>::COUNT_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, &mut Velocity, &Health, Option<&Position>) as QueryTuple>::COUNT_MUTABLE,
+//             1
+//         );
+//     }
+
+//     #[test]
+//     fn test_count_optional_immutable() {
+//         // Test single types
+//         assert_eq!(<&Position as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE, 0);
+//         assert_eq!(<&mut Position as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE, 0);
+//         assert_eq!(
+//             <Option<&Position> as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             1
+//         );
+//         assert_eq!(
+//             <Option<&mut Position> as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+
+//         // Test tuple types
+//         assert_eq!(
+//             <(&Position, &Velocity) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, &mut Velocity) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&Velocity>, &Health) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             1
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&mut Velocity>, &Health) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+
+//         // Test larger tuples
+//         assert_eq!(
+//             <(&Position, &Velocity, &Health) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity, &mut Health) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             0
+//         );
+//         assert_eq!(<(Option<&Position>, Option<&Velocity>, Option<&Health>) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE, 3);
+//         assert_eq!(
+//             <(&Position, &mut Velocity, &Health, Option<&Position>) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             1
+//         );
+//         assert_eq!(
+//             <(Option<&Position>, Option<&mut Velocity>, Option<&Health>) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE,
+//             2
+//         );
+//     }
+
+//     #[test]
+//     fn test_count_optional_mutable() {
+//         // Test single types
+//         assert_eq!(<&Position as QueryTuple>::COUNT_OPTIONAL_MUTABLE, 0);
+//         assert_eq!(<&mut Position as QueryTuple>::COUNT_OPTIONAL_MUTABLE, 0);
+//         assert_eq!(<Option<&Position> as QueryTuple>::COUNT_OPTIONAL_MUTABLE, 0);
+//         assert_eq!(
+//             <Option<&mut Position> as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             1
+//         );
+
+//         // Test tuple types
+//         assert_eq!(
+//             <(&Position, &Velocity) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, &mut Velocity) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&Velocity>, &Health) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&Position, Option<&mut Velocity>, &Health) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             1
+//         );
+
+//         // Test larger tuples
+//         assert_eq!(
+//             <(&Position, &Velocity, &Health) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(&mut Position, &mut Velocity, &mut Health) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(<(Option<&Position>, Option<&Velocity>, Option<&Health>) as QueryTuple>::COUNT_OPTIONAL_MUTABLE, 0);
+//         assert_eq!(
+//             <(&Position, &mut Velocity, &Health, Option<&Position>) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             0
+//         );
+//         assert_eq!(
+//             <(Option<&Position>, Option<&mut Velocity>, Option<&Health>) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             1
+//         );
+//         assert_eq!(
+//             <(
+//                 Option<&mut Position>,
+//                 Option<&mut Velocity>,
+//                 Option<&mut Health>
+//             ) as QueryTuple>::COUNT_OPTIONAL_MUTABLE,
+//             3
+//         );
+//     }
+
+//     #[test]
+//     fn test_total_counts_add_up() {
+//         // Verify that all counts add up to the total count
+//         // Using const assertions instead of type alias to avoid lifetime issues
+
+//         const TOTAL_COUNT: usize = <(
+//             &Position,
+//             &mut Velocity,
+//             Option<&Health>,
+//             Option<&mut Position>,
+//         ) as QueryTuple>::COUNT;
+//         const IMMUTABLE_COUNT: usize = <(
+//             &Position,
+//             &mut Velocity,
+//             Option<&Health>,
+//             Option<&mut Position>,
+//         ) as QueryTuple>::COUNT_IMMUTABLE;
+//         const MUTABLE_COUNT: usize = <(
+//             &Position,
+//             &mut Velocity,
+//             Option<&Health>,
+//             Option<&mut Position>,
+//         ) as QueryTuple>::COUNT_MUTABLE;
+//         const OPTIONAL_IMMUTABLE_COUNT: usize = <(
+//             &Position,
+//             &mut Velocity,
+//             Option<&Health>,
+//             Option<&mut Position>,
+//         ) as QueryTuple>::COUNT_OPTIONAL_IMMUTABLE;
+//         const OPTIONAL_MUTABLE_COUNT: usize = <(
+//             &Position,
+//             &mut Velocity,
+//             Option<&Health>,
+//             Option<&mut Position>,
+//         ) as QueryTuple>::COUNT_OPTIONAL_MUTABLE;
+
+//         assert_eq!(TOTAL_COUNT, 4);
+//         assert_eq!(IMMUTABLE_COUNT, 1);
+//         assert_eq!(MUTABLE_COUNT, 1);
+//         assert_eq!(OPTIONAL_IMMUTABLE_COUNT, 1);
+//         assert_eq!(OPTIONAL_MUTABLE_COUNT, 1);
+
+//         // Verify they all add up
+//         assert_eq!(
+//             TOTAL_COUNT,
+//             IMMUTABLE_COUNT + MUTABLE_COUNT + OPTIONAL_IMMUTABLE_COUNT + OPTIONAL_MUTABLE_COUNT
+//         );
+//     }
+// }

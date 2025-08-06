@@ -57,8 +57,24 @@ where
         let mut iter = self.retrieve_iter();
         let world = self.world();
 
-        while self.iter_next(&mut iter) {
-            internal_each_iter_next::<T, false>(&mut iter, &world, &mut func);
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            while self.iter_next(&mut iter) {
+                internal_each_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+            }
+        }
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if iter.row_fields == 0 {
+                while self.iter_next(&mut iter) {
+                    internal_each_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+                }
+            } else {
+                while self.iter_next(&mut iter) {
+                    internal_each_iter_next::<T, false, true>(&mut iter, &world, &mut func);
+                }
+            }
         }
     }
 
@@ -75,8 +91,23 @@ where
         let world = self.world();
         let mut iter = self.retrieve_iter();
 
-        while self.iter_next(&mut iter) {
-            internal_each_entity_iter_next::<T, false>(&mut iter, &world, &mut func);
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            while self.iter_next(&mut iter) {
+                internal_each_entity_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+            }
+        }
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if iter.row_fields == 0 {
+                while self.iter_next(&mut iter) {
+                    internal_each_entity_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+                }
+            } else {
+                while self.iter_next(&mut iter) {
+                    internal_each_entity_iter_next::<T, false, true>(&mut iter, &world, &mut func);
+                }
+            }
         }
     }
 
@@ -96,50 +127,39 @@ where
             let world_ptr = iter.world;
             let world = WorldRef::from_ptr(world_ptr);
 
-            while self.iter_next(&mut iter) {
-                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-                let iter_count = iter.count as usize;
-
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+            #[cfg(feature = "flecs_safety_locks")]
+            if iter.row_fields == 0 {
+                while self.iter_next(&mut iter) {
+                    __internal_find_impl::<T, false>(
+                        &mut func,
+                        iter,
+                        &mut entity,
+                        world_ptr,
+                        &world,
+                    );
                 }
-
-                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-                table_lock(world_ptr, iter.table);
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple(i);
-                        if func(tuple) {
-                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
-                            break;
-                        }
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_row(&iter, i);
-                        if func(tuple) {
-                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
-                            break;
-                        }
-                    }
-                } else {
-                    for i in 0..iter_count {
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        if func(tuple) {
-                            entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
-                            break;
-                        }
-                    }
+            } else {
+                while self.iter_next(&mut iter) {
+                    __internal_find_impl::<T, true>(
+                        &mut func,
+                        iter,
+                        &mut entity,
+                        world_ptr,
+                        &world,
+                    );
                 }
+            }
 
-                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-                table_unlock(world_ptr, iter.table);
-
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                while self.iter_next(&mut iter) {
+                    __internal_find_impl::<T, false>(
+                        &mut func,
+                        iter,
+                        &mut entity,
+                        world_ptr,
+                        &world,
+                    );
                 }
             }
             entity
@@ -165,55 +185,39 @@ where
             let world_ptr = iter.world;
             let world = WorldRef::from_ptr(world_ptr);
 
-            while self.iter_next(&mut iter) {
-                let (is_any_array, mut components_data) = T::create_ptrs(&iter);
-                let iter_count = iter.count as usize;
-
-                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-                table_lock(world_ptr, iter.table);
-
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(&iter, T::COUNT as usize, &world);
+            #[cfg(feature = "flecs_safety_locks")]
+            if iter.row_fields == 0 {
+                while self.iter_next(&mut iter) {
+                    __internal_find_entity_impl::<T, false>(
+                        &mut func,
+                        iter,
+                        &mut entity_result,
+                        world_ptr,
+                        &world,
+                    );
                 }
-
-                if !is_any_array.a_ref && !is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-
-                        let tuple = components_data.get_tuple(i);
-                        if func(entity, tuple) {
-                            entity_result = Some(entity);
-                            break;
-                        }
-                    }
-                } else if is_any_array.a_row {
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-                        let tuple = components_data.get_tuple_with_row(&iter, i);
-                        if func(entity, tuple) {
-                            entity_result = Some(entity);
-                            break;
-                        }
-                    }
-                } else {
-                    // is_any_array.a_ref
-                    for i in 0..iter_count {
-                        let entity = EntityView::new_from(world, *iter.entities.add(i));
-                        let tuple = components_data.get_tuple_with_ref(i);
-                        if func(entity, tuple) {
-                            entity_result = Some(entity);
-                            break;
-                        }
-                    }
+            } else {
+                while self.iter_next(&mut iter) {
+                    __internal_find_entity_impl::<T, true>(
+                        &mut func,
+                        iter,
+                        &mut entity_result,
+                        world_ptr,
+                        &world,
+                    );
                 }
+            }
 
-                #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-                table_unlock(world_ptr, iter.table);
-
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(&iter, T::COUNT as usize, &world);
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                while self.iter_next(&mut iter) {
+                    __internal_find_entity_impl::<T, false>(
+                        &mut func,
+                        iter,
+                        &mut entity_result,
+                        world_ptr,
+                        &world,
+                    );
                 }
             }
             entity_result
@@ -374,7 +378,7 @@ where
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
-            __internal_query_execute_each::<T, FuncEach>
+            __internal_query_execute_each_from_run::<T, FuncEach>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
         internal_run::<P>(&mut iter, &mut func, self.world());
@@ -463,7 +467,7 @@ where
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
-            __internal_query_execute_each_entity::<T, FuncEachEntity>
+            __internal_query_execute_each_entity_from_run::<T, FuncEachEntity>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
         let world = self.world();
@@ -750,35 +754,28 @@ where
         let mut it = self.retrieve_iter();
 
         #[cfg(feature = "flecs_safety_locks")]
-        let world = self.world();
-
-        // Proceed only if there is at least one entity in the iterator
-        if self.iter_next(&mut it) && it.count > 0 {
-            #[cfg(feature = "flecs_safety_locks")]
-            {
-                do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
+        {
+            let world = self.world();
+            if it.row_fields == 0 {
+                // Proceed only if there is at least one entity in the iterator
+                if self.iter_next(&mut it) && it.count > 0 {
+                    return __internal_try_first_impl::<T, R, false>(func, it, world);
+                }
+                return None;
             }
-
-            let (is_any_array, mut components_data) = T::create_ptrs(&it);
-            let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
-                components_data.get_tuple(0)
-            } else if is_any_array.a_row {
-                components_data.get_tuple_with_row(&it, 0)
-            } else {
-                components_data.get_tuple_with_ref(0)
-            };
-
-            let result = Some(func(tuple));
-
-            #[cfg(feature = "flecs_safety_locks")]
-            {
-                do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
+            if self.iter_next(&mut it) && it.count > 0 {
+                // Proceed only if there is at least one entity in the iterator
+                return __internal_try_first_impl::<T, R, true>(func, it, world);
             }
-            // Clean up iterator resources safely
-            unsafe { sys::ecs_iter_fini(&mut it) };
+            None
+        }
 
-            result
-        } else {
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            // Proceed only if there is at least one entity in the iterator
+            if self.iter_next(&mut it) && it.count > 0 {
+                return __internal_try_first_impl::<T, R, false>(func, it);
+            }
             None
         }
     }
@@ -876,41 +873,29 @@ where
         let mut it = self.retrieve_iter();
 
         #[cfg(feature = "flecs_safety_locks")]
-        let world = self.world();
+        {
+            let world = self.world();
 
+            if it.row_fields == 0 {
+                // Proceed only if we can iterate
+                if self.iter_next(&mut it) {
+                    return __internal_try_first_only_impl::<T, R, false>(func, it, world);
+                }
+                // No entities in the iterator
+                return Err(FirstOnlyError::NoEntities);
+            }
+            if self.iter_next(&mut it) {
+                // Proceed only if we can iterate
+                return __internal_try_first_only_impl::<T, R, true>(func, it, world);
+            }
+            // No entities in the iterator
+            Err(FirstOnlyError::NoEntities)
+        }
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
         // Proceed only if we can iterate
         if self.iter_next(&mut it) {
-            if it.count == 1 {
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<INCREMENT>(&it, T::COUNT as usize, &world);
-                }
-
-                let (is_any_array, mut components_data) = T::create_ptrs(&it);
-
-                let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
-                    components_data.get_tuple(0)
-                } else if is_any_array.a_row {
-                    components_data.get_tuple_with_row(&it, 0)
-                } else {
-                    components_data.get_tuple_with_ref(0)
-                };
-
-                // Clean up iterator resources safely
-                let result = func(tuple);
-
-                #[cfg(feature = "flecs_safety_locks")]
-                {
-                    do_read_write_locks::<DECREMENT>(&it, T::COUNT as usize, &world);
-                }
-                unsafe { sys::ecs_iter_fini(&mut it) };
-
-                Ok(result)
-            } else {
-                // More than one entity
-                unsafe { sys::ecs_iter_fini(&mut it) };
-                Err(FirstOnlyError::MoreThanOneEntity)
-            }
+            __internal_try_first_only_impl::<T, R, false>(func, it)
         } else {
             // No entities in the iterator
             Err(FirstOnlyError::NoEntities)
@@ -1091,18 +1076,256 @@ where
     }
 }
 
-unsafe extern "C-unwind" fn __internal_query_execute_each<T, Func>(iter: *mut sys::ecs_iter_t)
+#[inline(always)]
+fn __internal_try_first_only_impl<T, R, const ANY_SPARSE_TERMS: bool>(
+    func: impl FnOnce(T::TupleType<'_>) -> R,
+    mut it: flecs_ecs_sys::ecs_iter_t,
+    #[cfg(feature = "flecs_safety_locks")] world: WorldRef<'_>,
+) -> Result<R, FirstOnlyError>
 where
+    T: QueryTuple,
+{
+    if it.count == 1 {
+        let (is_any_array, mut components_data) = T::create_ptrs(&it);
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+                &world,
+                components_data.safety_table_records(),
+            );
+        }
+
+        let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
+            components_data.get_tuple(0)
+        } else if is_any_array.a_row {
+            components_data.get_tuple_with_row(&it, 0)
+        } else {
+            components_data.get_tuple_with_ref(0)
+        };
+
+        // Clean up iterator resources safely
+        let result = func(tuple);
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+                &world,
+                components_data.safety_table_records(),
+            );
+        }
+        unsafe { sys::ecs_iter_fini(&mut it) };
+
+        Ok(result)
+    } else {
+        // More than one entity
+        unsafe { sys::ecs_iter_fini(&mut it) };
+        Err(FirstOnlyError::MoreThanOneEntity)
+    }
+}
+
+#[inline(always)]
+fn __internal_try_first_impl<T, R, const ANY_SPARSE_TERMS: bool>(
+    func: impl FnOnce(T::TupleType<'_>) -> R,
+    mut it: flecs_ecs_sys::ecs_iter_t,
+    #[cfg(feature = "flecs_safety_locks")] world: WorldRef<'_>,
+) -> Option<R>
+where
+    T: QueryTuple,
+{
+    let (is_any_array, mut components_data) = T::create_ptrs(&it);
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+            &world,
+            components_data.safety_table_records(),
+        );
+    }
+
+    let tuple = if !is_any_array.a_row && !is_any_array.a_ref {
+        components_data.get_tuple(0)
+    } else if is_any_array.a_row {
+        components_data.get_tuple_with_row(&it, 0)
+    } else {
+        components_data.get_tuple_with_ref(0)
+    };
+
+    let result = Some(func(tuple));
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+            &world,
+            components_data.safety_table_records(),
+        );
+    }
+    // Clean up iterator resources safely
+    unsafe { sys::ecs_iter_fini(&mut it) };
+
+    result
+}
+
+#[inline(always)]
+fn __internal_find_entity_impl<'a, T, const ANY_SPARSE_TERMS: bool>(
+    func: &mut impl FnMut(EntityView<'a>, T::TupleType<'_>) -> bool,
+    iter: flecs_ecs_sys::ecs_iter_t,
+    entity_result: &mut Option<EntityView<'a>>,
+    _world_ptr: *mut flecs_ecs_sys::ecs_world_t,
+    world: &WorldRef<'a>,
+) where
+    T: QueryTuple,
+{
+    let (is_any_array, mut components_data) = T::create_ptrs(&iter);
+    let iter_count = iter.count as usize;
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    table_lock(_world_ptr, iter.table);
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+    }
+    unsafe {
+        if !is_any_array.a_ref && !is_any_array.a_row {
+            for i in 0..iter_count {
+                let entity = EntityView::new_from(world, *iter.entities.add(i));
+
+                let tuple = components_data.get_tuple(i);
+                if func(entity, tuple) {
+                    *entity_result = Some(entity);
+                    break;
+                }
+            }
+        } else if is_any_array.a_row {
+            for i in 0..iter_count {
+                let entity = EntityView::new_from(world, *iter.entities.add(i));
+                let tuple = components_data.get_tuple_with_row(&iter, i);
+                if func(entity, tuple) {
+                    *entity_result = Some(entity);
+                    break;
+                }
+            }
+        } else {
+            // is_any_array.a_ref
+            for i in 0..iter_count {
+                let entity = EntityView::new_from(world, *iter.entities.add(i));
+                let tuple = components_data.get_tuple_with_ref(i);
+                if func(entity, tuple) {
+                    *entity_result = Some(entity);
+                    break;
+                }
+            }
+        }
+    }
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    table_unlock(_world_ptr, iter.table);
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+    }
+}
+
+#[inline(always)]
+fn __internal_find_impl<'a, T, const ANY_SPARSE_TERMS: bool>(
+    func: &mut impl FnMut(T::TupleType<'_>) -> bool,
+    iter: flecs_ecs_sys::ecs_iter_t,
+    entity: &mut Option<EntityView<'a>>,
+    _world_ptr: *mut flecs_ecs_sys::ecs_world_t,
+    world: &WorldRef<'a>,
+) where
+    T: QueryTuple,
+{
+    let (is_any_array, mut components_data) = T::create_ptrs(&iter);
+    let iter_count = iter.count as usize;
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+    }
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    table_lock(_world_ptr, iter.table);
+
+    unsafe {
+        if !is_any_array.a_ref && !is_any_array.a_row {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple(i);
+                if func(tuple) {
+                    *entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                    break;
+                }
+            }
+        } else if is_any_array.a_row {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_row(&iter, i);
+                if func(tuple) {
+                    *entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                    break;
+                }
+            }
+        } else {
+            for i in 0..iter_count {
+                let tuple = components_data.get_tuple_with_ref(i);
+                if func(tuple) {
+                    *entity = Some(EntityView::new_from(world, *iter.entities.add(i)));
+                    break;
+                }
+            }
+        }
+    }
+
+    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+    table_unlock(_world_ptr, iter.table);
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+    }
+}
+
+#[inline(always)]
+unsafe extern "C-unwind" fn __internal_query_execute_each_from_run<T, Func>(
+    iter: *mut sys::ecs_iter_t,
+) where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
     let iter = unsafe { &mut *iter };
     let func = unsafe { &mut *(iter.callback_ctx as *mut Func) };
     let world = unsafe { WorldRef::from_ptr(iter.world) };
-    internal_each_iter_next::<T, true>(iter, &world, func);
+
+    #[cfg(feature = "flecs_safety_locks")]
+    {
+        if iter.row_fields == 0 {
+            internal_each_iter_next::<T, true, false>(iter, &world, func);
+        } else {
+            internal_each_iter_next::<T, true, true>(iter, &world, func);
+        }
+    }
+
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    {
+        internal_each_iter_next::<T, true, false>(iter, &world, func);
+    }
 }
 
-unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
+#[inline(always)]
+unsafe extern "C-unwind" fn __internal_query_execute_each_entity_from_run<T, Func>(
     iter: *mut sys::ecs_iter_t,
 ) where
     T: QueryTuple,
@@ -1112,7 +1335,20 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity<T, Func>(
         let iter = &mut *iter;
         let func = &mut *(iter.callback_ctx as *mut Func);
         let world = WorldRef::from_ptr(iter.world);
-        internal_each_entity_iter_next::<T, true>(iter, &world, func);
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if iter.row_fields == 0 {
+                internal_each_entity_iter_next::<T, true, false>(iter, &world, func);
+            } else {
+                internal_each_entity_iter_next::<T, true, true>(iter, &world, func);
+            }
+        }
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            internal_each_entity_iter_next::<T, true, false>(iter, &world, func);
+        }
     }
 }
 
