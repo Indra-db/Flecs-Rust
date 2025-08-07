@@ -92,6 +92,15 @@ impl<'a, T> Field<'a, T> {
     pub fn get(&self, index: usize) -> Option<&T> {
         self.slice_components.get(index)
     }
+
+    /// Get table field as a slice
+    pub fn as_slice(&self) -> &[T] {
+        if self.is_shared() {
+            &self.slice_components[0..=0]
+        } else {
+            self.slice_components
+        }
+    }
 }
 
 impl<'a, T> Index<FieldIndex> for Field<'a, T> {
