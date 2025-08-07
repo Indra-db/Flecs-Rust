@@ -176,7 +176,11 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
         self.desc.type_.assign_entity = Some(unsafe {
             core::mem::transmute::<
                 extern "C-unwind" fn(&'a mut T, WorldRef<'a>, Entity),
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, *mut flecs_ecs_sys::ecs_world_t, u64),
+                unsafe extern "C-unwind" fn(
+                    *mut core::ffi::c_void,
+                    *mut flecs_ecs_sys::ecs_world_t,
+                    u64,
+                ),
             >(func.to_extern_fn())
         });
         self
@@ -209,7 +213,10 @@ impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
         self.desc.type_.ensure_element = Some(unsafe {
             core::mem::transmute::<
                 extern "C-unwind" fn(&mut T, usize) -> &mut ElemType,
-                unsafe extern "C-unwind" fn(*mut core::ffi::c_void, usize) -> *mut core::ffi::c_void,
+                unsafe extern "C-unwind" fn(
+                    *mut core::ffi::c_void,
+                    usize,
+                ) -> *mut core::ffi::c_void,
             >(func.to_extern_fn())
         });
         self

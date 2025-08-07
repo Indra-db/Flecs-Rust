@@ -428,32 +428,48 @@ fn __internal_do_read_write_locks<
 
     unsafe {
         for i in 0..count_immutable {
-            let tr = &*table_records.get_unchecked(i).table_record;
-            let col = tr.column;
+            let info = table_records.get_unchecked(i);
+            let tr = info.table_record;
 
-            if ANY_SPARSE_TERMS && col == -1 {
-                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
-                if sys::ecs_rust_is_sparse_idr(idr) {
-                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
-                }
+            //if component_id is set, that means this term is a row term
+            if ANY_SPARSE_TERMS && info.component_id != 0 {
+                let idr = if tr.is_null() {
+                    //non-fragmenting component
+                    sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
+                } else {
+                    //sparse component
+                    (&*tr).hdr.cache as *mut sys::ecs_component_record_t
+                };
+                lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
                 continue;
             }
+
+            let tr = &*tr;
+
+            let col = tr.column;
 
             let table = tr.hdr.table;
             lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
         }
         for i in start_index_mutable..end_index_mutable {
-            let tr = &*table_records.get_unchecked(i).table_record;
-            let col = tr.column;
+            let info = table_records.get_unchecked(i);
+            let tr = info.table_record;
 
-            if ANY_SPARSE_TERMS && col == -1 {
-                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
-                if sys::ecs_rust_is_sparse_idr(idr) {
-                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
-                }
+            //if component_id is set, that means this term is a row term
+            if ANY_SPARSE_TERMS && info.component_id != 0 {
+                let idr = if tr.is_null() {
+                    //non-fragmenting component
+                    sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
+                } else {
+                    //sparse component
+                    (&*tr).hdr.cache as *mut sys::ecs_component_record_t
+                };
+                lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
                 continue;
             }
 
+            let tr = &*tr;
+            let col = tr.column;
             let table = tr.hdr.table;
             lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
         }
@@ -462,21 +478,32 @@ fn __internal_do_read_write_locks<
             // if !sys::ecs_field_is_set(iter, i as i8) {
             //     continue;
             // }
-            let tr = table_records.get_unchecked(i).table_record;
-            if tr.is_null() {
+            let info = table_records.get_unchecked(i);
+            let tr = info.table_record;
+
+            if !ANY_SPARSE_TERMS && tr.is_null() {
                 continue;
             }
+
+            if ANY_SPARSE_TERMS {
+                let is_comp_id_set = info.component_id != 0;
+                if is_comp_id_set {
+                    let idr = if tr.is_null() {
+                        //non-fragmenting component
+                        sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
+                    } else {
+                        //sparse component
+                        (&*tr).hdr.cache as *mut sys::ecs_component_record_t
+                    };
+                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
+                    continue;
+                } else if tr.is_null() {
+                    continue;
+                }
+            }
+
             let tr = &*tr;
             let col = tr.column;
-
-            if ANY_SPARSE_TERMS && col == -1 {
-                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
-                if sys::ecs_rust_is_sparse_idr(idr) {
-                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
-                }
-                continue;
-            }
-
             let table = tr.hdr.table;
             lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
         }
@@ -485,21 +512,32 @@ fn __internal_do_read_write_locks<
             // if !sys::ecs_field_is_set(iter, i as i8) {
             //     continue;
             // }
-            let tr = table_records.get_unchecked(i).table_record;
-            if tr.is_null() {
+            let info = table_records.get_unchecked(i);
+            let tr = info.table_record;
+
+            if !ANY_SPARSE_TERMS && tr.is_null() {
                 continue;
             }
+
+            if ANY_SPARSE_TERMS {
+                let is_comp_id_set = info.component_id != 0;
+                if is_comp_id_set {
+                    let idr = if tr.is_null() {
+                        //non-fragmenting component
+                        sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
+                    } else {
+                        //sparse component
+                        (&*tr).hdr.cache as *mut sys::ecs_component_record_t
+                    };
+                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
+                    continue;
+                } else if tr.is_null() {
+                    continue;
+                }
+            }
+
             let tr = &*tr;
             let col = tr.column;
-
-            if ANY_SPARSE_TERMS && col == -1 {
-                let idr = tr.hdr.cache as *mut sys::ecs_component_record_t;
-                if sys::ecs_rust_is_sparse_idr(idr) {
-                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
-                }
-                continue;
-            }
-
             let table = tr.hdr.table;
             lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
         }

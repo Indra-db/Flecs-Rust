@@ -4,23 +4,18 @@ use crate::core::*;
 use crate::sys;
 use flecs_ecs_derive::tuples;
 
-// Not sure if this has any value, but keeping it here for food for thought.
-// pub struct ArrayElement {
-//     pub ptr: *mut u8,
-//     pub index: i8,
-//     pub is_ref: bool,
-// }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[doc(hidden)]
 pub struct IsAnyArray {
     pub a_ref: bool, //e.g. singleton, prefab inheritance
-    pub a_row: bool, //e.g. sparse
+    pub a_row: bool, //e.g. sparse, non_fragmenting
 }
 
 #[cfg(feature = "flecs_safety_locks")]
 #[derive(Debug, Clone, Copy, Default)]
 pub struct TableColumnSafety {
+    //only set for sparse terms
+    pub component_id: u64,
     pub table_record: *const sys::ecs_table_record_t,
 }
 
@@ -29,8 +24,6 @@ pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
     pub is_ref_array_components: [bool; LEN],
     pub is_row_array_components: [bool; LEN],
     pub index_array_components: [i8; LEN],
-    #[cfg(feature = "flecs_safety_locks")]
-    pub ids: [ReadWriteId; LEN],
     #[cfg(feature = "flecs_safety_locks")]
     pub safety_table_records: [TableColumnSafety; LEN],
     _marker: PhantomData<T>,
@@ -50,9 +43,6 @@ pub trait ComponentPointers<T: QueryTuple> {
     fn get_tuple_with_ref(&mut self, index: usize) -> T::TupleType<'_>;
 
     #[cfg(feature = "flecs_safety_locks")]
-    fn ids(&self) -> &[ReadWriteId];
-
-    #[cfg(feature = "flecs_safety_locks")]
     fn safety_table_records(&self) -> &[TableColumnSafety];
 }
 
@@ -62,8 +52,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
         let mut is_ref_array_components = [false; LEN];
         let mut is_row_array_components = [false; LEN];
         let mut index_array_components = [0; LEN];
-        #[cfg(feature = "flecs_safety_locks")]
-        let mut ids = [ReadWriteId::Read(0); LEN];
         #[cfg(feature = "flecs_safety_locks")]
         let mut safety_table_records = [TableColumnSafety::default(); LEN];
 
@@ -75,8 +63,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 &mut is_row_array_components[..],
                 &mut index_array_components[..],
                 #[cfg(feature = "flecs_safety_locks")]
-                &mut ids[..],
-                #[cfg(feature = "flecs_safety_locks")]
                 &mut safety_table_records[..],
             )
         } else {
@@ -85,8 +71,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             T::populate_self_array_ptrs(
                 iter,
                 &mut array_components[..],
-                #[cfg(feature = "flecs_safety_locks")]
-                &mut ids[..],
                 #[cfg(feature = "flecs_safety_locks")]
                 &mut safety_table_records[..],
             );
@@ -103,8 +87,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
                 is_ref_array_components,
                 is_row_array_components,
                 index_array_components,
-                #[cfg(feature = "flecs_safety_locks")]
-                ids,
                 #[cfg(feature = "flecs_safety_locks")]
                 safety_table_records,
                 _marker: PhantomData::<T>,
@@ -138,11 +120,6 @@ impl<T: QueryTuple, const LEN: usize> ComponentPointers<T> for ComponentsData<T,
             &self.is_ref_array_components[..],
             index,
         )
-    }
-
-    #[cfg(feature = "flecs_safety_locks")]
-    fn ids(&self) -> &[ReadWriteId] {
-        &self.ids[..]
     }
 
     #[cfg(feature = "flecs_safety_locks")]
@@ -373,14 +350,12 @@ pub trait QueryTuple: Sized {
         is_ref: &mut [bool],
         is_row: &mut [bool],
         indexes: &mut [i8],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     ) -> IsAnyArray;
 
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     );
 
@@ -460,27 +435,30 @@ where
         is_ref: &mut [bool],
         is_row: &mut [bool],
         indexes: &mut [i8],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
     ) -> IsAnyArray {
+        #[cfg(feature = "flecs_safety_locks")]
+        let tr = unsafe { table_records.get_unchecked_mut(0) };
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            tr.table_record = unsafe { *it.trs.add(0) };
+        }
+
         if it.row_fields & (1u32 << 0) != 0 {
             // Need to fetch the value with flecs_field_at()
             is_ref[0] = true;
             is_row[0] = true;
             indexes[0] = 0;
+
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                tr.component_id = unsafe { *it.ids.add(0) };
+            }
         } else {
             components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
             is_ref[0] = unsafe { *it.sources.add(0) != 0 };
         };
-        #[cfg(feature = "flecs_safety_locks")]
-        {
-            table_records[0].table_record = unsafe { *it.trs.add(0) };
-            if A::IS_IMMUTABLE {
-                ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
-            } else {
-                ids[0] = ReadWriteId::Write(unsafe { *it.ids.add(0) });
-            }
-        }
+
         IsAnyArray {
             a_ref: is_ref[0],
             a_row: is_row[0],
@@ -491,19 +469,14 @@ where
     fn populate_self_array_ptrs(
         it: &sys::ecs_iter_t,
         components: &mut [*mut u8],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
 
     ) {
         ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
         #[cfg(feature = "flecs_safety_locks")]
         {
-            table_records[0].table_record = unsafe { *it.trs.add(0) };
-            if A::IS_IMMUTABLE {
-                ids[0] = ReadWriteId::Read(unsafe { *it.ids.add(0) });
-            } else {
-                ids[0] = ReadWriteId::Write(unsafe { *it.ids.add(0) });
-            }
+            let tr = unsafe { table_records.get_unchecked_mut(0) };
+            tr.table_record = unsafe { *it.trs.add(0) };
         }
         components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
@@ -690,7 +663,6 @@ macro_rules! impl_iterable {
                 is_ref: &mut [bool],
                 is_row: &mut [bool],
                 indexes: &mut [i8],
-                #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
                 #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
             ) -> IsAnyArray {
                 let mut index : usize = 0;
@@ -705,40 +677,45 @@ macro_rules! impl_iterable {
                 #[cfg(feature = "flecs_safety_locks")]
                 let mut index_optional_mutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE + Self::COUNT_OPTIONAL_IMMUTABLE };
                 $(
+                    #[cfg(feature = "flecs_safety_locks")]
+                    let idx = match ($t::IS_IMMUTABLE, $t::IS_OPTIONAL) {
+                            (true,  false) => &mut index_immutable,
+                            (true,  true)  => &mut index_optional_immutable,
+                            (false, false) => &mut index_mutable,
+                            (false, true)  => &mut index_optional_mutable,
+                        };
+
+                    #[cfg(feature = "flecs_safety_locks")]
+                    let tr = unsafe { table_records.get_unchecked_mut(*idx) };
+
+                    #[cfg(feature = "flecs_safety_locks")]
+                    {
+                        tr.table_record = unsafe { *it.trs.add(index) };
+                    }
+
+                    #[cfg(feature = "flecs_safety_locks")]
+                    {
+                        *idx += 1;
+                    }
+
                     if (it.row_fields & (1u32 << index)) != 0 {
                         // Need to fetch the value with flecs_field_at()
                         is_ref[index] =  true;
                         is_row[index] = true;
                         indexes[index] = index as i8;
+                        any_ref |= true;
+                        any_row |= true;
+                        #[cfg(feature = "flecs_safety_locks")]
+                        {
+                            tr.component_id = unsafe { *it.ids.add(index) };
+                        }
                     } else {
                         components[index] =
                             flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
-                        is_ref[index] = unsafe { *it.sources.add(index ) != 0 };
+                        let is_ref_val = unsafe { *it.sources.add(index ) != 0 };
+                        is_ref[index] = is_ref_val;
+                        any_ref |= is_ref_val;
                     }
-                    #[cfg(feature = "flecs_safety_locks")]
-                    {
-                        if $t::IS_IMMUTABLE {
-                            if !$t::IS_OPTIONAL {
-                                table_records[index_immutable].table_record = unsafe { *it.trs.add(index) };
-                                index_immutable += 1;
-                            } else {
-                                table_records[index_optional_immutable].table_record = unsafe { *it.trs.add(index) };
-                                index_optional_immutable += 1;
-                            }
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index) });
-                        } else {
-                            if !$t::IS_OPTIONAL {
-                                table_records[index_mutable].table_record = unsafe { *it.trs.add(index) };
-                                index_mutable += 1;
-                            } else {
-                                table_records[index_optional_mutable].table_record = unsafe { *it.trs.add(index) };
-                                index_optional_mutable += 1;
-                            }
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index) });
-                        }
-                    }
-                    any_ref |= is_ref[index ];
-                    any_row |= is_row[index ];
                     index += 1;
                 )*
                 IsAnyArray {
@@ -752,7 +729,6 @@ macro_rules! impl_iterable {
             fn populate_self_array_ptrs(
                 it: &sys::ecs_iter_t,
                 components: &mut [*mut u8],
-                #[cfg(feature = "flecs_safety_locks")] ids: &mut [ReadWriteId],
                 #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
             ) {
                 let mut index : usize = 0;
@@ -770,25 +746,16 @@ macro_rules! impl_iterable {
                         flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                     #[cfg(feature = "flecs_safety_locks")]
                     {
-                        if $t::IS_IMMUTABLE {
-                            if !$t::IS_OPTIONAL {
-                                table_records[index_immutable].table_record = unsafe { *it.trs.add(index) };
-                                index_immutable += 1;
-                            } else {
-                                table_records[index_optional_immutable].table_record = unsafe { *it.trs.add(index) };
-                                index_optional_immutable += 1;
-                            }
-                            ids[index as usize] = ReadWriteId::Read(unsafe { *it.ids.add(index) });
-                        } else {
-                            if !$t::IS_OPTIONAL {
-                                table_records[index_mutable].table_record = unsafe { *it.trs.add(index) };
-                                index_mutable += 1;
-                            } else {
-                                table_records[index_optional_mutable].table_record = unsafe { *it.trs.add(index) };
-                                index_optional_mutable += 1;
-                            }
-                            ids[index as usize] = ReadWriteId::Write(unsafe { *it.ids.add(index) });
-                        }
+                        let idx = match ($t::IS_IMMUTABLE, $t::IS_OPTIONAL) {
+                            (true,  false) => &mut index_immutable,
+                            (true,  true)  => &mut index_optional_immutable,
+                            (false, false) => &mut index_mutable,
+                            (false, true)  => &mut index_optional_mutable,
+                        };
+
+                        let tr = unsafe { table_records.get_unchecked_mut(*idx) };
+                        tr.table_record = unsafe { *it.trs.add(index) };
+                        *idx += 1;
                     }
                     index += 1;
                 )*

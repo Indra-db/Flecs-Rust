@@ -729,10 +729,7 @@ where
     ///     .component::<DerivedAction2>()
     ///     .add_trait::<(flecs::IsA, Action)>();
     ///
-    /// let entity = world
-    ///     .entity()
-    ///     .add(DerivedAction)
-    ///     .add(DerivedAction2);
+    /// let entity = world.entity().add(DerivedAction).add(DerivedAction2);
     ///
     /// world.new_query::<&Action>().run(|mut it| {
     ///     let mut vec = vec![];
@@ -1275,9 +1272,14 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
             let world_ref = &self.world;
+            let tr = unsafe { *self.iter.trs.add(index as usize) };
+            let idr = if !tr.is_null() {
+                unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t }
+            } else {
+                let comp_id = unsafe { *self.iter.ids.add(index as usize) };
+                unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
+            };
 
             FieldAt::<T::UnderlyingType>::new(component_ref, world_ref, unsafe {
                 NonNull::new_unchecked(idr)
@@ -1358,8 +1360,14 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
             let world_ref = &self.world;
+
+            let idr = if !tr.is_null() {
+                unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t }
+            } else {
+                let comp_id = unsafe { *self.iter.ids.add(index as usize) };
+                unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
+            };
 
             FieldAtMut::<T::UnderlyingType>::new(component_ref, world_ref, unsafe {
                 NonNull::new_unchecked(idr)
@@ -1448,12 +1456,11 @@ where
     /// let mut tgt_count = 0;
     ///
     /// q.run(|mut it| {
-    ///
     ///     while it.next() {
-    ///        for row in it.iter() {
+    ///         for row in it.iter() {
     ///             let e = it.entity(row);
     ///             assert_eq!(e, alice);
-    ///     
+    ///
     ///             it.targets(0, |tgt| {
     ///                 if tgt_count == 0 {
     ///                     assert_eq!(tgt, pizza);
@@ -1463,9 +1470,9 @@ where
     ///                 }
     ///                 tgt_count += 1;
     ///             });
-    ///     
+    ///
     ///             count += 1;
-    ///        }
+    ///         }
     ///     }
     /// });
     ///

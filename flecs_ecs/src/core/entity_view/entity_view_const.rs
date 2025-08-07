@@ -918,10 +918,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// let entity = world
-    ///     .entity()
-    ///     .add((Likes, apple))
-    ///     .add((Likes, banana));
+    /// let entity = world.entity().add((Likes, apple)).add((Likes, banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -1068,9 +1065,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity
-    ///     .add((Likes, apple))
-    ///     .add((Likes, banana));
+    /// entity.add((Likes, apple)).add((Likes, banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```

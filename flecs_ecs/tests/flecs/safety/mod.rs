@@ -455,8 +455,7 @@ mod table_iter {
         use super::*;
 
         #[test]
-        #[ignore = "internal error, check flecs update if it's fixed"]
-        fn filter() {
+        fn filter_sparse() {
             let world = World::new();
 
             world.component::<Foo>().add_trait::<flecs::Sparse>();
@@ -471,7 +470,22 @@ mod table_iter {
         }
 
         #[test]
-        fn query_read() {
+        fn filter_non_fragmenting() {
+            let world = World::new();
+
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        iter.field_at::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
+        fn query_read_sparse() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
@@ -486,10 +500,41 @@ mod table_iter {
         }
 
         #[test]
+        fn query_read_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
+            world.entity().set(Foo(0));
+            query!(world, &Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        let _x1 = iter.field_at::<Foo>(0, 0usize);
+                        let _x2 = iter.field_at::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
         #[should_panic]
-        fn query_read_write() {
+        fn query_read_write_sparse() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        let _x = iter.field_at::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read_write_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().run(|mut iter| {
                 while iter.next() {
@@ -506,9 +551,9 @@ mod table_iter {
         use super::*;
 
         #[test]
-        #[ignore = "internal error, check flecs update if it's fixed, https://discord.com/channels/633826290415435777/1345832462940504155/1345832462940504155"]
-        fn filter() {
+        fn filter_sparse() {
             let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
             query!(world, Foo).build().run(|mut iter| {
                 while iter.next() {
@@ -520,9 +565,22 @@ mod table_iter {
         }
 
         #[test]
-        #[ignore = "internal error, check flecs update if it's fixed, https://discord.com/channels/633826290415435777/1345832462940504155/1345832462940504155"]
+        fn filter_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        iter.field_at_mut::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
         #[should_panic]
-        fn filter_double_field_at_mut() {
+        fn filter_double_field_at_mut_sparse() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
@@ -538,7 +596,23 @@ mod table_iter {
 
         #[test]
         #[should_panic]
-        fn query_read() {
+        fn filter_double_field_at_mut_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
+            world.entity().set(Foo(0));
+            query!(world, Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        let _x = iter.field_at_mut::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read_sparse() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
             world.entity().set(Foo(0));
@@ -554,9 +628,41 @@ mod table_iter {
 
         #[test]
         #[should_panic]
-        fn query_read_write() {
+        fn query_read_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
+            world.entity().set(Foo(0));
+            query!(world, &Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        let _x = iter.field_at_mut::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read_write_sparse() {
             let world = World::new();
             world.component::<Foo>().add_trait::<flecs::Sparse>();
+            world.entity().set(Foo(0));
+            query!(world, &mut Foo).build().run(|mut iter| {
+                while iter.next() {
+                    for _ in iter.iter() {
+                        let _x = iter.field_at::<Foo>(0, 0usize);
+                        let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                    }
+                }
+            });
+        }
+
+        #[test]
+        #[should_panic]
+        fn query_read_write_non_fragmenting() {
+            let world = World::new();
+            world.component::<Foo>().add_trait::<flecs::DontFragment>();
             world.entity().set(Foo(0));
             query!(world, &mut Foo).build().run(|mut iter| {
                 while iter.next() {
