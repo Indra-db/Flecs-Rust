@@ -10,11 +10,7 @@ fn query_uncached_destruction_no_panic() {
     let query = world.new_query::<&Tag>();
     let query2 = query.clone();
     drop(query);
-    query2.run(|mut it| {
-        dbg!(it.iter_mut().flags & flecs_ecs::sys::EcsIterIsValid != 0);
-        while it.next() {}
-        dbg!(it.iter_mut().flags & flecs_ecs::sys::EcsIterIsValid != 0);
-    });
+    query2.run(|mut it| while it.next() {});
     drop(query2);
 }
 
