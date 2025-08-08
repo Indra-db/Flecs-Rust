@@ -161,45 +161,81 @@ where
     type TupleType<'e> = A::ActualType;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [u64]
+        world: impl WorldProvider<'a>,
+        entity: Entity,
+        record: *const ecs_record_t,
+        components: &mut [*mut c_void],
+        #[cfg(feature = "flecs_safety_locks")] ids: &mut [u64],
     ) -> bool {
         let world_ref = world.world();
-        let world_ptr = unsafe { sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t };
+        let world_ptr = unsafe {
+            sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t
+        };
         let table = unsafe { (*record).table };
         let entity = *entity;
         let mut has_all_components = true;
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        #[cfg(feature = "flecs_safety_locks")]
-        { 
-            ids[0] = id;
-            
+        if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
+            assert!(
+                {
+                    let first = ecs_first(id, world);
+                    first != flecs::Wildcard::ID && first != flecs::Any::ID
+                },
+                "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+            );
+
+            assert!(
+                {
+                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                    let cast_id =
+                        world_ref.component_id::<<A::OnlyType as ComponentOrPairId>::CastType>();
+                    id != 0 && id == cast_id
+                },
+                "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
+            );
+
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let first_id = ecs_entity_id_high(id);
+                let second_id = ecs_entity_id_low(id);
+                if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                    let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                    ids[0] = ecs_pair(first_id, target_id);
+                } else {
+                    ids[0] = id;
+                }
+            }
+        } else {
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                ids[0] = id;
+            }
         }
 
-        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) };
+        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
 
-            if component_ptr.is_null() {
-                components[0] = core::ptr::null_mut();
-                has_all_components = false;
-                if SHOULD_PANIC && !A::IS_OPTION {
-                    ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                        "Component `{}` not found on `EntityView::cloned` operation
-                        with parameters: `{}`.
-                        Use `try_cloned` variant to avoid assert/panicking if you want to handle the error
-                        or use `Option<{}> instead to handle individual cases.",
-                        core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType>());
-                    panic!("Component `{}` not found on `EntityView::cloned` operation
+        if component_ptr.is_null() {
+            components[0] = core::ptr::null_mut();
+            has_all_components = false;
+            if SHOULD_PANIC && !A::IS_OPTION {
+                ecs_assert!(false, FlecsErrorCode::OperationFailed,
+                    "Component `{}` not found on `EntityView::cloned` operation
                     with parameters: `{}`.
-                    Use `try_cloned` variant to avoid assert/panicking if
-                    you want to handle the error or use `Option<{}>
-                    instead to handle individual cases.",
+                    Use `try_cloned` variant to avoid assert/panicking if you want to handle the error
+                    or use `Option<{}> instead to handle individual cases.",
                     core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType>());
-                }
-            } else {
-                components[0] = component_ptr;
+                panic!("Component `{}` not found on `EntityView::cloned` operation
+                with parameters: `{}`.
+                Use `try_cloned` variant to avoid assert/panicking if
+                you want to handle the error or use `Option<{}>
+                instead to handle individual cases.",
+                core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType>());
             }
+        } else {
+            components[0] = component_ptr;
+        }
 
         has_all_components
     }
