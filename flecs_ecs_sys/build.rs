@@ -34,9 +34,19 @@ fn generate_bindings() {
         // recursively keeping nested uses around.
         .allowlist_file("src/flecs.h")
         .allowlist_file("src/flecs_rust.h")
-        .allowlist_recursively(false)
-        // Use the "C-unwind" ABI
-        .override_abi(bindgen::Abi::CUnwind, ".*")
+        .allowlist_recursively(false);
+
+    // Use appropriate ABI based on target platform
+    // WASM doesn't support unwinding, so use "C" ABI
+    // Other platforms can use "C-unwind" ABI
+    let target = env::var("TARGET").unwrap();
+    if target.contains("wasm") {
+        bindings = bindings.override_abi(bindgen::Abi::C, ".*");
+    } else {
+        bindings = bindings.override_abi(bindgen::Abi::CUnwind, ".*");
+    }
+
+    let bindings = bindings
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
         // Prefer core::* over std::*
