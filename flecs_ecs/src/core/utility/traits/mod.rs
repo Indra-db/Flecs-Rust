@@ -19,7 +19,7 @@ pub use system_api::*;
 pub use world_provider::*;
 
 use crate::core::{
-    ComponentId, ComponentPointers, EntityView, ImplementsClone, ImplementsDefault,
+    ComponentId, ComponentPointers, EntityView, FieldIndex, ImplementsClone, ImplementsDefault,
     ImplementsPartialEq, ImplementsPartialOrd, QueryTuple, TableIter, ecs_assert,
 };
 #[cfg(feature = "flecs_safety_locks")]
@@ -142,6 +142,35 @@ pub mod private {
                         &world,
                         each_entity,
                     );
+                }
+            }
+        }
+
+        /// Callback of the `each_entity` functionality
+        ///
+        /// # Arguments
+        ///
+        /// * `iter` - The iterator which gets passed in from `C`
+        ///
+        /// # See also
+        unsafe extern "C-unwind" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        where
+            Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
+        {
+            unsafe {
+                let iter = &mut *iter;
+                let world = WorldRef::from_ptr(iter.world);
+                let each_iter = &mut *(iter.callback_ctx as *mut Func);
+                #[cfg(feature = "flecs_safety_locks")]
+                if iter.row_fields == 0 {
+                    internal_each_iter::<T, P, false, false>(iter, each_iter, &world);
+                } else {
+                    internal_each_iter::<T, P, false, true>(iter, each_iter, &world);
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    internal_each_iter::<T, P, false, false>(iter, each_iter, &world);
                 }
             }
         }
@@ -437,4 +466,79 @@ pub(crate) fn internal_each_entity_iter_next<
     internal_each_generic::<T, WithEntity<'_>, CALLED_FROM_RUN, ANY_SPARSE_TERMS, _>(
         iter, extractor, func, world,
     );
+}
+
+#[inline(always)]
+pub(crate) fn internal_each_iter<
+    T: QueryTuple,
+    P: ComponentId,
+    const CALLED_FROM_RUN: bool,
+    const ANY_SPARSE_TERMS: bool,
+>(
+    iter: &mut sys::ecs_iter_t,
+    func: &mut impl FnMut(TableIter<CALLED_FROM_RUN, P>, FieldIndex, T::TupleType<'_>),
+    world: &WorldRef<'_>,
+) {
+    const {
+        assert!(
+            !T::CONTAINS_ANY_TAG_TERM,
+            "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
+        );
+    }
+
+    unsafe {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        let world_ptr = iter.world;
+        iter.flags |= sys::EcsIterCppEach;
+        let (is_any_array, mut components_data) = T::create_ptrs(iter);
+        let count = if iter.count == 0 && iter.table.is_null() {
+            1_usize
+        } else {
+            iter.count as usize
+        };
+
+        #[cfg(feature = "flecs_safety_locks")]
+        do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+
+        // only lock/unlock in debug or forced‑assert builds, and only
+        // if we’re not in the “called from run” path:
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        if !CALLED_FROM_RUN {
+            table_lock(world_ptr, iter.table);
+        }
+
+        if !is_any_array.a_ref && !is_any_array.a_row {
+            for i in 0..count {
+                let tuple = components_data.get_tuple(i);
+                let iter_t = TableIter::new(iter, *world);
+                func(iter_t, FieldIndex(i), tuple);
+            }
+        } else if is_any_array.a_row {
+            for i in 0..count {
+                let tuple = components_data.get_tuple_with_row(iter, i);
+                let iter_t = TableIter::new(iter, *world);
+                func(iter_t, FieldIndex(i), tuple);
+            }
+        } else {
+            for i in 0..count {
+                let tuple = components_data.get_tuple_with_ref(i);
+                let iter_t = TableIter::new(iter, *world);
+                func(iter_t, FieldIndex(i), tuple);
+            }
+        }
+
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        if !CALLED_FROM_RUN {
+            table_unlock(world_ptr, iter.table);
+        }
+
+        #[cfg(feature = "flecs_safety_locks")]
+        do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
+            world,
+            components_data.safety_table_records(),
+        );
+    }
 }

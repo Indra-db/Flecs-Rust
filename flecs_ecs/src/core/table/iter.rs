@@ -17,6 +17,7 @@ pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
     pub iter: &'a mut sys::ecs_iter_t,
     pub(crate) count: usize,
     pub(crate) world: WorldRef<'a>,
+    #[cfg(feature = "flecs_safety_locks")]
     currently_multithreaded: bool,
     marker: PhantomData<P>,
 }
@@ -52,6 +53,7 @@ where
         Self {
             iter,
             count,
+            #[cfg(feature = "flecs_safety_locks")]
             currently_multithreaded: world.is_currently_multithreaded(),
             world,
             marker: PhantomData,

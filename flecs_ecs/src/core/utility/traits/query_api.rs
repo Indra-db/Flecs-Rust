@@ -111,6 +111,72 @@ where
         }
     }
 
+    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
+    /// which contains more information about the object being iterated.
+    /// The `usize` argument contains the index of the entity being iterated,
+    /// which can be used to obtain entity-specific data from the `TableIter` object.
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    ///
+    /// let eva = world.entity_named("eva");
+    ///
+    /// world
+    ///     .entity_named("adam")
+    ///     .set(Position { x: 10, y: 20 })
+    ///     .add((Likes::id(), eva));
+    ///
+    /// world
+    ///     .query::<&Position>()
+    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
+    ///     .build()
+    ///     .each_iter(|it, index, p| {
+    ///         let e = it.entity(index);
+    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    ///     });
+    ///
+    /// // Output:
+    /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
+    /// ```
+    fn each_iter(&self, mut func: impl FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>))
+    where
+        P: ComponentId,
+    {
+        let world = self.world();
+        let mut iter = self.retrieve_iter();
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            while self.iter_next(&mut iter) {
+                internal_each_iter::<T, P, false, false>(&mut iter, &mut func, &world);
+            }
+        }
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if iter.row_fields == 0 {
+                while self.iter_next(&mut iter) {
+                    internal_each_iter::<T, P, false, false>(&mut iter, &mut func, &world);
+                }
+            } else {
+                while self.iter_next(&mut iter) {
+                    internal_each_iter::<T, P, false, true>(&mut iter, &mut func, &world);
+                }
+            }
+        }
+    }
+
     /// find iterator to find an entity
     /// The "find" iterator accepts a function that is invoked for each matching entity and checks if the condition is true.
     /// if it is, it returns that entity.
@@ -468,6 +534,67 @@ where
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
             __internal_query_execute_each_entity_from_run::<T, FuncEachEntity>
+                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
+        );
+        let world = self.world();
+        let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
+        iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
+        func(iter_t);
+        iter.callback = None;
+        iter.callback_ctx = core::ptr::null_mut();
+    }
+
+    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
+    /// which contains more information about the object being iterated.
+    /// The `usize` argument contains the index of the entity being iterated,
+    /// which can be used to obtain entity-specific data from the `TableIter` object.
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    ///
+    /// let eva = world.entity_named("eva");
+    ///
+    /// world
+    ///     .entity_named("adam")
+    ///     .set(Position { x: 10, y: 20 })
+    ///     .add((Likes::id(), eva));
+    ///
+    /// world
+    ///     .query::<&Position>()
+    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
+    ///     .build()
+    ///     .each_iter(|it, index, p| {
+    ///         let e = it.entity(index);
+    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    ///     });
+    ///
+    /// // Output:
+    /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
+    /// ```
+    fn run_each_iter<FuncEachIter>(
+        &self,
+        mut func: impl FnMut(TableIter<true, P>),
+        mut func_each: FuncEachIter,
+    ) where
+        P: ComponentId,
+        FuncEachIter: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>),
+    {
+        let mut iter = self.retrieve_iter();
+        iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
+        iter.callback = Some(
+            __internal_query_execute_each_iter_from_run::<T, P, FuncEachIter>
                 as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
         );
         let world = self.world();
@@ -1348,6 +1475,34 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity_from_run<T, Fun
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
             internal_each_entity_iter_next::<T, true, false>(iter, &world, func);
+        }
+    }
+}
+
+#[inline(always)]
+unsafe extern "C-unwind" fn __internal_query_execute_each_iter_from_run<T, P, Func>(
+    iter: *mut sys::ecs_iter_t,
+) where
+    T: QueryTuple,
+    P: ComponentId,
+    Func: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>),
+{
+    unsafe {
+        let iter = &mut *iter;
+        let func = &mut *(iter.callback_ctx as *mut Func);
+        let world = WorldRef::from_ptr(iter.world);
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            internal_each_iter::<T, P, true, false>(iter, func, &world);
+        }
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if iter.row_fields == 0 {
+                internal_each_iter::<T, P, true, false>(iter, func, &world);
+            } else {
+                internal_each_iter::<T, P, true, true>(iter, func, &world);
+            }
         }
     }
 }
