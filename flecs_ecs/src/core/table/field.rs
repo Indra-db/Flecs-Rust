@@ -564,7 +564,7 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     }
 
     /// Get mutable table field as a slice
-    pub fn as_slice_mut(&mut self) -> &mut [T] {
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
         self.slice_components
     }
 }
