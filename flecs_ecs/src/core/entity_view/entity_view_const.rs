@@ -394,7 +394,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`Entity::id_view()`] - Convert Entity to [`IdView`]
-    pub fn id_view(&self) -> IdView {
+    pub fn id_view(&self) -> IdView<'_> {
         IdView::new_from_id(self.world, *self.id)
     }
 
@@ -2198,7 +2198,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity if found, otherwise `None`.
     #[inline(always)]
-    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, true)
     }
 
@@ -2215,7 +2215,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity if found, otherwise `None`.
     #[inline(always)]
-    pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, false)
     }
 
@@ -2239,7 +2239,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity, entity id will be 0 if not found.
     #[inline(always)]
-    pub fn lookup_recursive(&self, name: &str) -> EntityView {
+    pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
             panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
@@ -2263,7 +2263,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity, entity id will be 0 if not found.
     #[inline(always)]
-    pub fn lookup(&self, name: &str) -> EntityView {
+    pub fn lookup(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }

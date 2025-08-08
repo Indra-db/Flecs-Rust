@@ -118,7 +118,7 @@ impl<'a> System<'a> {
     /// * `delta_time` - The time delta.
     /// * `param` - A user-defined parameter to pass to the system
     #[inline]
-    pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent {
+    pub fn run_dt_param(&self, delta_time: FTime, param: *mut c_void) -> SystemRunnerFluent<'_> {
         SystemRunnerFluent::new(self.world.real_world(), *self.id(), 0, 0, delta_time, param)
     }
 
@@ -128,13 +128,13 @@ impl<'a> System<'a> {
     ///
     /// * `delta_time` - The time delta.
     #[inline]
-    pub fn run_dt(&self, delta_time: FTime) -> SystemRunnerFluent {
+    pub fn run_dt(&self, delta_time: FTime) -> SystemRunnerFluent<'_> {
         self.run_dt_param(delta_time, core::ptr::null_mut())
     }
 
     /// Run the system
     #[inline]
-    pub fn run(&self) -> SystemRunnerFluent {
+    pub fn run(&self) -> SystemRunnerFluent<'_> {
         self.run_dt_param(0.0, core::ptr::null_mut())
     }
 
@@ -152,7 +152,7 @@ impl<'a> System<'a> {
         stage_count: i32,
         delta_time: FTime,
         param: *mut c_void,
-    ) -> SystemRunnerFluent {
+    ) -> SystemRunnerFluent<'_> {
         SystemRunnerFluent::new(
             self.world,
             *self.id(),

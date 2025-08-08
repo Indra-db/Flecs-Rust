@@ -841,7 +841,7 @@ where
     pub(crate) fn field_result<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Result<Field<T::UnderlyingType, true>, FieldError> {
+    ) -> Result<Field<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true>(index);
 
@@ -852,7 +852,7 @@ where
     pub(crate) fn field_result_mut<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Result<FieldMut<T::UnderlyingType, true>, FieldError> {
+    ) -> Result<FieldMut<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true>(index);
 
@@ -863,7 +863,7 @@ where
     pub(crate) fn field_result_internal<T, const LOCK: bool>(
         &self,
         index: i8,
-    ) -> Result<Field<T, LOCK>, FieldError> {
+    ) -> Result<Field<'_, T, LOCK>, FieldError> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
 
         if count == 0 {
@@ -912,7 +912,7 @@ where
     pub(crate) fn field_result_internal_mut<T, const LOCK: bool>(
         &self,
         index: i8,
-    ) -> Result<FieldMut<T, LOCK>, FieldError> {
+    ) -> Result<FieldMut<'_, T, LOCK>, FieldError> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
 
         if count == 0 {

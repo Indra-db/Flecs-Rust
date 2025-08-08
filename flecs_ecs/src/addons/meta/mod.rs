@@ -38,7 +38,7 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    pub fn component_ext<T>(&self, id: FetchedId<T>) -> Component<T> {
+    pub fn component_ext<T>(&self, id: FetchedId<T>) -> Component<'_, T> {
         Component::<T>::new_id(self, id)
     }
 
@@ -60,13 +60,13 @@ impl World {
     }
 
     /// Return meta cursor to value
-    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
+    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor<'_> {
         let type_id = T::get_id(self.world());
         Cursor::new(self, type_id, data as *mut T as *mut c_void)
     }
 
     /// Return meta cursor to value
-    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor {
+    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor<'_> {
         if ptr.is_null() {
             panic!("ptr is null");
         }
@@ -75,7 +75,7 @@ impl World {
     }
 
     /// Create primitive type
-    pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView {
+    pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView<'_> {
         let desc = sys::ecs_primitive_desc_t {
             kind: kind as sys::ecs_primitive_kind_t,
             entity: 0u64,
@@ -91,7 +91,7 @@ impl World {
     }
 
     /// Create array type
-    pub fn array(&self, elem_id: impl IntoEntity, array_count: i32) -> EntityView {
+    pub fn array(&self, elem_id: impl IntoEntity, array_count: i32) -> EntityView<'_> {
         let desc = sys::ecs_array_desc_t {
             type_: *elem_id.into_entity(self),
             count: array_count,
@@ -108,7 +108,7 @@ impl World {
     }
 
     /// Create vector type
-    pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView {
+    pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView<'_> {
         let elem_id: u64 = *elem_id.into();
         let name_elem = unsafe { sys::ecs_get_name(self.world_ptr(), elem_id) };
         let cstr_name = unsafe { CStr::from_ptr(name_elem) };
@@ -146,7 +146,7 @@ impl World {
     }
 
     /// Create vector type
-    pub fn vector<T: 'static>(&self) -> EntityView {
+    pub fn vector<T: 'static>(&self) -> EntityView<'_> {
         let id = self.component_id_map::<T>();
         self.vector_id(id)
     }

@@ -92,7 +92,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::alert_named()`]
-    pub fn alert<Components>(&self) -> AlertBuilder<Components>
+    pub fn alert<Components>(&self) -> AlertBuilder<'_, Components>
     where
         Components: QueryTuple,
     {
@@ -133,7 +133,7 @@ impl World {
     pub fn alert_builder_from_desc<Components>(
         &self,
         desc: sys::ecs_alert_desc_t,
-    ) -> AlertBuilder<Components>
+    ) -> AlertBuilder<'_, Components>
     where
         Components: QueryTuple,
     {

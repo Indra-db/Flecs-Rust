@@ -957,7 +957,7 @@ impl World {
     /// * [`World::merge()`]
     /// * [`World::set_stage_count()`]
     /// * [`World::stage_id()`]
-    pub fn stage(&self, stage_id: i32) -> WorldRef {
+    pub fn stage(&self, stage_id: i32) -> WorldRef<'_> {
         unsafe { WorldRef::from_ptr(sys::ecs_get_stage(self.raw_world.as_ptr(), stage_id)) }
     }
 
@@ -1006,7 +1006,7 @@ impl World {
     ///
     /// assert!(e.has(Position::id()));
     /// ```
-    pub fn create_async_stage(&self) -> WorldRef {
+    pub fn create_async_stage(&self) -> WorldRef<'_> {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
     }
 
@@ -1038,7 +1038,7 @@ impl World {
     /// * [`World::is_stage()`]
     /// * [`World::stage()`]
     /// * [`WorldRef`]
-    pub fn real_world(&self) -> WorldRef {
+    pub fn real_world(&self) -> WorldRef<'_> {
         self.world().real_world()
     }
 
@@ -1293,7 +1293,7 @@ impl World {
     ///
     /// * [`World::set_scope()`]
     #[inline(always)]
-    pub fn get_scope(&self) -> Option<EntityView> {
+    pub fn get_scope(&self) -> Option<EntityView<'_>> {
         let scope = unsafe { sys::ecs_get_scope(self.raw_world.as_ptr()) };
 
         if scope == 0 {
@@ -1339,7 +1339,7 @@ impl World {
     /// * [`World::get_scope()`]
     /// * [`World::set_scope()`]
     #[inline(always)]
-    pub fn set_scope(&self, id: impl IntoId) -> EntityView {
+    pub fn set_scope(&self, id: impl IntoId) -> EntityView<'_> {
         EntityView::new_from(self, unsafe {
             sys::ecs_set_scope(self.raw_world.as_ptr(), *id.into_id(self))
         })
@@ -1430,7 +1430,7 @@ impl World {
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
-    pub fn lookup_recursive(&self, name: &str) -> EntityView {
+    pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
             panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
@@ -1458,13 +1458,13 @@ impl World {
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
-    pub fn lookup(&self, name: &str) -> EntityView {
+    pub fn lookup(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].
-    fn try_lookup_impl(&self, name: &str, recursively: bool) -> Option<EntityView> {
+    fn try_lookup_impl(&self, name: &str, recursively: bool) -> Option<EntityView<'_>> {
         let name = compact_str::format_compact!("{}\0", name);
 
         let entity_id = unsafe {
@@ -1503,7 +1503,7 @@ impl World {
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     #[inline(always)]
-    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, true)
     }
 
@@ -1524,7 +1524,7 @@ impl World {
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
-    pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, false)
     }
 
@@ -1910,7 +1910,7 @@ impl World {
     /// # See also
     // #[doc(alias = "world::get_ref")]
     // #[inline(always)]
-    pub fn get_ref<T>(&self) -> CachedRef<T::CastType>
+    pub fn get_ref<T>(&self) -> CachedRef<'_, T::CastType>
     where
         T: ComponentOrPairId,
         T::CastType: DataComponent,
@@ -1928,7 +1928,7 @@ impl World {
     ///
     /// The entity representing the component.
     #[inline(always)]
-    pub fn singleton<T: ComponentId>(&self) -> EntityView {
+    pub fn singleton<T: ComponentId>(&self) -> EntityView<'_> {
         EntityView::new_from(self, T::entity_id(self))
     }
 
@@ -1946,7 +1946,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::target()`]
-    pub fn target(&self, relationship: impl IntoEntity, index: Option<usize>) -> EntityView {
+    pub fn target(&self, relationship: impl IntoEntity, index: Option<usize>) -> EntityView<'_> {
         let relationship = *relationship.into_entity(self);
         EntityView::new_from(self, unsafe {
             sys::ecs_get_target(
@@ -2019,7 +2019,7 @@ impl World {
     ///
     /// `EntityView` handle to the singleton component.
     #[inline(always)]
-    pub fn add<T: IntoId>(&self, id: T) -> EntityView {
+    pub fn add<T: IntoId>(&self, id: T) -> EntityView<'_> {
         let id = *id.into_id(self);
         // this branch will compile out in release mode
         if T::IS_PAIR {
@@ -2043,7 +2043,7 @@ impl World {
     pub fn add_enum<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
-    ) -> EntityView {
+    ) -> EntityView<'_> {
         EntityView::new_from(self, T::entity_id(self)).add_enum::<T>(enum_value)
     }
 
@@ -2062,7 +2062,7 @@ impl World {
     ///
     /// `EntityView` handle to the singleton pair.
     #[inline(always)]
-    pub fn add_pair_enum<First, Second>(&self, enum_value: Second) -> EntityView
+    pub fn add_pair_enum<First, Second>(&self, enum_value: Second) -> EntityView<'_>
     where
         First: ComponentId,
         Second: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -2077,7 +2077,7 @@ impl World {
     /// # Arguments
     ///
     /// * `id`: The id of the component to remove.
-    pub fn remove<T: IntoId>(&self, id: T) -> EntityView {
+    pub fn remove<T: IntoId>(&self, id: T) -> EntityView<'_> {
         let id = *id.into_id(self);
         if T::IS_PAIR {
             let first_id = id.get_id_first(self);
@@ -2111,7 +2111,7 @@ impl World {
     ///
     /// The entity representing the component.
     #[inline(always)]
-    pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView {
+    pub fn set_alias_component<T: ComponentId>(&self, alias: &str) -> EntityView<'_> {
         let alias = compact_str::format_compact!("{}\0", alias);
 
         let id = T::entity_id(self);
@@ -2140,7 +2140,7 @@ impl World {
     ///
     /// The entity found by name.
     #[inline(always)]
-    pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> EntityView {
+    pub fn set_alias_entity_by_name(&self, name: &str, alias: &str) -> EntityView<'_> {
         let name = compact_str::format_compact!("{}\0", name);
         let alias = compact_str::format_compact!("{}\0", alias);
 
@@ -2478,7 +2478,7 @@ impl World {
     /// The entity with the current generation. If the entity is not alive, this
     /// function will return an Entity of 0. Use `try_get_alive` if you want to
     /// return an `Option<EntityView>`.
-    pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView {
+    pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
 
         EntityView::new_from(self, entity)
@@ -2494,7 +2494,7 @@ impl World {
     ///
     /// The entity with the current generation.
     /// If the entity is not alive, this function will return `None`.
-    pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView> {
+    pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView<'_>> {
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
         if entity == 0 {
             None
@@ -2514,7 +2514,7 @@ impl World {
     /// # Returns
     ///
     /// The entity with the provided generation.
-    pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView {
+    pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
         let entity = *entity.into();
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)
@@ -2550,7 +2550,7 @@ impl World {
     ///
     /// `EntityView` wrapping the id of the enum constant.
     #[doc(alias = "world::id")] //enum mixin implementation
-    pub fn entity_from_enum<T>(&self, enum_value: T) -> EntityView
+    pub fn entity_from_enum<T>(&self, enum_value: T) -> EntityView<'_>
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
@@ -2575,7 +2575,7 @@ impl World {
     /// # Type Parameters
     ///
     /// * `T` - The component type to associate with the new entity.
-    pub fn entity_from<T: ComponentId>(&self) -> EntityView {
+    pub fn entity_from<T: ComponentId>(&self) -> EntityView<'_> {
         EntityView::new_from(self, T::entity_id(self))
     }
 
@@ -2603,7 +2603,7 @@ impl World {
     ///
     /// * [`World::entity()`]
     /// * [`World::entity_named_cstr()`]
-    pub fn entity_named(&self, name: &str) -> EntityView {
+    pub fn entity_named(&self, name: &str) -> EntityView<'_> {
         EntityView::new_named(self, name)
     }
 
@@ -2633,7 +2633,7 @@ impl World {
     ///
     /// * [`World::entity()`]
     /// * [`World::entity_named_cstr()`]
-    pub fn entity_named_scoped(&self, name: &str, sep: &str, root_sep: &str) -> EntityView {
+    pub fn entity_named_scoped(&self, name: &str, sep: &str, root_sep: &str) -> EntityView<'_> {
         EntityView::new_named_scoped(self, name, sep, root_sep)
     }
 
@@ -2660,7 +2660,7 @@ impl World {
     ///
     /// * [`World::entity()`]
     /// * [`World::entity_named()`]
-    pub fn entity_named_cstr(&self, name: &CStr) -> EntityView {
+    pub fn entity_named_cstr(&self, name: &CStr) -> EntityView<'_> {
         EntityView::new_named_cstr(self, name)
     }
 
@@ -2671,7 +2671,7 @@ impl World {
     /// * [`World::entity_named()`]
     /// * [`World::entity_named_cstr()`]
     #[inline(always)]
-    pub fn entity(&self) -> EntityView {
+    pub fn entity(&self) -> EntityView<'_> {
         EntityView::new(self)
     }
 
@@ -2688,7 +2688,7 @@ impl World {
     /// let entity = world.entity_null();
     /// assert_eq!(entity.id(), 0);
     /// ```
-    pub fn entity_null(&self) -> EntityView {
+    pub fn entity_null(&self) -> EntityView<'_> {
         EntityView::new_null(self)
     }
 
@@ -2697,7 +2697,7 @@ impl World {
     /// # Arguments
     ///
     /// * `id` - The id to use for the new entity.
-    pub fn entity_from_id(&self, id: impl Into<Entity>) -> EntityView {
+    pub fn entity_from_id(&self, id: impl Into<Entity>) -> EntityView<'_> {
         EntityView::new_from(self, id.into())
     }
 
@@ -2712,7 +2712,7 @@ impl World {
     /// * [`World::prefab_named()`]
     /// * [`World::prefab_type()`]
     /// * [`World::prefab_type_named()`]
-    pub fn prefab(&self) -> EntityView {
+    pub fn prefab(&self) -> EntityView<'_> {
         let result = EntityView::new(self);
         result.add(id::<flecs::Prefab>());
         result
@@ -2754,7 +2754,7 @@ impl World {
     /// * [`World::prefab()`]
     /// * [`World::prefab_named()`]
     /// * [`World::prefab_type_named()`]
-    pub fn prefab_type<T: ComponentId>(&self) -> EntityView {
+    pub fn prefab_type<T: ComponentId>(&self) -> EntityView<'_> {
         let result = self.entity_from::<T>();
         result.add(ECS_PREFAB);
         result
@@ -2818,7 +2818,7 @@ impl World {
     /// # Returns
     ///
     /// The `IdView` from the provided id.
-    pub fn id_view_from<Id: IntoId>(&self, id: Id) -> IdView {
+    pub fn id_view_from<Id: IntoId>(&self, id: Id) -> IdView<'_> {
         let id = *id.into_id(self);
         if Id::IS_PAIR {
             ecs_assert!(
@@ -2847,7 +2847,7 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    pub fn component<T: ComponentId>(&self) -> Component<T::UnderlyingType> {
+    pub fn component<T: ComponentId>(&self) -> Component<'_, T::UnderlyingType> {
         Component::<T::UnderlyingType>::new(self)
     }
 
@@ -2872,12 +2872,12 @@ impl World {
     }
 
     /// Create new untyped component.
-    pub fn component_untyped(&self) -> UntypedComponent {
+    pub fn component_untyped(&self) -> UntypedComponent<'_> {
         UntypedComponent::new(self)
     }
 
     /// Create new named untyped component.
-    pub fn component_untyped_named(&self, name: &str) -> UntypedComponent {
+    pub fn component_untyped_named(&self, name: &str) -> UntypedComponent<'_> {
         UntypedComponent::new_named(self, name)
     }
 
@@ -2890,7 +2890,7 @@ impl World {
     /// # Returns
     ///
     /// The found or registered untyped component.
-    pub fn component_untyped_from(&self, id: impl IntoEntity) -> UntypedComponent {
+    pub fn component_untyped_from(&self, id: impl IntoEntity) -> UntypedComponent<'_> {
         UntypedComponent::new_from(self, id)
     }
 
@@ -2906,7 +2906,7 @@ impl World {
     pub fn to_entity<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &self,
         enum_value: T,
-    ) -> EntityView {
+    ) -> EntityView<'_> {
         EntityView::new_from(self, enum_value.id_variant(self))
     }
 }
@@ -2948,7 +2948,7 @@ impl World {
     /// * [`EntityView::emit()`]
     /// * [`EntityView::enqueue()`]
     /// * [`World::event()`]
-    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<()> {
+    pub unsafe fn event_id(&self, event: impl Into<Entity>) -> EventBuilder<'_, ()> {
         EventBuilder::<()>::new_untyped(self, event)
     }
 
@@ -2967,7 +2967,7 @@ impl World {
     /// * [`EntityView::emit()`]
     /// * [`EntityView::enqueue()`]
     /// * [`World::event_id()`]
-    pub fn event<T: ComponentId>(&self) -> EventBuilder<T> {
+    pub fn event<T: ComponentId>(&self) -> EventBuilder<'_, T> {
         EventBuilder::<T>::new(self)
     }
 }
@@ -3003,7 +3003,7 @@ impl World {
     /// * [`World::observer_from()`]
     /// * [`World::observer_id()`]
     /// * [`World::observer_named()`]
-    pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<Event, Components>
+    pub fn observer<Event: ComponentId, Components>(&self) -> ObserverBuilder<'_, Event, Components>
     where
         Components: QueryTuple,
     {
@@ -3013,7 +3013,7 @@ impl World {
     pub fn observer_id<Components>(
         &self,
         event: impl Into<Entity>,
-    ) -> ObserverBuilder<(), Components>
+    ) -> ObserverBuilder<'_, (), Components>
     where
         Components: QueryTuple,
     {
@@ -3115,7 +3115,7 @@ impl World {
     /// * [`World::new_query()`]
     /// * [`World::new_query_named()`]
     /// * [`World::query_named()`]
-    pub fn query<Components>(&self) -> QueryBuilder<Components>
+    pub fn query<Components>(&self) -> QueryBuilder<'_, Components>
     where
         Components: QueryTuple,
     {
@@ -3156,7 +3156,7 @@ impl World {
     pub unsafe fn query_from_desc<Components>(
         &self,
         desc: &mut sys::ecs_query_desc_t,
-    ) -> QueryBuilder<Components>
+    ) -> QueryBuilder<'_, Components>
     where
         Components: QueryTuple,
     {
@@ -3278,7 +3278,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::system_named()`]
-    pub fn system<Components>(&self) -> SystemBuilder<Components>
+    pub fn system<Components>(&self) -> SystemBuilder<'_, Components>
     where
         Components: QueryTuple,
     {
@@ -3319,7 +3319,7 @@ impl World {
     pub fn system_builder_from_desc<Components>(
         &self,
         desc: sys::ecs_system_desc_t,
-    ) -> SystemBuilder<Components>
+    ) -> SystemBuilder<'_, Components>
     where
         Components: QueryTuple,
     {
@@ -3337,7 +3337,7 @@ impl World {
     /// * [`World::pipeline_named()`]
     /// * [`World::pipeline_type()`]
     #[inline(always)]
-    pub fn pipeline(&self) -> PipelineBuilder<()> {
+    pub fn pipeline(&self) -> PipelineBuilder<'_, ()> {
         PipelineBuilder::<()>::new(self)
     }
 
@@ -3367,7 +3367,7 @@ impl World {
     /// * [`World::pipeline()`]
     /// * [`World::pipeline_named()`]
     #[inline(always)]
-    pub fn pipeline_type<Pipeline>(&self) -> PipelineBuilder<()>
+    pub fn pipeline_type<Pipeline>(&self) -> PipelineBuilder<'_, ()>
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
@@ -3403,7 +3403,7 @@ impl World {
     /// * [`World::set_pipeline()`]
     /// * [`World::set_pipeline()`]
     #[inline(always)]
-    pub fn get_pipeline(&self) -> EntityView {
+    pub fn get_pipeline(&self) -> EntityView<'_> {
         EntityView::new_from(self, unsafe {
             sys::ecs_get_pipeline(self.raw_world.as_ptr())
         })

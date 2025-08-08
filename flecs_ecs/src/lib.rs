@@ -57,7 +57,7 @@ mod tests {
     }
 
     impl World {
-        pub fn add_(&self, id: impl IntoEntity) -> EntityView {
+        pub fn add_(&self, id: impl IntoEntity) -> EntityView<'_> {
             let id = id.into_entity(self);
             EntityView::new_from(self, id).add(id)
         }

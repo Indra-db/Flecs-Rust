@@ -142,7 +142,7 @@ where
     T: QueryTuple,
     Self: WorldProvider<'a>,
 {
-    fn entity(&self) -> EntityView {
+    fn entity(&self) -> EntityView<'_> {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         EntityView::new_from(world, unsafe {
             sys::ecs_get_entity(self.iter.query as *const c_void)

@@ -67,7 +67,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get type of value
-    pub fn get_type(&self) -> EntityView {
+    pub fn get_type(&self) -> EntityView<'_> {
         unsafe {
             EntityView::new_from(
                 WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),
@@ -77,7 +77,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get unit of value
-    pub fn get_unit(&self) -> EntityView {
+    pub fn get_unit(&self) -> EntityView<'_> {
         unsafe {
             EntityView::new_from(
                 WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),
@@ -182,7 +182,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get entity value
-    pub fn get_entity(&self) -> EntityView {
+    pub fn get_entity(&self) -> EntityView<'_> {
         unsafe {
             EntityView::new_from(
                 WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),

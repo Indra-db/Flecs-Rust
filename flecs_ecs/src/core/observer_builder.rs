@@ -140,7 +140,7 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `event` - The event to add
-    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<(), T> {
+    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<'_, (), T> {
         let event = *event.into_entity(self.world);
         self.desc.events[self.event_count] = event;
         self.event_count += 1;

@@ -1095,7 +1095,7 @@ impl<'a> EntityView<'a> {
     pub fn get_ref_second<Second: ComponentId + DataComponent>(
         &self,
         first: impl Into<Entity>,
-    ) -> CachedRef<Second> {
+    ) -> CachedRef<'_, Second> {
         let first = *first.into();
         let second = Second::entity_id(self.world);
         let pair = ecs_pair(first, second);

@@ -614,7 +614,7 @@ where
     /// # Returns
     ///
     /// The entity of the current query
-    fn entity(&self) -> EntityView;
+    fn entity(&self) -> EntityView<'_>;
 
     /// Each term iterator.
     /// The `each_term` iterator accepts a function that is invoked for each term
@@ -734,7 +734,7 @@ where
         plan
     }
 
-    fn iterable(&self) -> QueryIter<P, T> {
+    fn iterable(&self) -> QueryIter<'_, P, T> {
         QueryIter::new(self.retrieve_iter(), self.iter_next_func())
     }
 
@@ -1108,7 +1108,7 @@ where
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-    fn set_group(&self, group_id: impl IntoEntity) -> QueryIter<P, T> {
+    fn set_group(&self, group_id: impl IntoEntity) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group(&mut iter, group_id);
         iter
@@ -1122,7 +1122,7 @@ where
     ///
     /// * `value`: the value to set
     #[must_use = "This method returns a new query iterator that should be used"]
-    fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<P, T> {
+    fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var(&mut iter, var_id, value);
         iter
@@ -1135,7 +1135,7 @@ where
     /// * `var_id`: the variable id to set
     ///
     /// * `range`: the range to set
-    fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<P, T> {
+    fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table(&mut iter, var_id, table);
         iter
@@ -1147,7 +1147,7 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `value`: the value to set
-    fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<P, T> {
+    fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_expr(&mut iter, name, value);
         iter
@@ -1159,7 +1159,7 @@ where
     ///
     /// * `name`: the name of the variable to set
     /// * `range`: the range to set
-    fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<P, T> {
+    fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table_expr(&mut iter, name, table);
         iter

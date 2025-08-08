@@ -143,7 +143,7 @@ where
     T: QueryTuple,
 {
     #[inline(always)]
-    fn entity(&self) -> EntityView {
+    fn entity(&self) -> EntityView<'_> {
         EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
     }
 }
