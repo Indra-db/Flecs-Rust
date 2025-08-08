@@ -18,11 +18,7 @@ fn main() {
             // We use .with(Position::id()) because we cannot safely access the component
             // value here. The component value is uninitialized when the OnAdd event
             // is emitted, which is UB in Rust. To work around this, we use .with::<T>
-            println!(
-                " - OnAdd: {}: {}",
-                it.event_id().to_str(),
-                it.entity(index)
-            );
+            println!(" - OnAdd: {}: {}", it.event_id().to_str(), it.entity(index));
         });
 
     // Create an observer for three events
