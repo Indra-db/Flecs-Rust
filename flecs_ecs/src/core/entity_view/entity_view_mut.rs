@@ -514,13 +514,14 @@ impl<'a> EntityView<'a> {
     }
 
     /// Set a pair for an entity using the first element type and a second component ID.
-    pub fn set_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub fn set_first<First>(self, first: First, second: impl IntoEntity) -> Self
     where
         First: ComponentId + DataComponent,
     {
-        let world_ptr = self.world.world_ptr_mut();
+        let world = self.world;
+        let world_ptr = world.world_ptr_mut();
         let first_id = First::entity_id(self.world);
-        let second_id = *second.into();
+        let second_id = *second.into_entity(world);
         let pair_id = ecs_pair(first_id, second_id);
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
@@ -539,12 +540,13 @@ impl<'a> EntityView<'a> {
     /// # Panics
     ///
     /// Caller must ensure that first is a zero-sized type (ZST) or entity and not a pair.
-    pub fn set_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
+    pub fn set_second<Second>(self, first: impl IntoEntity, second: Second) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let world = self.world.world_ptr_mut();
-        let first_id = *first.into();
+        let world = self.world;
+        let world = world.world_ptr_mut();
+        let first_id = *first.into_entity(world);
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional
