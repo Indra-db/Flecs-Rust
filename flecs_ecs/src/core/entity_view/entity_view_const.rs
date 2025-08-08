@@ -1791,6 +1791,9 @@ impl<'a> EntityView<'a> {
                     0 // stage_id is not used in single-threaded mode
                 };
                 for id in read_ids {
+                    if *id == 0 {
+                        continue;
+                    }
                     let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
                     if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
                         //TODO this does locking regardless if the entity has the component or not

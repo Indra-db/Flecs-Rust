@@ -177,6 +177,8 @@ where
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
+        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(
                 {
@@ -198,23 +200,27 @@ where
 
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let first_id = ecs_entity_id_high(id);
-                let second_id = ecs_entity_id_low(id);
-                if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
-                    let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
-                    ids[0] = ecs_pair(first_id, target_id);
-                } else {
-                    ids[0] = id;
+                if !component_ptr.is_null() {
+                    let first_id = ecs_entity_id_high(id);
+                    let second_id = ecs_entity_id_low(id);
+                    if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                        let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                        ids[0] = ecs_pair(first_id, target_id);
+                    } else {
+                        ids[0] = id;
+                    }
                 }
             }
         } else {
             #[cfg(feature = "flecs_safety_locks")]
             {
-                ids[0] = id;
+                if !component_ptr.is_null() {
+                    ids[0] = id;
+                }
             }
         }
 
-        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+
 
         if component_ptr.is_null() {
             components[0] = core::ptr::null_mut();
@@ -313,6 +319,8 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
+                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
                         assert!(
                             {
@@ -334,23 +342,27 @@ macro_rules! impl_cloned_tuple {
 
                         #[cfg(feature = "flecs_safety_locks")]
                         {
-                            let first_id = ecs_entity_id_high(id);
-                            let second_id = ecs_entity_id_low(id);
-                            if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
-                                let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
-                                ids[index] = ecs_pair(first_id, target_id);
-                            } else {
-                                ids[index] = id;
+                            if !component_ptr.is_null() {
+                                let first_id = ecs_entity_id_high(id);
+                                let second_id = ecs_entity_id_low(id);
+                                if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                                    let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                                    ids[index] = ecs_pair(first_id, target_id);
+                                } else {
+                                    ids[index] = id;
+                                }
                             }
                         }
                     } else {
                         #[cfg(feature = "flecs_safety_locks")]
                         {
-                            ids[index] = id;
+                            if !component_ptr.is_null() {
+                                ids[index] = id;
+                            }
                         }
                     }
 
-                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
