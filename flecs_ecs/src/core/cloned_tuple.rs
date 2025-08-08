@@ -180,7 +180,7 @@ where
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(
                 {
-                    let first = ecs_first(id, world);
+                    let first = ecs_first(id, world_ref);
                     first != flecs::Wildcard::ID && first != flecs::Any::ID
                 },
                 "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
@@ -313,9 +313,41 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                                      #[cfg(feature = "flecs_safety_locks")]
-                    {
-                        ids[index] = id;
+                    if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
+                        assert!(
+                            {
+                                let first = ecs_first(id, world_ref);
+                                first != flecs::Wildcard::ID && first != flecs::Any::ID
+                            },
+                            "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+                        );
+
+                        assert!(
+                            {
+                                let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                                let cast_id =
+                                    world_ref.component_id::<<$t::OnlyType as ComponentOrPairId>::CastType>();
+                                id != 0 && id == cast_id
+                            },
+                            "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
+                        );
+
+                        #[cfg(feature = "flecs_safety_locks")]
+                        {
+                            let first_id = ecs_entity_id_high(id);
+                            let second_id = ecs_entity_id_low(id);
+                            if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
+                                let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
+                                ids[index] = ecs_pair(first_id, target_id);
+                            } else {
+                                ids[index] = id;
+                            }
+                        }
+                    } else {
+                        #[cfg(feature = "flecs_safety_locks")]
+                        {
+                            ids[index] = id;
+                        }
                     }
 
                     let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };

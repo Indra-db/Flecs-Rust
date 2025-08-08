@@ -67,7 +67,7 @@ pub struct SelfRef2 {
     pub value: Entity,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Value {
     pub value: i32,
 }

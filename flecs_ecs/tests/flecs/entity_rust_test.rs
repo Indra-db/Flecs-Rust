@@ -46,3 +46,18 @@ fn entity_id_reuse() {
     );
     assert_eq!(b.archetype().to_string(), first_archetype);
 }
+
+#[test]
+fn cloned_no_panic() {
+    let world = World::new();
+    let t = world.entity().id();
+    let s = world
+        .entity()
+        .set_first(Value { value: 5 }, t)
+        .set(Value { value: 10 });
+    let f = s.cloned::<&(Value, flecs::Wildcard)>();
+    let f2 = s.cloned::<(&(Value, flecs::Wildcard), &Value)>();
+    assert_eq!(f.value, 5);
+    assert_eq!(f2.0.value, 5);
+    assert_eq!(f2.1.value, 10);
+}
