@@ -16,6 +16,12 @@ extern crate alloc;
 #[allow(unused_imports)] //meant for no_std, not ready yet
 use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
 
+// Type definitions for function pointers that need different ABIs for WASM vs non-WASM
+#[cfg(not(target_family = "wasm"))]
+type ObserverIterFnPtr = extern "C-unwind" fn(*mut sys::ecs_iter_t);
+#[cfg(target_family = "wasm")]
+type ObserverIterFnPtr = extern "C" fn(*mut sys::ecs_iter_t);
+
 /// A view into an entity in the world that provides both read and write access to components and relationships.
 ///
 /// `EntityView` is a wrapper around an entity ID that provides a safe interface for:
@@ -2721,7 +2727,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty::<Func> as extern "C-unwind" fn(_)),
+            Some(Self::run_empty::<Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2771,7 +2777,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty_entity::<Func> as extern "C-unwind" fn(_)),
+            Some(Self::run_empty_entity::<Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2821,7 +2827,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload::<C, Func> as extern "C-unwind" fn(_)),
+            Some(Self::run_payload::<C, Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2871,7 +2877,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload_entity::<C, Func> as extern "C-unwind" fn(_)),
+            Some(Self::run_payload_entity::<C, Func> as ObserverIterFnPtr),
         );
         self
     }

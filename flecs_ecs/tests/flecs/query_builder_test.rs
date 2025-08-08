@@ -2121,7 +2121,7 @@ unsafe fn group_by_first_id_negated(
     id: u64,
     ctx: *mut c_void,
 ) -> u64 {
-    unsafe { !group_by_first_id(world, table, id, ctx) }
+    !group_by_first_id(world, table, id, ctx)
 }
 
 #[test]

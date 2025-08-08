@@ -42,12 +42,6 @@ pub mod private {
     use alloc::boxed::Box;
     use flecs_ecs_derive::extern_abi;
 
-    /// Type alias for extern function pointers that adapts to target platform
-    #[cfg(target_family = "wasm")]
-    pub type ExternIterFn = unsafe extern "C" fn(*mut sys::ecs_iter_t);
-    #[cfg(not(target_family = "wasm"))]
-    pub type ExternIterFn = unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t);
-
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
     pub trait internal_SystemAPI<'a, P, T>
@@ -82,6 +76,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         unsafe fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -112,6 +107,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         unsafe fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -154,6 +150,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         unsafe fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -184,6 +181,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         unsafe fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where

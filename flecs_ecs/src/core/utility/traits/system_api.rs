@@ -8,9 +8,6 @@ extern crate std;
 extern crate alloc;
 use alloc::boxed::Box;
 
-/// Import type alias from the private module
-use private::ExternIterFn;
-
 pub trait SystemAPI<'a, P, T>: Builder<'a> + private::internal_SystemAPI<'a, P, T>
 where
     T: QueryTuple,
@@ -524,17 +521,11 @@ macro_rules! implement_reactor_api {
                 self.desc.callback_ctx
             }
 
-            fn set_desc_callback(
-                &mut self,
-                callback: Option<crate::core::utility::traits::private::ExternIterFn>,
-            ) {
+            fn set_desc_callback(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.callback = callback;
             }
 
-            fn set_desc_run(
-                &mut self,
-                callback: Option<crate::core::utility::traits::private::ExternIterFn>,
-            ) {
+            fn set_desc_run(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.run = callback;
             }
         }
@@ -585,17 +576,11 @@ macro_rules! implement_reactor_api {
                 self.desc.callback_ctx
             }
 
-            fn set_desc_callback(
-                &mut self,
-                callback: Option<crate::core::utility::traits::private::ExternIterFn>,
-            ) {
+            fn set_desc_callback(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.callback = callback;
             }
 
-            fn set_desc_run(
-                &mut self,
-                callback: Option<crate::core::utility::traits::private::ExternIterFn>,
-            ) {
+            fn set_desc_run(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.run = callback;
             }
         }

@@ -1,6 +1,9 @@
 #![doc(hidden)]
 use core::ffi::c_void;
 
+#[cfg(target_family = "wasm")]
+type EcsCtxFreeT = unsafe extern "C" fn(*mut c_void);
+#[cfg(not(target_family = "wasm"))]
 type EcsCtxFreeT = unsafe extern "C-unwind" fn(*mut c_void);
 
 pub(crate) struct ComponentBindingCtx {
