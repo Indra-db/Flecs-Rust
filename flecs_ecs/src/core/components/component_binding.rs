@@ -18,20 +18,20 @@ impl Drop for ComponentBindingCtx {
             return;
         }
 
-        if let Some(on_add) = self.on_add {
-            if let Some(free_on_add) = self.free_on_add {
-                unsafe { free_on_add(on_add) };
-            }
+        if let Some(on_add) = self.on_add
+            && let Some(free_on_add) = self.free_on_add
+        {
+            unsafe { free_on_add(on_add) };
         }
-        if let Some(on_remove) = self.on_remove {
-            if let Some(free_on_remove) = self.free_on_remove {
-                unsafe { free_on_remove(on_remove) };
-            }
+        if let Some(on_remove) = self.on_remove
+            && let Some(free_on_remove) = self.free_on_remove
+        {
+            unsafe { free_on_remove(on_remove) };
         }
-        if let Some(on_set) = self.on_set {
-            if let Some(free_on_set) = self.free_on_set {
-                unsafe { free_on_set(on_set) };
-            }
+        if let Some(on_set) = self.on_set
+            && let Some(free_on_set) = self.free_on_set
+        {
+            unsafe { free_on_set(on_set) };
         }
     }
 }

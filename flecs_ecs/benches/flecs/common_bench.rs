@@ -49,7 +49,7 @@ pub fn reset_srand() {
     }
 }
 
-pub fn create_entities(world: &World, count: usize) -> Vec<EntityView> {
+pub fn create_entities(world: &World, count: usize) -> Vec<EntityView<'_>> {
     let mut vec = Vec::<EntityView>::with_capacity(count);
     for _ in 0..count {
         let entity = world.entity();

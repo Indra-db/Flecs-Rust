@@ -336,9 +336,9 @@ fn system_each_optional() {
     world
         .system::<(&mut Position, Option<&mut Velocity>, Option<&mut Mass>)>()
         .each_entity(|_e, (p, v, m)| {
-            if v.is_some() && m.is_some() {
-                let v = v.unwrap();
-                let m = m.unwrap();
+            if let Some(v) = v
+                && let Some(m) = m
+            {
                 p.x += v.x * m.value;
                 p.y += v.y * m.value;
             } else {

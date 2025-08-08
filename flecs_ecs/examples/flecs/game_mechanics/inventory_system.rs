@@ -83,10 +83,10 @@ fn item_kind(item: EntityView<'_>) -> Option<Entity> {
         } else if comp.is_pair() {
             // If item has a base entity, check if the base has an attribute
             // that is an Item.
-            if comp.first_id() == flecs::IsA::ID {
-                if let Some(base_kind) = item_kind(comp.second_id()) {
-                    result_entity = Some(base_kind);
-                }
+            if comp.first_id() == flecs::IsA::ID
+                && let Some(base_kind) = item_kind(comp.second_id())
+            {
+                result_entity = Some(base_kind);
             }
         }
     });
@@ -105,10 +105,11 @@ fn item_name(item: EntityView<'_>) -> Option<String> {
             if comp.entity_view().has((id::<flecs::IsA>(), Item)) {
                 result_name = comp.entity_view().get_name();
             }
-        } else if comp.is_pair() && comp.first_id() == flecs::IsA::ID {
-            if let Some(base_kind) = item_kind(comp.second_id()) {
-                result_name = comp.second_id().get_name();
-            }
+        } else if comp.is_pair()
+            && comp.first_id() == flecs::IsA::ID
+            && let Some(base_kind) = item_kind(comp.second_id())
+        {
+            result_name = comp.second_id().get_name();
         }
     });
 
@@ -157,10 +158,10 @@ fn find_item_w_kind(
             return;
         }
 
-        if let Some(ik) = item_kind(item) {
-            if ik == kind {
-                result = Some(item.id());
-            }
+        if let Some(ik) = item_kind(item)
+            && ik == kind
+        {
+            result = Some(item.id());
         }
     });
 

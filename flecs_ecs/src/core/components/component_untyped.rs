@@ -193,7 +193,7 @@ mod ord_operations {
     impl PartialOrd for UntypedComponent<'_> {
         #[inline]
         fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-            Some(self.entity.cmp(&other.entity))
+            Some(self.cmp(other))
         }
     }
 

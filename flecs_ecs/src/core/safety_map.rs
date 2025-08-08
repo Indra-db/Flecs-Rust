@@ -318,10 +318,10 @@ impl ReadWriteComponentsMap {
 
     pub(crate) fn panic_if_any_write_is_set(&self, ids: &[u64], table_id: TableId) {
         for id in ids {
-            if let Some(counter) = self.read_write.get(&combone_ids(*id, table_id)) {
-                if counter.counter.load(Ordering::Relaxed) & WRITE_FLAG != 0 {
-                    panic!("Write already set");
-                }
+            if let Some(counter) = self.read_write.get(&combone_ids(*id, table_id))
+                && counter.counter.load(Ordering::Relaxed) & WRITE_FLAG != 0
+            {
+                panic!("Write already set");
             }
         }
     }

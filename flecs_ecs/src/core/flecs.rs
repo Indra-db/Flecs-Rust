@@ -247,7 +247,7 @@ create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
 create_pre_registered_component!(
     OrderedChildren,
     ECS_ORDERED_CHILDREN,
-    "Tag that when added to a parent ensures stable order of ecs_children result."
+    "Tag that when added to a parent ensures stable order of `ecs_children` result."
 );
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
@@ -286,14 +286,14 @@ create_pre_registered_component!(
     ECS_INHERITABLE,
     "Component trait. Mark component as inheritable.
     This is the opposite of Final. This trait can be used to enforce that queries
-    take into account component inheritance before inheritance (IsA) 
+    take into account component inheritance before inheritance (`IsA`) 
     relationships are added with the component as target."
 );
 
 create_pre_registered_component!(
     PairIsTag,
     ECS_PAIR_IS_TAG,
-    "Component trait. A relationship can be marked with PairIsTag in which case
+    "Component trait. A relationship can be marked with `PairIsTag` in which case
      a pair with the relationship will never contain data."
 );
 create_pre_registered_component!(
