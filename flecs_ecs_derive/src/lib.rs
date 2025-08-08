@@ -336,36 +336,35 @@ fn impl_cached_component_data_struct(
         for predicate in where_clause.predicates.iter() {
             if let syn::WherePredicate::Type(predicate_type) = predicate {
                 // Extract the Ident from the bounded type
-                if let Type::Path(type_path) = &predicate_type.bounded_ty {
-                    if let Some(segment) = type_path.path.segments.first() {
-                        let type_ident = &segment.ident;
-                        for bound in predicate_type.bounds.iter() {
-                            if let syn::TypeParamBound::Trait(trait_bound) = bound {
-                                if trait_bound.path.is_ident("Default") {
-                                    if let Some((_, gtype_info)) =
-                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
-                                    {
-                                        gtype_info.set_is_bound_default();
-                                    }
-                                } else if trait_bound.path.is_ident("Clone") {
-                                    if let Some((_, gtype_info)) =
-                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
-                                    {
-                                        gtype_info.set_is_bound_clone();
-                                    }
-                                } else if trait_bound.path.is_ident("PartialOrd") {
-                                    if let Some((_, gtype_info)) =
-                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
-                                    {
-                                        gtype_info.set_contains_partial_ord_bound();
-                                    }
-                                } else if trait_bound.path.is_ident("PartialEq") {
-                                    if let Some((_, gtype_info)) =
-                                        type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
-                                    {
-                                        gtype_info.set_contains_partial_eq_bound();
-                                    }
+                if let Type::Path(type_path) = &predicate_type.bounded_ty
+                    && let Some(segment) = type_path.path.segments.first()
+                {
+                    let type_ident = &segment.ident;
+                    for bound in predicate_type.bounds.iter() {
+                        if let syn::TypeParamBound::Trait(trait_bound) = bound {
+                            if trait_bound.path.is_ident("Default") {
+                                if let Some((_, gtype_info)) =
+                                    type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                {
+                                    gtype_info.set_is_bound_default();
                                 }
+                            } else if trait_bound.path.is_ident("Clone") {
+                                if let Some((_, gtype_info)) =
+                                    type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                {
+                                    gtype_info.set_is_bound_clone();
+                                }
+                            } else if trait_bound.path.is_ident("PartialOrd") {
+                                if let Some((_, gtype_info)) =
+                                    type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                                {
+                                    gtype_info.set_contains_partial_ord_bound();
+                                }
+                            } else if trait_bound.path.is_ident("PartialEq")
+                                && let Some((_, gtype_info)) =
+                                    type_info_vec.iter_mut().find(|(id, _)| *id == *type_ident)
+                            {
+                                gtype_info.set_contains_partial_eq_bound();
                             }
                         }
                     }
@@ -1174,10 +1173,10 @@ fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
                 Ok(found_repr_c)
             });
 
-            if let Ok(found_repr_c) = result {
-                if found_repr_c {
-                    return (true, token_stream); // Return true immediately if `#[repr(C)]` is found
-                }
+            if let Ok(found_repr_c) = result
+                && found_repr_c
+            {
+                return (true, token_stream); // Return true immediately if `#[repr(C)]` is found
             }
         }
     }
@@ -2210,7 +2209,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///     while it.next() {
 ///         let world = it.world();
 ///         for i in it.iter() {
-///             let e = it.entity(i).unwrap();
+///             let e = it.get_entity(i).unwrap();
 ///             let id = it.id(0);
 ///             let shape = ShapesTrait::cast(e, id);
 ///             let calc = shape.calculate();
