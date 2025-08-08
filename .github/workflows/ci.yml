@@ -2,7 +2,7 @@ name: CI
 
 env:
   # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
-  RUST_MIN_VER: "1.88"
+  RUST_MIN_VER: "1.88.0"
 
 on:
   push:
@@ -16,13 +16,13 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
-    name: cargo fmt
+    name: cargo fmt (1.88)
     steps:
       - uses: actions/checkout@v4
-      - name: install stable toolchain
+      - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_MIN_VER }}
           components: rustfmt
       - name: cargo fmt
         run: cargo fmt --all --check
@@ -39,14 +39,16 @@ jobs:
     strategy:
       matrix:
         os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test
+    name: cargo clippy + test (1.88)
     steps:
       - uses: actions/checkout@v4
-      - name: install stable toolchain
+      - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_MIN_VER }}
           components: clippy
+      - name: rustc/cargo versions
+        run: rustc -V && cargo -V
       - name: cargo clippy
         run: cargo clippy --all-targets --workspace -- -D warnings
       - name: cargo test
@@ -56,16 +58,16 @@ jobs:
 
   build-ios:
     runs-on: macos-latest
-    name: cargo build + clippy (iOS)
+    name: cargo build + clippy (iOS, 1.88)
     env:
-        RUSTFLAGS: -Dwarnings
-        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+      RUSTFLAGS: -Dwarnings
+      IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     steps:
       - uses: actions/checkout@v4
-      - name: install stable toolchain
+      - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_MIN_VER }}
           components: clippy
           targets: aarch64-apple-ios
       - name: cargo build
@@ -75,15 +77,15 @@ jobs:
 
   build-musl:
     runs-on: ubuntu-latest
-    name: cargo build + test (musl)
+    name: cargo build + test (musl, 1.88)
     env:
-        RUSTFLAGS: -Dwarnings
+      RUSTFLAGS: -Dwarnings
     steps:
       - uses: actions/checkout@v4
-      - name: install stable toolchain
+      - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_MIN_VER }}
           components: clippy
           targets: x86_64-unknown-linux-musl
       - name: Install musl tools
@@ -97,20 +99,22 @@ jobs:
 
   build-msrv:
     runs-on: ubuntu-latest
-    name: cargo build (MSRV)
+    name: cargo build (MSRV 1.88)
     env:
-        RUSTFLAGS: -Dwarnings
+      RUSTFLAGS: -Dwarnings
     steps:
       - uses: actions/checkout@v4
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_MIN_VER }}
+      - name: rustc/cargo versions
+        run: rustc -V && cargo -V
       - name: cargo build
         run: cargo build
 
   build-doc:
-    name: cargo docs-rs
+    name: cargo docs-rs (nightly)
     runs-on: ubuntu-22.04
     env:
       RUSTDOCFLAGS: -Dwarnings
@@ -119,9 +123,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-        
+
       # Compile cargo-docs-rs locally so it links against the runner's glibc.
       - run: cargo install cargo-docs-rs --locked
-        
+
       - run: cargo docs-rs -p flecs_ecs
       - run: cargo docs-rs -p flecs_ecs_derive
