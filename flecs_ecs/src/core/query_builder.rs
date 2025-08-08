@@ -12,6 +12,7 @@ extern crate std;
 
 extern crate alloc;
 use alloc::{format, vec::Vec};
+use flecs_ecs_derive::extern_abi;
 
 /// Builder for [`Query`].
 ///
@@ -237,12 +238,17 @@ where
 }
 
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
+#[cfg(not(target_family = "wasm"))]
 type GroupByFn = extern "C-unwind" fn(
     *mut sys::ecs_world_t,
     *mut sys::ecs_table_t,
     sys::ecs_id_t,
     *mut c_void,
 ) -> u64;
+
+#[cfg(target_family = "wasm")]
+type GroupByFn =
+    extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
 
 /// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
@@ -758,7 +764,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
+        #[extern_abi]
+        fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
         where
             F: Fn(Entity, &T, Entity, &T) -> i32,
         {
@@ -787,12 +794,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F>(
-            e1: Entity,
-            e1_data: *const c_void,
-            e2: Entity,
-            e2_data: *const c_void,
-        ) -> i32
+        #[extern_abi]
+        fn output<F>(e1: Entity, e1_data: *const c_void, e2: Entity, e2_data: *const c_void) -> i32
         where
             F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
         {

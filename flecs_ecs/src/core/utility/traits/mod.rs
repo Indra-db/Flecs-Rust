@@ -40,6 +40,13 @@ pub mod private {
 
     extern crate alloc;
     use alloc::boxed::Box;
+    use flecs_ecs_derive::extern_abi;
+
+    /// Type alias for extern function pointers that adapts to target platform
+    #[cfg(target_family = "wasm")]
+    pub type ExternIterFn = unsafe extern "C" fn(*mut sys::ecs_iter_t);
+    #[cfg(not(target_family = "wasm"))]
+    pub type ExternIterFn = unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t);
 
     #[allow(non_camel_case_types)]
     #[doc(hidden)]
@@ -64,15 +71,9 @@ pub mod private {
 
         fn desc_binding_context(&self) -> *mut c_void;
 
-        fn set_desc_callback(
-            &mut self,
-            callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
-        );
+        fn set_desc_callback(&mut self, callback: Option<ExternIterFn>);
 
-        fn set_desc_run(
-            &mut self,
-            callback: Option<unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t)>,
-        );
+        fn set_desc_run(&mut self, callback: Option<ExternIterFn>);
 
         /// Callback of the each functionality
         ///
@@ -81,9 +82,9 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each<const CALLED_FROM_RUN: bool, Func>(
-            iter: *mut sys::ecs_iter_t,
-        ) where
+        #[extern_abi]
+        unsafe fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
+        where
             Func: FnMut(T::TupleType<'_>),
         {
             unsafe {
@@ -111,9 +112,9 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(
-            iter: *mut sys::ecs_iter_t,
-        ) where
+        #[extern_abi]
+        unsafe fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
+        where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
             unsafe {
@@ -153,7 +154,8 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        #[extern_abi]
+        unsafe fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
         {
@@ -182,7 +184,8 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        unsafe extern "C-unwind" fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
+        #[extern_abi]
+        unsafe fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),
         {
@@ -194,7 +197,8 @@ pub mod private {
             }
         }
 
-        extern "C-unwind" fn free_callback<Func>(ptr: *mut c_void) {
+        #[extern_abi]
+        fn free_callback<Func>(ptr: *mut c_void) {
             unsafe {
                 drop(Box::from_raw(ptr as *mut Func));
             };

@@ -11,6 +11,7 @@ use alloc::string::String;
 
 #[cfg(feature = "flecs_json")]
 use alloc::string::ToString;
+use flecs_ecs_derive::extern_abi;
 
 /// Custom error type for `try_first_only` failures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -30,7 +31,7 @@ pub trait IterOperations {
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool;
 
     #[doc(hidden)]
-    fn iter_next_func(&self) -> unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool;
+    fn iter_next_func(&self) -> ExternIterNextFn;
 
     #[doc(hidden)]
     fn query_ptr(&self) -> *const sys::ecs_query_t;
@@ -443,10 +444,7 @@ where
     {
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
-        iter.callback = Some(
-            __internal_query_execute_each_from_run::<T, FuncEach>
-                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
-        );
+        iter.callback = Some(__internal_query_execute_each_from_run::<T, FuncEach> as ExternIterFn);
         internal_run::<P>(&mut iter, &mut func, self.world());
         iter.callback = None;
         iter.callback_ctx = core::ptr::null_mut();
@@ -533,8 +531,7 @@ where
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(
-            __internal_query_execute_each_entity_from_run::<T, FuncEachEntity>
-                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
+            __internal_query_execute_each_entity_from_run::<T, FuncEachEntity> as ExternIterFn,
         );
         let world = self.world();
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
@@ -593,10 +590,8 @@ where
     {
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
-        iter.callback = Some(
-            __internal_query_execute_each_iter_from_run::<T, P, FuncEachIter>
-                as unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t),
-        );
+        iter.callback =
+            Some(__internal_query_execute_each_iter_from_run::<T, P, FuncEachIter> as ExternIterFn);
         let world = self.world();
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
@@ -1426,9 +1421,9 @@ fn __internal_find_impl<'a, T, const ANY_SPARSE_TERMS: bool>(
 }
 
 #[inline(always)]
-unsafe extern "C-unwind" fn __internal_query_execute_each_from_run<T, Func>(
-    iter: *mut sys::ecs_iter_t,
-) where
+#[extern_abi]
+unsafe fn __internal_query_execute_each_from_run<T, Func>(iter: *mut sys::ecs_iter_t)
+where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
@@ -1452,9 +1447,9 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_from_run<T, Func>(
 }
 
 #[inline(always)]
-unsafe extern "C-unwind" fn __internal_query_execute_each_entity_from_run<T, Func>(
-    iter: *mut sys::ecs_iter_t,
-) where
+#[extern_abi]
+unsafe fn __internal_query_execute_each_entity_from_run<T, Func>(iter: *mut sys::ecs_iter_t)
+where
     T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
@@ -1480,9 +1475,9 @@ unsafe extern "C-unwind" fn __internal_query_execute_each_entity_from_run<T, Fun
 }
 
 #[inline(always)]
-unsafe extern "C-unwind" fn __internal_query_execute_each_iter_from_run<T, P, Func>(
-    iter: *mut sys::ecs_iter_t,
-) where
+#[extern_abi]
+unsafe fn __internal_query_execute_each_iter_from_run<T, P, Func>(iter: *mut sys::ecs_iter_t)
+where
     T: QueryTuple,
     P: ComponentId,
     Func: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>),

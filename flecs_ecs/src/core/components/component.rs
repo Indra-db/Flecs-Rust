@@ -12,6 +12,7 @@ extern crate std;
 
 extern crate alloc;
 use alloc::boxed::Box;
+use flecs_ecs_derive::extern_abi;
 
 /// Component class.
 /// Class used to register components and component metadata.
@@ -161,7 +162,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the binding context.
-    unsafe extern "C-unwind" fn binding_ctx_drop(ptr: *mut c_void) {
+    #[extern_abi]
+    unsafe fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);
@@ -241,7 +243,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on add hook.
-    unsafe extern "C-unwind" fn on_add_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_add_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -252,7 +255,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on remove hook.
-    unsafe extern "C-unwind" fn on_remove_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_remove_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -263,7 +267,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on set hook.
-    unsafe extern "C-unwind" fn on_set_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_set_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -274,7 +279,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to run the on add hook.
-    unsafe extern "C-unwind" fn run_add<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_add<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -292,7 +298,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to run the on set hook.
-    unsafe extern "C-unwind" fn run_set<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_set<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -308,7 +315,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to run the on remove hook.
-    unsafe extern "C-unwind" fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {

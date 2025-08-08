@@ -613,15 +613,15 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
     let ctor_hooks =
         unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
 
-    !core::ptr::fn_addr_eq(
-        ctor_hooks,
-        sys::flecs_default_ctor
-            as unsafe extern "C-unwind" fn(
-                *mut core::ffi::c_void,
-                i32,
-                *const sys::ecs_type_info_t,
-            ),
-    )
+    /// Type alias for extern function pointers that adapts to target platform
+    #[cfg(target_family = "wasm")]
+    type ExternDefaultCtorFn =
+        unsafe extern "C" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
+    #[cfg(not(target_family = "wasm"))]
+    type ExternDefaultCtorFn =
+        unsafe extern "C-unwind" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
+
+    !core::ptr::fn_addr_eq(ctor_hooks, sys::flecs_default_ctor as ExternDefaultCtorFn)
 }
 
 /// Separate the types of an `Archetype` into a `Vec<String>`.

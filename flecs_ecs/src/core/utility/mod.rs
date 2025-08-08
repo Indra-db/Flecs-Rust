@@ -19,3 +19,16 @@ pub use log::*;
 pub use traits::*;
 #[doc(hidden)]
 pub use types::*;
+
+use crate::sys;
+
+/// Type alias for extern function pointers that adapts to target platform
+#[cfg(target_family = "wasm")]
+pub(crate) type ExternIterFn = unsafe extern "C" fn(*mut sys::ecs_iter_t);
+#[cfg(not(target_family = "wasm"))]
+pub(crate) type ExternIterFn = unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t);
+
+#[cfg(target_family = "wasm")]
+pub(crate) type ExternIterNextFn = unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool;
+#[cfg(not(target_family = "wasm"))]
+pub(crate) type ExternIterNextFn = unsafe extern "C-unwind" fn(*mut sys::ecs_iter_t) -> bool;

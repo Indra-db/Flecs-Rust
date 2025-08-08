@@ -1,6 +1,7 @@
 use core::ffi::{c_char, c_void};
 
 use crate::core::{Entity, WorldRef};
+use flecs_ecs_derive::extern_abi;
 
 use super::Serializer;
 
@@ -18,7 +19,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(ser: &Serializer, value: &T) -> i32
+        #[extern_abi]
+        fn output<F, T>(ser: &Serializer, value: &T) -> i32
         where
             F: Fn(&Serializer, &T) -> i32,
         {
@@ -43,7 +45,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(ser: &Serializer, value: &T, name: *const c_char) -> i32
+        #[extern_abi]
+        fn output<F, T>(ser: &Serializer, value: &T, name: *const c_char) -> i32
         where
             F: Fn(&Serializer, &T, *const c_char) -> i32,
         {
@@ -67,7 +70,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(ser: &Serializer, value: &T, elem: usize) -> i32
+        #[extern_abi]
+        fn output<F, T>(ser: &Serializer, value: &T, elem: usize) -> i32
         where
             F: Fn(&Serializer, &T, usize) -> i32,
         {
@@ -91,7 +95,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: bool)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: bool)
         where
             F: Fn(&mut T, bool),
         {
@@ -116,7 +121,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: c_char)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: c_char)
         where
             F: Fn(&mut T, c_char),
         {
@@ -141,7 +147,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: i64)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: i64)
         where
             F: Fn(&mut T, i64),
         {
@@ -166,7 +173,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: u64)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: u64)
         where
             F: Fn(&mut T, u64),
         {
@@ -191,7 +199,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: f32)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: f32)
         where
             F: Fn(&mut T, f32),
         {
@@ -216,7 +225,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: *const c_char)
         where
             F: Fn(&mut T, *const c_char),
         {
@@ -241,7 +251,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<'a, F, T>(value: &'a mut T, world: WorldRef<'a>, entity: Entity)
+        #[extern_abi]
+        fn output<'a, F, T>(value: &'a mut T, world: WorldRef<'a>, entity: Entity)
         where
             F: Fn(&'a mut T, WorldRef<'a>, Entity),
         {
@@ -266,7 +277,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T)
         where
             F: Fn(&mut T),
         {
@@ -291,7 +303,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T)
         where
             F: Fn(&mut T),
         {
@@ -316,7 +329,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T, ElemType>(value: &mut T, elem: usize) -> &mut ElemType
+        #[extern_abi]
+        fn output<F, T, ElemType>(value: &mut T, elem: usize) -> &mut ElemType
         where
             F: Fn(&mut T, usize) -> &mut ElemType,
         {
@@ -341,7 +355,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: *const c_char) -> *mut c_void
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: *const c_char) -> *mut c_void
         where
             F: Fn(&mut T, *const c_char) -> *mut c_void,
         {
@@ -366,7 +381,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T) -> usize
+        #[extern_abi]
+        fn output<F, T>(value: &mut T) -> usize
         where
             F: Fn(&mut T) -> usize,
         {
@@ -391,7 +407,8 @@ where
         }
         core::mem::forget(self);
 
-        extern "C-unwind" fn output<F, T>(value: &mut T, data: usize)
+        #[extern_abi]
+        fn output<F, T>(value: &mut T, data: usize)
         where
             F: Fn(&mut T, usize),
         {

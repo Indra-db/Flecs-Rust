@@ -2101,7 +2101,8 @@ fn query_builder_16_terms() {
     assert_eq!(count, 1);
 }
 
-unsafe extern "C-unwind" fn group_by_first_id(
+#[extern_abi]
+unsafe fn group_by_first_id(
     _world: *mut sys::ecs_world_t,
     table: *mut sys::ecs_table_t,
     _id: u64,
@@ -2113,7 +2114,8 @@ unsafe extern "C-unwind" fn group_by_first_id(
     }
 }
 
-unsafe extern "C-unwind" fn group_by_first_id_negated(
+#[extern_abi]
+unsafe fn group_by_first_id_negated(
     world: *mut sys::ecs_world_t,
     table: *mut sys::ecs_table_t,
     id: u64,
@@ -2248,7 +2250,8 @@ fn query_builder_group_by_template() {
     assert_eq!(count, 3);
 }
 
-unsafe extern "C-unwind" fn group_by_rel(
+#[extern_abi]
+unsafe fn group_by_rel(
     world: *mut sys::ecs_world_t,
     table: *mut sys::ecs_table_t,
     id: u64,
@@ -2559,7 +2562,8 @@ fn query_builder_group_by_default_func_w_type() {
     assert!(e3_found);
 }
 
-extern "C-unwind" fn callback_group_create(
+#[extern_abi]
+fn callback_group_create(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     group_by_ctx: *mut c_void,
@@ -2572,7 +2576,8 @@ extern "C-unwind" fn callback_group_create(
     let group_id = Box::new(group_id);
     Box::into_raw(group_id) as *mut c_void
 }
-extern "C-unwind" fn callback_group_delete(
+#[extern_abi]
+fn callback_group_delete(
     world: *mut sys::ecs_world_t,
     group_id: u64,
     ctx: *mut c_void,
