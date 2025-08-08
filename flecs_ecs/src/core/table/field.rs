@@ -194,6 +194,16 @@ impl<'a, T> FieldMut<'a, T> {
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         self.slice_components.get_mut(index)
     }
+
+    /// Get table field as a slice
+    pub fn as_slice(&self) -> &[T] {
+        self.slice_components
+    }
+
+    /// Get mutable table field as a slice
+    pub fn as_slice_mut(&mut self) -> &mut [T] {
+        self.slice_components
+    }
 }
 
 impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
