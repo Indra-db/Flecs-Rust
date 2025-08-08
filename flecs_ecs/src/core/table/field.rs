@@ -95,11 +95,7 @@ impl<'a, T> Field<'a, T> {
 
     /// Get table field as a slice
     pub fn as_slice(&self) -> &[T] {
-        if self.is_shared() {
-            &self.slice_components[0..=0]
-        } else {
-            self.slice_components
-        }
+        self.slice_components
     }
 }
 
