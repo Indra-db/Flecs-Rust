@@ -2296,3 +2296,58 @@ pub fn ecs_rust_trait(_: ProcMacroTokenStream) -> ProcMacroTokenStream {
     };
     ProcMacroTokenStream::new()
 }
+
+/// Attribute macro that conditionally applies the appropriate extern ABI based on target platform.
+///
+/// For WASM targets (which don't support unwinding), it uses `extern "C"`.
+/// For other targets, it uses `extern "C-unwind"`.
+///
+/// # Usage
+///
+/// ```ignore
+/// use flecs_ecs_derive::extern_abi;
+///
+/// #[extern_abi]
+/// fn my_function() {
+///     // Function implementation
+/// }
+/// ```
+///
+/// This will expand to:
+/// - `extern "C" fn my_function() { ... }` on WASM targets
+/// - `extern "C-unwind" fn my_function() { ... }` on other targets
+#[proc_macro_attribute]
+pub fn extern_abi(
+    _args: ProcMacroTokenStream,
+    input: ProcMacroTokenStream,
+) -> ProcMacroTokenStream {
+    let input_fn = parse_macro_input!(input as syn::ItemFn);
+
+    let fn_name = &input_fn.sig.ident;
+    let fn_inputs = &input_fn.sig.inputs;
+    let fn_output = &input_fn.sig.output;
+    let fn_block = &input_fn.block;
+    let fn_generics = &input_fn.sig.generics;
+    let fn_where_clause = &input_fn.sig.generics.where_clause;
+    let fn_vis = &input_fn.vis;
+    let fn_attrs = &input_fn.attrs;
+
+    // Check if there's already an extern specification
+    if input_fn.sig.abi.is_some() {
+        return quote! {
+            compile_error!("Function already has an extern ABI specification. Remove it to use #[extern_abi].");
+        }.into();
+    }
+
+    let output = quote! {
+        #(#fn_attrs)*
+        #[cfg(target_family = "wasm")]
+        #fn_vis extern "C" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
+
+        #(#fn_attrs)*
+        #[cfg(not(target_family = "wasm"))]
+        #fn_vis extern "C-unwind" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
+    };
+
+    ProcMacroTokenStream::from(output)
+}

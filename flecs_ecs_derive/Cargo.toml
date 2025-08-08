@@ -15,7 +15,7 @@ name = "flecs_ecs_derive"
 workspace = true
 
 [dependencies]
-syn = "2.0.101"
+syn = { version = "2.0.101", features = ["full"] }
 quote = "1.0.40"
 proc-macro2 = "1.0.95"
 
