@@ -84,15 +84,10 @@ fn main() {
         .query::<()>()
         .with_enum_wildcard::<&Tile>()
         .build()
-        .run(|mut it| {
-            while it.next() {
-                let pair = it.pair(0).unwrap();
-                let tile_constant = pair.second_id();
-                let path = tile_constant.path().unwrap();
-                for i in it.iter() {
-                    println!("{path}");
-                }
-            }
+        .each_iter(|it, _, _| {
+            let pair = it.pair(0).unwrap();
+            let tile_constant = pair.second_id();
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Output:s:
@@ -108,15 +103,10 @@ fn main() {
         .with_enum_wildcard::<&Tile>()
         .with_enum(TileStatus::Occupied)
         .build()
-        .run(|mut it| {
-            while it.next() {
-                let pair = it.pair(0).unwrap();
-                let tile_constant = pair.second_id();
-                let path = tile_constant.path().unwrap();
-                for i in it.iter() {
-                    println!("{path}");
-                }
-            }
+        .each_iter(|it, _, _| {
+            let pair = it.pair(0).unwrap();
+            let tile_constant = pair.second_id();
+            println!("{}", tile_constant.path().unwrap());
         });
 
     // Output:s:

@@ -27,27 +27,17 @@ fn main() {
         .observer::<flecs::OnSet, (&Position, &Position)>()
         .term_at(1)
         .parent()
-        .run(|mut it| {
-            // The observer will iterate over all entities that match the query,
-            // which includes both self and parent.
-            while it.next() {
-                let pos_self = it.field::<Position>(0);
-                let pos_parent = it.field::<Position>(1);
-                for i in it.iter() {
-                    let pos_self = &pos_self[i];
-                    let pos_parent = &pos_parent[i];
-                    println!(
-                        " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
-                        it.event().name(),
-                        it.event_id().to_str(),
-                        it.get_entity(i).unwrap().name(),
-                        pos_self.x,
-                        pos_self.y,
-                        pos_parent.x,
-                        pos_parent.y
-                    );
-                }
-            }
+        .each_iter(|it, index, (pos_self, pos_parent)| {
+            println!(
+                " - {}: {}: {}: self: {{ {}, {} }}, parent: {{ {}, {} }}",
+                it.event().name(),
+                it.event_id().to_str(),
+                it.entity(index).name(),
+                pos_self.x,
+                pos_self.y,
+                pos_parent.x,
+                pos_parent.y
+            );
         });
 
     // Create entity and parent

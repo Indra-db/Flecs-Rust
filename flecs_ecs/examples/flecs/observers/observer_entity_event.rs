@@ -39,13 +39,9 @@ fn main() {
     world
         .observer::<CloseRequested, ()>()
         .with(id::<flecs::Any>())
-        .run(|mut it| {
+        .each_iter(|it, _index, _| {
             let reason = it.param().reason;
-            while it.next() {
-                for i in it.iter() {
-                    println!("Close request with reason: {reason:?}");
-                }
-            }
+            println!("Close request with reason: {reason:?}");
         });
 
     let widget = world.entity_named("MyWidget");

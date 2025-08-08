@@ -135,14 +135,8 @@ fn main() {
     let location_var = query.find_var("Location").unwrap();
 
     // Iterate the query
-    query.run(|mut it| {
-        while it.next() {
-            for i in it.iter() {
-                let location = it.get_var(location_var);
-                let entity = it.get_entity(i).unwrap();
-                println!("{entity} lives in {location}");
-            }
-        }
+    query.each_iter(|it, index, _| {
+        println!("{} lives in {}", it.entity(index), it.get_var(location_var));
     });
 
     // Output:

@@ -32,17 +32,12 @@ fn main() {
 
     // Iterate the query with a flecs::iter. This makes it possible to inspect
     // the pair that we are currently matched with.
-    query.run(|mut it| {
-        while it.next() {
-            let eats = it.field::<EatsAmount>(0);
-            let pair = it.pair(0).unwrap();
-            let food = pair.second_id().name();
-            for i in it.iter() {
-                let entity = it.get_entity(i).unwrap().name();
-                let amount = eats[i].amount;
-                println!("{entity} eats {amount} {food}");
-            }
-        }
+    query.each_iter(|it, index, eats| {
+        let entity = it.entity(index);
+        let pair = it.pair(0).unwrap();
+        let food = pair.second_id();
+
+        println!("{} eats {} {}", entity, eats.amount, food);
     });
 
     // Output:

@@ -74,18 +74,14 @@ fn main() {
             // Filter for enchanted creatures within the current iteration
             query_enchanted
             .set_var_table(0, iter.range().unwrap())
-            .run(|mut it| {
-                while it.next() {
-                    for i in it.iter() {
-                        let pos = &loc[i];
-                        let abil_power = ability[i].power;
-                        let entity = it.get_entity(i).unwrap();
-                        println!(
-                            "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} ",
-                            pos.x, pos.y, abil_power
-                        );
-                    }
-                }
+            .each_iter( |it, index ,_| {
+                let pos = &loc[index];
+                let abil_power = ability[index].power;
+                let entity = it.entity(index);
+                println!(
+                    "Creature id: {entity} at location {},{} is enchanted with mystical energy, ability power: {} "
+                    , pos.x, pos.y, abil_power
+                );
             });
         }
     });
