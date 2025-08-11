@@ -177,12 +177,6 @@ where
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        if !SHOULD_PANIC {
-            if !EntityView::new_from(world_ref, id).has(id) {
-                return false;
-            }
-        }
-
         let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
 
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
@@ -325,80 +319,6 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    if !SHOULD_PANIC {
-                        if EntityView::new_from(world_ref, id).has(id) {
-                               let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
-
-                                if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
-                                    assert!(
-                                        {
-                                            let first = ecs_first(id, world_ref);
-                                            first != flecs::Wildcard::ID && first != flecs::Any::ID
-                                        },
-                                        "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
-                                    );
-
-                                    assert!(
-                                        {
-                                            let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
-                                            let cast_id =
-                                                world_ref.component_id::<<$t::OnlyType as ComponentOrPairId>::CastType>();
-                                            id != 0 && id == cast_id
-                                        },
-                                        "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
-                                    );
-
-                                    #[cfg(feature = "flecs_safety_locks")]
-                                    {
-                                        if !component_ptr.is_null() {
-                                            let first_id = ecs_entity_id_high(id);
-                                            let second_id = ecs_entity_id_low(id);
-                                            if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
-                                                let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
-                                                ids[index] = ecs_pair(first_id, target_id);
-                                            } else {
-                                                ids[index] = id;
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    #[cfg(feature = "flecs_safety_locks")]
-                                    {
-                                        if !component_ptr.is_null() {
-                                            ids[index] = id;
-                                        }
-                                    }
-                                }
-
-
-
-                                if !component_ptr.is_null() {
-                                    components[index] = component_ptr;
-                                } else {
-                                    components[index] = core::ptr::null_mut();
-                                    if !$t::IS_OPTION {
-                                        if SHOULD_PANIC {
-                                            ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                                                "Component `{}` not found on `EntityView::cloned` operation 
-                                                with parameters: `{}`. 
-                                                Use `try_cloned` variant to avoid assert/panicking if you want to handle 
-                                                the error or use `Option<{}> instead to handle individual cases.",
-                                                core::any::type_name::<$t::OnlyType>(), core::any::type_name::<Self>(),
-                                                core::any::type_name::<$t::ActualType>());
-                                            panic!("Component `{}` not found on `EntityView::cloned`operation 
-                                            with parameters: `{}`. 
-                                            Use `try_cloned` variant to avoid assert/panicking if you want to handle the error 
-                                            or use `Option<{}> instead to handle individual cases.", core::any::type_name::<$t::OnlyType>(),
-                                            core::any::type_name::<Self>(), core::any::type_name::<$t::ActualType>());
-                                        }
-                                        has_all_components = false;
-                                    }
-                                }
-                                index += 1;
-                        } else {
-                            index += 1;
-                        }
-                    } else {
                     let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
 
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
@@ -467,9 +387,6 @@ macro_rules! impl_cloned_tuple {
                         }
                     }
                     index += 1;
-                    }
-
-
                 )*
 
                 has_all_components
