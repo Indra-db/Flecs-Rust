@@ -1504,9 +1504,10 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
     ) -> Option<Return> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     return None;
+        // }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
@@ -1550,9 +1551,10 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            panic!("Entity does not have any components");
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     panic!("Entity does not have any components");
+        // }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
@@ -1636,9 +1638,10 @@ impl<'a> EntityView<'a> {
     pub fn cloned<T: ClonedTuple>(self) -> T::TupleType<'a> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            panic!("Entity does not have any components");
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     panic!("Entity does not have any components");
+        // }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
 
@@ -1664,9 +1667,11 @@ impl<'a> EntityView<'a> {
                 };
 
                 for id in read_ids {
+                    if *id == 0 {
+                        continue;
+                    } // skip optional/missing component ids
                     let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
                     if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
-                        //check if no writes are present so we can clone
                         sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, idr);
                         sparse_id_record_lock_read_end::<MULTITHREADED>(idr);
                         continue;
@@ -1764,9 +1769,10 @@ impl<'a> EntityView<'a> {
     pub fn try_cloned<T: ClonedTuple>(self) -> Option<T::TupleType<'a>> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     return None;
+        // }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
 

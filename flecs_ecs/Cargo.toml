@@ -42,7 +42,9 @@ test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", option
 criterion = "0.7.0"
 seq-macro = "0.3.6"
 rand = "0.9.1"
-ctor = "0.4.2"
+ctor = "0.5.0"
+rstest = "0.26.1"
+rstest_reuse = "0.7.0"
 insta = { version = "1.42.1", features = ["yaml","filters"] }
 libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
