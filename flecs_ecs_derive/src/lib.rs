@@ -774,11 +774,23 @@ fn impl_cached_component_data_struct(
         }
     };
 
+    let internal_on_component_registration = quote! {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
+            #[inline(always)]
+            fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+
+
+                <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+            }
+        }
+    };
+
     let on_component_registration = if has_on_registration {
         quote! {}
     } else {
         quote! {
             impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+                #[inline(always)]
                 fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
             }
         }
@@ -790,6 +802,7 @@ fn impl_cached_component_data_struct(
         #common_traits
         #component_id
         #on_component_registration
+        #internal_on_component_registration
     }
 }
 
@@ -1087,11 +1100,23 @@ fn impl_cached_component_data_enum(
         }
     };
 
+    let internal_on_component_registration = quote! {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
+            #[inline(always)]
+            fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+
+
+                <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+            }
+        }
+    };
+
     let on_component_registration = if has_on_registration {
         quote! {}
     } else {
         quote! {
             impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+                #[inline(always)]
                 fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
             }
         }
@@ -1126,6 +1151,8 @@ fn impl_cached_component_data_enum(
         #not_empty_trait_or_error
 
         #cached_enum_data
+
+        #internal_on_component_registration
 
         #on_component_registration
 

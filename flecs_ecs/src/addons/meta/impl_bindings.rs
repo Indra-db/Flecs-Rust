@@ -65,6 +65,10 @@ impl<T: ComponentId> ComponentId for Opaque<'static, T> {
     }
 }
 
+impl<T: ComponentId> InternalOnComponentRegistration for Opaque<'static, T> {
+    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
+}
+
 impl<T: ComponentId> OnComponentRegistration for Opaque<'static, T> {
     fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }

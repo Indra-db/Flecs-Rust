@@ -144,6 +144,10 @@ macro_rules! create_pre_registered_extern_component {
             }
         }
 
+        impl InternalOnComponentRegistration for $struct_name {
+            fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
+        }
+
         impl OnComponentRegistration for $struct_name {
             fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
         }
@@ -227,6 +231,10 @@ macro_rules! impl_component_traits_primitive_type {
             fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
+        }
+
+        impl InternalOnComponentRegistration for $name {
+            fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
         }
 
         impl OnComponentRegistration for $name {
