@@ -66,7 +66,6 @@ impl Default for World {
         let ctx = Box::leak(Box::new(WorldCtx::new()));
         let components = unsafe { NonNull::new_unchecked(&mut ctx.components) };
         let components_array = unsafe { NonNull::new_unchecked(&mut ctx.components_array) };
-        #[cfg(feature = "flecs_safety_locks")]
         let world = Self {
             raw_world,
             components,
