@@ -65,9 +65,12 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(meta, skip, on_registration))]
+#[proc_macro_derive(Component, attributes(meta, skip, on_registration, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
+
+    // Collect #[flecs(...)] trait requests to apply on registration
+    let flecs_traits_calls = collect_flecs_traits_calls(&input);
 
     let has_repr_c = check_repr_c(&input);
     let has_on_registration = input
@@ -90,6 +93,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 has_fields,
                 &is_tag,
                 has_on_registration,
+                &flecs_traits_calls,
             ));
         }
         Data::Enum(_) => {
@@ -100,12 +104,14 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     true,
                     &is_tag,
                     has_on_registration,
+                    &flecs_traits_calls,
                 ));
             } else {
                 generated_impls.push(impl_cached_component_data_enum(
                     &mut input,
                     has_on_registration,
                     has_repr_c.1,
+                    &flecs_traits_calls,
                 ));
             }
         }
@@ -116,13 +122,87 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone());
 
-    // Combine the generated code with the original struct definition
     let output = quote! {
         #( #generated_impls )*
         #meta_impl
     };
 
     output.into()
+}
+
+// Parse #[flecs(...)] attribute and build calls to _component.add_trait::<flecs::...>();
+fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
+    use syn::{
+        parenthesized, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma,
+    };
+
+    enum Item {
+        Single(Path),
+        Pair(Path, Path),
+    }
+
+    impl Parse for Item {
+        fn parse(input: ParseStream) -> Result<Self> {
+            if input.peek(syn::token::Paren) {
+                let inner;
+                parenthesized!(inner in input);
+                let first: Path = inner.parse()?;
+                inner.parse::<Comma>()?;
+                let second: Path = inner.parse()?;
+                Ok(Item::Pair(first, second))
+            } else {
+                let p: Path = input.parse()?;
+                Ok(Item::Single(p))
+            }
+        }
+    }
+
+    fn qualify(p: &Path) -> TokenStream {
+        if p.segments.len() == 1 {
+            let ident = &p.segments.first().unwrap().ident;
+            quote! { flecs_ecs::core::flecs::#ident }
+        } else {
+            quote! { #p }
+        }
+    }
+
+    fn should_be_unqualified(p: &Path) -> bool {
+        p.segments
+            .last()
+            .map(|s| {
+                let ident = &s.ident;
+                ident == "With" || ident == "OneOf" || ident == "IsA" || ident == "ChildOf"
+            })
+            .unwrap_or(false)
+    }
+
+    let mut out = TokenStream::new();
+    for attr in &input.attrs {
+        if attr.path().is_ident("flecs") {
+            let args: Result<Punctuated<Item, Token![,]>> =
+                attr.parse_args_with(Punctuated::<Item, Token![,]>::parse_terminated);
+            if let Ok(args) = args {
+                for item in args.iter() {
+                    match item {
+                        Item::Single(p) => {
+                            let q = qualify(p);
+                            out.extend(quote! { _component.add_trait::<#q>(); });
+                        }
+                        Item::Pair(p1, p2) => {
+                            let q1 = qualify(p1);
+                            let q2 = if should_be_unqualified(p1) {
+                                quote! { #p2 }
+                            } else {
+                                qualify(p2)
+                            };
+                            out.extend(quote! { _component.add_trait::<(#q1, #q2)>(); });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 
 fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> TokenStream {
@@ -280,6 +360,7 @@ fn impl_cached_component_data_struct(
     has_fields: bool,
     is_tag: &TokenStream,
     has_on_registration: bool,
+    flecs_traits_calls: &TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -778,7 +859,9 @@ fn impl_cached_component_data_struct(
         impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+                let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
 
+                #flecs_traits_calls
 
                 <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
             }
@@ -886,6 +969,7 @@ fn impl_cached_component_data_enum(
     ast: &mut syn::DeriveInput,
     has_on_registration: bool,
     underlying_enum_type: TokenStream,
+    flecs_traits_calls: &TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -1104,7 +1188,9 @@ fn impl_cached_component_data_enum(
         impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+                let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
 
+                #flecs_traits_calls
 
                 <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
             }

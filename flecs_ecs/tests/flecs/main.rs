@@ -8,6 +8,7 @@ pub mod common_test;
 mod clone_default_impl_test;
 mod component_lifecycle_test;
 mod component_test;
+mod derive_attr_component_traits;
 mod entity_bulk_rust_test;
 mod entity_rust_test;
 mod entity_test;
