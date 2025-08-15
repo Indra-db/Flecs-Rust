@@ -65,12 +65,12 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(meta, skip, on_registration, flecs))]
+#[proc_macro_derive(Component, attributes(meta_skip, on_registration, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
 
-    // Collect #[flecs(...)] trait requests to apply on registration
-    let flecs_traits_calls = collect_flecs_traits_calls(&input);
+    // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
+    let (flecs_traits_calls, has_flecs_meta) = collect_flecs_traits_calls(&input);
 
     let has_repr_c = check_repr_c(&input);
     let has_on_registration = input
@@ -120,7 +120,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     input.generics.make_where_clause();
 
-    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone());
+    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone(), has_flecs_meta);
 
     let output = quote! {
         #( #generated_impls )*
@@ -131,7 +131,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 }
 
 // Parse #[flecs(...)] attribute and build calls to _component.add_trait::<flecs::...>();
-fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
+fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool) {
     use syn::{
         parenthesized, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma,
     };
@@ -177,6 +177,7 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
     }
 
     let mut out = TokenStream::new();
+    let mut has_flecs_meta = false;
     for attr in &input.attrs {
         if attr.path().is_ident("flecs") {
             let args: Result<Punctuated<Item, Token![,]>> =
@@ -185,6 +186,15 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
                 for item in args.iter() {
                     match item {
                         Item::Single(p) => {
+                            // Allow #[flecs(meta)] to enable meta generation and skip trait emission
+                            if p.segments
+                                .last()
+                                .map(|s| s.ident == "meta")
+                                .unwrap_or(false)
+                            {
+                                has_flecs_meta = true;
+                                continue;
+                            }
                             let q = qualify(p);
                             out.extend(quote! { _component.add_trait::<#q>(); });
                         }
@@ -202,11 +212,16 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
             }
         }
     }
-    out
+    (out, has_flecs_meta)
 }
 
-fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> TokenStream {
-    let has_meta_attribute = input.attrs.iter().any(|attr| attr.path().is_ident("meta"));
+fn impl_meta(
+    input: &DeriveInput,
+    has_repr_c: bool,
+    struct_name: Ident,
+    has_flecs_meta: bool,
+) -> TokenStream {
+    let has_meta_attribute = has_flecs_meta;
 
     if !has_meta_attribute {
         return quote! {};
@@ -218,7 +233,10 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
         Data::Struct(data_struct) => {
             if let Fields::Named(fields_named) = &data_struct.fields {
                 for field in &fields_named.named {
-                    let is_ignored = field.attrs.iter().any(|attr| attr.path().is_ident("skip"));
+                    let is_ignored = field
+                        .attrs
+                        .iter()
+                        .any(|attr| attr.path().is_ident("meta_skip"));
 
                     if is_ignored {
                         continue;
@@ -251,7 +269,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
                     let is_ignored = variant
                         .attrs
                         .iter()
-                        .any(|attr| attr.path().is_ident("skip"));
+                        .any(|attr| attr.path().is_ident("meta_skip"));
 
                     if is_ignored {
                         continue;
@@ -1260,9 +1278,7 @@ fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
                         found_repr_c = true;
 
                         // get the underlying ident type as tokenstream
-                        token_stream = quote! {
-                            i32
-                        };
+                        token_stream = quote! { i32 };
                         break;
                     } else if path.is_ident("i8")
                         || path.is_ident("u8")
@@ -1277,9 +1293,7 @@ fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
 
                         // get the underlying ident type as tokenstream
                         let ident = path.get_ident().cloned().unwrap();
-                        token_stream = quote! {
-                            #ident
-                        };
+                        token_stream = quote! { #ident };
                         break;
                     }
                 }

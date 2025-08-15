@@ -3,7 +3,7 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Default, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Position {
     pub x: f32,
     pub y: f32,

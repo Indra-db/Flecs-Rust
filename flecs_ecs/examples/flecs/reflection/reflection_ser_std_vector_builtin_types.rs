@@ -8,7 +8,7 @@ use flecs_ecs::prelude::*;
 // see `src/addons/meta/builtin.rs` for more information on what types exactly.
 
 #[derive(Component, Debug)]
-#[meta]
+#[flecs(meta)]
 struct VectorComponent {
     ints: Vec<i32>,
     strings: Vec<String>,
