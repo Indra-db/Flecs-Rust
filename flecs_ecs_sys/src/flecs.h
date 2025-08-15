@@ -4397,6 +4397,21 @@ void* flecs_hashmap_next_(
 extern "C" {
 #endif
 
+#ifdef FLECS_SAFETY_LOCKS
+typedef struct ecs_safety_info_t{
+    ecs_component_record_t *cr;
+    ecs_table_t *table;
+    int16_t column_index;
+} ecs_safety_info_t;
+#endif
+
+typedef struct ecs_get_ptr_t{
+    void *component_ptr;
+#ifdef FLECS_SAFETY_LOCKS
+    ecs_safety_info_t si;
+#endif
+} ecs_get_ptr_t;
+
 /** Record for entity index. */
 struct ecs_record_t {
     ecs_component_record_t *cr;               /**< component record to (*, entity) for target entities */
@@ -6996,6 +7011,19 @@ FLECS_ALWAYS_INLINE const void* ecs_get_id(
     ecs_entity_t entity,
     ecs_id_t id);
 
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_get_ptr_t ecs_get_id_w_info(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id);
+
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_get_ptr_t ecs_get_id_from_record(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    const ecs_record_t *r,
+    ecs_id_t id);
+
 /** Get a mutable pointer to a component.
  * This operation obtains a mutable pointer to the requested component. The
  * operation accepts the component entity id.
@@ -7011,6 +7039,19 @@ FLECS_API
 FLECS_ALWAYS_INLINE void* ecs_get_mut_id(
     const ecs_world_t *world,
     ecs_entity_t entity,
+    ecs_id_t id);
+
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_get_ptr_t ecs_get_mut_id_w_info(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id);
+
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_get_ptr_t ecs_get_mut_id_from_record(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    const ecs_record_t *r,
     ecs_id_t id);
 
 /** Get a mutable pointer to a component.
