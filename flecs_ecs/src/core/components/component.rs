@@ -54,7 +54,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     /// # Arguments
     ///
     /// * `world`: the world.
-    pub fn new(world: impl WorldProvider<'a>) -> Self {
+    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let world = world.world();
         let id = T::__register_or_get_id::<false>(world);
 
@@ -71,10 +71,18 @@ impl<'a, T: ComponentId> Component<'a, T> {
     ///
     /// * `world`: the world.
     /// * `name`: the name of the component.
-    pub fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
+    pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
         let id = T::__register_or_get_id_named::<false>(world.world(), name);
 
         let world = world.world();
+        Self {
+            base: UntypedComponent::new_from(world, id),
+            _marker: PhantomData,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn new_w_id(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
         Self {
             base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
