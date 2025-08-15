@@ -1243,6 +1243,42 @@ impl<'a> EntityView<'a> {
 }
 
 #[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+fn __cloned_locks<const MULTITHREADED: bool>(
+    world: WorldRef<'_>,
+    components: &[*mut c_void],
+    safety_info: &[sys::ecs_safety_info_t],
+) {
+    let stage_id = if MULTITHREADED {
+        world.stage_id()
+    } else {
+        0 // stage_id is not used in single-threaded mode
+    };
+
+    for (index, si) in safety_info.iter().enumerate() {
+        // skip missing components
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+
+        if !si.cr.is_null() {
+            sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+            sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+            continue;
+        }
+
+        //check if no writes are present so we can clone
+        get_table_column_lock_read_begin::<MULTITHREADED>(
+            &world,
+            si.table,
+            si.column_index,
+            stage_id,
+        );
+        table_column_lock_read_end::<MULTITHREADED>(si.table, si.column_index, stage_id);
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
 fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
     world: &WorldRef,
     callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
@@ -1628,52 +1664,13 @@ impl<'a> EntityView<'a> {
             let world = self.world.real_world();
             let safety_info = tuple_data.safety_info();
 
-            #[inline(always)]
-            fn __internal_cloned<const MULTITHREADED: bool>(
-                world: WorldRef<'_>,
-                components: &[*mut c_void],
-                safety_info: &[sys::ecs_safety_info_t],
-            ) {
-                let stage_id = if MULTITHREADED {
-                    world.stage_id()
-                } else {
-                    0 // stage_id is not used in single-threaded mode
-                };
-
-                for (index, si) in safety_info.iter().enumerate() {
-                    // skip missing components
-                    if unsafe { components.get_unchecked(index).is_null() } {
-                        continue;
-                    }
-
-                    if !si.cr.is_null() {
-                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
-                        sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
-                        continue;
-                    }
-
-                    //check if no writes are present so we can clone
-                    get_table_column_lock_read_begin::<MULTITHREADED>(
-                        &world,
-                        si.table,
-                        si.column_index,
-                        stage_id,
-                    );
-                    table_column_lock_read_end::<MULTITHREADED>(
-                        si.table,
-                        si.column_index,
-                        stage_id,
-                    );
-                }
-            }
-
             let multithreaded = self.world.is_currently_multithreaded();
 
             if multithreaded {
-                __internal_cloned::<true>(world, tuple_data.component_ptrs(), safety_info);
+                __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
             } else {
                 // single-threaded mode
-                __internal_cloned::<false>(world, tuple_data.component_ptrs(), safety_info);
+                __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
             }
         }
 
@@ -1748,61 +1745,23 @@ impl<'a> EntityView<'a> {
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
 
-        #[cfg(feature = "flecs_safety_locks")]
-        {
-            let world = self.world.real_world();
-            let safety_info = tuple_data.safety_info();
-
-            #[inline(always)]
-            fn __internal_try_cloned<const MULTITHREADED: bool>(
-                world: WorldRef<'_>,
-                components: &[*mut c_void],
-                safety_info: &[sys::ecs_safety_info_t],
-            ) {
-                let stage_id = if MULTITHREADED {
-                    world.stage_id()
-                } else {
-                    0 // stage_id is not used in single-threaded mode
-                };
-                for (index, si) in safety_info.iter().enumerate() {
-                    if unsafe { components.get_unchecked(index).is_null() } {
-                        continue;
-                    }
-                    if !si.cr.is_null() {
-                        let cr = si.cr;
-                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, cr);
-                        sparse_id_record_lock_read_end::<MULTITHREADED>(cr);
-                        continue;
-                    }
-
-                    //check if no writes are present so we can clone
-                    get_table_column_lock_read_begin::<MULTITHREADED>(
-                        &world,
-                        si.table,
-                        si.column_index,
-                        stage_id,
-                    );
-                    table_column_lock_read_end::<MULTITHREADED>(
-                        si.table,
-                        si.column_index,
-                        stage_id,
-                    );
-                }
-            }
-
-            let multithreaded = self.world.is_currently_multithreaded();
-
-            if multithreaded {
-                __internal_try_cloned::<true>(world, tuple_data.component_ptrs(), safety_info);
-            } else {
-                __internal_try_cloned::<false>(world, tuple_data.component_ptrs(), safety_info);
-            }
-        }
-
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
         let has_all_components = tuple_data.has_all_components();
 
         if has_all_components {
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let world = self.world.real_world();
+                let safety_info = tuple_data.safety_info();
+
+                let multithreaded = self.world.is_currently_multithreaded();
+
+                if multithreaded {
+                    __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                } else {
+                    __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                }
+            }
             Some(tuple_data.get_tuple())
         } else {
             None
