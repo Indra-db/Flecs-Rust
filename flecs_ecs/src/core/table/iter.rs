@@ -866,7 +866,7 @@ where
     ) -> Result<Field<'_, T, LOCK>, FieldError> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return Err(FieldError::NoMatchesCount0);
         }
 
@@ -915,7 +915,7 @@ where
     ) -> Result<FieldMut<'_, T, LOCK>, FieldError> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return Err(FieldError::NoMatchesCount0);
         }
 
@@ -964,7 +964,7 @@ where
         index: i8,
     ) -> Option<Field<'a, T, LOCK>> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return None;
         }
 
@@ -1009,7 +1009,7 @@ where
     #[inline(always)]
     pub(crate) fn field_internal<T, const LOCK: bool>(&self, index: i8) -> Field<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 {
+        if count == 0 || array.is_null() {
             panic!(
                 "field_internal: no values at index {index} — ensure the field exists and has entries"
             );
@@ -1099,7 +1099,7 @@ where
         index: i8,
     ) -> Option<FieldMut<'a, T, LOCK>> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return None;
         }
 
@@ -1147,7 +1147,7 @@ where
         index: i8,
     ) -> FieldMut<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 {
+        if count == 0 || array.is_null() {
             panic!(
                 "field_internal: no values at index {index} — ensure the field exists and has entries"
             );
@@ -1193,7 +1193,7 @@ where
     pub(crate) fn field_untyped_internal(&self, index: i8) -> FieldUntyped {
         let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             panic!(
                 "field_untyped_internal: no values at index {index} — ensure the field exists and has entries"
             );
@@ -1205,7 +1205,7 @@ where
     pub(crate) fn get_field_untyped_internal(&self, index: i8) -> Option<FieldUntyped> {
         let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return None;
         }
 
@@ -1215,7 +1215,7 @@ where
     pub(crate) fn field_untyped_internal_mut(&self, index: i8) -> FieldUntypedMut {
         let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             panic!(
                 "field_untyped_internal_mut: no values at index {index} — ensure the field exists and has entries"
             );
@@ -1227,7 +1227,7 @@ where
     pub(crate) fn get_field_untyped_internal_mut(&self, index: i8) -> Option<FieldUntypedMut> {
         let (array, is_shared, count, size) = self.field_untyped_internal_parts(index);
 
-        if count == 0 {
+        if count == 0 || array.is_null() {
             return None;
         }
 
