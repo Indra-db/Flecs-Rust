@@ -99,7 +99,11 @@ where
     }
 }
 
-pub trait OnComponentRegistration {
+pub trait InternalOnComponentRegistration {
+    fn internal_on_component_registration(world: WorldRef, component_id: Entity);
+}
+
+pub trait OnComponentRegistration: InternalOnComponentRegistration {
     fn on_component_registration(world: WorldRef, component_id: Entity);
 }
 
@@ -178,7 +182,7 @@ pub trait ComponentId:
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
 
-                    Self::on_component_registration(world, Entity::new(id));
+                    Self::internal_on_component_registration(world, Entity::new(id));
 
                     return id;
                 }
@@ -202,7 +206,7 @@ pub trait ComponentId:
 
                 components_array[index] = id;
 
-                Self::on_component_registration(world, Entity::new(id));
+                Self::internal_on_component_registration(world, Entity::new(id));
 
                 id
             }
@@ -232,7 +236,7 @@ pub trait ComponentId:
 
                         let id = entry.insert(id);
 
-                        Self::on_component_registration(world, Entity::new(id));
+                        Self::internal_on_component_registration(world, Entity::new(id));
                         id
                     } else {
                         *entry.into_mut()
@@ -258,7 +262,7 @@ pub trait ComponentId:
 
                     let id = entry.insert(id);
 
-                    Self::on_component_registration(world, Entity::new(*id));
+                    Self::internal_on_component_registration(world, Entity::new(*id));
                     *id
                 }
             }
@@ -307,7 +311,7 @@ pub trait ComponentId:
                             .insert(core::any::TypeId::of::<Self>(), id);
                     }
 
-                    Self::on_component_registration(world, Entity::new(id));
+                    Self::internal_on_component_registration(world, Entity::new(id));
 
                     return id;
                 }
@@ -330,7 +334,7 @@ pub trait ComponentId:
 
                 components_array[index] = id;
 
-                Self::on_component_registration(world, Entity::new(id));
+                Self::internal_on_component_registration(world, Entity::new(id));
 
                 id
             }
@@ -360,7 +364,7 @@ pub trait ComponentId:
 
                         let id = entry.insert(id);
 
-                        Self::on_component_registration(world, Entity::new(id));
+                        Self::internal_on_component_registration(world, Entity::new(id));
                         id
                     } else {
                         *entry.into_mut()
@@ -386,7 +390,7 @@ pub trait ComponentId:
 
                     let id = entry.insert(id);
 
-                    Self::on_component_registration(world, Entity::new(*id));
+                    Self::internal_on_component_registration(world, Entity::new(*id));
                     *id
                 }
             }
@@ -693,9 +697,23 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
 }
 
 #[doc(hidden)]
+impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &T {
+    fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
+        T::internal_on_component_registration(world, component_id);
+    }
+}
+
+#[doc(hidden)]
 impl<T: OnComponentRegistration> OnComponentRegistration for &T {
     fn on_component_registration(world: WorldRef, component_id: Entity) {
         T::on_component_registration(world, component_id);
+    }
+}
+
+#[doc(hidden)]
+impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &mut T {
+    fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
+        T::internal_on_component_registration(world, component_id);
     }
 }
 
