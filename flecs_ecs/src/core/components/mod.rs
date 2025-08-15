@@ -13,16 +13,3 @@ pub(crate) use component_binding::*;
 pub use component_untyped::*;
 #[doc(hidden)]
 pub use lifecycle_traits::*;
-
-#[cfg(feature = "flecs_safety_locks")]
-#[derive(Clone, Copy)]
-#[doc(hidden)]
-pub enum ComponentTypeRWLock {
-    Dense((i16, super::ReadWriteId)),
-    Sparse(
-        (
-            *mut flecs_ecs::sys::ecs_component_record_t,
-            super::ReadWriteId,
-        ),
-    ),
-}

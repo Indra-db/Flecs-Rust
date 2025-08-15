@@ -46,7 +46,7 @@ fn generate_bindings() {
         bindings = bindings.override_abi(bindgen::Abi::CUnwind, ".*");
     }
 
-    let bindings = bindings
+    let mut bindings = bindings
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
         // Prefer core::* over std::*

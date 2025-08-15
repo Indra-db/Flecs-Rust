@@ -76,7 +76,7 @@ fn set_component_type<T: ComponentId>(world: &World, component_type: ComponentTy
 
 #[template]
 #[rstest(
-    case::normal(ComponentType::Fragment),
+    case::fragment(ComponentType::Fragment),
     case::sparse(ComponentType::Sparse),
     case::dont_fragment(ComponentType::DontFragment)
 )]
