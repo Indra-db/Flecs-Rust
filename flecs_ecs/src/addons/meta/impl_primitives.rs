@@ -88,12 +88,12 @@ impl ComponentId for EntityView<'static> {
     }
 }
 
-impl InternalOnComponentRegistration for EntityView<'static> {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
+impl InternalComponentHooks for EntityView<'static> {
+    
 }
 
 impl OnComponentRegistration for EntityView<'static> {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+    
 }
 
 // Recursive expansion of Component macro
@@ -151,10 +151,10 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
     }
 }
 
-impl InternalOnComponentRegistration for String {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
+impl InternalComponentHooks for String {
+    
 }
 
 impl OnComponentRegistration for String {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
+    
 }

@@ -856,7 +856,7 @@ fn impl_cached_component_data_struct(
     };
 
     let internal_on_component_registration = quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
                 let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
@@ -1185,7 +1185,7 @@ fn impl_cached_component_data_enum(
     };
 
     let internal_on_component_registration = quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
                 let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);

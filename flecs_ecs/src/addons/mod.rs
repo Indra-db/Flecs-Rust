@@ -144,13 +144,9 @@ macro_rules! create_pre_registered_extern_component {
             }
         }
 
-        impl InternalOnComponentRegistration for $struct_name {
-            fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl InternalComponentHooks for $struct_name {}
 
-        impl OnComponentRegistration for $struct_name {
-            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl OnComponentRegistration for $struct_name {}
     };
 }
 
@@ -233,13 +229,9 @@ macro_rules! impl_component_traits_primitive_type {
             }
         }
 
-        impl InternalOnComponentRegistration for $name {
-            fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl InternalComponentHooks for $name {}
 
-        impl OnComponentRegistration for $name {
-            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl OnComponentRegistration for $name {}
     };
 }
 

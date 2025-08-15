@@ -99,12 +99,17 @@ where
     }
 }
 
-pub trait InternalOnComponentRegistration {
-    fn internal_on_component_registration(world: WorldRef, component_id: Entity);
+#[doc(hidden)]
+pub trait InternalComponentHooks {
+    fn internal_pre_registration_name() -> Option<&'static str> {
+        None
+    }
+
+    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
-pub trait OnComponentRegistration: InternalOnComponentRegistration {
-    fn on_component_registration(world: WorldRef, component_id: Entity);
+pub trait OnComponentRegistration: InternalComponentHooks {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
 /// Trait that manages component IDs across multiple worlds & binaries.
@@ -697,7 +702,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
 }
 
 #[doc(hidden)]
-impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &T {
+impl<T: InternalComponentHooks> InternalComponentHooks for &T {
     fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
         T::internal_on_component_registration(world, component_id);
     }
@@ -711,7 +716,7 @@ impl<T: OnComponentRegistration> OnComponentRegistration for &T {
 }
 
 #[doc(hidden)]
-impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &mut T {
+impl<T: InternalComponentHooks> InternalComponentHooks for &mut T {
     fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
         T::internal_on_component_registration(world, component_id);
     }
