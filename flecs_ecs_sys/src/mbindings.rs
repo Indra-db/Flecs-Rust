@@ -248,6 +248,29 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
     };
 }
 
+#[cfg(feature = "flecs_safety_locks")]
+impl Default for ecs_safety_info_t {
+    #[inline]
+    fn default() -> Self {
+        ecs_safety_info_t {
+            cr: core::ptr::null_mut(),
+            table: core::ptr::null_mut(),
+            column_index: -1,
+        }
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl Default for ecs_get_ptr_t {
+    #[inline]
+    fn default() -> Self {
+        ecs_get_ptr_t {
+            component_ptr: core::ptr::null_mut(),
+            ..Default::default()
+        }
+    }
+}
+
 unsafe impl Send for EcsWorldStats {}
 
 unsafe impl Sync for EcsWorldStats {}

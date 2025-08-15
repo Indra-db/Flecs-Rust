@@ -1246,67 +1246,46 @@ impl<'a> EntityView<'a> {
 fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
     world: &WorldRef,
     callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
-    record: *mut flecs_ecs_sys::ecs_record_t,
     tuple_data: <T as GetTuple>::Pointers,
     tuple: <T as GetTuple>::TupleType<'_>,
 ) -> Return {
-    let table = unsafe { (*record).table };
-    let ids = tuple_data.read_write_ids();
+    let components = tuple_data.component_ptrs();
+    let safety_info = tuple_data.safety_info();
     let world = world.real_world();
-    let world_ptr = world.world_ptr();
     let stage_id = if MULTITHREADED {
         world.stage_id()
     } else {
         0 // stage_id is not used in single-threaded mode
     };
-    let mut arr_component_info: T::ArrayColumnIndex = T::ArrayColumnIndex::init();
-    let component_info_arr = arr_component_info.column_indices_mut();
-    let mut i = 0;
-    for id in ids {
-        let raw_id = **id;
-        let idr = unsafe { sys::ecs_id_record_get(world_ptr, raw_id) };
-        if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
-            //TODO this does locking regardless if the entity has the component or not
-            component_info_arr[i] = ComponentTypeRWLock::Sparse((idr, *id));
-            match id {
-                ReadWriteId::Read(_) => {
-                    sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, idr);
-                }
-                ReadWriteId::Write(_) => {
-                    sparse_id_record_lock_write_begin::<MULTITHREADED>(&world, idr);
-                }
-            }
-            i += 1;
+
+    for (index, si) in safety_info.iter().enumerate() {
+        if unsafe { components.get_unchecked(index).is_null() } {
             continue;
         }
-        let column_index = unsafe {
-            sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, raw_id, idr)
-        };
-
-        component_info_arr[i] = ComponentTypeRWLock::Dense((column_index as i16, *id));
-        i += 1;
-
-        //does not have the component
-        if column_index == -1 {
-            continue;
-        }
-
-        match id {
-            ReadWriteId::Read(_) => {
-                get_table_column_lock_read_begin::<MULTITHREADED>(
-                    &world,
-                    table,
-                    column_index as i16,
-                    stage_id,
-                );
+        match si {
+            SafetyInfo::Read(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+                } else {
+                    get_table_column_lock_read_begin::<MULTITHREADED>(
+                        &world,
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
             }
-            ReadWriteId::Write(_) => {
-                get_table_column_lock_write_begin::<MULTITHREADED>(
-                    &world,
-                    table,
-                    column_index as i16,
-                    stage_id,
-                );
+            SafetyInfo::Write(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_write_begin::<MULTITHREADED>(&world, si.cr);
+                } else {
+                    get_table_column_lock_write_begin::<MULTITHREADED>(
+                        &world,
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
             }
         }
     }
@@ -1315,32 +1294,33 @@ fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
     let ret = callback(tuple);
     world.defer_end();
 
-    for id_info in component_info_arr.iter() {
-        match id_info {
-            ComponentTypeRWLock::Sparse((idr, id)) => match id {
-                ReadWriteId::Read(_) => {
-                    sparse_id_record_lock_read_end::<MULTITHREADED>(*idr);
+    for (index, si) in safety_info.iter().enumerate() {
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+        match si {
+            SafetyInfo::Read(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+                } else {
+                    table_column_lock_read_end::<MULTITHREADED>(
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
                 }
-                ReadWriteId::Write(_) => {
-                    sparse_id_record_lock_write_end::<MULTITHREADED>(*idr);
+            }
+            SafetyInfo::Write(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_write_end::<MULTITHREADED>(si.cr);
+                } else {
+                    table_column_lock_write_end::<MULTITHREADED>(
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
                 }
-            },
-            ComponentTypeRWLock::Dense((column_index, id)) => match id {
-                ReadWriteId::Read(_) => {
-                    //does not have the component
-                    if *column_index == -1 {
-                        continue;
-                    }
-                    table_column_lock_read_end::<MULTITHREADED>(table, *column_index, stage_id);
-                }
-                ReadWriteId::Write(_) => {
-                    //does not have the component
-                    if *column_index == -1 {
-                        continue;
-                    }
-                    table_column_lock_write_end::<MULTITHREADED>(table, *column_index, stage_id);
-                }
-            },
+            }
         }
     }
     ret
@@ -1523,7 +1503,6 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
                     return Some(get_rw_lock::<T, Return, true>(
                         &self.world,
                         callback,
-                        record,
                         tuple_data,
                         tuple,
                     ));
@@ -1531,7 +1510,6 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
                 return Some(get_rw_lock::<T, Return, false>(
                     &self.world,
                     callback,
-                    record,
                     tuple_data,
                     tuple,
                 ));
@@ -1563,9 +1541,9 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         {
             let multithreaded = self.world.is_currently_multithreaded();
             if multithreaded {
-                get_rw_lock::<T, Return, true>(&self.world, callback, record, tuple_data, tuple)
+                get_rw_lock::<T, Return, true>(&self.world, callback, tuple_data, tuple)
             } else {
-                get_rw_lock::<T, Return, false>(&self.world, callback, record, tuple_data, tuple)
+                get_rw_lock::<T, Return, false>(&self.world, callback, tuple_data, tuple)
             }
         }
 
@@ -1648,17 +1626,13 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_safety_locks")]
         {
             let world = self.world.real_world();
-            let world_ptr = world.ptr_mut();
-            let table = unsafe { (*record).table };
-            let read_ids = tuple_data.read_ids();
+            let safety_info = tuple_data.safety_info();
 
             #[inline(always)]
             fn __internal_cloned<const MULTITHREADED: bool>(
-                record: *mut flecs_ecs_sys::ecs_record_t,
                 world: WorldRef<'_>,
-                world_ptr: *mut flecs_ecs_sys::ecs_world_t,
-                table: *mut flecs_ecs_sys::ecs_table_t,
-                read_ids: &[u64],
+                components: &[*mut c_void],
+                safety_info: &[sys::ecs_safety_info_t],
             ) {
                 let stage_id = if MULTITHREADED {
                     world.stage_id()
@@ -1666,30 +1640,28 @@ impl<'a> EntityView<'a> {
                     0 // stage_id is not used in single-threaded mode
                 };
 
-                for id in read_ids {
-                    if *id == 0 {
-                        continue;
-                    } // skip optional/missing component ids
-                    let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
-                    if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
-                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, idr);
-                        sparse_id_record_lock_read_end::<MULTITHREADED>(idr);
+                for (index, si) in safety_info.iter().enumerate() {
+                    // skip missing components
+                    if unsafe { components.get_unchecked(index).is_null() } {
                         continue;
                     }
 
-                    let column_index = unsafe {
-                        sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, *id, idr)
-                    };
+                    if !si.cr.is_null() {
+                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+                        sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+                        continue;
+                    }
+
                     //check if no writes are present so we can clone
                     get_table_column_lock_read_begin::<MULTITHREADED>(
                         &world,
-                        table,
-                        column_index as i16,
+                        si.table,
+                        si.column_index,
                         stage_id,
                     );
                     table_column_lock_read_end::<MULTITHREADED>(
-                        table,
-                        column_index as i16,
+                        si.table,
+                        si.column_index,
                         stage_id,
                     );
                 }
@@ -1698,10 +1670,10 @@ impl<'a> EntityView<'a> {
             let multithreaded = self.world.is_currently_multithreaded();
 
             if multithreaded {
-                __internal_cloned::<true>(record, world, world_ptr, table, read_ids);
+                __internal_cloned::<true>(world, tuple_data.component_ptrs(), safety_info);
             } else {
                 // single-threaded mode
-                __internal_cloned::<false>(record, world, world_ptr, table, read_ids);
+                __internal_cloned::<false>(world, tuple_data.component_ptrs(), safety_info);
             }
         }
 
@@ -1779,54 +1751,40 @@ impl<'a> EntityView<'a> {
         #[cfg(feature = "flecs_safety_locks")]
         {
             let world = self.world.real_world();
-            let world_ptr = world.ptr_mut();
-            let table = unsafe { (*record).table };
-            let read_ids = tuple_data.read_ids();
+            let safety_info = tuple_data.safety_info();
 
             #[inline(always)]
             fn __internal_try_cloned<const MULTITHREADED: bool>(
-                record: *mut flecs_ecs_sys::ecs_record_t,
                 world: WorldRef<'_>,
-                world_ptr: *mut flecs_ecs_sys::ecs_world_t,
-                table: *mut flecs_ecs_sys::ecs_table_t,
-                read_ids: &[u64],
+                components: &[*mut c_void],
+                safety_info: &[sys::ecs_safety_info_t],
             ) {
                 let stage_id = if MULTITHREADED {
                     world.stage_id()
                 } else {
                     0 // stage_id is not used in single-threaded mode
                 };
-                for id in read_ids {
-                    if *id == 0 {
+                for (index, si) in safety_info.iter().enumerate() {
+                    if unsafe { components.get_unchecked(index).is_null() } {
                         continue;
                     }
-                    let idr = unsafe { sys::ecs_id_record_get(world_ptr, *id) };
-                    if unsafe { sys::ecs_rust_is_sparse_idr(idr) } {
-                        //TODO this does locking regardless if the entity has the component or not
-                        //check if no writes are present so we can clone
-                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, idr);
-                        sparse_id_record_lock_read_end::<MULTITHREADED>(idr);
-                        continue;
-                    }
-
-                    let column_index = unsafe {
-                        sys::ecs_table_get_column_index_w_idr(world_ptr, (*record).table, *id, idr)
-                    };
-                    //does not have the component
-                    if column_index == -1 {
+                    if !si.cr.is_null() {
+                        let cr = si.cr;
+                        sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, cr);
+                        sparse_id_record_lock_read_end::<MULTITHREADED>(cr);
                         continue;
                     }
 
                     //check if no writes are present so we can clone
                     get_table_column_lock_read_begin::<MULTITHREADED>(
                         &world,
-                        table,
-                        column_index as i16,
+                        si.table,
+                        si.column_index,
                         stage_id,
                     );
                     table_column_lock_read_end::<MULTITHREADED>(
-                        table,
-                        column_index as i16,
+                        si.table,
+                        si.column_index,
                         stage_id,
                     );
                 }
@@ -1835,9 +1793,9 @@ impl<'a> EntityView<'a> {
             let multithreaded = self.world.is_currently_multithreaded();
 
             if multithreaded {
-                __internal_try_cloned::<true>(record, world, world_ptr, table, read_ids);
+                __internal_try_cloned::<true>(world, tuple_data.component_ptrs(), safety_info);
             } else {
-                __internal_try_cloned::<false>(record, world, world_ptr, table, read_ids);
+                __internal_try_cloned::<false>(world, tuple_data.component_ptrs(), safety_info);
             }
         }
 

@@ -2393,6 +2393,19 @@ unsafe extern "C-unwind" {
         value_size: ecs_size_t,
     ) -> *mut ::core::ffi::c_void;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_safety_info_t {
+    pub cr: *mut ecs_component_record_t,
+    pub table: *mut ecs_table_t,
+    pub column_index: i16,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_get_ptr_t {
+    pub component_ptr: *mut ::core::ffi::c_void,
+    pub si: ecs_safety_info_t,
+}
 #[doc = "Record for entity index."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3688,12 +3701,42 @@ unsafe extern "C-unwind" {
     ) -> *const ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
+    pub fn ecs_get_id_w_info(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        id: ecs_id_t,
+    ) -> ecs_get_ptr_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_get_id_from_record(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        r: *const ecs_record_t,
+        id: ecs_id_t,
+    ) -> ecs_get_ptr_t;
+}
+unsafe extern "C-unwind" {
     #[doc = "Get a mutable pointer to a component.\n This operation obtains a mutable pointer to the requested component. The\n operation accepts the component entity id.\n\n Unlike ecs_get_id(), this operation does not return inherited components.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to get.\n @return The component pointer, NULL if the entity does not have the component."]
     pub fn ecs_get_mut_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         id: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_get_mut_id_w_info(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        id: ecs_id_t,
+    ) -> ecs_get_ptr_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_get_mut_id_from_record(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        r: *const ecs_record_t,
+        id: ecs_id_t,
+    ) -> ecs_get_ptr_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Get a mutable pointer to a component.\n This operation returns a mutable pointer to a component. If the component did\n not yet exist, it will be added.\n\n If ensure is called when the world is in deferred/readonly mode, the\n function will:\n - return a pointer to a temp storage if the component does not yet exist, or\n - return a pointer to the existing component if it exists\n\n @param world The world.\n @param entity The entity.\n @param id The entity id of the component to obtain.\n @return The component pointer.\n\n @see ecs_ensure_modified_id()\n @see ecs_emplace_id()"]
@@ -8371,22 +8414,6 @@ unsafe extern "C-unwind" {
     ) -> *const ecs_member_t;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_rust_mut_get_id(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        record: *const ecs_record_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_rust_get_id(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        record: *const ecs_record_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-unsafe extern "C-unwind" {
     pub fn ecs_rust_rel_count(
         world: *const ecs_world_t,
         id: ecs_id_t,
@@ -8406,23 +8433,6 @@ unsafe extern "C-unwind" {
         id: ecs_id_t,
         idr: *const ecs_component_record_t,
     ) -> *const ecs_type_info_t;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_rust_is_sparse_idr(idr: *const ecs_component_record_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_id_record_get(
-        world: *const ecs_world_t,
-        id: ecs_id_t,
-    ) -> *mut ecs_component_record_t;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_get_column_index_w_idr(
-        world: *const ecs_world_t,
-        table: *const ecs_table_t,
-        id: ecs_id_t,
-        idr: *mut ecs_component_record_t,
-    ) -> i32;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

@@ -12,7 +12,7 @@ pub struct ComponentsData<T: ClonedTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) read_ids: [u64; LEN],
+    pub(crate) safety_info: [sys::ecs_safety_info_t; LEN],
     _marker: PhantomData<T>,
 }
 
@@ -27,8 +27,10 @@ pub trait ClonedComponentPointers<T: ClonedTuple> {
 
     fn has_all_components(&self) -> bool;
 
+    fn component_ptrs(&self) -> &[*mut c_void];
+
     #[cfg(feature = "flecs_safety_locks")]
-    fn read_ids(&self) -> &[u64];
+    fn safety_info(&self) -> &[sys::ecs_safety_info_t];
 }
 
 impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for ComponentsData<T, LEN> {
@@ -40,7 +42,7 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
         #[cfg(feature = "flecs_safety_locks")]
-        let mut read_ids = [0; LEN];
+        let mut safety_info = [sys::ecs_safety_info_t::default(); LEN];
 
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
@@ -48,14 +50,14 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
             record,
             &mut array_components[..],
             #[cfg(feature = "flecs_safety_locks")]
-            &mut read_ids,
+            &mut safety_info,
         );
 
         Self {
             array_components,
             has_all_components,
             #[cfg(feature = "flecs_safety_locks")]
-            read_ids,
+            safety_info,
             _marker: PhantomData::<T>,
         }
     }
@@ -68,9 +70,13 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
         self.has_all_components
     }
 
+    fn component_ptrs(&self) -> &[*mut c_void] {
+        &self.array_components
+    }
+
     #[cfg(feature = "flecs_safety_locks")]
-    fn read_ids(&self) -> &[u64] {
-        &self.read_ids
+    fn safety_info(&self) -> &[sys::ecs_safety_info_t] {
+        &self.safety_info
     }
 }
 
@@ -142,7 +148,7 @@ pub trait ClonedTuple: Sized {
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [u64],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
     ) -> bool;
 
     fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a>;
@@ -165,7 +171,7 @@ where
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
-        #[cfg(feature = "flecs_safety_locks")] ids: &mut [u64],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
     ) -> bool {
         let world_ref = world.world();
         let world_ptr = unsafe {
@@ -177,7 +183,8 @@ where
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+        let get_ptr = unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+        let component_ptr = get_ptr.component_ptr;
 
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(
@@ -197,30 +204,7 @@ where
                 },
                 "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
             );
-
-            #[cfg(feature = "flecs_safety_locks")]
-            {
-                if !component_ptr.is_null() {
-                    let first_id = ecs_entity_id_high(id);
-                    let second_id = ecs_entity_id_low(id);
-                    if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
-                        let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
-                        ids[0] = ecs_pair(first_id, target_id);
-                    } else {
-                        ids[0] = id;
-                    }
-                }
-            }
-        } else {
-            #[cfg(feature = "flecs_safety_locks")]
-            {
-                if !component_ptr.is_null() {
-                    ids[0] = id;
-                }
-            }
         }
-
-
 
         if component_ptr.is_null() {
             components[0] = core::ptr::null_mut();
@@ -241,6 +225,10 @@ where
             }
         } else {
             components[0] = component_ptr;
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                safety_info[0] = get_ptr.si;
+            }
         }
 
         has_all_components
@@ -306,7 +294,7 @@ macro_rules! impl_cloned_tuple {
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
                 world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void],
-                #[cfg(feature = "flecs_safety_locks")] ids : &mut [u64]
+                #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t]
             ) -> bool {
 
                 let world_ref = world.world();
@@ -319,7 +307,8 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    let component_ptr = unsafe { sys::ecs_rust_get_id(world_ptr, entity, record, id) };
+                    let get_ptr = unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+                    let component_ptr = get_ptr.component_ptr;
 
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
                         assert!(
@@ -339,33 +328,14 @@ macro_rules! impl_cloned_tuple {
                             },
                             "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
                         );
-
-                        #[cfg(feature = "flecs_safety_locks")]
-                        {
-                            if !component_ptr.is_null() {
-                                let first_id = ecs_entity_id_high(id);
-                                let second_id = ecs_entity_id_low(id);
-                                if second_id == flecs::Wildcard::ID || second_id == flecs::Any::ID {
-                                    let target_id = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
-                                    ids[index] = ecs_pair(first_id, target_id);
-                                } else {
-                                    ids[index] = id;
-                                }
-                            }
-                        }
-                    } else {
-                        #[cfg(feature = "flecs_safety_locks")]
-                        {
-                            if !component_ptr.is_null() {
-                                ids[index] = id;
-                            }
-                        }
                     }
-
-
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
+                        #[cfg(feature = "flecs_safety_locks")]
+                        {
+                            safety_info[index] = get_ptr.si;
+                        }
                     } else {
                         components[index] = core::ptr::null_mut();
                         if !$t::IS_OPTION {
