@@ -179,7 +179,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on add hook.
-    pub fn on_add<Func>(&mut self, func: Func) -> &mut Self
+    pub fn on_add<Func>(self, func: Func) -> Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -203,7 +203,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on remove hook.
-    pub fn on_remove<Func>(&mut self, func: Func) -> &mut Self
+    pub fn on_remove<Func>(self, func: Func) -> Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -227,7 +227,7 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on set hook.
-    pub fn on_set<Func>(&mut self, func: Func) -> &mut Self
+    pub fn on_set<Func>(self, func: Func) -> Self
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {

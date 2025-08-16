@@ -4,14 +4,14 @@ use flecs_ecs::prelude::*;
 use json::WorldToJsonDesc;
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,

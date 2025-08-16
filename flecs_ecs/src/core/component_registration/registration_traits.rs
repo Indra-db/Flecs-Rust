@@ -99,12 +99,17 @@ where
     }
 }
 
-pub trait InternalOnComponentRegistration {
-    fn internal_on_component_registration(world: WorldRef, component_id: Entity);
+#[doc(hidden)]
+pub trait InternalComponentHooks {
+    fn internal_pre_registration_name() -> Option<&'static str> {
+        None
+    }
+
+    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
-pub trait OnComponentRegistration: InternalOnComponentRegistration {
-    fn on_component_registration(world: WorldRef, component_id: Entity);
+pub trait OnComponentRegistration: InternalComponentHooks {
+    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
 /// Trait that manages component IDs across multiple worlds & binaries.
@@ -169,10 +174,13 @@ pub trait ComponentId:
                         }
                     }
 
-                    let id = registration_traits::try_register_component::<
-                        MANUAL_REGISTRATION_CHECK,
-                        Self,
-                    >(world);
+                    let id = if let Some(name) = Self::internal_pre_registration_name() {
+                        try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                    } else {
+                        registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                            world,
+                        )
+                    };
 
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
@@ -199,10 +207,13 @@ pub trait ComponentId:
                     components_array.set_len(capacity);
                 }
 
-                let id = registration_traits::try_register_component::<
-                    MANUAL_REGISTRATION_CHECK,
-                    Self,
-                >(world);
+                let id = if let Some(name) = Self::internal_pre_registration_name() {
+                    try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                } else {
+                    registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                        world,
+                    )
+                };
 
                 components_array[index] = id;
 
@@ -229,10 +240,16 @@ pub trait ComponentId:
                             }
                         }
 
-                        let id = registration_traits::try_register_component::<
-                            MANUAL_REGISTRATION_CHECK,
-                            Self,
-                        >(world);
+                        let id = if let Some(name) = Self::internal_pre_registration_name() {
+                            try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(
+                                world, name,
+                            )
+                        } else {
+                            registration_traits::try_register_component::<
+                                MANUAL_REGISTRATION_CHECK,
+                                Self,
+                            >(world)
+                        };
 
                         let id = entry.insert(id);
 
@@ -255,10 +272,13 @@ pub trait ComponentId:
                         }
                     }
 
-                    let id = registration_traits::try_register_component::<
-                        MANUAL_REGISTRATION_CHECK,
-                        Self,
-                    >(world);
+                    let id = if let Some(name) = Self::internal_pre_registration_name() {
+                        try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                    } else {
+                        registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                            world,
+                        )
+                    };
 
                     let id = entry.insert(id);
 
@@ -697,7 +717,7 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
 }
 
 #[doc(hidden)]
-impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &T {
+impl<T: InternalComponentHooks> InternalComponentHooks for &T {
     fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
         T::internal_on_component_registration(world, component_id);
     }
@@ -711,7 +731,7 @@ impl<T: OnComponentRegistration> OnComponentRegistration for &T {
 }
 
 #[doc(hidden)]
-impl<T: InternalOnComponentRegistration> InternalOnComponentRegistration for &mut T {
+impl<T: InternalComponentHooks> InternalComponentHooks for &mut T {
     fn internal_on_component_registration(world: WorldRef, component_id: Entity) {
         T::internal_on_component_registration(world, component_id);
     }

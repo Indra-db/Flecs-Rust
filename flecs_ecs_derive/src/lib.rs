@@ -65,12 +65,12 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(meta, skip, on_registration, flecs))]
+#[proc_macro_derive(Component, attributes(meta_skip, on_registration, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
 
-    // Collect #[flecs(...)] trait requests to apply on registration
-    let flecs_traits_calls = collect_flecs_traits_calls(&input);
+    // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
+    let (flecs_traits_calls, has_flecs_meta, flecs_name) = collect_flecs_traits_calls(&input);
 
     let has_repr_c = check_repr_c(&input);
     let has_on_registration = input
@@ -94,6 +94,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                 &is_tag,
                 has_on_registration,
                 &flecs_traits_calls,
+                &flecs_name,
             ));
         }
         Data::Enum(_) => {
@@ -105,6 +106,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     &is_tag,
                     has_on_registration,
                     &flecs_traits_calls,
+                    &flecs_name,
                 ));
             } else {
                 generated_impls.push(impl_cached_component_data_enum(
@@ -112,6 +114,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
                     has_on_registration,
                     has_repr_c.1,
                     &flecs_traits_calls,
+                    &flecs_name,
                 ));
             }
         }
@@ -120,7 +123,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 
     input.generics.make_where_clause();
 
-    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone());
+    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone(), has_flecs_meta);
 
     let output = quote! {
         #( #generated_impls )*
@@ -131,7 +134,8 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 }
 
 // Parse #[flecs(...)] attribute and build calls to _component.add_trait::<flecs::...>();
-fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
+// Additionally parse special options like `meta` and `name = "..."`.
+fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option<LitStr>) {
     use syn::{
         parenthesized, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma,
     };
@@ -139,6 +143,13 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
     enum Item {
         Single(Path),
         Pair(Path, Path),
+        Name(LitStr),
+        Add(Vec<Type>),
+        Set(Vec<Expr>),
+        OnAdd(Expr),
+        OnSetHook(Expr),
+        OnRemove(Expr),
+        OnReplace(Expr),
     }
 
     impl Parse for Item {
@@ -150,6 +161,89 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
                 inner.parse::<Comma>()?;
                 let second: Path = inner.parse()?;
                 Ok(Item::Pair(first, second))
+            } else if input.peek(Ident) && input.peek2(Token![=]) {
+                // name = "..."
+                let ident: Ident = input.parse()?;
+                input.parse::<Token![=]>()?;
+                let value: LitStr = input.parse()?;
+                if ident == "name" {
+                    Ok(Item::Name(value))
+                } else {
+                    // For now only `name =` is supported as key=value
+                    Err(syn::Error::new(
+                        ident.span(),
+                        "Unsupported flecs option. Expected `name = \"...\"`",
+                    ))
+                }
+            } else if input.peek(Ident) && input.peek2(syn::token::Paren) {
+                // function-like entries: add(...), set(...)
+                let ident: Ident = input.parse()?;
+                if ident == "add" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut tys: Vec<Type> = Vec::new();
+                    if !inner.is_empty() {
+                        loop {
+                            let ty: Type = inner.parse()?;
+                            tys.push(ty);
+                            if inner.peek(Comma) {
+                                inner.parse::<Comma>()?;
+                                if inner.is_empty() {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    Ok(Item::Add(tys))
+                } else if ident == "set" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut exprs: Vec<Expr> = Vec::new();
+                    if !inner.is_empty() {
+                        loop {
+                            let expr: Expr = inner.parse()?;
+                            exprs.push(expr);
+                            if inner.peek(Comma) {
+                                inner.parse::<Comma>()?;
+                                if inner.is_empty() {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    Ok(Item::Set(exprs))
+                } else if ident == "on_add"
+                    || ident == "on_set"
+                    || ident == "on_remove"
+                    || ident == "on_replace"
+                {
+                    let inner;
+                    parenthesized!(inner in input);
+                    // Accept a single expression: either a path (fn ptr) or an inline closure
+                    let expr: Expr = inner.parse()?;
+                    if !inner.is_empty() {
+                        return Err(syn::Error::new(
+                            inner.span(),
+                            "Expected a single hook expression",
+                        ));
+                    }
+                    match &*ident.to_string() {
+                        "on_add" => Ok(Item::OnAdd(expr)),
+                        "on_set" => Ok(Item::OnSetHook(expr)),
+                        "on_remove" => Ok(Item::OnRemove(expr)),
+                        "on_replace" => Ok(Item::OnReplace(expr)),
+                        _ => unreachable!(),
+                    }
+                } else {
+                    Err(syn::Error::new(
+                        ident.span(),
+                        "Unknown flecs function. Expected `add(...)` or `set(...)`",
+                    ))
+                }
             } else {
                 let p: Path = input.parse()?;
                 Ok(Item::Single(p))
@@ -162,7 +256,16 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
             let ident = &p.segments.first().unwrap().ident;
             quote! { flecs_ecs::core::flecs::#ident }
         } else {
-            quote! { #p }
+            let first = p.segments.first().unwrap();
+            if first.ident == "flecs" {
+                let rest = p.segments.iter().skip(1).map(|seg| {
+                    let ident = &seg.ident;
+                    quote! { :: #ident }
+                });
+                quote! { flecs_ecs::core::flecs #( #rest )* }
+            } else {
+                quote! { #p }
+            }
         }
     }
 
@@ -177,14 +280,33 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
     }
 
     let mut out = TokenStream::new();
+    let mut has_flecs_meta = false;
+    let mut flecs_name: Option<LitStr> = None;
+    // Track ordering across all #[flecs(...)] attributes as encountered
+    let mut position: usize = 0;
+    let mut name_pos: Option<usize> = None;
+    let mut meta_pos: Option<usize> = None;
     for attr in &input.attrs {
         if attr.path().is_ident("flecs") {
             let args: Result<Punctuated<Item, Token![,]>> =
                 attr.parse_args_with(Punctuated::<Item, Token![,]>::parse_terminated);
             if let Ok(args) = args {
                 for item in args.iter() {
+                    position += 1;
                     match item {
                         Item::Single(p) => {
+                            // Allow #[flecs(meta)] to enable meta generation and skip trait emission
+                            if p.segments
+                                .last()
+                                .map(|s| s.ident == "meta")
+                                .unwrap_or(false)
+                            {
+                                has_flecs_meta = true;
+                                if meta_pos.is_none() {
+                                    meta_pos = Some(position);
+                                }
+                                continue;
+                            }
                             let q = qualify(p);
                             out.extend(quote! { _component.add_trait::<#q>(); });
                         }
@@ -197,16 +319,130 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> TokenStream {
                             };
                             out.extend(quote! { _component.add_trait::<(#q1, #q2)>(); });
                         }
+                        Item::Add(tys) => {
+                            for ty in tys {
+                                match ty {
+                                    syn::Type::Tuple(tup) => {
+                                        let elems = &tup.elems;
+                                        if elems.len() == 2 {
+                                            let first = &elems[0];
+                                            let second = &elems[1];
+                                            out.extend(quote! { _component.add((<#first>::id(), <#second>::id())); });
+                                        } else {
+                                            out.extend(quote! { compile_error!("add((...)) only supports pairs with exactly two types"); });
+                                        }
+                                    }
+                                    _ => {
+                                        out.extend(quote! { _component.add(<#ty>::id()); });
+                                    }
+                                }
+                            }
+                        }
+                        Item::Set(exprs) => {
+                            for expr in exprs {
+                                match expr {
+                                    syn::Expr::Tuple(tup) => {
+                                        let elems = &tup.elems;
+                                        if elems.len() == 2 {
+                                            let first = &elems[0];
+                                            let second = &elems[1];
+                                            // Pattern 1: (ValueExpr, TypePath) -> set_first(ValueExpr, <Type>::id())
+                                            let is_first_value =
+                                                !matches!(first, syn::Expr::Path(_));
+                                            let is_second_path =
+                                                matches!(second, syn::Expr::Path(_));
+
+                                            // Pattern 2: (TypePath, ValueExpr) -> set_second(<Type>::id(), ValueExpr)
+                                            let is_first_path = matches!(first, syn::Expr::Path(_));
+                                            let is_second_value =
+                                                !matches!(second, syn::Expr::Path(_));
+
+                                            if is_first_value && is_second_path {
+                                                out.extend(quote! { _component.set_first(#first, <#second>::id()); });
+                                            } else if is_first_path && is_second_value {
+                                                out.extend(quote! { _component.set_second(<#first>::id(), #second); });
+                                            } else {
+                                                out.extend(quote! { compile_error!("set((...)) expects exactly one value expression and one type path"); });
+                                            }
+                                        } else {
+                                            out.extend(quote! { compile_error!("set((...)) only supports pairs with exactly two elements"); });
+                                        }
+                                    }
+                                    _ => {
+                                        out.extend(quote! { _component.set(#expr); });
+                                    }
+                                }
+                            }
+                        }
+                        Item::Name(name) => {
+                            // capture name; if multiple provided, raise a compile-time error later
+                            if flecs_name.is_none() {
+                                flecs_name = Some(name.clone());
+                                name_pos = Some(position);
+                            } else {
+                                out.extend(quote! { compile_error!("Duplicate `name` in #[flecs(...)] attribute"); });
+                            }
+                        }
+                        Item::OnAdd(hook) => {
+                            out.extend(quote! { _component.on_add(#hook); });
+                        }
+                        Item::OnSetHook(hook) => {
+                            out.extend(quote! { _component.on_set(#hook); });
+                        }
+                        Item::OnRemove(hook) => {
+                            out.extend(quote! { _component.on_remove(#hook); });
+                        }
+                        Item::OnReplace(_hook) => {
+                            //TODO feature rust version
+                            //out.extend(quote! { _component.on_replace(#hook); });
+                        }
                     }
                 }
             }
         }
     }
-    out
+    // Validate ordering: if name/meta are provided, they must occupy the first two positions in any order.
+    let mut ordering_error: Option<String> = None;
+    match (name_pos, meta_pos) {
+        (Some(n), Some(m)) => {
+            if !(n == 1 && m == 2 || n == 2 && m == 1) {
+                ordering_error = Some(format!(
+                    "`name` and `meta` must be the first two items of #[flecs(...)] (found at positions {n} and {m})",
+                ));
+            }
+        }
+        (Some(n), None) => {
+            if n != 1 {
+                ordering_error = Some(format!(
+                    "`name` must be the first item of #[flecs(...)] when present (found at position {n})",
+                ));
+            }
+        }
+        (None, Some(m)) => {
+            if m != 1 {
+                ordering_error = Some(format!(
+                    "`meta` must be the first item of #[flecs(...)] when present (found at position {m})",
+                ));
+            }
+        }
+        (None, None) => {}
+    }
+
+    if let Some(msg) = ordering_error {
+        let lit = LitStr::new(&msg, Span::call_site());
+        out.extend(quote! { compile_error!(#lit); });
+    }
+
+    (out, has_flecs_meta, flecs_name)
 }
 
-fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> TokenStream {
-    let has_meta_attribute = input.attrs.iter().any(|attr| attr.path().is_ident("meta"));
+fn impl_meta(
+    input: &DeriveInput,
+    has_repr_c: bool,
+    struct_name: Ident,
+    has_flecs_meta: bool,
+) -> TokenStream {
+    let has_meta_attribute = has_flecs_meta;
 
     if !has_meta_attribute {
         return quote! {};
@@ -218,7 +454,10 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
         Data::Struct(data_struct) => {
             if let Fields::Named(fields_named) = &data_struct.fields {
                 for field in &fields_named.named {
-                    let is_ignored = field.attrs.iter().any(|attr| attr.path().is_ident("skip"));
+                    let is_ignored = field
+                        .attrs
+                        .iter()
+                        .any(|attr| attr.path().is_ident("meta_skip"));
 
                     if is_ignored {
                         continue;
@@ -251,7 +490,7 @@ fn impl_meta(input: &DeriveInput, has_repr_c: bool, struct_name: Ident) -> Token
                     let is_ignored = variant
                         .attrs
                         .iter()
-                        .any(|attr| attr.path().is_ident("skip"));
+                        .any(|attr| attr.path().is_ident("meta_skip"));
 
                     if is_ignored {
                         continue;
@@ -361,6 +600,7 @@ fn impl_cached_component_data_struct(
     is_tag: &TokenStream,
     has_on_registration: bool,
     flecs_traits_calls: &TokenStream,
+    flecs_name: &Option<LitStr>,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -855,8 +1095,18 @@ fn impl_cached_component_data_struct(
         }
     };
 
-    let internal_on_component_registration = quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
+    let internal_on_component_registration = {
+        let pre_name = if let Some(name) = flecs_name {
+            quote! {
+                #[inline(always)]
+                fn internal_pre_registration_name() -> Option<&'static str> { Some(#name) }
+            }
+        } else {
+            quote! {}
+        };
+        quote! {
+        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
+            #pre_name
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
                 let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
@@ -865,6 +1115,7 @@ fn impl_cached_component_data_struct(
 
                 <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
             }
+        }
         }
     };
 
@@ -970,6 +1221,7 @@ fn impl_cached_component_data_enum(
     has_on_registration: bool,
     underlying_enum_type: TokenStream,
     flecs_traits_calls: &TokenStream,
+    flecs_name: &Option<LitStr>,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -1184,15 +1436,26 @@ fn impl_cached_component_data_enum(
         }
     };
 
-    let internal_on_component_registration = quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalOnComponentRegistration for #name #type_generics {
-            #[inline(always)]
-            fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
+    let internal_on_component_registration = {
+        let pre_name = if let Some(name) = flecs_name {
+            quote! {
+                #[inline(always)]
+                fn internal_pre_registration_name() -> Option<&'static str> { Some(#name) }
+            }
+        } else {
+            quote! {}
+        };
+        quote! {
+            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
+                #pre_name
+                #[inline(always)]
+                fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
+                    let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
 
-                #flecs_traits_calls
+                    #flecs_traits_calls
 
-                <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+                    <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+                }
             }
         }
     };
@@ -1260,9 +1523,7 @@ fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
                         found_repr_c = true;
 
                         // get the underlying ident type as tokenstream
-                        token_stream = quote! {
-                            i32
-                        };
+                        token_stream = quote! { i32 };
                         break;
                     } else if path.is_ident("i8")
                         || path.is_ident("u8")
@@ -1277,9 +1538,7 @@ fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
 
                         // get the underlying ident type as tokenstream
                         let ident = path.get_ident().cloned().unwrap();
-                        token_stream = quote! {
-                            #ident
-                        };
+                        token_stream = quote! { #ident };
                         break;
                     }
                 }

@@ -18,7 +18,7 @@
 /// use flecs_ecs::prelude::*;
 ///
 /// #[derive(Debug, Component)]
-/// #[meta]
+/// #[flecs(meta)]
 /// struct Point {
 ///     x: f32,
 ///     y: f32,
@@ -42,7 +42,7 @@
 /// use flecs_ecs::prelude::*;
 ///
 /// #[derive(Debug, Component)]
-/// #[meta]
+/// #[flecs(meta)]
 /// struct Point {
 ///     x: f32,
 ///     y: f32,
@@ -104,7 +104,7 @@ macro_rules! meta_register_vector_type {
 /// use flecs_ecs::prelude::*;
 ///
 /// #[derive(Debug, Component)]
-/// #[meta]
+/// #[flecs(meta)]
 /// struct Point {
 ///     x: f32,
 ///     y: f32,
@@ -129,7 +129,7 @@ macro_rules! meta_register_vector_type {
 /// use flecs_ecs::prelude::*;
 ///
 /// #[derive(Debug, Component)]
-/// #[meta]
+/// #[flecs(meta)]
 /// struct Point {
 ///     x: f32,
 ///     y: f32,

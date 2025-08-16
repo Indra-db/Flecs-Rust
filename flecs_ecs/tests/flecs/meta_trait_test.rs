@@ -2,24 +2,24 @@ use flecs_ecs::prelude::meta::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 struct Position {
     x: f32,
     y: f32,
 }
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 struct PositionSkipY {
     x: f32,
-    #[skip]
+    #[meta_skip]
     y: f32,
 }
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 struct PositionSkipX {
-    #[skip]
+    #[meta_skip]
     x: f32,
     y: f32,
 }
@@ -74,7 +74,7 @@ fn test_pos_skip_x() {
 
 #[derive(Debug, Component)]
 #[repr(C)]
-#[meta]
+#[flecs(meta)]
 pub enum Color {
     Red,
     Green,
@@ -82,7 +82,7 @@ pub enum Color {
 }
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct TypeWithEnum {
     pub color: Color,
 }
@@ -119,7 +119,7 @@ fn test_enum() {
 }
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct TypeWithString {
     pub name: String,
 }
@@ -152,7 +152,7 @@ fn test_type_w_string() {
 }
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct TypeWithVecString {
     pub names: Vec<String>,
 }

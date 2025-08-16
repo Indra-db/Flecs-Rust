@@ -3,14 +3,14 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Default, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Point {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Default, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Line {
     pub start: Point,
     pub stop: Point,

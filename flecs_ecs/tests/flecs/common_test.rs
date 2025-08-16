@@ -93,7 +93,7 @@ pub struct Position {
 }
 
 #[derive(Debug, Component, Default)]
-#[meta]
+#[flecs(meta)]
 pub struct Point {
     x: f32,
     pub y: f32,

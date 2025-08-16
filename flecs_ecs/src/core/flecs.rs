@@ -105,7 +105,7 @@ macro_rules! create_pre_registered_component {
             }
         }
 
-        impl InternalOnComponentRegistration for $struct_name {
+        impl InternalComponentHooks for $struct_name {
             fn internal_on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
         }
 
@@ -621,13 +621,9 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
 }
 
-impl InternalOnComponentRegistration for () {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for () {}
 
-impl OnComponentRegistration for () {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for () {}
 
 impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
     type UnderlyingType = ();
