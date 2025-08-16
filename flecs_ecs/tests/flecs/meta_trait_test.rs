@@ -12,14 +12,14 @@ struct Position {
 #[flecs(meta)]
 struct PositionSkipY {
     x: f32,
-    #[meta_skip]
+    #[flecs_skip]
     y: f32,
 }
 
 #[derive(Component)]
 #[flecs(meta)]
 struct PositionSkipX {
-    #[meta_skip]
+    #[flecs_skip]
     x: f32,
     y: f32,
 }
