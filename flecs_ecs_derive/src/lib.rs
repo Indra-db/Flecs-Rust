@@ -144,6 +144,8 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
         Single(Path),
         Pair(Path, Path),
         Name(LitStr),
+        Add(Vec<Type>),
+        Set(Vec<Expr>),
     }
 
     impl Parse for Item {
@@ -167,6 +169,53 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                     Err(syn::Error::new(
                         ident.span(),
                         "Unsupported flecs option. Expected `name = \"...\"`",
+                    ))
+                }
+            } else if input.peek(Ident) && input.peek2(syn::token::Paren) {
+                // function-like entries: add(...), set(...)
+                let ident: Ident = input.parse()?;
+                if ident == "add" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut tys: Vec<Type> = Vec::new();
+                    if !inner.is_empty() {
+                        loop {
+                            let ty: Type = inner.parse()?;
+                            tys.push(ty);
+                            if inner.peek(Comma) {
+                                inner.parse::<Comma>()?;
+                                if inner.is_empty() {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    Ok(Item::Add(tys))
+                } else if ident == "set" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut exprs: Vec<Expr> = Vec::new();
+                    if !inner.is_empty() {
+                        loop {
+                            let expr: Expr = inner.parse()?;
+                            exprs.push(expr);
+                            if inner.peek(Comma) {
+                                inner.parse::<Comma>()?;
+                                if inner.is_empty() {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    Ok(Item::Set(exprs))
+                } else {
+                    Err(syn::Error::new(
+                        ident.span(),
+                        "Unknown flecs function. Expected `add(...)` or `set(...)`",
                     ))
                 }
             } else {
@@ -243,6 +292,61 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                                 qualify(p2)
                             };
                             out.extend(quote! { _component.add_trait::<(#q1, #q2)>(); });
+                        }
+                        Item::Add(tys) => {
+                            for ty in tys {
+                                match ty {
+                                    syn::Type::Tuple(tup) => {
+                                        let elems = &tup.elems;
+                                        if elems.len() == 2 {
+                                            let first = &elems[0];
+                                            let second = &elems[1];
+                                            out.extend(quote! { _component.add((<#first>::id(), <#second>::id())); });
+                                        } else {
+                                            out.extend(quote! { compile_error!("add((...)) only supports pairs with exactly two types"); });
+                                        }
+                                    }
+                                    _ => {
+                                        out.extend(quote! { _component.add(<#ty>::id()); });
+                                    }
+                                }
+                            }
+                        }
+                        Item::Set(exprs) => {
+                            for expr in exprs {
+                                match expr {
+                                    syn::Expr::Tuple(tup) => {
+                                        let elems = &tup.elems;
+                                        if elems.len() == 2 {
+                                            let first = &elems[0];
+                                            let second = &elems[1];
+                                            // Pattern 1: (ValueExpr, TypePath) -> set_first(ValueExpr, <Type>::id())
+                                            let is_first_value =
+                                                !matches!(first, syn::Expr::Path(_));
+                                            let is_second_path =
+                                                matches!(second, syn::Expr::Path(_));
+
+                                            // Pattern 2: (TypePath, ValueExpr) -> set_second(<Type>::id(), ValueExpr)
+                                            let is_first_path = matches!(first, syn::Expr::Path(_));
+                                            let is_second_value =
+                                                !matches!(second, syn::Expr::Path(_));
+
+                                            if is_first_value && is_second_path {
+                                                out.extend(quote! { _component.set_first(#first, <#second>::id()); });
+                                            } else if is_first_path && is_second_value {
+                                                out.extend(quote! { _component.set_second(<#first>::id(), #second); });
+                                            } else {
+                                                out.extend(quote! { compile_error!("set((...)) expects exactly one value expression and one type path"); });
+                                            }
+                                        } else {
+                                            out.extend(quote! { compile_error!("set((...)) only supports pairs with exactly two elements"); });
+                                        }
+                                    }
+                                    _ => {
+                                        out.extend(quote! { _component.set(#expr); });
+                                    }
+                                }
+                            }
                         }
                         Item::Name(name) => {
                             // capture name; if multiple provided, raise a compile-time error later
