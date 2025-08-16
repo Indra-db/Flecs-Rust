@@ -130,7 +130,6 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
         #( #generated_impls )*
         #meta_impl
     };
-                                ops.push(quote! { .set_second(id::<#second_ty>()) });
 
     output.into()
 }
