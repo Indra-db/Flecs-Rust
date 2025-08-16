@@ -146,6 +146,10 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
         Name(LitStr),
         Add(Vec<Type>),
         Set(Vec<Expr>),
+        OnAdd(Expr),
+        OnSetHook(Expr),
+        OnRemove(Expr),
+        OnReplace(Expr),
     }
 
     impl Parse for Item {
@@ -212,6 +216,28 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                         }
                     }
                     Ok(Item::Set(exprs))
+                } else if ident == "on_add"
+                    || ident == "on_set"
+                    || ident == "on_remove"
+                    || ident == "on_replace"
+                {
+                    let inner;
+                    parenthesized!(inner in input);
+                    // Accept a single expression: either a path (fn ptr) or an inline closure
+                    let expr: Expr = inner.parse()?;
+                    if !inner.is_empty() {
+                        return Err(syn::Error::new(
+                            inner.span(),
+                            "Expected a single hook expression",
+                        ));
+                    }
+                    match &*ident.to_string() {
+                        "on_add" => Ok(Item::OnAdd(expr)),
+                        "on_set" => Ok(Item::OnSetHook(expr)),
+                        "on_remove" => Ok(Item::OnRemove(expr)),
+                        "on_replace" => Ok(Item::OnReplace(expr)),
+                        _ => unreachable!(),
+                    }
                 } else {
                     Err(syn::Error::new(
                         ident.span(),
@@ -356,6 +382,19 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                             } else {
                                 out.extend(quote! { compile_error!("Duplicate `name` in #[flecs(...)] attribute"); });
                             }
+                        }
+                        Item::OnAdd(hook) => {
+                            out.extend(quote! { _component.on_add(#hook); });
+                        }
+                        Item::OnSetHook(hook) => {
+                            out.extend(quote! { _component.on_set(#hook); });
+                        }
+                        Item::OnRemove(hook) => {
+                            out.extend(quote! { _component.on_remove(#hook); });
+                        }
+                        Item::OnReplace(_hook) => {
+                            //TODO feature rust version
+                            //out.extend(quote! { _component.on_replace(#hook); });
                         }
                     }
                 }
