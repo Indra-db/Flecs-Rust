@@ -88,13 +88,9 @@ impl ComponentId for EntityView<'static> {
     }
 }
 
-impl InternalComponentHooks for EntityView<'static> {
-    
-}
+impl InternalComponentHooks for EntityView<'static> {}
 
-impl OnComponentRegistration for EntityView<'static> {
-    
-}
+impl OnComponentRegistration for EntityView<'static> {}
 
 // Recursive expansion of Component macro
 // =======================================
@@ -151,10 +147,6 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
     }
 }
 
-impl InternalComponentHooks for String {
-    
-}
+impl InternalComponentHooks for String {}
 
-impl OnComponentRegistration for String {
-    
-}
+impl OnComponentRegistration for String {}

@@ -1,8 +1,6 @@
 //! Periodically tracks statistics for the world and systems.
 
-use crate::core::{
-    Entity, InternalComponentHooks, OnComponentRegistration, World, WorldProvider, WorldRef,
-};
+use crate::core::{InternalComponentHooks, OnComponentRegistration, World, WorldProvider};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
@@ -95,13 +93,9 @@ where
     }
 }
 
-impl InternalComponentHooks for sys::EcsWorldStats {
-    
-}
+impl InternalComponentHooks for sys::EcsWorldStats {}
 
-impl OnComponentRegistration for sys::EcsWorldStats {
-    
-}
+impl OnComponentRegistration for sys::EcsWorldStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -164,13 +158,9 @@ where
     }
 }
 
-impl InternalComponentHooks for sys::EcsPipelineStats {
-    
-}
+impl InternalComponentHooks for sys::EcsPipelineStats {}
 
-impl OnComponentRegistration for sys::EcsPipelineStats {
-    
-}
+impl OnComponentRegistration for sys::EcsPipelineStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -233,13 +223,9 @@ where
     }
 }
 
-impl InternalComponentHooks for sys::EcsWorldSummary {
-    
-}
+impl InternalComponentHooks for sys::EcsWorldSummary {}
 
-impl OnComponentRegistration for sys::EcsWorldSummary {
-    
-}
+impl OnComponentRegistration for sys::EcsWorldSummary {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -302,13 +288,9 @@ where
     }
 }
 
-impl InternalComponentHooks for sys::EcsSystemStats {
-    
-}
+impl InternalComponentHooks for sys::EcsSystemStats {}
 
-impl OnComponentRegistration for sys::EcsSystemStats {
-    
-}
+impl OnComponentRegistration for sys::EcsSystemStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -372,10 +354,6 @@ where
     }
 }
 
-impl InternalComponentHooks for Stats {
-    
-}
+impl InternalComponentHooks for Stats {}
 
-impl OnComponentRegistration for Stats {
-    
-}
+impl OnComponentRegistration for Stats {}

@@ -174,10 +174,13 @@ pub trait ComponentId:
                         }
                     }
 
-                    let id = registration_traits::try_register_component::<
-                        MANUAL_REGISTRATION_CHECK,
-                        Self,
-                    >(world);
+                    let id = if let Some(name) = Self::internal_pre_registration_name() {
+                        try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                    } else {
+                        registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                            world,
+                        )
+                    };
 
                     components_array[index] = id;
                     #[cfg(feature = "flecs_meta")]
@@ -204,10 +207,13 @@ pub trait ComponentId:
                     components_array.set_len(capacity);
                 }
 
-                let id = registration_traits::try_register_component::<
-                    MANUAL_REGISTRATION_CHECK,
-                    Self,
-                >(world);
+                let id = if let Some(name) = Self::internal_pre_registration_name() {
+                    try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                } else {
+                    registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                        world,
+                    )
+                };
 
                 components_array[index] = id;
 
@@ -234,10 +240,16 @@ pub trait ComponentId:
                             }
                         }
 
-                        let id = registration_traits::try_register_component::<
-                            MANUAL_REGISTRATION_CHECK,
-                            Self,
-                        >(world);
+                        let id = if let Some(name) = Self::internal_pre_registration_name() {
+                            try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(
+                                world, name,
+                            )
+                        } else {
+                            registration_traits::try_register_component::<
+                                MANUAL_REGISTRATION_CHECK,
+                                Self,
+                            >(world)
+                        };
 
                         let id = entry.insert(id);
 
@@ -260,10 +272,13 @@ pub trait ComponentId:
                         }
                     }
 
-                    let id = registration_traits::try_register_component::<
-                        MANUAL_REGISTRATION_CHECK,
-                        Self,
-                    >(world);
+                    let id = if let Some(name) = Self::internal_pre_registration_name() {
+                        try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name)
+                    } else {
+                        registration_traits::try_register_component::<MANUAL_REGISTRATION_CHECK, Self>(
+                            world,
+                        )
+                    };
 
                     let id = entry.insert(id);
 

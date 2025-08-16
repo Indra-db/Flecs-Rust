@@ -65,10 +65,6 @@ impl<T: ComponentId> ComponentId for Opaque<'static, T> {
     }
 }
 
-impl<T: ComponentId> InternalComponentHooks for Opaque<'static, T> {
-    
-}
+impl<T: ComponentId> InternalComponentHooks for Opaque<'static, T> {}
 
-impl<T: ComponentId> OnComponentRegistration for Opaque<'static, T> {
-    
-}
+impl<T: ComponentId> OnComponentRegistration for Opaque<'static, T> {}
