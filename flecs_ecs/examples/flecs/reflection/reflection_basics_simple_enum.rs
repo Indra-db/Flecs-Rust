@@ -4,7 +4,7 @@ use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component)]
 #[repr(C)]
-#[meta]
+#[flecs(meta)]
 pub enum Color {
     Red,
     Green,
@@ -12,7 +12,7 @@ pub enum Color {
 }
 
 #[derive(Debug, Component)]
-#[meta]
+#[flecs(meta)]
 pub struct TypeWithEnum {
     pub color: Color,
 }

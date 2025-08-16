@@ -1,9 +1,6 @@
 //! Periodically tracks statistics for the world and systems.
 
-use crate::core::{
-    Entity, InternalOnComponentRegistration, OnComponentRegistration, World, WorldProvider,
-    WorldRef,
-};
+use crate::core::{InternalComponentHooks, OnComponentRegistration, World, WorldProvider};
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
@@ -96,13 +93,9 @@ where
     }
 }
 
-impl InternalOnComponentRegistration for sys::EcsWorldStats {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for sys::EcsWorldStats {}
 
-impl OnComponentRegistration for sys::EcsWorldStats {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for sys::EcsWorldStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -165,13 +158,9 @@ where
     }
 }
 
-impl InternalOnComponentRegistration for sys::EcsPipelineStats {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for sys::EcsPipelineStats {}
 
-impl OnComponentRegistration for sys::EcsPipelineStats {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for sys::EcsPipelineStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -234,13 +223,9 @@ where
     }
 }
 
-impl InternalOnComponentRegistration for sys::EcsWorldSummary {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for sys::EcsWorldSummary {}
 
-impl OnComponentRegistration for sys::EcsWorldSummary {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for sys::EcsWorldSummary {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -303,13 +288,9 @@ where
     }
 }
 
-impl InternalOnComponentRegistration for sys::EcsSystemStats {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for sys::EcsSystemStats {}
 
-impl OnComponentRegistration for sys::EcsSystemStats {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for sys::EcsSystemStats {}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -373,10 +354,6 @@ where
     }
 }
 
-impl InternalOnComponentRegistration for Stats {
-    fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl InternalComponentHooks for Stats {}
 
-impl OnComponentRegistration for Stats {
-    fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-}
+impl OnComponentRegistration for Stats {}

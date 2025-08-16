@@ -7,21 +7,21 @@ use flecs_ecs::sys;
 use json::IterToJsonDesc;
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 pub struct Mass {
     pub value: f32,
 }

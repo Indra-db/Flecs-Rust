@@ -8,14 +8,14 @@ use flecs_ecs::prelude::*;
 // see `src/addons/meta/builtin.rs` for more information on what types exactly.
 
 #[derive(Component, Debug)]
-#[meta]
+#[flecs(meta)]
 struct Point {
     x: f32,
     y: f32,
 }
 
 #[derive(Component, Debug)]
-#[meta]
+#[flecs(meta)]
 struct VectorComponent {
     points: Vec<Point>,
     strings: Vec<String>,

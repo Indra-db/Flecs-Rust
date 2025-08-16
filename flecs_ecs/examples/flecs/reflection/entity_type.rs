@@ -3,7 +3,7 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Component)]
-#[meta]
+#[flecs(meta)]
 pub struct TypeWithEntity {
     pub e: Entity,
 }

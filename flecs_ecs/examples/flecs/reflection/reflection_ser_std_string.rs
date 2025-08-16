@@ -9,7 +9,7 @@ use flecs_ecs::prelude::*;
 // thus serializing components with String is already supported out of the box
 
 #[derive(Component, Debug)]
-#[meta]
+#[flecs(meta)]
 struct StringComponent {
     a: String,
     b: String,

@@ -589,7 +589,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
             }
         }
 
-        impl InternalOnComponentRegistration for $name {
+        impl InternalComponentHooks for $name {
             fn internal_on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
         }
 
@@ -663,13 +663,9 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             }
         }
 
-        impl InternalOnComponentRegistration for $name {
-            fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl InternalComponentHooks for $name {}
 
-        impl OnComponentRegistration for $name {
-            fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
-        }
+        impl OnComponentRegistration for $name {}
     };
 }
 
