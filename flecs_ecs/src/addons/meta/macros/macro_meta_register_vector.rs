@@ -26,6 +26,8 @@
 ///
 /// let world = World::new();
 ///
+/// world.component::<Point>();
+///
 /// meta_register_vector_type!(&world, Point { x: 0.0, y: 0.0 });
 ///
 /// //this then later on can be used like this...
@@ -53,6 +55,8 @@
 /// }
 ///
 /// let world = World::new();
+///
+/// world.component::<Point>();
 ///
 /// meta_register_vector_type!(&world, Point::new(0.0, 0.0));
 /// // if default is available, one can use that as well
@@ -108,6 +112,8 @@ macro_rules! meta_register_vector_type {
 ///
 /// let world = World::new();
 ///
+/// world.component::<Point>();
+///
 /// let id = id!(&world, Vec<Point>);
 /// world
 ///     .component_ext::<Vec<Point>>(id)
@@ -136,6 +142,8 @@ macro_rules! meta_register_vector_type {
 /// }
 ///
 /// let world = World::new();
+///
+/// world.component::<Point>();
 ///
 /// let id = id!(&world, Vec<Point>);
 /// world
