@@ -65,7 +65,7 @@ use syn::{
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(meta_skip, on_registration, flecs))]
+#[proc_macro_derive(Component, attributes(flecs_skip, on_registration, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
 
@@ -457,7 +457,7 @@ fn impl_meta(
                     let is_ignored = field
                         .attrs
                         .iter()
-                        .any(|attr| attr.path().is_ident("meta_skip"));
+                        .any(|attr| attr.path().is_ident("flecs_skip"));
 
                     if is_ignored {
                         continue;
@@ -490,7 +490,7 @@ fn impl_meta(
                     let is_ignored = variant
                         .attrs
                         .iter()
-                        .any(|attr| attr.path().is_ident("meta_skip"));
+                        .any(|attr| attr.path().is_ident("flecs_skip"));
 
                     if is_ignored {
                         continue;
