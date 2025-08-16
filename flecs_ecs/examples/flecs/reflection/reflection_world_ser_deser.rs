@@ -24,9 +24,6 @@ pub struct Move;
 // from the serialized data, and makes it easier to import across worlds.
 impl Module for Move {
     fn module(world: &World) {
-        world.component::<Position>().meta();
-        world.component::<Velocity>().meta();
-
         world
             .system_named::<(&mut Position, &Velocity)>("Move")
             .each_entity(|e, (pos, vel)| {

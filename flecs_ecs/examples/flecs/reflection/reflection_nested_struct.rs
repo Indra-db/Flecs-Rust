@@ -19,9 +19,6 @@ pub struct Line {
 fn main() {
     let world = World::new();
 
-    world.component::<Point>().meta();
-    world.component::<Line>().meta();
-
     // Create entity, set Line component
     let e = world.entity().set(Line {
         start: Point { x: 10.0, y: 20.0 },

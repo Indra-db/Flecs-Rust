@@ -24,18 +24,12 @@ struct VectorComponent {
 fn main() {
     let world = World::new();
 
-    //register point component with meta
-    world.component::<Point>().meta();
-
     // String and vec<String> are already pre-registered by the meta framework
 
     // register vec<Point> component with meta
     // we have to pass a default value for the Point struct that
     // will be used to create new elements in the vector
     meta_register_vector_type!(&world, Point { x: 0.0, y: 0.0 });
-
-    // Register component with std::vector members
-    world.component::<VectorComponent>().meta();
 
     // Create value & serialize it to JSON
     let mut v = VectorComponent {

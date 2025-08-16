@@ -25,13 +25,6 @@ pub struct Mass {
 fn main() {
     let world = World::new();
 
-    // Register components with reflection data
-    world.component::<Position>().meta();
-
-    world.component::<Velocity>().meta();
-
-    world.component::<Mass>().meta();
-
     world
         .entity_named("a")
         .set(Position { x: 10.0, y: 20.0 })
