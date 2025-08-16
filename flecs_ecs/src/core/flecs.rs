@@ -7,6 +7,7 @@ use crate::sys;
 //TODO: a lot of these need to be feature gated
 
 pub trait FlecsTrait {}
+pub trait FlecsComponentTrait {}
 
 macro_rules! create_pre_registered_component {
     ($struct_name:ident, $const_name:ident) => {
@@ -112,6 +113,19 @@ macro_rules! create_pre_registered_component {
         impl OnComponentRegistration for $struct_name {
             fn on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
         }
+    };
+}
+
+// Component-trait specialization: same as create_pre_registered_component but also
+// implements FlecsComponentTrait. Use this for items documented on the
+// "Component traits" page so they can be identified at compile time.
+macro_rules! create_component_trait {
+    ($struct_name:ident, $const_name:ident) => {
+        create_component_trait!($struct_name, $const_name, "");
+    };
+    ($struct_name:ident, $const_name:ident, $doc:tt) => {
+        create_pre_registered_component!($struct_name, $const_name, $doc);
+        impl FlecsComponentTrait for $struct_name {}
     };
 }
 
@@ -244,11 +258,11 @@ create_pre_registered_component!(FlecsCore, ECS_FLECS_CORE);
 create_pre_registered_component!(FlecsInternals, ECS_FLECS_INTERNALS);
 create_pre_registered_component!(Module, ECS_MODULE);
 create_pre_registered_component!(Private, ECS_PRIVATE);
-create_pre_registered_component!(Prefab, ECS_PREFAB);
-create_pre_registered_component!(Disabled, ECS_DISABLED);
-create_pre_registered_component!(NotQueryable, ECS_NOT_QUERYABLE);
-create_pre_registered_component!(SlotOf, ECS_SLOT_OF);
-create_pre_registered_component!(
+create_component_trait!(Prefab, ECS_PREFAB);
+create_component_trait!(Disabled, ECS_DISABLED);
+create_component_trait!(NotQueryable, ECS_NOT_QUERYABLE);
+create_component_trait!(SlotOf, ECS_SLOT_OF);
+create_component_trait!(
     OrderedChildren,
     ECS_ORDERED_CHILDREN,
     "Tag that when added to a parent ensures stable order of ecs_children result."
@@ -265,27 +279,27 @@ create_pre_registered_component!(This_, ECS_THIS);
 create_pre_registered_component!(Variable, ECS_VARIABLE);
 // Shortcut as EcsVariable is typically used as source for singleton terms
 create_pre_registered_component!(Singleton, ECS_VARIABLE);
-create_pre_registered_component!(
+create_component_trait!(
     Transitive,
     ECS_TRANSITIVE,
     "Component trait. Relationship is marked as transitive."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Reflexive,
     ECS_REFLEXIVE,
     "Component trait. Relationship is marked as reflexive."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Symmetric,
     ECS_SYMMETRIC,
     "Component trait. Relationship is marked as symmetric."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Final,
     ECS_FINAL,
     "Component trait. This component cannot be used in an [`IsA`] relationship."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Inheritable,
     ECS_INHERITABLE,
     "Component trait. Mark component as inheritable.
@@ -294,78 +308,78 @@ create_pre_registered_component!(
     relationships are added with the component as target."
 );
 
-create_pre_registered_component!(
+create_component_trait!(
     PairIsTag,
     ECS_PAIR_IS_TAG,
     "Component trait. A relationship can be marked with PairIsTag in which case
      a pair with the relationship will never contain data."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Exclusive,
     ECS_EXCLUSIVE,
     "Component trait. Enforces that an entity can only have a single instance of a relationship."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Acyclic,
     ECS_ACYCLIC,
     "Component trait. Indicates that the relationship cannot contain cycles."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Traversable,
     ECS_TRAVERSABLE,
     "Component trait. This relationship can be traversed automatically by queries, e.g. using [`Up`]."
 );
-create_pre_registered_component!(
+create_component_trait!(
     With,
     ECS_WITH,
     "Component trait. Indicates that this relationship must always come together with another component."
 );
-create_pre_registered_component!(
+create_component_trait!(
     OneOf,
     ECS_ONE_OF,
     "Component trait. Enforces that the target of the relationship is a child of a specified entity."
 );
-create_pre_registered_component!(
+create_component_trait!(
     CanToggle,
     ECS_CAN_TOGGLE,
     "Component trait. Allows a component to be toggled."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Trait,
     ECS_TRAIT,
     "Component trait. Marks an entity as a trait."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Relationship,
     ECS_RELATIONSHIP,
     "Component trait. Enforces that an entity can only be used as a relationship."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Target,
     ECS_TARGET,
     "Component trait. Enforces that an entity can only be used as the target of a relationship."
 );
 
 // OnInstantiate traits
-create_pre_registered_component!(
+create_component_trait!(
     OnInstantiate,
     ECS_ON_INSTANTIATE,
     "Component trait. Configures behavior of components when an entity is instantiated from another entity. \
     Used as a pair with one of [`Override`], [`Inherit`], or [`DontInherit`]."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Override,
     ECS_OVERRIDE,
     "The default behavior. Inherited components are copied to the instance."
 );
-create_pre_registered_component!(
+create_component_trait!(
     Inherit,
     ECS_INHERIT,
     "Inherited components are not copied to the instance. \
     Operations such as `get` and `has`, and queries will automatically lookup inheritable components \
     by following the [`IsA`] relationship."
 );
-create_pre_registered_component!(
+create_component_trait!(
     DontInherit,
     ECS_DONT_INHERIT,
     "Components with the [`DontInherit`] trait are not inherited from a base entity \
@@ -373,24 +387,24 @@ create_pre_registered_component!(
 );
 
 // OnDelete/OnDeleteTarget traits
-create_pre_registered_component!(OnDelete, ECS_ON_DELETE);
-create_pre_registered_component!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
-create_pre_registered_component!(Remove, ECS_REMOVE);
-create_pre_registered_component!(Delete, ECS_DELETE);
-create_pre_registered_component!(Panic, ECS_PANIC);
+create_component_trait!(OnDelete, ECS_ON_DELETE);
+create_component_trait!(OnDeleteTarget, ECS_ON_DELETE_TARGET);
+create_component_trait!(Remove, ECS_REMOVE);
+create_component_trait!(Delete, ECS_DELETE);
+create_component_trait!(Panic, ECS_PANIC);
 
 // Builtin relationships
-create_pre_registered_component!(
+create_component_trait!(
     ChildOf,
     ECS_CHILD_OF,
     "Builtin relationship. Allows for the creation of entity hierarchies."
 );
-create_pre_registered_component!(
+create_component_trait!(
     IsA,
     ECS_IS_A,
     "Builtin relationship. Used to express that one entity is equivalent to another."
 );
-create_pre_registered_component!(
+create_component_trait!(
     DependsOn,
     ECS_DEPENDS_ON,
     "Builtin relationship. Used to determine the execution order of systems."
@@ -451,12 +465,12 @@ pub mod script {
 #[cfg(feature = "flecs_script")]
 pub use script::Script;
 
-create_pre_registered_component!(
+create_component_trait!(
     Sparse,
     ECS_SPARSE,
     "Component trait. Configures a component to use sparse storage."
 );
-create_pre_registered_component!(
+create_component_trait!(
     DontFragment,
     ECS_DONT_FRAGMENT,
     "Component trait. Mark component as non-fragmenting"

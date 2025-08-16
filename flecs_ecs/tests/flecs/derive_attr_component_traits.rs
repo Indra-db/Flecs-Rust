@@ -12,88 +12,88 @@ mod component_traits_attributes {
 
     // Single-trait components
     #[derive(Component)]
-    #[flecs(Transitive)]
+    #[flecs(traits(Transitive))]
     struct TTransitive;
 
     #[derive(Component)]
-    #[flecs(Reflexive)]
+    #[flecs(traits(Reflexive))]
     struct TReflexive;
 
     #[derive(Component)]
-    #[flecs(Symmetric)]
+    #[flecs(traits(Symmetric))]
     struct TSymmetric;
 
     #[derive(Component)]
-    #[flecs(Final)]
+    #[flecs(traits(Final))]
     struct TFinal;
 
     #[derive(Component)]
-    #[flecs(Inheritable)]
+    #[flecs(traits(Inheritable))]
     struct TInheritable;
 
     #[derive(Component)]
-    #[flecs(PairIsTag)]
+    #[flecs(traits(PairIsTag))]
     struct TPairIsTag;
 
     #[derive(Component)]
-    #[flecs(Exclusive)]
+    #[flecs(traits(Exclusive))]
     struct TExclusive;
 
     #[derive(Component)]
-    #[flecs(Acyclic)]
+    #[flecs(traits(Acyclic))]
     struct TAcyclic;
 
     #[derive(Component)]
-    #[flecs(Traversable)]
+    #[flecs(traits(Traversable))]
     struct TTraversable;
 
     #[derive(Component)]
-    #[flecs(CanToggle)]
+    #[flecs(traits(CanToggle))]
     struct TCanToggle;
 
     #[derive(Component)]
-    #[flecs(Trait)]
+    #[flecs(traits(Trait))]
     struct TTrait;
 
     #[derive(Component)]
-    #[flecs(Relationship)]
+    #[flecs(traits(Relationship))]
     struct TRelationship;
 
     #[derive(Component)]
-    #[flecs(Target)]
+    #[flecs(traits(Target))]
     struct TTarget;
 
     #[derive(Component)]
-    #[flecs(Sparse)]
+    #[flecs(traits(Sparse))]
     struct TSparse;
 
     #[derive(Component)]
-    #[flecs(DontFragment)]
+    #[flecs(traits(DontFragment))]
     struct TDontFragment;
 
     // Pair-trait components (relationship, target)
     #[derive(Component)]
-    #[flecs((With, _Y))]
+    #[flecs(traits((With, _Y)))]
     struct TWithY;
 
     #[derive(Component)]
-    #[flecs((OneOf, Group))]
+    #[flecs(traits((OneOf, Group)))]
     struct TOneOfGroup;
 
     #[derive(Component)]
-    #[flecs((OnInstantiate, Override))]
+    #[flecs(traits((OnInstantiate, Override)))]
     struct TOnInstOverride;
 
     #[derive(Component)]
-    #[flecs((OnInstantiate, Inherit))]
+    #[flecs(traits((OnInstantiate, Inherit)))]
     struct TOnInstInherit;
 
     #[derive(Component)]
-    #[flecs((OnInstantiate, DontInherit))]
+    #[flecs(traits((OnInstantiate, DontInherit)))]
     struct TOnInstDontInherit;
 
     #[derive(Component)]
-    #[flecs(Acyclic,(OnInstantiate,Inherit),Inheritable,flecs::Sparse)]
+    #[flecs(traits(Acyclic,(OnInstantiate,Inherit),Inheritable,flecs::Sparse))]
     struct MultipleTraits;
 
     #[test]
@@ -154,34 +154,6 @@ mod component_traits_attributes {
         assert!(c.has(flecs::Sparse));
     }
 }
-
-mod child_of_isa_attributes {
-    use super::*;
-    #[derive(Component)]
-    struct IsATarget;
-
-    #[derive(Component)]
-    struct ChildOfTarget;
-
-    #[derive(Component)]
-    #[flecs((IsA, IsATarget))]
-    struct TIsA;
-
-    #[derive(Component)]
-    #[flecs((ChildOf, ChildOfTarget))]
-    struct TChildOf;
-
-    #[test]
-    fn child_of_isa_traits_flags_present() {
-        let world = World::new();
-
-        let c = world.component::<TIsA>();
-        assert!(c.has((flecs::IsA, IsATarget)));
-        let c = world.component::<TChildOf>();
-        assert!(c.has((flecs::ChildOf, ChildOfTarget)));
-    }
-}
-
 mod name_attribute {
     use super::*;
 
@@ -194,7 +166,7 @@ mod name_attribute {
     struct CompileTestOrdering2;
 
     #[derive(Component)]
-    #[flecs(name = "AName", meta, DontFragment, flecs::Sparse)]
+    #[flecs(name = "AName", meta, traits(DontFragment, flecs::Sparse))]
     struct CompileTestMultipleFlecsAttributes;
 
     #[derive(Component)]
@@ -237,10 +209,35 @@ mod add_set_attributes {
     }
 
     #[derive(Component)]
+    struct IsATarget(i32);
+
+    #[derive(Component)]
+    struct ChildOfTarget;
+
+    #[derive(Component)]
+    #[flecs(add((flecs::IsA, IsATarget)))]
+    struct TIsA;
+
+    #[derive(Component)]
+    #[flecs(add((flecs::ChildOf, ChildOfTarget)))]
+    struct TChildOf;
+
+    #[test]
+    fn child_of_isa_traits_flags_present() {
+        let world = World::new();
+
+        let c = world.component::<TIsA>();
+        assert!(c.has((flecs::IsA, IsATarget::id())));
+        let c = world.component::<TChildOf>();
+        assert!(c.has((flecs::ChildOf, ChildOfTarget)));
+    }
+
+    #[derive(Component)]
     #[flecs(
-        Prefab, //flecs trait to say it's a prefab
+        traits(Prefab), //flecs trait to say it's a prefab
         add(TAdd, CAdd,
-            (TAdd, CAdd) //pair
+            (TAdd, CAdd), //pair
+            (flecs::IsA, IsATarget)
             ),
         set(CSet1F { value: 1 }, CSet2F { value: 2, other: 3 }, // inline construction
             CSetWDefault::default(),  //constructed from fn
@@ -293,51 +290,51 @@ mod component_hooks_attributes {
     use super::*;
 
     #[derive(Default, Component)]
-    #[flecs(on_add(on_add_hook))]
+    #[flecs(hooks(on_add(on_add_hook)))]
     struct OnAddHookFn(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_add(|e, _c| {
+    #[flecs(hooks(on_add(|e, _c| {
         e.world().get::<&mut OnAddHookCounter>(|counter| {
             counter.count += 1;
         });
-    }))]
+    })))]
     struct OnAddHookInline(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_remove(on_remove_hook))]
+    #[flecs(hooks(on_remove(on_remove_hook)))]
     struct OnRemoveHookFn(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_remove(|e, _c| {
+    #[flecs(hooks(on_remove(|e, _c| {
         e.world().get::<&mut OnRemoveHookCounter>(|counter| {
             counter.count += 1;
         });
-    }))]
+    })))]
     struct OnRemoveHookInline(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_set(on_set_hook))]
+    #[flecs(hooks(on_set(on_set_hook)))]
     struct OnSetHookFn(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_set(|e, _c| {
+    #[flecs(hooks(on_set(|e, _c| {
         e.world().get::<&mut OnSetHookCounter>(|counter| {
             counter.count += 1;
         });
-    }))]
+    })))]
     struct OnSetHookInline(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_replace(on_replace_hook))]
+    #[flecs(hooks(on_replace(on_replace_hook)))]
     struct OnReplaceHookFn(i32);
 
     #[derive(Default, Component)]
-    #[flecs(on_replace(|e, _c| {
+    #[flecs(hooks(on_replace(|e, _c| {
         e.world().get::<&mut OnReplaceHookCounter>(|counter| {
             counter.count += 1;
         });
-    }))]
+    })))]
     struct OnReplaceHookInline(i32);
 
     fn on_add_hook(e: EntityView<'_>, _c: &mut OnAddHookFn) {

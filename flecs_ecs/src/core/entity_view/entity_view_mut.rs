@@ -3,9 +3,7 @@ use core::ffi::c_void;
 use flecs_ecs::core::*;
 use sys::EcsIsA;
 
-use crate::sys;
-
-use self::flecs::FlecsTrait;
+use crate::{core::flecs::FlecsComponentTrait, sys};
 
 // functions in here match most of the functions in the c++ entity and entity_builder class
 impl<'a> EntityView<'a> {
@@ -93,7 +91,7 @@ impl<'a> EntityView<'a> {
     pub fn add_trait<T>(self) -> Self
     where
         T: ComponentOrPairId,
-        T::First: FlecsTrait,
+        T::First: FlecsComponentTrait,
     {
         let world = self.world;
         unsafe { self.add_id_unchecked(T::get_id(world)) }

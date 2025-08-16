@@ -144,8 +144,11 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
         Single(Path),
         Pair(Path, Path),
         Name(LitStr),
+        Meta,
         Add(Vec<Type>),
         Set(Vec<Expr>),
+        Traits(Vec<Item>),
+        Hooks(Vec<Item>),
         OnAdd(Expr),
         OnSetHook(Expr),
         OnRemove(Expr),
@@ -169,31 +172,25 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                 if ident == "name" {
                     Ok(Item::Name(value))
                 } else {
-                    // For now only `name =` is supported as key=value
                     Err(syn::Error::new(
                         ident.span(),
                         "Unsupported flecs option. Expected `name = \"...\"`",
                     ))
                 }
             } else if input.peek(Ident) && input.peek2(syn::token::Paren) {
-                // function-like entries: add(...), set(...)
+                // function-like entries: add(...), set(...), traits(...), hooks(...), on_*(...)
                 let ident: Ident = input.parse()?;
                 if ident == "add" {
                     let inner;
                     parenthesized!(inner in input);
                     let mut tys: Vec<Type> = Vec::new();
-                    if !inner.is_empty() {
-                        loop {
-                            let ty: Type = inner.parse()?;
-                            tys.push(ty);
-                            if inner.peek(Comma) {
-                                inner.parse::<Comma>()?;
-                                if inner.is_empty() {
-                                    break;
-                                }
-                            } else {
-                                break;
-                            }
+                    while !inner.is_empty() {
+                        let ty: Type = inner.parse()?;
+                        tys.push(ty);
+                        if inner.peek(Comma) {
+                            inner.parse::<Comma>()?;
+                        } else {
+                            break;
                         }
                     }
                     Ok(Item::Add(tys))
@@ -201,21 +198,83 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                     let inner;
                     parenthesized!(inner in input);
                     let mut exprs: Vec<Expr> = Vec::new();
-                    if !inner.is_empty() {
-                        loop {
-                            let expr: Expr = inner.parse()?;
-                            exprs.push(expr);
-                            if inner.peek(Comma) {
-                                inner.parse::<Comma>()?;
-                                if inner.is_empty() {
-                                    break;
-                                }
-                            } else {
-                                break;
-                            }
+                    while !inner.is_empty() {
+                        let expr: Expr = inner.parse()?;
+                        exprs.push(expr);
+                        if inner.peek(Comma) {
+                            inner.parse::<Comma>()?;
+                        } else {
+                            break;
                         }
                     }
                     Ok(Item::Set(exprs))
+                } else if ident == "traits" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut items: Vec<Item> = Vec::new();
+                    while !inner.is_empty() {
+                        if inner.peek(syn::token::Paren) {
+                            let p;
+                            parenthesized!(p in inner);
+                            let first: Path = p.parse()?;
+                            p.parse::<Comma>()?;
+                            let second: Path = p.parse()?;
+                            items.push(Item::Pair(first, second));
+                        } else if inner.peek(Ident) {
+                            let fork = inner.fork();
+                            let ident_peek: Ident = fork.parse()?;
+                            if ident_peek == "meta" {
+                                // consume the ident
+                                let _ = inner.parse::<Ident>()?;
+                                items.push(Item::Meta);
+                            } else {
+                                let p: Path = inner.parse()?;
+                                items.push(Item::Single(p));
+                            }
+                        } else {
+                            let p: Path = inner.parse()?;
+                            items.push(Item::Single(p));
+                        }
+                        if inner.peek(Comma) {
+                            inner.parse::<Comma>()?;
+                        } else {
+                            break;
+                        }
+                    }
+                    Ok(Item::Traits(items))
+                } else if ident == "hooks" {
+                    let inner;
+                    parenthesized!(inner in input);
+                    let mut items: Vec<Item> = Vec::new();
+                    while !inner.is_empty() {
+                        let hook_ident: Ident = inner.parse()?;
+                        if hook_ident == "on_add"
+                            || hook_ident == "on_set"
+                            || hook_ident == "on_remove"
+                            || hook_ident == "on_replace"
+                        {
+                            let par;
+                            parenthesized!(par in inner);
+                            let expr: Expr = par.parse()?;
+                            let which = hook_ident.to_string();
+                            match which.as_str() {
+                                "on_add" => items.push(Item::OnAdd(expr)),
+                                "on_set" => items.push(Item::OnSetHook(expr)),
+                                "on_remove" => items.push(Item::OnRemove(expr)),
+                                "on_replace" => items.push(Item::OnReplace(expr)),
+                                _ => unreachable!(),
+                            }
+                            if inner.peek(Comma) {
+                                inner.parse::<Comma>()?;
+                            }
+                        } else {
+                            return Err(syn::Error::new(
+                                hook_ident.span(),
+                                "Unknown hook in hooks(...). Expected on_add/on_set/on_remove/on_replace",
+                            ));
+                        }
+                    }
+                    Ok(Item::Hooks(items))
                 } else if ident == "on_add"
                     || ident == "on_set"
                     || ident == "on_remove"
@@ -223,7 +282,6 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                 {
                     let inner;
                     parenthesized!(inner in input);
-                    // Accept a single expression: either a path (fn ptr) or an inline closure
                     let expr: Expr = inner.parse()?;
                     if !inner.is_empty() {
                         return Err(syn::Error::new(
@@ -241,12 +299,25 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                 } else {
                     Err(syn::Error::new(
                         ident.span(),
-                        "Unknown flecs function. Expected `add(...)` or `set(...)`",
+                        "Unknown flecs function. Expected `add(...)` or `set(...)` or `traits(...)` or `hooks(...)`",
                     ))
                 }
             } else {
-                let p: Path = input.parse()?;
-                Ok(Item::Single(p))
+                // Bare identifier/path entry. Recognize `meta` specially.
+                if input.peek(Ident) {
+                    let fork = input.fork();
+                    let ident_peek: Ident = fork.parse()?;
+                    if ident_peek == "meta" {
+                        let _ = input.parse::<Ident>()?;
+                        Ok(Item::Meta)
+                    } else {
+                        let p: Path = input.parse()?;
+                        Ok(Item::Single(p))
+                    }
+                } else {
+                    let p: Path = input.parse()?;
+                    Ok(Item::Single(p))
+                }
             }
         }
     }
@@ -294,30 +365,56 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                 for item in args.iter() {
                     position += 1;
                     match item {
-                        Item::Single(p) => {
-                            // Allow #[flecs(meta)] to enable meta generation and skip trait emission
-                            if p.segments
-                                .last()
-                                .map(|s| s.ident == "meta")
-                                .unwrap_or(false)
-                            {
-                                has_flecs_meta = true;
-                                if meta_pos.is_none() {
-                                    meta_pos = Some(position);
+                        Item::Traits(items) => {
+                            for t in items {
+                                match t {
+                                    Item::Single(p) => {
+                                        let q = qualify(p);
+                                        out.extend(quote! { _component.add_trait::<#q>(); });
+                                    }
+                                    Item::Pair(p1, p2) => {
+                                        let q1 = qualify(p1);
+                                        let q2 = if should_be_unqualified(p1) {
+                                            quote! { #p2 }
+                                        } else {
+                                            qualify(p2)
+                                        };
+                                        out.extend(
+                                            quote! { _component.add_trait::<(#q1, #q2)>(); },
+                                        );
+                                    }
+                                    Item::Meta => {
+                                        has_flecs_meta = true;
+                                        if meta_pos.is_none() {
+                                            meta_pos = Some(position);
+                                        }
+                                    }
+                                    _ => {}
                                 }
-                                continue;
                             }
-                            let q = qualify(p);
-                            out.extend(quote! { _component.add_trait::<#q>(); });
                         }
-                        Item::Pair(p1, p2) => {
-                            let q1 = qualify(p1);
-                            let q2 = if should_be_unqualified(p1) {
-                                quote! { #p2 }
-                            } else {
-                                qualify(p2)
-                            };
-                            out.extend(quote! { _component.add_trait::<(#q1, #q2)>(); });
+                        Item::Hooks(items) => {
+                            for h in items {
+                                match h {
+                                    Item::OnAdd(hook) => {
+                                        out.extend(quote! { _component.on_add(#hook); });
+                                    }
+                                    Item::OnSetHook(hook) => {
+                                        out.extend(quote! { _component.on_set(#hook); });
+                                    }
+                                    Item::OnRemove(hook) => {
+                                        out.extend(quote! { _component.on_remove(#hook); });
+                                    }
+                                    Item::OnReplace(_hook) => { /* not supported yet */ }
+                                    _ => {}
+                                }
+                            }
+                        }
+                        Item::Meta => {
+                            has_flecs_meta = true;
+                            if meta_pos.is_none() {
+                                meta_pos = Some(position);
+                            }
                         }
                         Item::Add(tys) => {
                             for ty in tys {
@@ -346,20 +443,15 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                                         if elems.len() == 2 {
                                             let first = &elems[0];
                                             let second = &elems[1];
-                                            // Pattern 1: (ValueExpr, TypePath) -> set_first(ValueExpr, <Type>::id())
-                                            let is_first_value =
+                                            let first_is_value =
                                                 !matches!(first, syn::Expr::Path(_));
-                                            let is_second_path =
-                                                matches!(second, syn::Expr::Path(_));
-
-                                            // Pattern 2: (TypePath, ValueExpr) -> set_second(<Type>::id(), ValueExpr)
-                                            let is_first_path = matches!(first, syn::Expr::Path(_));
-                                            let is_second_value =
+                                            let second_is_value =
                                                 !matches!(second, syn::Expr::Path(_));
-
-                                            if is_first_value && is_second_path {
+                                            if first_is_value && !second_is_value {
+                                                // (ValueExpr, TypePath)
                                                 out.extend(quote! { _component.set_first(#first, <#second>::id()); });
-                                            } else if is_first_path && is_second_value {
+                                            } else if !first_is_value && second_is_value {
+                                                // (TypePath, ValueExpr)
                                                 out.extend(quote! { _component.set_second(<#first>::id(), #second); });
                                             } else {
                                                 out.extend(quote! { compile_error!("set((...)) expects exactly one value expression and one type path"); });
@@ -383,18 +475,8 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
                                 out.extend(quote! { compile_error!("Duplicate `name` in #[flecs(...)] attribute"); });
                             }
                         }
-                        Item::OnAdd(hook) => {
-                            out.extend(quote! { _component.on_add(#hook); });
-                        }
-                        Item::OnSetHook(hook) => {
-                            out.extend(quote! { _component.on_set(#hook); });
-                        }
-                        Item::OnRemove(hook) => {
-                            out.extend(quote! { _component.on_remove(#hook); });
-                        }
-                        Item::OnReplace(_hook) => {
-                            //TODO feature rust version
-                            //out.extend(quote! { _component.on_replace(#hook); });
+                        _ => {
+                            out.extend(quote! { compile_error!("Unexpected item in #[flecs(...)] attribute"); });
                         }
                     }
                 }

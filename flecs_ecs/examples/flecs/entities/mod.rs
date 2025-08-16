@@ -1,3 +1,4 @@
+mod component_attributes;
 mod entity_basics;
 mod entity_hierarchy;
 mod entity_hooks;
