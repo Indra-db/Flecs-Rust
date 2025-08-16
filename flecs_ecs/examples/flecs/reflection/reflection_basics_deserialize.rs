@@ -12,10 +12,8 @@ pub struct Position {
 fn main() {
     let world = World::new();
 
-    // Register the Position component with reflection data
-    world.component::<Position>().meta();
-
-    /* Alternatively, you can do it manually like so (without the derive macro)
+    /* Alternatively when not using meta attribute,
+    you can do it manually like so (without the derive macro)
     .member(f32,"x", 1 /* count */, core::mem::offset_of!(Position, x))
     .member(f32,"y", 1, core::mem::offset_of!(Position, y));
     */

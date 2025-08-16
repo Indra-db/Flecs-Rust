@@ -515,6 +515,16 @@ fn collect_flecs_traits_calls(input: &DeriveInput) -> (TokenStream, bool, Option
         out.extend(quote! { compile_error!(#lit); });
     }
 
+    // If meta was requested, ensure we invoke it during registration.
+    let out = if has_flecs_meta {
+        quote! {
+            _component.meta();
+            #out
+        }
+    } else {
+        out
+    };
+
     (out, has_flecs_meta, flecs_name)
 }
 

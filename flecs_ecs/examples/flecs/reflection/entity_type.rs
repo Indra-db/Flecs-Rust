@@ -11,10 +11,6 @@ pub struct TypeWithEntity {
 fn main() {
     let mut world = World::new();
 
-    // Using Entity directly would resolve to a u64 datatype, so
-    // use flecs::meta::Entity instead.
-    world.component::<TypeWithEntity>().meta();
-
     /* Alternatively, you can do it manually like so (without the derive macro)
     .member(Entity::id(),"e", 1, core::mem::offset_of!(TypeWithEntity, e));
     */

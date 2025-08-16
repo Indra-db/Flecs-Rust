@@ -28,8 +28,6 @@ struct PositionSkipX {
 fn test_pos() {
     let world = World::new();
 
-    world.component::<Position>().meta();
-
     // Create a new entity
     let e = world.entity().set(Position { x: 2.0, y: 4.0 });
 
@@ -44,8 +42,6 @@ fn test_pos() {
 fn test_pos_skip_y() {
     let world = World::new();
 
-    world.component::<PositionSkipY>().meta();
-
     // Create a new entity
     let e = world.entity().set(PositionSkipY { x: 2.0, y: 4.0 });
 
@@ -59,8 +55,6 @@ fn test_pos_skip_y() {
 #[test]
 fn test_pos_skip_x() {
     let world = World::new();
-
-    world.component::<PositionSkipX>().meta();
 
     // Create a new entity
     let e = world.entity().set(PositionSkipX { x: 2.0, y: 4.0 });
@@ -90,12 +84,6 @@ pub struct TypeWithEnum {
 #[test]
 fn test_enum() {
     let world = World::new();
-
-    // Register the Color component
-    world.component::<Color>().meta();
-
-    // Register the TypeWithEnum component
-    world.component::<TypeWithEnum>().meta();
 
     assert!(
         world
@@ -130,11 +118,6 @@ pub struct TypeWithString {
 fn test_type_w_string() {
     let world = World::new();
 
-    // String already pre-registered
-
-    // Register the Type containing String component
-    world.component::<TypeWithString>().meta();
-
     assert!(
         world
             .component::<TypeWithString>()
@@ -162,11 +145,6 @@ pub struct TypeWithVecString {
 #[test]
 fn test_type_w_vec_string() {
     let world = World::new();
-
-    // String already pre-registered
-
-    // Register the Type containing Vec<String> component
-    world.component::<TypeWithVecString>().meta();
 
     assert!(
         world

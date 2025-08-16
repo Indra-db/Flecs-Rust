@@ -19,10 +19,6 @@ pub struct Line {
 fn main() {
     let world = World::new();
 
-    world.component::<Point>().meta();
-
-    world.component::<Line>().meta();
-
     // Create entity, set value of Line using reflection API
     let e = world.entity().add(Line::id());
 

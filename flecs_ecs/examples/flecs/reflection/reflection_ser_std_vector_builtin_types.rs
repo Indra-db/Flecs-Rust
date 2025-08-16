@@ -17,9 +17,6 @@ struct VectorComponent {
 fn main() {
     let world = World::new();
 
-    // Register component with std::vector members
-    world.component::<VectorComponent>().meta();
-
     // Create value & serialize it to JSON
     let mut v = VectorComponent {
         ints: vec![1, 2, 3],

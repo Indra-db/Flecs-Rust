@@ -18,9 +18,6 @@ struct StringComponent {
 fn main() {
     let world = World::new();
 
-    // Register component with std::string members
-    world.component::<StringComponent>().meta();
-
     // Create value & serialize it
     let mut v = StringComponent {
         a: "foo".to_string(),

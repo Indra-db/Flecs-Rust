@@ -20,18 +20,15 @@ pub struct TypeWithEnum {
 fn main() {
     let mut world = World::new();
 
-    // Register the Color component
-    world.component::<Color>().meta();
-    /* Alternatively, you can do it manually like so (without the derive macro)
+    /* Alternatively without the meta attribute,
+    you can do it manually like so (without the derive macro)
     .constant("Red", Color::Red as i32)
     .constant("Green", Color::Green as i32)
     .constant("Blue", Color::Blue as i32);
     */
 
-    // Register the TypeWithEnum component
-    world.component::<TypeWithEnum>().meta();
-
-    /* Alternatively, you can do it manually like so (without the derive macro)
+    /* Alternatively without the meta attribute,
+    you can do it manually like so (without the derive macro)
     .member(Color::id(),"color", 1, core::mem::offset_of!(TypeWithEnum, color));
      */
 
