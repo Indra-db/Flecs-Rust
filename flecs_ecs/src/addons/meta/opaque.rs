@@ -20,16 +20,16 @@ pub struct Opaque<'a, T: 'static, ElemType = ()> {
 impl<'a, T, ElemType> Opaque<'a, T, ElemType> {
     /// Creates a new Opaque instance
     pub fn new(world: impl WorldProvider<'a>) -> Self {
-        let id = *world
-            .world()
+        let world = world.world();
+        let id = world
             .components_map()
             .get(&core::any::TypeId::of::<T>())
             .unwrap_or_else(|| panic!("Component with name: {} is not registered, pre-register components with `world.component::<T>() or world.component_ext::<T>(id)`", core::any::type_name::<T>()));
 
         Self {
-            world: world.world(),
+            world,
             desc: ecs_opaque_desc_t {
-                entity: id,
+                entity: *id,
                 type_: Default::default(),
             },
             phantom: core::marker::PhantomData,
