@@ -721,15 +721,15 @@ where
     ///
     /// world
     ///     .component::<DerivedAction>()
-    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///     .is_a(Action::id());
     ///
     /// world
     ///     .component::<DerivedAction>()
-    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///     .is_a(Action::id());
     ///
     /// world
     ///     .component::<DerivedAction2>()
-    ///     .add_trait::<(flecs::IsA, Action)>();
+    ///     .is_a(Action::id());
     ///
     /// let entity = world.entity().add(DerivedAction).add(DerivedAction2);
     ///
