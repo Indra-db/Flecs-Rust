@@ -277,8 +277,7 @@ create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
 create_pre_registered_component!(Any, ECS_ANY, "Match at most one entity");
 create_pre_registered_component!(This_, ECS_THIS);
 create_pre_registered_component!(Variable, ECS_VARIABLE);
-// Shortcut as EcsVariable is typically used as source for singleton terms
-create_pre_registered_component!(Singleton, ECS_VARIABLE);
+
 create_component_trait!(
     Transitive,
     ECS_TRANSITIVE,
@@ -358,6 +357,12 @@ create_component_trait!(
     Target,
     ECS_TARGET,
     "Component trait. Enforces that an entity can only be used as the target of a relationship."
+);
+
+create_component_trait!(
+    Singleton,
+    ECS_SINGLETON,
+    "Component trait. Configures the components to be used as a singleton only. This automatically tells queries that it's a singleton"
 );
 
 // OnInstantiate traits
@@ -844,7 +849,7 @@ mod tests {
             assert_eq!(flecs::Any, sys::EcsAny);
             assert_eq!(flecs::This_, sys::EcsThis);
             assert_eq!(flecs::Variable, sys::EcsVariable);
-            assert_eq!(flecs::Singleton, sys::EcsVariable);
+            assert_eq!(flecs::Singleton, sys::EcsSingleton);
             assert_eq!(flecs::Transitive, sys::EcsTransitive);
             assert_eq!(flecs::Reflexive, sys::EcsReflexive);
             assert_eq!(flecs::Symmetric, sys::EcsSymmetric);

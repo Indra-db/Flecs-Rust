@@ -183,7 +183,7 @@ where
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        let get_ptr = unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+        let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
         let component_ptr = get_ptr.component_ptr;
 
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
@@ -307,7 +307,7 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    let get_ptr = unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+                    let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
                     let component_ptr = get_ptr.component_ptr;
 
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {

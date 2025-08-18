@@ -195,13 +195,14 @@ pub const EcsIdIsInheritable: u32 = 32768;
 pub const EcsIdHasOnAdd: u32 = 65536;
 pub const EcsIdHasOnRemove: u32 = 131072;
 pub const EcsIdHasOnSet: u32 = 262144;
-pub const EcsIdHasOnTableCreate: u32 = 2097152;
-pub const EcsIdHasOnTableDelete: u32 = 4194304;
-pub const EcsIdIsSparse: u32 = 8388608;
-pub const EcsIdDontFragment: u32 = 16777216;
-pub const EcsIdMatchDontFragment: u32 = 33554432;
-pub const EcsIdOrderedChildren: u32 = 268435456;
-pub const EcsIdEventMask: u32 = 283574272;
+pub const EcsIdHasOnTableCreate: u32 = 524288;
+pub const EcsIdHasOnTableDelete: u32 = 1048576;
+pub const EcsIdIsSparse: u32 = 2097152;
+pub const EcsIdDontFragment: u32 = 4194304;
+pub const EcsIdMatchDontFragment: u32 = 8388608;
+pub const EcsIdOrderedChildren: u32 = 16777216;
+pub const EcsIdSingleton: u32 = 33554432;
+pub const EcsIdEventMask: u32 = 20905984;
 pub const EcsIdMarkedForDelete: u32 = 1073741824;
 pub const EcsNonTrivialIdSparse: u32 = 1;
 pub const EcsNonTrivialIdNonFragmenting: u32 = 2;
@@ -271,39 +272,38 @@ pub const EcsObserverKeepAlive: u32 = 2048;
 pub const EcsTableHasBuiltins: u32 = 2;
 pub const EcsTableIsPrefab: u32 = 4;
 pub const EcsTableHasIsA: u32 = 8;
-pub const EcsTableHasChildOf: u32 = 16;
-pub const EcsTableHasName: u32 = 32;
-pub const EcsTableHasPairs: u32 = 64;
-pub const EcsTableHasModule: u32 = 128;
-pub const EcsTableIsDisabled: u32 = 256;
-pub const EcsTableNotQueryable: u32 = 512;
-pub const EcsTableHasCtors: u32 = 1024;
-pub const EcsTableHasDtors: u32 = 2048;
-pub const EcsTableHasCopy: u32 = 4096;
-pub const EcsTableHasMove: u32 = 8192;
-pub const EcsTableHasToggle: u32 = 16384;
-pub const EcsTableHasOverrides: u32 = 32768;
+pub const EcsTableHasMultiIsA: u32 = 16;
+pub const EcsTableHasChildOf: u32 = 32;
+pub const EcsTableHasName: u32 = 64;
+pub const EcsTableHasPairs: u32 = 128;
+pub const EcsTableHasModule: u32 = 256;
+pub const EcsTableIsDisabled: u32 = 512;
+pub const EcsTableNotQueryable: u32 = 1024;
+pub const EcsTableHasCtors: u32 = 2048;
+pub const EcsTableHasDtors: u32 = 4096;
+pub const EcsTableHasCopy: u32 = 8192;
+pub const EcsTableHasMove: u32 = 16384;
+pub const EcsTableHasToggle: u32 = 32768;
 pub const EcsTableHasOnAdd: u32 = 65536;
 pub const EcsTableHasOnRemove: u32 = 131072;
 pub const EcsTableHasOnSet: u32 = 262144;
-pub const EcsTableHasOnTableFill: u32 = 524288;
-pub const EcsTableHasOnTableEmpty: u32 = 1048576;
-pub const EcsTableHasOnTableCreate: u32 = 2097152;
-pub const EcsTableHasOnTableDelete: u32 = 4194304;
-pub const EcsTableHasSparse: u32 = 8388608;
-pub const EcsTableHasDontFragment: u32 = 16777216;
-pub const EcsTableOverrideDontFragment: u32 = 33554432;
+pub const EcsTableHasOnTableCreate: u32 = 524288;
+pub const EcsTableHasOnTableDelete: u32 = 1048576;
+pub const EcsTableHasSparse: u32 = 2097152;
+pub const EcsTableHasDontFragment: u32 = 4194304;
+pub const EcsTableOverrideDontFragment: u32 = 8388608;
+pub const EcsTableHasOrderedChildren: u32 = 16777216;
+pub const EcsTableHasOverrides: u32 = 33554432;
 pub const EcsTableHasTraversable: u32 = 134217728;
-pub const EcsTableHasOrderedChildren: u32 = 268435456;
-pub const EcsTableEdgeReparent: u32 = 536870912;
-pub const EcsTableMarkedForDelete: u32 = 1073741824;
-pub const EcsTableHasLifecycle: u32 = 3072;
-pub const EcsTableIsComplex: u32 = 8408064;
-pub const EcsTableHasAddActions: u32 = 328712;
-pub const EcsTableHasRemoveActions: u32 = 133128;
-pub const EcsTableEdgeFlags: u32 = 8585216;
-pub const EcsTableAddEdgeFlags: u32 = 8454144;
-pub const EcsTableRemoveEdgeFlags: u32 = 276955136;
+pub const EcsTableEdgeReparent: u32 = 268435456;
+pub const EcsTableMarkedForDelete: u32 = 536870912;
+pub const EcsTableHasLifecycle: u32 = 6144;
+pub const EcsTableIsComplex: u32 = 2136064;
+pub const EcsTableHasAddActions: u32 = 329736;
+pub const EcsTableHasRemoveActions: u32 = 135176;
+pub const EcsTableEdgeFlags: u32 = 2293760;
+pub const EcsTableAddEdgeFlags: u32 = 2162688;
+pub const EcsTableRemoveEdgeFlags: u32 = 19005440;
 pub const EcsAperiodicComponentMonitors: u32 = 4;
 pub const EcsAperiodicEmptyQueries: u32 = 16;
 pub const ecs_world_t_magic: u32 = 1701016439;
@@ -350,13 +350,11 @@ pub const ECS_ALREADY_DEFINED: u32 = 8;
 pub const ECS_MISSING_OS_API: u32 = 9;
 pub const ECS_OPERATION_FAILED: u32 = 10;
 pub const ECS_INVALID_CONVERSION: u32 = 11;
-pub const ECS_ID_IN_USE: u32 = 12;
 pub const ECS_CYCLE_DETECTED: u32 = 13;
 pub const ECS_LEAK_DETECTED: u32 = 14;
 pub const ECS_DOUBLE_FREE: u32 = 15;
 pub const ECS_INCONSISTENT_NAME: u32 = 20;
 pub const ECS_NAME_IN_USE: u32 = 21;
-pub const ECS_NOT_A_COMPONENT: u32 = 22;
 pub const ECS_INVALID_COMPONENT_SIZE: u32 = 23;
 pub const ECS_INVALID_COMPONENT_ALIGNMENT: u32 = 24;
 pub const ECS_COMPONENT_NOT_REGISTERED: u32 = 25;
@@ -399,6 +397,57 @@ pub type ecs_flags32_t = u32;
 pub type ecs_flags64_t = u64;
 #[doc = "Keep unsigned integers out of the codebase as they do more harm than good"]
 pub type ecs_size_t = i32;
+#[doc = "Ids are the things that can be added to an entity.\n An id can be an entity or pair, and can have optional id flags."]
+pub type ecs_id_t = u64;
+#[doc = "An entity identifier.\n Entity ids consist out of a number unique to the entity in the lower 32 bits,\n and a counter used to track entity liveliness in the upper 32 bits. When an\n id is recycled, its generation count is increased. This causes recycled ids\n to be very large (>4 billion), which is normal."]
+pub type ecs_entity_t = ecs_id_t;
+#[doc = "A type is a list of (component) ids.\n Types are used to communicate the \"type\" of an entity. In most type systems a\n typeof operation returns a single type. In ECS however, an entity can have\n multiple components, which is why an ECS type consists of a vector of ids.\n\n The component ids of a type are sorted, which ensures that it doesn't matter\n in which order components are added to an entity. For example, if adding\n Position then Velocity would result in type \\[Position, Velocity\\], first\n adding Velocity then Position would also result in type \\[Position, Velocity\\].\n\n Entities are grouped together by type in the ECS storage in tables. The\n storage has exactly one table per unique type that is created by the\n application that stores all entities and components for that type. This is\n also referred to as an archetype."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_type_t {
+    #[doc = "< Array with ids."]
+    pub array: *mut ecs_id_t,
+    #[doc = "< Number of elements in array."]
+    pub count: i32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_world_t {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_stage_t {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_table_t {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_component_record_t {
+    _unused: [u8; 0],
+}
+#[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an ecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an ecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
+pub type ecs_poly_t = ::core::ffi::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_mixins_t {
+    _unused: [u8; 0],
+}
+#[doc = "Header for ecs_poly_t objects."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_header_t {
+    #[doc = "< Magic number indicating which type of flecs object"]
+    pub type_: i32,
+    #[doc = "< Refcount, to enable RAII handles"]
+    pub refcount: i32,
+    #[doc = "< Table with offsets to (optional) mixins"]
+    pub mixins: *mut ecs_mixins_t,
+}
 #[doc = "A component column."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -490,6 +539,15 @@ unsafe extern "C-unwind" {
     );
 }
 unsafe extern "C-unwind" {
+    pub fn ecs_vec_set_min_size_w_type_info(
+        allocator: *mut ecs_allocator_t,
+        vec: *mut ecs_vec_t,
+        size: ecs_size_t,
+        elem_count: i32,
+        ti: *const ecs_type_info_t,
+    );
+}
+unsafe extern "C-unwind" {
     pub fn ecs_vec_set_min_count(
         allocator: *mut ecs_allocator_t,
         vec: *mut ecs_vec_t,
@@ -511,6 +569,24 @@ unsafe extern "C-unwind" {
         vec: *mut ecs_vec_t,
         size: ecs_size_t,
         elem_count: i32,
+    );
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_vec_set_count_w_type_info(
+        allocator: *mut ecs_allocator_t,
+        vec: *mut ecs_vec_t,
+        size: ecs_size_t,
+        elem_count: i32,
+        ti: *const ecs_type_info_t,
+    );
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_vec_set_min_count_w_type_info(
+        allocator: *mut ecs_allocator_t,
+        vec: *mut ecs_vec_t,
+        size: ecs_size_t,
+        elem_count: i32,
+        ti: *const ecs_type_info_t,
     );
 }
 unsafe extern "C-unwind" {
@@ -1574,57 +1650,6 @@ unsafe extern "C-unwind" {
     #[doc = "Are module path functions available?"]
     pub fn ecs_os_has_modules() -> bool;
 }
-#[doc = "Ids are the things that can be added to an entity.\n An id can be an entity or pair, and can have optional id flags."]
-pub type ecs_id_t = u64;
-#[doc = "An entity identifier.\n Entity ids consist out of a number unique to the entity in the lower 32 bits,\n and a counter used to track entity liveliness in the upper 32 bits. When an\n id is recycled, its generation count is increased. This causes recycled ids\n to be very large (>4 billion), which is normal."]
-pub type ecs_entity_t = ecs_id_t;
-#[doc = "A type is a list of (component) ids.\n Types are used to communicate the \"type\" of an entity. In most type systems a\n typeof operation returns a single type. In ECS however, an entity can have\n multiple components, which is why an ECS type consists of a vector of ids.\n\n The component ids of a type are sorted, which ensures that it doesn't matter\n in which order components are added to an entity. For example, if adding\n Position then Velocity would result in type \\[Position, Velocity\\], first\n adding Velocity then Position would also result in type \\[Position, Velocity\\].\n\n Entities are grouped together by type in the ECS storage in tables. The\n storage has exactly one table per unique type that is created by the\n application that stores all entities and components for that type. This is\n also referred to as an archetype."]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_type_t {
-    #[doc = "< Array with ids."]
-    pub array: *mut ecs_id_t,
-    #[doc = "< Number of elements in array."]
-    pub count: i32,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_world_t {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_stage_t {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_table_t {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_component_record_t {
-    _unused: [u8; 0],
-}
-#[doc = "A poly object.\n A poly (short for polymorph) object is an object that has a variable list of\n capabilities, determined by a mixin table. This is the current list of types\n in the flecs API that can be used as an ecs_poly_t:\n\n - ecs_world_t\n - ecs_stage_t\n - ecs_query_t\n\n Functions that accept an ecs_poly_t argument can accept objects of these\n types. If the object does not have the requested mixin the API will throw an\n assert.\n\n The poly/mixin framework enables partially overlapping features to be\n implemented once, and enables objects of different types to interact with\n each other depending on what mixins they have, rather than their type\n (in some ways it's like a mini-ECS). Additionally, each poly object has a\n header that enables the API to do sanity checking on the input arguments."]
-pub type ecs_poly_t = ::core::ffi::c_void;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_mixins_t {
-    _unused: [u8; 0],
-}
-#[doc = "Header for ecs_poly_t objects."]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_header_t {
-    #[doc = "< Magic number indicating which type of flecs object"]
-    pub type_: i32,
-    #[doc = "< Refcount, to enable RAII handles"]
-    pub refcount: i32,
-    #[doc = "< Table with offsets to (optional) mixins"]
-    pub mixins: *mut ecs_mixins_t,
-}
 #[doc = "Function prototype for runnables (systems, observers).\n The run callback overrides the default behavior for iterating through the\n results of a runnable object.\n\n The default runnable iterates the iterator, and calls an iter_action (see\n below) for each returned result.\n\n @param it The iterator to be iterated by the runnable."]
 pub type ecs_run_action_t =
     ::core::option::Option<unsafe extern "C-unwind" fn(it: *mut ecs_iter_t)>;
@@ -1945,6 +1970,8 @@ pub struct ecs_type_hooks_t {
     pub on_set: ecs_iter_action_t,
     #[doc = "Callback that is invoked when an instance of the component is removed.\n This callback is invoked after the triggers are invoked, and before the\n destructor is invoked."]
     pub on_remove: ecs_iter_action_t,
+    #[doc = "Callback that is invoked with the existing and new value before the\n value is assigned. Invoked after on_add and before on_set. Registering\n an on_replace hook prevents using operations that return a mutable\n pointer to the component like get_mut, ensure and emplace."]
+    pub on_replace: ecs_iter_action_t,
     #[doc = "< User defined context"]
     pub ctx: *mut ::core::ffi::c_void,
     #[doc = "< Language binding context"]
@@ -2393,19 +2420,6 @@ unsafe extern "C-unwind" {
         value_size: ecs_size_t,
     ) -> *mut ::core::ffi::c_void;
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_safety_info_t {
-    pub cr: *mut ecs_component_record_t,
-    pub table: *mut ecs_table_t,
-    pub column_index: i16,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_get_ptr_t {
-    pub component_ptr: *mut ::core::ffi::c_void,
-    pub si: ecs_safety_info_t,
-}
 #[doc = "Record for entity index."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2423,8 +2437,8 @@ pub struct ecs_record_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_table_cache_hdr_t {
-    #[doc = "< Table cache of element. Of type ecs_component_record_t* for component index elements."]
-    pub cache: *mut ecs_table_cache_t,
+    #[doc = "< Component record for component."]
+    pub cr: *mut ecs_component_record_t,
     #[doc = "< Table associated with element."]
     pub table: *mut ecs_table_t,
     #[doc = "< Next/previous elements for id in table cache."]
@@ -2456,6 +2470,21 @@ pub struct ecs_table_diff_t {
     pub added_flags: ecs_flags32_t,
     pub removed_flags: ecs_flags32_t,
 }
+#[doc = "safety information of where the ptr from `get` functions originates from.\n when component record is null, that means it comes from a table.\n when table is null, that means it comes from a sparse storage.\n this is used for column locking / component record locking."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_safety_info_t {
+    pub cr: *mut ecs_component_record_t,
+    pub table: *mut ecs_table_t,
+    pub column_index: i16,
+}
+#[doc = "a wrapper around a void* which represents a component pointer.\n When FLECS_SAFETY_LOCKS is defined, then this also provides additional safety information about the pointer."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_get_ptr_t {
+    pub component_ptr: *mut ::core::ffi::c_void,
+    pub si: ecs_safety_info_t,
+}
 unsafe extern "C-unwind" {
     #[doc = "Find record for entity.\n An entity record contains the table and row for the entity.\n\n To use ecs_record_t::row as the record in the table, use:\n   ECS_RECORD_TO_ROW(r->row)\n\n This removes potential entity bitflags from the row field.\n\n @param world The world.\n @param entity The entity.\n @return The record, NULL if the entity does not exist."]
     pub fn ecs_record_find(world: *const ecs_world_t, entity: ecs_entity_t) -> *mut ecs_record_t;
@@ -2479,6 +2508,23 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "End read access to entity.\n This operation ends read access, and must be called after ecs_read_begin().\n\n @param record Record to the entity."]
     pub fn ecs_read_end(record: *const ecs_record_t);
+}
+unsafe extern "C-unwind" {
+    #[doc = "Get an immutable pointer to a component by providing the entity record.\n This operation obtains a const pointer to the requested component. The\n operation accepts the component entity id.\n\n This operation can return inherited components reachable through an `IsA`\n relationship.\n\n @param world The world.\n @param entity The entity.\n @param r The entity record.\n @param component The component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see ecs_get_id()\n @see ecs_get_mut_id()\n @see flecs_get_mut_id_from_record()"]
+    pub fn flecs_get_id_from_record(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        r: *const ecs_record_t,
+        component: ecs_id_t,
+    ) -> ecs_get_ptr_t;
+}
+unsafe extern "C-unwind" {
+    #[doc = "Get a mutable pointer to a component, providing the entity record.\n This operation obtains a mutable pointer to the requested component. The\n operation accepts the component entity id.\n\n Unlike flecs_get_id_from_record(), this operation does not return inherited components.\n This is to prevent errors where an application accidentally resolves an\n inherited component shared with many entities and modifies it, while thinking\n it is modifying an owned component.\n\n @param world The world.\n @param r The entity record.\n @param component The component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see flecs_get_id_from_record()\n @see ecs_get_mut_id()\n @see ecs_get_id()"]
+    pub fn flecs_get_mut_id_from_record(
+        world: *const ecs_world_t,
+        r: *const ecs_record_t,
+        component: ecs_id_t,
+    ) -> ecs_get_ptr_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Get component from entity record.\n This operation returns a pointer to a component for the entity\n associated with the provided record. For safe access to the component, obtain\n the record with ecs_read_begin() or ecs_write_begin().\n\n Obtaining a component from a record is faster than obtaining it from the\n entity handle, as it reduces the number of lookups required.\n\n @param world The world.\n @param record Record to the entity.\n @param id The (component) id.\n @return Pointer to component, or NULL if entity does not have the component.\n\n @see ecs_record_ensure_id()"]
@@ -2570,6 +2616,78 @@ unsafe extern "C-unwind" {
         id_ptr: *mut ecs_id_t,
         diff: *mut ecs_table_diff_t,
     ) -> *mut ecs_table_t;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_read_begin(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_read_end(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_write_begin(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_write_end(idr: *mut ecs_component_record_t) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_read_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_read_end(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_write_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_write_end(table: *mut ecs_table_t, column_index: i16) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_read_begin_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_read_end_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_write_begin_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_sparse_id_record_lock_write_end_multithreaded(
+        idr: *mut ecs_component_record_t,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_read_begin_multithreaded(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_read_end_multithreaded(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_write_begin_multithreaded(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
+}
+unsafe extern "C-unwind" {
+    pub fn flecs_table_column_lock_write_end_multithreaded(
+        table: *mut ecs_table_t,
+        column_index: i16,
+        stage_id: i32,
+    ) -> bool;
 }
 #[doc = "Utility to hold a value of a dynamic type."]
 #[repr(C)]
@@ -3244,6 +3362,10 @@ unsafe extern "C" {
     pub static EcsPanic: ecs_entity_t;
 }
 unsafe extern "C" {
+    #[doc = "Mark component as singleton. Singleton components may only be added to\n themselves."]
+    pub static EcsSingleton: ecs_entity_t;
+}
+unsafe extern "C" {
     #[doc = "Mark component as sparse"]
     pub static EcsSparse: ecs_entity_t;
 }
@@ -3591,8 +3713,8 @@ unsafe extern "C-unwind" {
     pub fn ecs_new_low_id(world: *mut ecs_world_t) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Create new entity with (component) id.\n This operation creates a new entity with an optional (component) id. When 0\n is passed to the id parameter, no component is added to the new entity.\n\n @param world The world.\n @param id The component id to initialize the new entity with.\n @return The new entity."]
-    pub fn ecs_new_w_id(world: *mut ecs_world_t, id: ecs_id_t) -> ecs_entity_t;
+    #[doc = "Create new entity with (component) id.\n This operation creates a new entity with an optional (component) id. When 0\n is passed to the id parameter, no component is added to the new entity.\n\n @param world The world.\n @param component The component to create the new entity with.\n @return The new entity."]
+    pub fn ecs_new_w_id(world: *mut ecs_world_t, component: ecs_id_t) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Create new entity in table.\n This operation creates a new entity in the specified table.\n\n @param world The world.\n @param table The table to which to add the new entity.\n @return The new entity."]
@@ -3611,10 +3733,10 @@ unsafe extern "C-unwind" {
     ) -> *const ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Create N new entities.\n This operation is the same as ecs_new_w_id(), but creates N entities\n instead of one.\n\n @param world The world.\n @param id The component id to create the entities with.\n @param count The number of entities to create.\n @return The first entity id of the newly created entities."]
+    #[doc = "Create N new entities.\n This operation is the same as ecs_new_w_id(), but creates N entities\n instead of one.\n\n @param world The world.\n @param component The component to create the entities with.\n @param count The number of entities to create.\n @return The first entity id of the newly created entities."]
     pub fn ecs_bulk_new_w_id(
         world: *mut ecs_world_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
         count: i32,
     ) -> *const ecs_entity_t;
 }
@@ -3632,8 +3754,8 @@ unsafe extern "C-unwind" {
     pub fn ecs_delete(world: *mut ecs_world_t, entity: ecs_entity_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Delete all entities with the specified id.\n This will delete all entities (tables) that have the specified id. The id\n may be a wildcard and/or a pair.\n\n @param world The world.\n @param id The id."]
-    pub fn ecs_delete_with(world: *mut ecs_world_t, id: ecs_id_t);
+    #[doc = "Delete all entities with the specified component.\n This will delete all entities (tables) that have the specified id. The\n component may be a wildcard and/or a pair.\n\n @param world The world.\n @param component The component."]
+    pub fn ecs_delete_with(world: *mut ecs_world_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "Set child order for parent with OrderedChildren.\n If the parent has the OrderedChildren trait, the order of the children\n will be updated to the order in the specified children array. The operation\n will fail if the parent does not have the OrderedChildren trait.\n\n This operation always takes place immediately, and is not deferred. When the\n operation is called from a multithreaded system it will fail.\n\n The reason for not deferring this operation is that by the time the deferred\n command would be executed, the children of the parent could have been changed\n which would cause the operation to fail.\n\n @param world The world.\n @param parent The parent.\n @param children An array with children.\n @param child_count The number of children in the provided array."]
@@ -3652,31 +3774,31 @@ unsafe extern "C-unwind" {
     ) -> ecs_entities_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Add a (component) id to an entity.\n This operation adds a single (component) id to an entity. If the entity\n already has the id, this operation will have no side effects.\n\n @param world The world.\n @param entity The entity.\n @param id The id to add."]
-    pub fn ecs_add_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
+    #[doc = "Add a (component) id to an entity.\n This operation adds a single (component) id to an entity. If the entity\n already has the id, this operation will have no side effects.\n\n @param world The world.\n @param entity The entity.\n @param component The component id to add."]
+    pub fn ecs_add_id(world: *mut ecs_world_t, entity: ecs_entity_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Remove a (component) id from an entity.\n This operation removes a single (component) id to an entity. If the entity\n does not have the id, this operation will have no side effects.\n\n @param world The world.\n @param entity The entity.\n @param id The id to remove."]
-    pub fn ecs_remove_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
+    #[doc = "Remove a component from an entity.\n This operation removes a single component from an entity. If the entity\n does not have the component, this operation will have no side effects.\n\n @param world The world.\n @param entity The entity.\n @param component The component to remove."]
+    pub fn ecs_remove_id(world: *mut ecs_world_t, entity: ecs_entity_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Add auto override for (component) id.\n An auto override is a component that is automatically added to an entity when\n it is instantiated from a prefab. Auto overrides are added to the entity that\n is inherited from (usually a prefab). For example:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_auto_override(world, prefab, Position);\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n An auto override is equivalent to a manual override:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // false\n ecs_add(world, inst, Position); // manual override\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n This operation is equivalent to manually adding the id with the AUTO_OVERRIDE\n bit applied:\n\n @code\n ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | id);\n @endcode\n\n When a component is overridden and inherited from a prefab, the value from\n the prefab component is copied to the instance. When the component is not\n inherited from a prefab, it is added to the instance as if using ecs_add_id().\n\n Overriding is the default behavior on prefab instantiation. Auto overriding\n is only useful for components with the `(OnInstantiate, Inherit)` trait.\n When a component has the `(OnInstantiate, DontInherit)` trait and is overridden\n the component is added, but the value from the prefab will not be copied.\n\n @param world The world.\n @param entity The entity.\n @param id The (component) id to auto override."]
-    pub fn ecs_auto_override_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
+    #[doc = "Add auto override for component.\n An auto override is a component that is automatically added to an entity when\n it is instantiated from a prefab. Auto overrides are added to the entity that\n is inherited from (usually a prefab). For example:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_auto_override(world, prefab, Position);\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n An auto override is equivalent to a manual override:\n\n @code\n ecs_entity_t prefab = ecs_insert(world,\n   ecs_value(Position, {10, 20}),\n   ecs_value(Mass, {100}));\n\n ecs_entity_t inst = ecs_new_w_pair(world, EcsIsA, prefab);\n assert(ecs_owns(world, inst, Position)); // false\n ecs_add(world, inst, Position); // manual override\n assert(ecs_owns(world, inst, Position)); // true\n assert(ecs_owns(world, inst, Mass)); // false\n @endcode\n\n This operation is equivalent to manually adding the id with the AUTO_OVERRIDE\n bit applied:\n\n @code\n ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | id);\n @endcode\n\n When a component is overridden and inherited from a prefab, the value from\n the prefab component is copied to the instance. When the component is not\n inherited from a prefab, it is added to the instance as if using ecs_add_id().\n\n Overriding is the default behavior on prefab instantiation. Auto overriding\n is only useful for components with the `(OnInstantiate, Inherit)` trait.\n When a component has the `(OnInstantiate, DontInherit)` trait and is overridden\n the component is added, but the value from the prefab will not be copied.\n\n @param world The world.\n @param entity The entity.\n @param component The component to auto override."]
+    pub fn ecs_auto_override_id(world: *mut ecs_world_t, entity: ecs_entity_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "Clear all components.\n This operation will remove all components from an entity.\n\n @param world The world.\n @param entity The entity."]
     pub fn ecs_clear(world: *mut ecs_world_t, entity: ecs_entity_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Remove all instances of the specified (component) id.\n This will remove the specified id from all entities (tables). The id may be\n a wildcard and/or a pair.\n\n @param world The world.\n @param id The id."]
-    pub fn ecs_remove_all(world: *mut ecs_world_t, id: ecs_id_t);
+    #[doc = "Remove all instances of the specified component.\n This will remove the specified id from all entities (tables). The id may be\n a wildcard and/or a pair.\n\n @param world The world.\n @param component The component."]
+    pub fn ecs_remove_all(world: *mut ecs_world_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Set current with id.\n New entities are automatically created with the specified id.\n\n @param world The world.\n @param id The id.\n @return The previous id."]
-    pub fn ecs_set_with(world: *mut ecs_world_t, id: ecs_id_t) -> ecs_entity_t;
+    #[doc = "Create new entities with specified component.\n Entities created with ecs_entity_init() will be created with the specified\n component. This does not apply to entities created with ecs_new().\n\n Only one component can be specified at a time. If this operation is called\n while a component is already configured, the new component will override the\n old component.\n\n @param world The world.\n @param component The component.\n @return The previously set component.\n @see ecs_entity_init()\n @see ecs_set_with()"]
+    pub fn ecs_set_with(world: *mut ecs_world_t, component: ecs_id_t) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get current with id.\n Get the id set with ecs_set_with().\n\n @param world The world.\n @return The last id provided to ecs_set_with()."]
+    #[doc = "Get component set with ecs_set_with().\n Get the component set with ecs_set_with().\n\n @param world The world.\n @return The last component provided to ecs_set_with().\n @see ecs_set_with()"]
     pub fn ecs_get_with(world: *const ecs_world_t) -> ecs_id_t;
 }
 unsafe extern "C-unwind" {
@@ -3684,98 +3806,61 @@ unsafe extern "C-unwind" {
     pub fn ecs_enable(world: *mut ecs_world_t, entity: ecs_entity_t, enabled: bool);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Enable or disable component.\n Enabling or disabling a component does not add or remove a component from an\n entity, but prevents it from being matched with queries. This operation can\n be useful when a component must be temporarily disabled without destroying\n its value. It is also a more performant operation for when an application\n needs to add/remove components at high frequency, as enabling/disabling is\n cheaper than a regular add or remove.\n\n @param world The world.\n @param entity The entity.\n @param id The component.\n @param enable True to enable the component, false to disable."]
-    pub fn ecs_enable_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t, enable: bool);
+    #[doc = "Enable or disable component.\n Enabling or disabling a component does not add or remove a component from an\n entity, but prevents it from being matched with queries. This operation can\n be useful when a component must be temporarily disabled without destroying\n its value. It is also a more performant operation for when an application\n needs to add/remove components at high frequency, as enabling/disabling is\n cheaper than a regular add or remove.\n\n @param world The world.\n @param entity The entity.\n @param component The component to enable/disable.\n @param enable True to enable the component, false to disable."]
+    pub fn ecs_enable_id(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        component: ecs_id_t,
+        enable: bool,
+    );
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test if component is enabled.\n Test whether a component is currently enabled or disabled. This operation\n will return true when the entity has the component and if it has not been\n disabled by ecs_enable_component().\n\n @param world The world.\n @param entity The entity.\n @param id The component.\n @return True if the component is enabled, otherwise false."]
-    pub fn ecs_is_enabled_id(world: *const ecs_world_t, entity: ecs_entity_t, id: ecs_id_t)
-        -> bool;
+    #[doc = "Test if component is enabled.\n Test whether a component is currently enabled or disabled. This operation\n will return true when the entity has the component and if it has not been\n disabled by ecs_enable_component().\n\n @param world The world.\n @param entity The entity.\n @param component The component.\n @return True if the component is enabled, otherwise false."]
+    pub fn ecs_is_enabled_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        component: ecs_id_t,
+    ) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get an immutable pointer to a component.\n This operation obtains a const pointer to the requested component. The\n operation accepts the component entity id.\n\n This operation can return inherited components reachable through an `IsA`\n relationship.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see ecs_get_mut_id()"]
+    #[doc = "Get an immutable pointer to a component.\n This operation obtains a const pointer to the requested component. The\n operation accepts the component entity id.\n\n This operation can return inherited components reachable through an `IsA`\n relationship.\n\n @param world The world.\n @param entity The entity.\n @param component The component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see ecs_get_mut_id()\n @see flecs_get_id_from_record()\n @see flecs_get_mut_id_from_record()"]
     pub fn ecs_get_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> *const ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_get_id_w_info(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        id: ecs_id_t,
-    ) -> ecs_get_ptr_t;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_get_id_from_record(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        r: *const ecs_record_t,
-        id: ecs_id_t,
-    ) -> ecs_get_ptr_t;
-}
-unsafe extern "C-unwind" {
-    #[doc = "Get a mutable pointer to a component.\n This operation obtains a mutable pointer to the requested component. The\n operation accepts the component entity id.\n\n Unlike ecs_get_id(), this operation does not return inherited components.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to get.\n @return The component pointer, NULL if the entity does not have the component."]
+    #[doc = "Get a mutable pointer to a component.\n This operation obtains a mutable pointer to the requested component. The\n operation accepts the component entity id.\n\n Unlike ecs_get_id(), this operation does not return inherited components.\n This is to prevent errors where an application accidentally resolves an\n inherited component shared with many entities and modifies it, while thinking\n it is modifying an owned component.\n\n @param world The world.\n @param entity The entity.\n @param component The component to get.\n @return The component pointer, NULL if the entity does not have the component.\n\n @see ecs_get_id()\n @see flecs_get_id_from_record()\n @see flecs_get_mut_id_from_record()"]
     pub fn ecs_get_mut_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_get_mut_id_w_info(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        id: ecs_id_t,
-    ) -> ecs_get_ptr_t;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_get_mut_id_from_record(
-        world: *const ecs_world_t,
-        entity: ecs_entity_t,
-        r: *const ecs_record_t,
-        id: ecs_id_t,
-    ) -> ecs_get_ptr_t;
-}
-unsafe extern "C-unwind" {
-    #[doc = "Get a mutable pointer to a component.\n This operation returns a mutable pointer to a component. If the component did\n not yet exist, it will be added.\n\n If ensure is called when the world is in deferred/readonly mode, the\n function will:\n - return a pointer to a temp storage if the component does not yet exist, or\n - return a pointer to the existing component if it exists\n\n @param world The world.\n @param entity The entity.\n @param id The entity id of the component to obtain.\n @return The component pointer.\n\n @see ecs_ensure_modified_id()\n @see ecs_emplace_id()"]
+    #[doc = "Ensure entity has component, return pointer.\n This operation returns a mutable pointer to a component. If the entity did\n not yet have the component, it will be added.\n\n If ensure is called when the world is in deferred/readonly mode, the\n function will:\n - return a pointer to a temp storage if the component does not yet exist, or\n - return a pointer to the existing component if it exists\n\n @param world The world.\n @param entity The entity.\n @param component The component to get/add.\n @return The component pointer.\n\n @see ecs_emplace_id()"]
     pub fn ecs_ensure_id(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
+        size: usize,
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Combines ensure + modified in single operation.\n This operation is a more efficient alternative to calling ecs_ensure_id() and\n ecs_modified_id() separately. This operation is only valid when the world is in\n deferred mode, which ensures that the Modified event is not emitted before\n the modification takes place.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to obtain.\n @return The component pointer."]
-    pub fn ecs_ensure_modified_id(
-        world: *mut ecs_world_t,
-        entity: ecs_entity_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-unsafe extern "C-unwind" {
-    #[doc = "Combines get_mut + modified in single operation.\n This operation is a more efficient alternative to calling ecs_get_mut_id() and\n ecs_modified_id() separately. This operation is only valid when the world is in\n deferred mode, which ensures that the Modified event is not emitted before\n the modification takes place.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to obtain.\n @return The component pointer."]
-    pub fn ecs_get_mut_modified_id(
-        world: *mut ecs_world_t,
-        entity: ecs_entity_t,
-        id: ecs_id_t,
-    ) -> *mut ::core::ffi::c_void;
-}
-unsafe extern "C-unwind" {
-    #[doc = "Create a component ref.\n A ref is a handle to an entity + component which caches a small amount of\n data to reduce overhead of repeatedly accessing the component. Use\n ecs_ref_get() to get the component data.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component.\n @return The reference."]
+    #[doc = "Create a component ref.\n A ref is a handle to an entity + component which caches a small amount of\n data to reduce overhead of repeatedly accessing the component. Use\n ecs_ref_get() to get the component data.\n\n @param world The world.\n @param entity The entity.\n @param component The component to create a ref for.\n @return The reference."]
     pub fn ecs_ref_init_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> ecs_ref_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get component from ref.\n Get component pointer from ref. The ref must be created with ecs_ref_init().\n\n @param world The world.\n @param ref The ref.\n @param id The component id.\n @return The component pointer, NULL if the entity does not have the component."]
+    #[doc = "Get component from ref.\n Get component pointer from ref. The ref must be created with ecs_ref_init().\n The specified component must match the component with which the ref was\n created.\n\n @param world The world.\n @param ref The ref.\n @param component The component to get.\n @return The component pointer, NULL if the entity does not have the component."]
     pub fn ecs_ref_get_id(
         world: *const ecs_world_t,
         ref_: *mut ecs_ref_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
@@ -3783,34 +3868,35 @@ unsafe extern "C-unwind" {
     pub fn ecs_ref_update(world: *const ecs_world_t, ref_: *mut ecs_ref_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Emplace a component.\n Emplace is similar to ecs_ensure_id() except that the component constructor\n is not invoked for the returned pointer, allowing the component to be\n constructed directly in the storage.\n\n When the `is_new` parameter is not provided, the operation will assert when the\n component already exists. When the `is_new` parameter is provided, it will\n indicate whether the returned storage has been constructed.\n\n When `is_new` indicates that the storage has not yet been constructed, it must\n be constructed by the code invoking this operation. Not constructing the\n component will result in undefined behavior.\n\n @param world The world.\n @param entity The entity.\n @param id The component to obtain.\n @param is_new Whether this is an existing or new component.\n @return The (uninitialized) component pointer."]
+    #[doc = "Emplace a component.\n Emplace is similar to ecs_ensure_id() except that the component constructor\n is not invoked for the returned pointer, allowing the component to be\n constructed directly in the storage.\n\n When the `is_new` parameter is not provided, the operation will assert when the\n component already exists. When the `is_new` parameter is provided, it will\n indicate whether the returned storage has been constructed.\n\n When `is_new` indicates that the storage has not yet been constructed, it must\n be constructed by the code invoking this operation. Not constructing the\n component will result in undefined behavior.\n\n @param world The world.\n @param entity The entity.\n @param component The component to get/add.\n @param size The component size.\n @param is_new Whether this is an existing or new component.\n @return The (uninitialized) component pointer."]
     pub fn ecs_emplace_id(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
+        size: usize,
         is_new: *mut bool,
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Signal that a component has been modified.\n This operation is usually used after modifying a component value obtained by\n ecs_ensure_id(). The operation will mark the component as dirty, and invoke\n OnSet observers and hooks.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component that was modified."]
-    pub fn ecs_modified_id(world: *mut ecs_world_t, entity: ecs_entity_t, id: ecs_id_t);
+    #[doc = "Signal that a component has been modified.\n This operation is usually used after modifying a component value obtained by\n ecs_ensure_id(). The operation will mark the component as dirty, and invoke\n OnSet observers and hooks.\n\n @param world The world.\n @param entity The entity.\n @param component The component that was modified."]
+    pub fn ecs_modified_id(world: *mut ecs_world_t, entity: ecs_entity_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Set the value of a component.\n This operation allows an application to set the value of a component. The\n operation is equivalent to calling ecs_ensure_id() followed by\n ecs_modified_id(). The operation will not modify the value of the passed in\n component. If the component has a copy hook registered, it will be used to\n copy in the component.\n\n If the provided entity is 0, a new entity will be created.\n\n @param world The world.\n @param entity The entity.\n @param id The id of the component to set.\n @param size The size of the pointed-to value.\n @param ptr The pointer to the value."]
+    #[doc = "Set the value of a component.\n This operation allows an application to set the value of a component. The\n operation is equivalent to calling ecs_ensure_id() followed by\n ecs_modified_id(). The operation will not modify the value of the passed in\n component. If the component has a copy hook registered, it will be used to\n copy in the component.\n\n If the provided entity is 0, a new entity will be created.\n\n @param world The world.\n @param entity The entity.\n @param component The component to set.\n @param size The size of the pointed-to value.\n @param ptr The pointer to the value."]
     pub fn ecs_set_id(
         world: *mut ecs_world_t,
         entity: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
         size: usize,
         ptr: *const ::core::ffi::c_void,
     );
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test whether an entity is valid.\n Entities that are valid can be used with API functions. Using invalid\n entities with API operations will cause the function to panic.\n\n An entity is valid if it is not 0 and if it is alive.\n\n ecs_is_valid() will return true for ids that don't exist (alive or not alive). This\n allows for using ids that have never been created by ecs_new_w() or similar. In\n this the function differs from ecs_is_alive(), which will return false for\n entities that do not yet exist.\n\n The operation will return false for an id that exists and is not alive, as\n using this id with an API operation would cause it to assert.\n\n @param world The world.\n @param e The entity.\n @return True if the entity is valid, false if the entity is not valid."]
+    #[doc = "Test whether an entity is valid.\n This operation tests whether the entity id:\n - is not 0\n - has a valid bit pattern\n - is alive (see ecs_is_alive())\n\n If this operation returns true, it is safe to use the entity with other\n other operations.\n\n This operation should only be used if an application cannot be sure that an\n entity is initialized with a valid value. In all other cases where an entity\n was initialized with a valid value, but the application wants to check if the\n entity is (still) alive, use ecs_is_alive.\n\n @param world The world.\n @param e The entity.\n @return True if the entity is valid, false if the entity is not valid.\n @see ecs_is_alive()"]
     pub fn ecs_is_valid(world: *const ecs_world_t, e: ecs_entity_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test whether an entity is alive.\n Entities are alive after they are created, and become not alive when they are\n deleted. Operations that return alive ids are (amongst others) ecs_new(),\n ecs_new_low_id() and ecs_entity_init(). Ids can be made alive with the ecs_make_alive()\n function.\n\n After an id is deleted it can be recycled. Recycled ids are different from\n the original id in that they have a different generation count. This makes it\n possible for the API to distinguish between the two. An example:\n\n @code\n ecs_entity_t e1 = ecs_new(world);\n ecs_is_alive(world, e1);             // true\n ecs_delete(world, e1);\n ecs_is_alive(world, e1);             // false\n\n ecs_entity_t e2 = ecs_new(world);    // recycles e1\n ecs_is_alive(world, e2);             // true\n ecs_is_alive(world, e1);             // false\n @endcode\n\n @param world The world.\n @param e The entity.\n @return True if the entity is alive, false if the entity is not alive."]
+    #[doc = "Test whether an entity is alive.\n Entities are alive after they are created, and become not alive when they are\n deleted. Operations that return alive ids are (amongst others) ecs_new(),\n ecs_new_low_id() and ecs_entity_init(). Ids can be made alive with the\n ecs_make_alive() * function.\n\n After an id is deleted it can be recycled. Recycled ids are different from\n the original id in that they have a different generation count. This makes it\n possible for the API to distinguish between the two. An example:\n\n @code\n ecs_entity_t e1 = ecs_new(world);\n ecs_is_alive(world, e1);             // true\n ecs_delete(world, e1);\n ecs_is_alive(world, e1);             // false\n\n ecs_entity_t e2 = ecs_new(world);    // recycles e1\n ecs_is_alive(world, e2);             // true\n ecs_is_alive(world, e1);             // false\n @endcode\n\n Other than ecs_is_valid(), this operation will panic if the passed in entity\n id is 0 or has an invalid bit pattern.\n\n @param world The world.\n @param e The entity.\n @return True if the entity is alive, false if the entity is not alive.\n @see ecs_is_valid()"]
     pub fn ecs_is_alive(world: *const ecs_world_t, e: ecs_entity_t) -> bool;
 }
 unsafe extern "C-unwind" {
@@ -3826,8 +3912,8 @@ unsafe extern "C-unwind" {
     pub fn ecs_make_alive(world: *mut ecs_world_t, entity: ecs_entity_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Same as ecs_make_alive(), but for (component) ids.\n An id can be an entity or pair, and can contain id flags. This operation\n ensures that the entity (or entities, for a pair) are alive.\n\n When this operation is successful it guarantees that the provided id can be\n used in operations that accept an id.\n\n Since entities in a pair do not encode their generation ids, this operation\n will not fail when an entity with non-zero generation count already exists in\n the world.\n\n This is different from ecs_make_alive(), which will fail if attempted with an id\n that has generation 0 and an entity with a non-zero generation is currently\n alive.\n\n @param world The world.\n @param id The id to make alive."]
-    pub fn ecs_make_alive_id(world: *mut ecs_world_t, id: ecs_id_t);
+    #[doc = "Same as ecs_make_alive(), but for components.\n An id can be an entity or pair, and can contain id flags. This operation\n ensures that the entity (or entities, for a pair) are alive.\n\n When this operation is successful it guarantees that the provided id can be\n used in operations that accept an id.\n\n Since entities in a pair do not encode their generation ids, this operation\n will not fail when an entity with non-zero generation count already exists in\n the world.\n\n This is different from ecs_make_alive(), which will fail if attempted with an id\n that has generation 0 and an entity with a non-zero generation is currently\n alive.\n\n @param world The world.\n @param component The component to make alive."]
+    pub fn ecs_make_alive_id(world: *mut ecs_world_t, component: ecs_id_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "Test whether an entity exists.\n Similar as ecs_is_alive(), but ignores entity generation count.\n\n @param world The world.\n @param entity The entity.\n @return True if the entity exists, false if the entity does not exist."]
@@ -3867,12 +3953,17 @@ unsafe extern "C-unwind" {
     ) -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test if an entity has an id.\n This operation returns true if the entity has or inherits the specified id.\n\n @param world The world.\n @param entity The entity.\n @param id The id to test for.\n @return True if the entity has the id, false if not.\n\n @see ecs_owns_id()"]
-    pub fn ecs_has_id(world: *const ecs_world_t, entity: ecs_entity_t, id: ecs_id_t) -> bool;
+    #[doc = "Test if an entity has a component.\n This operation returns true if the entity has or inherits the component.\n\n @param world The world.\n @param entity The entity.\n @param component The component to test for.\n @return True if the entity has the component, false if not.\n\n @see ecs_owns_id()"]
+    pub fn ecs_has_id(world: *const ecs_world_t, entity: ecs_entity_t, component: ecs_id_t)
+        -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test if an entity owns an id.\n This operation returns true if the entity has the specified id. The operation\n behaves the same as ecs_has_id(), except that it will return false for\n components that are inherited through an `IsA` relationship.\n\n @param world The world.\n @param entity The entity.\n @param id The id to test for.\n @return True if the entity has the id, false if not."]
-    pub fn ecs_owns_id(world: *const ecs_world_t, entity: ecs_entity_t, id: ecs_id_t) -> bool;
+    #[doc = "Test if an entity owns a component.\n This operation returns true if the entity has the component. The operation\n behaves the same as ecs_has_id(), except that it will return false for\n components that are inherited through an `IsA` relationship.\n\n @param world The world.\n @param entity The entity.\n @param component The component to test for.\n @return True if the entity has the component, false if not."]
+    pub fn ecs_owns_id(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+        component: ecs_id_t,
+    ) -> bool;
 }
 unsafe extern "C-unwind" {
     #[doc = "Get the target of a relationship.\n This will return a target (second element of a pair) of the entity for the\n specified relationship. The index allows for iterating through the targets,\n if a single entity has multiple targets for the same relationship.\n\n If the index is larger than the total number of instances the entity has for\n the relationship, the operation will return 0.\n\n @param world The world.\n @param entity The entity.\n @param rel The relationship between the entity and the target.\n @param index The index of the relationship instance.\n @return The target for the relationship at the specified index."]
@@ -3888,12 +3979,12 @@ unsafe extern "C-unwind" {
     pub fn ecs_get_parent(world: *const ecs_world_t, entity: ecs_entity_t) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get the target of a relationship for a given id.\n This operation returns the first entity that has the provided id by following\n the specified relationship. If the entity itself has the id then entity will\n be returned. If the id cannot be found on the entity or by following the\n relationship, the operation will return 0.\n\n This operation can be used to lookup, for example, which prefab is providing\n a component by specifying the `IsA` relationship:\n\n @code\n // Is Position provided by the entity or one of its base entities?\n ecs_get_target_for_id(world, entity, EcsIsA, ecs_id(Position))\n @endcode\n\n @param world The world.\n @param entity The entity.\n @param rel The relationship to follow.\n @param id The id to lookup.\n @return The entity for which the target has been found."]
+    #[doc = "Get the target of a relationship for a given component.\n This operation returns the first entity that has the provided component by\n following the relationship. If the entity itself has the component then it\n will be returned. If the component cannot be found on the entity or by\n following the relationship, the operation will return 0.\n\n This operation can be used to lookup, for example, which prefab is providing\n a component by specifying the `IsA` relationship:\n\n @code\n // Is Position provided by the entity or one of its base entities?\n ecs_get_target_for_id(world, entity, EcsIsA, ecs_id(Position))\n @endcode\n\n @param world The world.\n @param entity The entity.\n @param rel The relationship to follow.\n @param component The component to lookup.\n @return The entity for which the target has been found."]
     pub fn ecs_get_target_for_id(
         world: *const ecs_world_t,
         entity: ecs_entity_t,
         rel: ecs_entity_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
@@ -4052,78 +4143,83 @@ unsafe extern "C-unwind" {
     ) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get the type for an id.\n This function returns the type information for an id. The specified id can be\n any valid id. For the rules on how type information is determined based on\n id, see ecs_get_typeid().\n\n @param world The world.\n @param id The id.\n @return The type information of the id."]
-    pub fn ecs_get_type_info(world: *const ecs_world_t, id: ecs_id_t) -> *const ecs_type_info_t;
+    #[doc = "Get the type info for an component.\n This function returns the type information for a component. The component can\n be a regular component or pair. For the rules on how type information is\n determined based on a component id, see ecs_get_typeid().\n\n @param world The world.\n @param component The component.\n @return The type information of the id."]
+    pub fn ecs_get_type_info(
+        world: *const ecs_world_t,
+        component: ecs_id_t,
+    ) -> *const ecs_type_info_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Register hooks for component.\n Hooks allow for the execution of user code when components are constructed,\n copied, moved, destructed, added, removed or set. Hooks can be assigned as\n as long as a component has not yet been used (added to an entity).\n\n The hooks that are currently set can be accessed with ecs_get_type_info().\n\n @param world The world.\n @param id The component id for which to register the actions\n @param hooks Type that contains the component actions."]
+    #[doc = "Register hooks for component.\n Hooks allow for the execution of user code when components are constructed,\n copied, moved, destructed, added, removed or set. Hooks can be assigned as\n as long as a component has not yet been used (added to an entity).\n\n The hooks that are currently set can be accessed with ecs_get_type_info().\n\n @param world The world.\n @param component The component for which to register the actions\n @param hooks Type that contains the component actions."]
     pub fn ecs_set_hooks_id(
         world: *mut ecs_world_t,
-        id: ecs_entity_t,
+        component: ecs_entity_t,
         hooks: *const ecs_type_hooks_t,
     );
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get hooks for component.\n\n @param world The world.\n @param id The component id for which to retrieve the hooks.\n @return The hooks for the component, or NULL if not registered."]
-    pub fn ecs_get_hooks_id(world: *const ecs_world_t, id: ecs_entity_t)
-        -> *const ecs_type_hooks_t;
+    #[doc = "Get hooks for component.\n\n @param world The world.\n @param component The component for which to retrieve the hooks.\n @return The hooks for the component, or NULL if not registered."]
+    pub fn ecs_get_hooks_id(
+        world: *const ecs_world_t,
+        component: ecs_entity_t,
+    ) -> *const ecs_type_hooks_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Returns whether specified id a tag.\n This operation returns whether the specified type is a tag (a component\n without data/size).\n\n An id is a tag when:\n - it is an entity without the EcsComponent component\n - it has an EcsComponent with size member set to 0\n - it is a pair where both elements are a tag\n - it is a pair where the first element has the #EcsPairIsTag tag\n\n @param world The world.\n @param id The id.\n @return Whether the provided id is a tag."]
-    pub fn ecs_id_is_tag(world: *const ecs_world_t, id: ecs_id_t) -> bool;
+    #[doc = "Returns whether specified component is a tag.\n This operation returns whether the specified component is a tag (a component\n without data/size).\n\n An id is a tag when:\n - it is an entity without the EcsComponent component\n - it has an EcsComponent with size member set to 0\n - it is a pair where both elements are a tag\n - it is a pair where the first element has the #EcsPairIsTag tag\n\n @param world The world.\n @param component The component.\n @return Whether the provided id is a tag."]
+    pub fn ecs_id_is_tag(world: *const ecs_world_t, component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Returns whether specified id is in use.\n This operation returns whether an id is in use in the world. An id is in use\n if it has been added to one or more tables.\n\n @param world The world.\n @param id The id.\n @return Whether the id is in use."]
-    pub fn ecs_id_in_use(world: *const ecs_world_t, id: ecs_id_t) -> bool;
+    #[doc = "Returns whether specified component is in use.\n This operation returns whether a component is in use in the world. A\n component is in use if it has been added to one or more tables.\n\n @param world The world.\n @param component The component.\n @return Whether the component is in use."]
+    pub fn ecs_id_in_use(world: *const ecs_world_t, component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get the type for an id.\n This operation returns the component id for an id, if the id is associated\n with a type. For a regular component with a non-zero size (an entity with the\n EcsComponent component) the operation will return the entity itself.\n\n For an entity that does not have the EcsComponent component, or with an\n EcsComponent value with size 0, the operation will return 0.\n\n For a pair id the operation will return the type associated with the pair, by\n applying the following queries in order:\n - The first pair element is returned if it is a component\n - 0 is returned if the relationship entity has the Tag property\n - The second pair element is returned if it is a component\n - 0 is returned.\n\n @param world The world.\n @param id The id.\n @return The type id of the id."]
-    pub fn ecs_get_typeid(world: *const ecs_world_t, id: ecs_id_t) -> ecs_entity_t;
+    #[doc = "Get the type for a component.\n This operation returns the type for a component id, if the id is associated\n with a type. For a regular component with a non-zero size (an entity with the\n EcsComponent component) the operation will return the component id itself.\n\n For an entity that does not have the EcsComponent component, or with an\n EcsComponent value with size 0, the operation will return 0.\n\n For a pair id the operation will return the type associated with the pair, by\n applying the following queries in order:\n - The first pair element is returned if it is a component\n - 0 is returned if the relationship entity has the Tag property\n - The second pair element is returned if it is a component\n - 0 is returned.\n\n @param world The world.\n @param component The component.\n @return The type of the component."]
+    pub fn ecs_get_typeid(world: *const ecs_world_t, component: ecs_id_t) -> ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Utility to match an id with a pattern.\n This operation returns true if the provided pattern matches the provided\n id. The pattern may contain a wildcard (or wildcards, when a pair).\n\n @param id The id.\n @param pattern The pattern to compare with.\n @return Whether the id matches the pattern."]
-    pub fn ecs_id_match(id: ecs_id_t, pattern: ecs_id_t) -> bool;
+    #[doc = "Utility to match a component with a pattern.\n This operation returns true if the provided pattern matches the provided\n component. The pattern may contain a wildcard (or wildcards, when a pair).\n\n @param component The component.\n @param pattern The pattern to compare with.\n @return Whether the id matches the pattern."]
+    pub fn ecs_id_match(component: ecs_id_t, pattern: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Utility to check if id is a pair.\n\n @param id The id.\n @return True if id is a pair."]
-    pub fn ecs_id_is_pair(id: ecs_id_t) -> bool;
+    #[doc = "Utility to check if component is a pair.\n\n @param component The component.\n @return True if component is a pair."]
+    pub fn ecs_id_is_pair(component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Utility to check if id is a wildcard.\n\n @param id The id.\n @return True if id is a wildcard or a pair containing a wildcard."]
-    pub fn ecs_id_is_wildcard(id: ecs_id_t) -> bool;
+    #[doc = "Utility to check if component is a wildcard.\n\n @param component The component.\n @return True if component is a wildcard or a pair containing a wildcard."]
+    pub fn ecs_id_is_wildcard(component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Utility to check if id is an any wildcard.\n\n @param id The id.\n @return True if id is an any wildcard or a pair containing an any wildcard."]
-    pub fn ecs_id_is_any(id: ecs_id_t) -> bool;
+    #[doc = "Utility to check if component is an any wildcard.\n\n @param component The component.\n @return True if component is an any wildcard or a pair containing an any wildcard."]
+    pub fn ecs_id_is_any(component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Utility to check if id is valid.\n A valid id is an id that can be added to an entity. Invalid ids are:\n - ids that contain wildcards\n - ids that contain invalid entities\n - ids that are 0 or contain 0 entities\n\n Note that the same rules apply to removing from an entity, with the exception\n of wildcards.\n\n @param world The world.\n @param id The id.\n @return True if the id is valid."]
-    pub fn ecs_id_is_valid(world: *const ecs_world_t, id: ecs_id_t) -> bool;
+    #[doc = "Utility to check if id is valid.\n A valid id is an id that can be added to an entity. Invalid ids are:\n - ids that contain wildcards\n - ids that contain invalid entities\n - ids that are 0 or contain 0 entities\n\n Note that the same rules apply to removing from an entity, with the exception\n of wildcards.\n\n @param world The world.\n @param component The component.\n @return True if the id is valid."]
+    pub fn ecs_id_is_valid(world: *const ecs_world_t, component: ecs_id_t) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get flags associated with id.\n This operation returns the internal flags (see api_flags.h) that are\n associated with the provided id.\n\n @param world The world.\n @param id The id.\n @return Flags associated with the id, or 0 if the id is not in use."]
-    pub fn ecs_id_get_flags(world: *const ecs_world_t, id: ecs_id_t) -> ecs_flags32_t;
+    #[doc = "Get flags associated with id.\n This operation returns the internal flags (see api_flags.h) that are\n associated with the provided id.\n\n @param world The world.\n @param component The component.\n @return Flags associated with the id, or 0 if the id is not in use."]
+    pub fn ecs_id_get_flags(world: *const ecs_world_t, component: ecs_id_t) -> ecs_flags32_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Convert id flag to string.\n This operation converts an id flag to a string.\n\n @param id_flags The id flag.\n @return The id flag string, or NULL if no valid id is provided."]
-    pub fn ecs_id_flag_str(id_flags: ecs_id_t) -> *const ::core::ffi::c_char;
+    #[doc = "Convert component flag to string.\n This operation converts a component flag to a string. Possible outputs are:\n\n - PAIR\n - TOGGLE\n - AUTO_OVERRIDE\n\n @param component_flags The component flag.\n @return The id flag string, or NULL if no valid id is provided."]
+    pub fn ecs_id_flag_str(component_flags: ecs_id_t) -> *const ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Convert (component) id to string.\n This operation interprets the structure of an id and converts it to a string.\n\n @param world The world.\n @param id The id to convert to a string.\n @return The id converted to a string."]
-    pub fn ecs_id_str(world: *const ecs_world_t, id: ecs_id_t) -> *mut ::core::ffi::c_char;
+    #[doc = "Convert component id to string.\n This operation converts the provided component id to a string. It can output\n strings of the following formats:\n\n - \"ComponentName\"\n - \"FLAG|ComponentName\"\n - \"(Relationship, Target)\"\n - \"FLAG|(Relationship, Target)\"\n\n The PAIR flag never added to the string.\n\n @param world The world.\n @param component The component to convert to a string.\n @return The component converted to a string."]
+    pub fn ecs_id_str(world: *const ecs_world_t, component: ecs_id_t) -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Write (component) id string to buffer.\n Same as ecs_id_str() but writes result to ecs_strbuf_t.\n\n @param world The world.\n @param id The id to convert to a string.\n @param buf The buffer to write to."]
-    pub fn ecs_id_str_buf(world: *const ecs_world_t, id: ecs_id_t, buf: *mut ecs_strbuf_t);
+    #[doc = "Write component string to buffer.\n Same as ecs_id_str() but writes result to ecs_strbuf_t.\n\n @param world The world.\n @param component The component to convert to a string.\n @param buf The buffer to write to."]
+    pub fn ecs_id_str_buf(world: *const ecs_world_t, component: ecs_id_t, buf: *mut ecs_strbuf_t);
 }
 unsafe extern "C-unwind" {
-    #[doc = "Convert string to a (component) id.\n This operation is the reverse of ecs_id_str(). The FLECS_SCRIPT addon\n is required for this operation to work.\n\n @param world The world.\n @param expr The string to convert to an id."]
+    #[doc = "Convert string to a component.\n This operation is the reverse of ecs_id_str(). The FLECS_SCRIPT addon\n is required for this operation to work.\n\n @param world The world.\n @param expr The string to convert to an id."]
     pub fn ecs_id_from_str(world: *const ecs_world_t, expr: *const ::core::ffi::c_char)
         -> ecs_id_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test whether term id is set.\n\n @param id The term id.\n @return True when set, false when not set."]
-    pub fn ecs_term_ref_is_set(id: *const ecs_term_ref_t) -> bool;
+    #[doc = "Test whether term ref is set.\n A term ref is a reference to an entity, component or variable for one of the\n three parts of a term (src, first, second).\n\n @param ref The term ref.\n @return True when set, false when not set."]
+    pub fn ecs_term_ref_is_set(ref_: *const ecs_term_ref_t) -> bool;
 }
 unsafe extern "C-unwind" {
     #[doc = "Test whether a term is set.\n This operation can be used to test whether a term has been initialized with\n values or whether it is empty.\n\n An application generally does not need to invoke this operation. It is useful\n when initializing a 0-initialized array of terms (like in ecs_term_desc_t) as\n this operation can be used to find the last initialized element.\n\n @param term The term.\n @return True when set, false when not set."]
@@ -4149,8 +4245,8 @@ unsafe extern "C-unwind" {
     pub fn ecs_query_str(query: *const ecs_query_t) -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Iterate all entities with specified (component id).\n This returns an iterator that yields all entities with a single specified\n component. This is a much lighter weight operation than creating and\n iterating a query.\n\n Usage:\n @code\n ecs_iter_t it = ecs_each(world, Player);\n while (ecs_each_next(&it)) {\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n If the specified id is a component, it is possible to access the component\n pointer with ecs_field just like with regular queries:\n\n @code\n ecs_iter_t it = ecs_each(world, Position);\n while (ecs_each_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n @param world The world.\n @param id The (component) id to iterate.\n @return An iterator that iterates all entities with the (component) id."]
-    pub fn ecs_each_id(world: *const ecs_world_t, id: ecs_id_t) -> ecs_iter_t;
+    #[doc = "Iterate all entities with specified (component id).\n This returns an iterator that yields all entities with a single specified\n component. This is a much lighter weight operation than creating and\n iterating a query.\n\n Usage:\n @code\n ecs_iter_t it = ecs_each(world, Player);\n while (ecs_each_next(&it)) {\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n If the specified id is a component, it is possible to access the component\n pointer with ecs_field just like with regular queries:\n\n @code\n ecs_iter_t it = ecs_each(world, Position);\n while (ecs_each_next(&it)) {\n   Position *p = ecs_field(&it, Position, 0);\n   for (int i = 0; i < it.count; i ++) {\n     // Iterate as usual.\n   }\n }\n @endcode\n\n @param world The world.\n @param component The component to iterate.\n @return An iterator that iterates all entities with the (component) id."]
+    pub fn ecs_each_id(world: *const ecs_world_t, component: ecs_id_t) -> ecs_iter_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Progress an iterator created with ecs_each_id().\n\n @param it The iterator.\n @return True if the iterator has more results, false if not."]
@@ -4464,19 +4560,19 @@ unsafe extern "C-unwind" {
     pub fn ecs_table_get_type(table: *const ecs_table_t) -> *const ecs_type_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get type index for id.\n This operation returns the index for an id in the table's type.\n\n @param world The world.\n @param table The table.\n @param id The id.\n @return The index of the id in the table type, or -1 if not found.\n\n @see ecs_table_has_id()"]
+    #[doc = "Get type index for component.\n This operation returns the index for a component in the table's type.\n\n @param world The world.\n @param table The table.\n @param component The component.\n @return The index of the component in the table type, or -1 if not found.\n\n @see ecs_table_has_id()"]
     pub fn ecs_table_get_type_index(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> i32;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get column index for id.\n This operation returns the column index for an id in the table's type. If the\n id is not a component, the function will return -1.\n\n @param world The world.\n @param table The table.\n @param id The component id.\n @return The column index of the id, or -1 if not found/not a component."]
+    #[doc = "Get column index for component.\n This operation returns the column index for a component in the table's type.\n If the component doesn't have data (it is a tag), the function will return -1.\n\n @param world The world.\n @param table The table.\n @param component The component.\n @return The column index of the id, or -1 if not found/not a component."]
     pub fn ecs_table_get_column_index(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> i32;
 }
 unsafe extern "C-unwind" {
@@ -4500,11 +4596,11 @@ unsafe extern "C-unwind" {
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get column from table by component id.\n This operation returns the component array for the provided component  id.\n\n @param world The world.\n @param table The table.\n @param id The component id for the column.\n @param offset The index of the first row to return (0 for entire column).\n @return The component array, or NULL if the index is not a component."]
+    #[doc = "Get column from table by component.\n This operation returns the component array for the provided component.\n\n @param world The world.\n @param table The table.\n @param component The component for the column.\n @param offset The index of the first row to return (0 for entire column).\n @return The component array, or NULL if the index is not a component."]
     pub fn ecs_table_get_id(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
         offset: i32,
     ) -> *mut ::core::ffi::c_void;
 }
@@ -4525,11 +4621,11 @@ unsafe extern "C-unwind" {
     pub fn ecs_table_entities(table: *const ecs_table_t) -> *const ecs_entity_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Test if table has id.\n Same as `ecs_table_get_type_index(world, table, id) != -1`.\n\n @param world The world.\n @param table The table.\n @param id The id.\n @return True if the table has the id, false if the table doesn't.\n\n @see ecs_table_get_type_index()"]
+    #[doc = "Test if table has component.\n Same as `ecs_table_get_type_index(world, table, component) != -1`.\n\n @param world The world.\n @param table The table.\n @param component The component.\n @return True if the table has the id, false if the table doesn't.\n\n @see ecs_table_get_type_index()"]
     pub fn ecs_table_has_id(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> bool;
 }
 unsafe extern "C-unwind" {
@@ -4541,11 +4637,11 @@ unsafe extern "C-unwind" {
     ) -> i32;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get table that has all components of current table plus the specified id.\n If the provided table already has the provided id, the operation will return\n the provided table.\n\n @param world The world.\n @param table The table.\n @param id The id to add.\n @result The resulting table."]
+    #[doc = "Get table that has all components of current table plus the specified id.\n If the provided table already has the provided id, the operation will return\n the provided table.\n\n @param world The world.\n @param table The table.\n @param component The component to add.\n @result The resulting table."]
     pub fn ecs_table_add_id(
         world: *mut ecs_world_t,
         table: *mut ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> *mut ecs_table_t;
 }
 unsafe extern "C-unwind" {
@@ -4557,11 +4653,11 @@ unsafe extern "C-unwind" {
     ) -> *mut ecs_table_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Get table that has all components of current table minus the specified id.\n If the provided table doesn't have the provided id, the operation will return\n the provided table.\n\n @param world The world.\n @param table The table.\n @param id The id to remove.\n @result The resulting table."]
+    #[doc = "Get table that has all components of current table minus the specified component.\n If the provided table doesn't have the provided component, the operation will\n return the provided table.\n\n @param world The world.\n @param table The table.\n @param component The component to remove.\n @result The resulting table."]
     pub fn ecs_table_remove_id(
         world: *mut ecs_world_t,
         table: *mut ecs_table_t,
-        id: ecs_id_t,
+        component: ecs_id_t,
     ) -> *mut ecs_table_t;
 }
 unsafe extern "C-unwind" {
@@ -4601,116 +4697,41 @@ unsafe extern "C-unwind" {
     ) -> bool;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Search for component id in table type.\n This operation returns the index of first occurrence of the id in the table\n type. The id may be a wildcard.\n\n When id_out is provided, the function will assign it with the found id. The\n found id may be different from the provided id if it is a wildcard.\n\n This is a constant time operation.\n\n @param world The world.\n @param table The table.\n @param id The id to search for.\n @param id_out If provided, it will be set to the found id (optional).\n @return The index of the id in the table type.\n\n @see ecs_search_offset()\n @see ecs_search_relation()"]
+    #[doc = "Search for component in table type.\n This operation returns the index of first occurrence of the component in the\n table type. The component may be a pair or wildcard.\n\n When component_out is provided, the function will assign it with the found\n component. The found component may be different from the provided component\n if it is a wildcard.\n\n This is a constant time operation.\n\n @param world The world.\n @param table The table.\n @param component The component to search for.\n @param component_out If provided, it will be set to the found component (optional).\n @return The index of the id in the table type.\n\n @see ecs_search_offset()\n @see ecs_search_relation()"]
     pub fn ecs_search(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
-        id: ecs_id_t,
-        id_out: *mut ecs_id_t,
+        component: ecs_id_t,
+        component_out: *mut ecs_id_t,
     ) -> i32;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Search for component id in table type starting from an offset.\n This operation is the same as ecs_search(), but starts searching from an offset\n in the table type.\n\n This operation is typically called in a loop where the resulting index is\n used in the next iteration as offset:\n\n @code\n int32_t index = -1;\n while ((index = ecs_search_offset(world, table, offset, id, NULL))) {\n   // do stuff\n }\n @endcode\n\n Depending on how the operation is used it is either linear or constant time.\n When the id has the form `(id)` or `(rel, *)` and the operation is invoked as\n in the above example, it is guaranteed to be constant time.\n\n If the provided id has the form `(*, tgt)` the operation takes linear time. The\n reason for this is that ids for an target are not packed together, as they\n are sorted relationship first.\n\n If the id at the offset does not match the provided id, the operation will do\n a linear search to find a matching id.\n\n @param world The world.\n @param table The table.\n @param offset Offset from where to start searching.\n @param id The id to search for.\n @param id_out If provided, it will be set to the found id (optional).\n @return The index of the id in the table type.\n\n @see ecs_search()\n @see ecs_search_relation()"]
+    #[doc = "Search for component in table type starting from an offset.\n This operation is the same as ecs_search(), but starts searching from an offset\n in the table type.\n\n This operation is typically called in a loop where the resulting index is\n used in the next iteration as offset:\n\n @code\n int32_t index = -1;\n while ((index = ecs_search_offset(world, table, offset, id, NULL))) {\n   // do stuff\n }\n @endcode\n\n Depending on how the operation is used it is either linear or constant time.\n When the id has the form `(id)` or `(rel, *)` and the operation is invoked as\n in the above example, it is guaranteed to be constant time.\n\n If the provided component has the form `(*, tgt)` the operation takes linear\n time. The reason for this is that ids for an target are not packed together,\n as they are sorted relationship first.\n\n If the component at the offset does not match the provided id, the operation\n will do a linear search to find a matching id.\n\n @param world The world.\n @param table The table.\n @param offset Offset from where to start searching.\n @param component The component to search for.\n @param component_out If provided, it will be set to the found component (optional).\n @return The index of the id in the table type.\n\n @see ecs_search()\n @see ecs_search_relation()"]
     pub fn ecs_search_offset(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
         offset: i32,
-        id: ecs_id_t,
-        id_out: *mut ecs_id_t,
+        component: ecs_id_t,
+        component_out: *mut ecs_id_t,
     ) -> i32;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Search for component/relationship id in table type starting from an offset.\n This operation is the same as ecs_search_offset(), but has the additional\n capability of traversing relationships to find a component. For example, if\n an application wants to find a component for either the provided table or a\n prefab (using the `IsA` relationship) of that table, it could use the operation\n like this:\n\n @code\n int32_t index = ecs_search_relation(\n   world,            // the world\n   table,            // the table\n   0,                // offset 0\n   ecs_id(Position), // the component id\n   EcsIsA,           // the relationship to traverse\n   0,                // start at depth 0 (the table itself)\n   0,                // no depth limit\n   NULL,             // (optional) entity on which component was found\n   NULL,             // see above\n   NULL);            // internal type with information about matched id\n @endcode\n\n The operation searches depth first. If a table type has 2 `IsA` relationships, the\n operation will first search the `IsA` tree of the first relationship.\n\n When choosing between ecs_search(), ecs_search_offset() and ecs_search_relation(),\n the simpler the function the better its performance.\n\n @param world The world.\n @param table The table.\n @param offset Offset from where to start searching.\n @param id The id to search for.\n @param rel The relationship to traverse (optional).\n @param flags Whether to search EcsSelf and/or EcsUp.\n @param subject_out If provided, it will be set to the matched entity.\n @param id_out If provided, it will be set to the found id (optional).\n @param tr_out Internal datatype.\n @return The index of the id in the table type.\n\n @see ecs_search()\n @see ecs_search_offset()"]
+    #[doc = "Search for component/relationship id in table type starting from an offset.\n This operation is the same as ecs_search_offset(), but has the additional\n capability of traversing relationships to find a component. For example, if\n an application wants to find a component for either the provided table or a\n prefab (using the `IsA` relationship) of that table, it could use the operation\n like this:\n\n @code\n int32_t index = ecs_search_relation(\n   world,            // the world\n   table,            // the table\n   0,                // offset 0\n   ecs_id(Position), // the component id\n   EcsIsA,           // the relationship to traverse\n   0,                // start at depth 0 (the table itself)\n   0,                // no depth limit\n   NULL,             // (optional) entity on which component was found\n   NULL,             // see above\n   NULL);            // internal type with information about matched id\n @endcode\n\n The operation searches depth first. If a table type has 2 `IsA` relationships, the\n operation will first search the `IsA` tree of the first relationship.\n\n When choosing between ecs_search(), ecs_search_offset() and ecs_search_relation(),\n the simpler the function the better its performance.\n\n @param world The world.\n @param table The table.\n @param offset Offset from where to start searching.\n @param component The component to search for.\n @param rel The relationship to traverse (optional).\n @param flags Whether to search EcsSelf and/or EcsUp.\n @param subject_out If provided, it will be set to the matched entity.\n @param component_out If provided, it will be set to the found component (optional).\n @param tr_out Internal datatype.\n @return The index of the component in the table type.\n\n @see ecs_search()\n @see ecs_search_offset()"]
     pub fn ecs_search_relation(
         world: *const ecs_world_t,
         table: *const ecs_table_t,
         offset: i32,
-        id: ecs_id_t,
+        component: ecs_id_t,
         rel: ecs_entity_t,
         flags: ecs_flags64_t,
         subject_out: *mut ecs_entity_t,
-        id_out: *mut ecs_id_t,
+        component_out: *mut ecs_id_t,
         tr_out: *mut *mut ecs_table_record_t,
     ) -> i32;
 }
 unsafe extern "C-unwind" {
     #[doc = "Remove all entities in a table. Does not deallocate table memory.\n Retaining table memory can be efficient when planning\n to refill the table with operations like ecs_bulk_init\n\n @param world The world.\n @param table The table to clear."]
     pub fn ecs_table_clear_entities(world: *mut ecs_world_t, table: *mut ecs_table_t);
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_id_from_component_record(idr: *const ecs_component_record_t) -> ecs_id_t;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_read_begin(idr: *mut ecs_component_record_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_read_end(idr: *mut ecs_component_record_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_write_begin(idr: *mut ecs_component_record_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_write_end(idr: *mut ecs_component_record_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_end(table: *mut ecs_table_t, column_index: i16) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_begin(table: *mut ecs_table_t, column_index: i16) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_end(table: *mut ecs_table_t, column_index: i16) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_read_begin_multithreaded(
-        idr: *mut ecs_component_record_t,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_read_end_multithreaded(
-        idr: *mut ecs_component_record_t,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_write_begin_multithreaded(
-        idr: *mut ecs_component_record_t,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_sparse_id_record_lock_write_end_multithreaded(
-        idr: *mut ecs_component_record_t,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_begin_multithreaded(
-        table: *mut ecs_table_t,
-        column_index: i16,
-        stage_id: i32,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_read_end_multithreaded(
-        table: *mut ecs_table_t,
-        column_index: i16,
-        stage_id: i32,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_begin_multithreaded(
-        table: *mut ecs_table_t,
-        column_index: i16,
-        stage_id: i32,
-    ) -> bool;
-}
-unsafe extern "C-unwind" {
-    pub fn ecs_table_column_lock_write_end_multithreaded(
-        table: *mut ecs_table_t,
-        column_index: i16,
-        stage_id: i32,
-    ) -> bool;
 }
 unsafe extern "C-unwind" {
     #[doc = "Construct a value in existing storage\n\n @param world The world.\n @param type The type of the value to create.\n @param ptr Pointer to a value of type 'type'\n @return Zero if success, nonzero if failed."]
@@ -4916,6 +4937,12 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Get last logged error code.\n Calling this operation resets the error code.\n\n @return Last error, 0 if none was logged since last call to last_error."]
     pub fn ecs_log_last_error() -> ::core::ffi::c_int;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_log_start_capture(capture_try: bool);
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_log_stop_capture() -> *mut ::core::ffi::c_char;
 }
 #[doc = "Callback type for init action."]
 pub type ecs_app_init_action_t = ::core::option::Option<
@@ -6144,7 +6171,7 @@ pub struct ecs_from_json_desc_t {
     #[doc = "Callback that allows for specifying a custom lookup function. The\n default behavior uses ecs_lookup()"]
     pub lookup_action: ::core::option::Option<
         unsafe extern "C-unwind" fn(
-            arg1: *const ecs_world_t,
+            arg1: *mut ecs_world_t,
             value: *const ::core::ffi::c_char,
             ctx: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
@@ -6884,6 +6911,10 @@ pub struct ecs_script_runtime_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsScript {
+    pub filename: *mut ::core::ffi::c_char,
+    pub code: *mut ::core::ffi::c_char,
+    #[doc = "Set if script evaluation had errors"]
+    pub error: *mut ::core::ffi::c_char,
     pub script: *mut ecs_script_t,
     #[doc = "Only set for template scripts"]
     pub template_: *mut ecs_script_template_t,
@@ -6948,20 +6979,28 @@ pub struct ecs_script_eval_desc_t {
     #[doc = "< Reusable runtime (optional)"]
     pub runtime: *mut ecs_script_runtime_t,
 }
+#[doc = "Used to capture error output from script evaluation."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_eval_result_t {
+    pub error: *mut ::core::ffi::c_char,
+}
 unsafe extern "C-unwind" {
-    #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n If the script uses outside variables, an ecs_script_vars_t object must be\n provided in the vars member of the desc object that defines all variables\n with the correct types.\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @param desc Parameters for script runtime.\n @return Script object if success, NULL if failed."]
+    #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n If the script uses outside variables, an ecs_script_vars_t object must be\n provided in the vars member of the desc object that defines all variables\n with the correct types.\n\n When the result parameter is not NULL, the script will capture errors and\n return them in the output struct. If result.error is set, it must be freed\n by the application.\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @param desc Parameters for script runtime.\n @param result Output of script evaluation.\n @return Script object if success, NULL if failed."]
     pub fn ecs_script_parse(
         world: *mut ecs_world_t,
         name: *const ::core::ffi::c_char,
         code: *const ::core::ffi::c_char,
         desc: *const ecs_script_eval_desc_t,
+        result: *mut ecs_script_eval_result_t,
     ) -> *mut ecs_script_t;
 }
 unsafe extern "C-unwind" {
-    #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n If variables were provided to ecs_script_parse(), an application may pass\n a different ecs_script_vars_t object to ecs_script_eval(), as long as the\n object has all referenced variables and they are of the same type.\n\n @param script The script.\n @param desc Parameters for script runtime.\n @return Zero if success, non-zero if failed."]
+    #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n If variables were provided to ecs_script_parse(), an application may pass\n a different ecs_script_vars_t object to ecs_script_eval(), as long as the\n object has all referenced variables and they are of the same type.\n\n When the result parameter is not NULL, the script will capture errors and\n return them in the output struct. If result.error is set, it must be freed\n by the application.\n\n @param script The script.\n @param desc Parameters for script runtime.\n @return Zero if success, non-zero if failed."]
     pub fn ecs_script_eval(
         script: *const ecs_script_t,
         desc: *const ecs_script_eval_desc_t,
+        result: *mut ecs_script_eval_result_t,
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C-unwind" {
@@ -6974,6 +7013,7 @@ unsafe extern "C-unwind" {
         world: *mut ecs_world_t,
         name: *const ::core::ffi::c_char,
         code: *const ::core::ffi::c_char,
+        result: *mut ecs_script_eval_result_t,
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C-unwind" {
@@ -7126,6 +7166,8 @@ pub struct ecs_expr_eval_desc_t {
     pub allow_unresolved_identifiers: bool,
     #[doc = "< Reusable runtime (optional)"]
     pub runtime: *mut ecs_script_runtime_t,
+    #[doc = "< For internal usage"]
+    pub script_visitor: *mut ::core::ffi::c_void,
 }
 unsafe extern "C-unwind" {
     #[doc = "Run expression.\n This operation runs an expression and stores the result in the provided\n value. If the value contains a type that is different from the type of the\n expression, the expression will be cast to the value.\n\n If the provided value for value.ptr is NULL, the value must be freed with\n ecs_value_free() afterwards.\n\n @param world The world.\n @param ptr The pointer to the expression to parse.\n @param value The value containing type & pointer to write to.\n @param desc Configuration parameters for the parser.\n @return Pointer to the character after the last one read, or NULL if failed."]
@@ -7179,6 +7221,10 @@ unsafe extern "C-unwind" {
         world: *mut ecs_world_t,
         desc: *mut ecs_const_var_desc_t,
     ) -> ecs_entity_t;
+}
+unsafe extern "C-unwind" {
+    #[doc = "Returns value for a const variable.\n This returns the value for a const variable that is created either with\n ecs_const_var_init, or in a script with \"export const v: ...\".\n\n @param world The world.\n @param var The variable associated with the entity."]
+    pub fn ecs_const_var_get(world: *const ecs_world_t, var: ecs_entity_t) -> ecs_value_t;
 }
 #[doc = "Used with ecs_function_init and ecs_method_init"]
 #[repr(C)]
@@ -7578,7 +7624,7 @@ pub struct EcsPrimitive {
 pub struct EcsMember {
     #[doc = "< Member type."]
     pub type_: ecs_entity_t,
-    #[doc = "< Number of elements (for inline arrays)."]
+    #[doc = "< Number of elements for inline arrays. Leave to 0 for non-array members."]
     pub count: i32,
     #[doc = "< Member unit."]
     pub unit: ecs_entity_t,
@@ -7615,7 +7661,7 @@ pub struct ecs_member_t {
     pub name: *const ::core::ffi::c_char,
     #[doc = "Member type."]
     pub type_: ecs_entity_t,
-    #[doc = "Element count (for inline arrays). May be set when used with ecs_struct_desc_t"]
+    #[doc = "Element count (for inline arrays). May be set when used with\n ecs_struct_desc_t. Leave to 0 for non-array members."]
     pub count: i32,
     #[doc = "May be set when used with ecs_struct_desc_t. Member offset."]
     pub offset: i32,
@@ -7660,7 +7706,7 @@ pub struct ecs_enum_constant_t {
 pub struct EcsEnum {
     pub underlying_type: ecs_entity_t,
     #[doc = "< map<i32_t, ecs_enum_constant_t>"]
-    pub constants: ecs_map_t,
+    pub constants: *mut ecs_map_t,
     #[doc = "< vector<ecs_enum_constants_t>"]
     pub ordered_constants: ecs_vec_t,
 }
@@ -7682,7 +7728,7 @@ pub struct ecs_bitmask_constant_t {
 #[derive(Debug, Copy, Clone)]
 pub struct EcsBitmask {
     #[doc = "< map<u32_t, ecs_bitmask_constant_t>"]
-    pub constants: ecs_map_t,
+    pub constants: *mut ecs_map_t,
     #[doc = "< vector<ecs_bitmask_constants_t>"]
     pub ordered_constants: ecs_vec_t,
 }
@@ -7865,66 +7911,92 @@ pub struct EcsUnitPrefix {
     #[doc = "< Translation of prefix"]
     pub translation: ecs_unit_translation_t,
 }
-pub const ecs_meta_type_op_kind_t_EcsOpArray: ecs_meta_type_op_kind_t = 0;
-pub const ecs_meta_type_op_kind_t_EcsOpVector: ecs_meta_type_op_kind_t = 1;
-pub const ecs_meta_type_op_kind_t_EcsOpOpaque: ecs_meta_type_op_kind_t = 2;
-pub const ecs_meta_type_op_kind_t_EcsOpPush: ecs_meta_type_op_kind_t = 3;
-pub const ecs_meta_type_op_kind_t_EcsOpPop: ecs_meta_type_op_kind_t = 4;
+#[doc = "< Push struct."]
+pub const ecs_meta_op_kind_t_EcsOpPushStruct: ecs_meta_op_kind_t = 0;
+#[doc = "< Push array."]
+pub const ecs_meta_op_kind_t_EcsOpPushArray: ecs_meta_op_kind_t = 1;
+#[doc = "< Push vector."]
+pub const ecs_meta_op_kind_t_EcsOpPushVector: ecs_meta_op_kind_t = 2;
+#[doc = "< Pop scope."]
+pub const ecs_meta_op_kind_t_EcsOpPop: ecs_meta_op_kind_t = 3;
+#[doc = "< Opaque struct."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueStruct: ecs_meta_op_kind_t = 4;
+#[doc = "< Opaque array."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueArray: ecs_meta_op_kind_t = 5;
+#[doc = "< Opaque vector."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueVector: ecs_meta_op_kind_t = 6;
+#[doc = "< Forward to type. Allows for recursive types."]
+pub const ecs_meta_op_kind_t_EcsOpForward: ecs_meta_op_kind_t = 7;
 #[doc = "< Marks last constant that can open/close a scope"]
-pub const ecs_meta_type_op_kind_t_EcsOpScope: ecs_meta_type_op_kind_t = 5;
-pub const ecs_meta_type_op_kind_t_EcsOpEnum: ecs_meta_type_op_kind_t = 6;
-pub const ecs_meta_type_op_kind_t_EcsOpBitmask: ecs_meta_type_op_kind_t = 7;
+pub const ecs_meta_op_kind_t_EcsOpScope: ecs_meta_op_kind_t = 8;
+#[doc = "< Opaque value."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueValue: ecs_meta_op_kind_t = 9;
+pub const ecs_meta_op_kind_t_EcsOpEnum: ecs_meta_op_kind_t = 10;
+pub const ecs_meta_op_kind_t_EcsOpBitmask: ecs_meta_op_kind_t = 11;
 #[doc = "< Marks first constant that's a primitive"]
-pub const ecs_meta_type_op_kind_t_EcsOpPrimitive: ecs_meta_type_op_kind_t = 8;
-pub const ecs_meta_type_op_kind_t_EcsOpBool: ecs_meta_type_op_kind_t = 9;
-pub const ecs_meta_type_op_kind_t_EcsOpChar: ecs_meta_type_op_kind_t = 10;
-pub const ecs_meta_type_op_kind_t_EcsOpByte: ecs_meta_type_op_kind_t = 11;
-pub const ecs_meta_type_op_kind_t_EcsOpU8: ecs_meta_type_op_kind_t = 12;
-pub const ecs_meta_type_op_kind_t_EcsOpU16: ecs_meta_type_op_kind_t = 13;
-pub const ecs_meta_type_op_kind_t_EcsOpU32: ecs_meta_type_op_kind_t = 14;
-pub const ecs_meta_type_op_kind_t_EcsOpU64: ecs_meta_type_op_kind_t = 15;
-pub const ecs_meta_type_op_kind_t_EcsOpI8: ecs_meta_type_op_kind_t = 16;
-pub const ecs_meta_type_op_kind_t_EcsOpI16: ecs_meta_type_op_kind_t = 17;
-pub const ecs_meta_type_op_kind_t_EcsOpI32: ecs_meta_type_op_kind_t = 18;
-pub const ecs_meta_type_op_kind_t_EcsOpI64: ecs_meta_type_op_kind_t = 19;
-pub const ecs_meta_type_op_kind_t_EcsOpF32: ecs_meta_type_op_kind_t = 20;
-pub const ecs_meta_type_op_kind_t_EcsOpF64: ecs_meta_type_op_kind_t = 21;
-pub const ecs_meta_type_op_kind_t_EcsOpUPtr: ecs_meta_type_op_kind_t = 22;
-pub const ecs_meta_type_op_kind_t_EcsOpIPtr: ecs_meta_type_op_kind_t = 23;
-pub const ecs_meta_type_op_kind_t_EcsOpString: ecs_meta_type_op_kind_t = 24;
-pub const ecs_meta_type_op_kind_t_EcsOpEntity: ecs_meta_type_op_kind_t = 25;
-pub const ecs_meta_type_op_kind_t_EcsOpId: ecs_meta_type_op_kind_t = 26;
-pub const ecs_meta_type_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_type_op_kind_t = 26;
+pub const ecs_meta_op_kind_t_EcsOpPrimitive: ecs_meta_op_kind_t = 12;
+pub const ecs_meta_op_kind_t_EcsOpBool: ecs_meta_op_kind_t = 13;
+pub const ecs_meta_op_kind_t_EcsOpChar: ecs_meta_op_kind_t = 14;
+pub const ecs_meta_op_kind_t_EcsOpByte: ecs_meta_op_kind_t = 15;
+pub const ecs_meta_op_kind_t_EcsOpU8: ecs_meta_op_kind_t = 16;
+pub const ecs_meta_op_kind_t_EcsOpU16: ecs_meta_op_kind_t = 17;
+pub const ecs_meta_op_kind_t_EcsOpU32: ecs_meta_op_kind_t = 18;
+pub const ecs_meta_op_kind_t_EcsOpU64: ecs_meta_op_kind_t = 19;
+pub const ecs_meta_op_kind_t_EcsOpI8: ecs_meta_op_kind_t = 20;
+pub const ecs_meta_op_kind_t_EcsOpI16: ecs_meta_op_kind_t = 21;
+pub const ecs_meta_op_kind_t_EcsOpI32: ecs_meta_op_kind_t = 22;
+pub const ecs_meta_op_kind_t_EcsOpI64: ecs_meta_op_kind_t = 23;
+pub const ecs_meta_op_kind_t_EcsOpF32: ecs_meta_op_kind_t = 24;
+pub const ecs_meta_op_kind_t_EcsOpF64: ecs_meta_op_kind_t = 25;
+pub const ecs_meta_op_kind_t_EcsOpUPtr: ecs_meta_op_kind_t = 26;
+pub const ecs_meta_op_kind_t_EcsOpIPtr: ecs_meta_op_kind_t = 27;
+pub const ecs_meta_op_kind_t_EcsOpString: ecs_meta_op_kind_t = 28;
+pub const ecs_meta_op_kind_t_EcsOpEntity: ecs_meta_op_kind_t = 29;
+pub const ecs_meta_op_kind_t_EcsOpId: ecs_meta_op_kind_t = 30;
+pub const ecs_meta_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_op_kind_t = 30;
 #[doc = "Serializer instruction opcodes.\n The meta type serializer works by generating a flattened array with\n instructions that tells a serializer what kind of fields can be found in a\n type at which offsets."]
-pub type ecs_meta_type_op_kind_t = ::core::ffi::c_uint;
+pub type ecs_meta_op_kind_t = ::core::ffi::c_uint;
 #[doc = "Meta type serializer instruction data."]
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_meta_type_op_t {
+#[derive(Copy, Clone)]
+pub struct ecs_meta_op_t {
     #[doc = "< Instruction opcode."]
-    pub kind: ecs_meta_type_op_kind_t,
-    #[doc = "< Offset of current field"]
+    pub kind: ecs_meta_op_kind_t,
+    #[doc = "< Underlying type kind (for enums)."]
+    pub underlying_kind: ecs_meta_op_kind_t,
+    #[doc = "< Offset of current field."]
     pub offset: ecs_size_t,
-    #[doc = "< Number of elements (for inline arrays)."]
-    pub count: i32,
     #[doc = "< Name of value (only used for struct members)"]
     pub name: *const ::core::ffi::c_char,
+    #[doc = "< Element size (for PushArray/PushVector) and element count (for PopArray)"]
+    pub elem_size: ecs_size_t,
     #[doc = "< Number of operations until next field or end"]
-    pub op_count: i32,
-    #[doc = "< Size of type of operation"]
-    pub size: ecs_size_t,
+    pub op_count: i16,
+    #[doc = "< Index of member in struct"]
+    pub member_index: i16,
     #[doc = "< Type entity"]
     pub type_: ecs_entity_t,
-    #[doc = "< Index of member in struct"]
-    pub member_index: i32,
-    #[doc = "< string -> member index (structs only)"]
+    #[doc = "< Type info"]
+    pub type_info: *const ecs_type_info_t,
+    pub is: ecs_meta_op_t__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union ecs_meta_op_t__bindgen_ty_1 {
+    #[doc = "< string -> member index (structs)"]
     pub members: *mut ecs_hashmap_t,
+    #[doc = "< (u)int -> constant entity (enums/bitmasks)"]
+    pub constants: *mut ecs_map_t,
+    #[doc = "< Serialize callback for opaque types"]
+    pub opaque: ecs_meta_serialize_t,
 }
 #[doc = "Component that stores the type serializer.\n Added to all types with reflection data."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EcsTypeSerializer {
-    #[doc = "< vector<ecs_meta_type_op_t>"]
+    #[doc = "< Quick access to type kind (same as EcsType)"]
+    pub kind: ecs_type_kind_t,
+    #[doc = "< vector<ecs_meta_op_t>"]
     pub ops: ecs_vec_t,
 }
 #[doc = "Type with information about currently serialized scope."]
@@ -7933,32 +8005,30 @@ pub struct EcsTypeSerializer {
 pub struct ecs_meta_scope_t {
     #[doc = "< The type being iterated"]
     pub type_: ecs_entity_t,
-    #[doc = "< The type operations (see ecs_meta_type_op_t)"]
-    pub ops: *mut ecs_meta_type_op_t,
-    #[doc = "< Number of operations in ops array to process"]
-    pub op_count: i32,
-    #[doc = "< Current operation"]
-    pub op_cur: i32,
-    #[doc = "< Current element (for collections)"]
-    pub elem_cur: i32,
+    #[doc = "< The type operations (see ecs_meta_op_t)"]
+    pub ops: *mut ecs_meta_op_t,
+    #[doc = "< Number of elements in ops"]
+    pub ops_count: i16,
+    #[doc = "< Current element in ops"]
+    pub ops_cur: i16,
     #[doc = "< Depth to restore, in case dotmember was used"]
-    pub prev_depth: i32,
-    #[doc = "< Pointer to the value being iterated"]
+    pub prev_depth: i16,
+    #[doc = "< Pointer to ops\\[0\\]"]
     pub ptr: *mut ::core::ffi::c_void,
-    #[doc = "< Pointer to component, in case size/alignment is needed"]
-    pub comp: *const EcsComponent,
     #[doc = "< Opaque type interface"]
     pub opaque: *const EcsOpaque,
-    #[doc = "< Current vector, in case a vector is iterated"]
-    pub vector: *mut ecs_vec_t,
     #[doc = "< string -> member index"]
     pub members: *mut ecs_hashmap_t,
     #[doc = "< Is the scope iterating elements?"]
     pub is_collection: bool,
-    #[doc = "< Is the scope iterating an inline array?"]
-    pub is_inline_array: bool,
-    #[doc = "< Was scope populated (for collections)"]
+    #[doc = "< Was scope populated (for vectors)"]
     pub is_empty_scope: bool,
+    #[doc = "< Was scope moved in (with ecs_meta_elem, for vectors)"]
+    pub is_moved_scope: bool,
+    #[doc = "< Set for collections"]
+    pub elem: i32,
+    #[doc = "< Set for collections"]
+    pub elem_count: i32,
 }
 #[doc = "Type that enables iterating/populating a value using reflection data."]
 #[repr(C)]
@@ -7969,7 +8039,7 @@ pub struct ecs_meta_cursor_t {
     #[doc = "< Cursor scope stack."]
     pub scope: [ecs_meta_scope_t; 32usize],
     #[doc = "< Current scope depth."]
-    pub depth: i32,
+    pub depth: i16,
     #[doc = "< Does the cursor point to a valid field."]
     pub valid: bool,
     #[doc = "< If in root scope, this allows for a push for primitive types"]
@@ -7977,13 +8047,20 @@ pub struct ecs_meta_cursor_t {
     #[doc = "Custom entity lookup action for overriding default ecs_lookup"]
     pub lookup_action: ::core::option::Option<
         unsafe extern "C-unwind" fn(
-            arg1: *const ecs_world_t,
+            arg1: *mut ecs_world_t,
             arg2: *const ::core::ffi::c_char,
             arg3: *mut ::core::ffi::c_void,
         ) -> ecs_entity_t,
     >,
     #[doc = "< Context for lookup_action"]
     pub lookup_ctx: *mut ::core::ffi::c_void,
+}
+unsafe extern "C-unwind" {
+    #[doc = "Convert serializer to string."]
+    pub fn ecs_meta_serializer_to_str(
+        world: *mut ecs_world_t,
+        type_: ecs_entity_t,
+    ) -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C-unwind" {
     #[doc = "Create meta cursor.\n A meta cursor allows for walking over, reading and writing a value without\n having to know its type at compile time.\n\n When a value is assigned through the cursor API, it will get converted to\n the actual value of the underlying type. This allows the underlying type to\n change without having to update the serialized data. For example, an integer\n field can be set by a string, a floating point can be set as integer etc.\n\n @param world The world.\n @param type The type of the value.\n @param ptr Pointer to the value.\n @return A meta cursor for the value."]
@@ -8144,6 +8221,13 @@ unsafe extern "C-unwind" {
         type_kind: ecs_primitive_kind_t,
         ptr: *const ::core::ffi::c_void,
     ) -> f64;
+}
+unsafe extern "C-unwind" {
+    #[doc = "Get element count for array/vector operations.\n The operation must either be EcsOpPushArray or EcsOpPushVector. If the\n operation is EcsOpPushArray, the provided pointer may be NULL.\n\n @param op The serializer operation.\n @param ptr Pointer to the array/vector value.\n @return The number of elements."]
+    pub fn ecs_meta_op_get_elem_count(
+        op: *const ecs_meta_op_t,
+        ptr: *const ::core::ffi::c_void,
+    ) -> ecs_size_t;
 }
 #[doc = "Used with ecs_primitive_init()."]
 #[repr(C)]
@@ -8407,6 +8491,30 @@ unsafe extern "C-unwind" {
         value_size: usize,
     ) -> ecs_entity_t;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_cpp_get_mut_t {
+    pub ptr: *mut ::core::ffi::c_void,
+    pub call_modified: bool,
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_cpp_set(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        component: ecs_id_t,
+        new_ptr: *const ::core::ffi::c_void,
+        size: usize,
+    ) -> ecs_cpp_get_mut_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_cpp_assign(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        component: ecs_id_t,
+        new_ptr: *const ::core::ffi::c_void,
+        size: usize,
+    ) -> ecs_cpp_get_mut_t;
+}
 unsafe extern "C-unwind" {
     pub fn ecs_cpp_last_member(
         world: *const ecs_world_t,
@@ -8455,11 +8563,5 @@ pub struct ecs_query_op_t {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_query_op_ctx_t {
-    pub _address: u8,
-}
-#[doc = "< Table cache of element. Of type ecs_component_record_t* for component index elements."]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_table_cache_t {
     pub _address: u8,
 }

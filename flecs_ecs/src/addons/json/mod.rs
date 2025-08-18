@@ -24,7 +24,13 @@ pub type IterToJsonDesc = sys::ecs_iter_to_json_desc_t;
 
 impl EntityView<'_> {
     /// Set component or pair id from JSON.
-    pub fn set_json(self, comp: impl IntoId, json: &str, desc: Option<&FromJsonDesc>) -> Self {
+    pub fn set_json(
+        self,
+        comp: impl IntoId,
+        size: usize,
+        json: &str,
+        desc: Option<&FromJsonDesc>,
+    ) -> Self {
         let comp: u64 = *comp.into_id(self.world);
         let world = self.world_ptr_mut();
         let id = *self.id;
@@ -36,7 +42,7 @@ impl EntityView<'_> {
                 return self;
             }
 
-            let ptr = sys::ecs_ensure_id(world, id, comp);
+            let ptr = sys::ecs_ensure_id(world, id, comp, size);
             ecs_assert!(
                 !ptr.is_null(),
                 FlecsErrorCode::InternalError,

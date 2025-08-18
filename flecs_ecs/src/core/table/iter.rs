@@ -1277,7 +1277,7 @@ where
             let world_ref = &self.world;
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let idr = if !tr.is_null() {
-                unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t }
+                unsafe { (*tr).hdr.cr }
             } else {
                 let comp_id = unsafe { *self.iter.ids.add(index as usize) };
                 unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
@@ -1320,7 +1320,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
+            let idr = unsafe { (*tr).hdr.cr };
             let world_ref = &self.world;
 
             Some(FieldAt::<T::UnderlyingType>::new(
@@ -1365,7 +1365,7 @@ where
             let world_ref = &self.world;
 
             let idr = if !tr.is_null() {
-                unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t }
+                unsafe { (*tr).hdr.cr }
             } else {
                 let comp_id = unsafe { *self.iter.ids.add(index as usize) };
                 unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
@@ -1408,7 +1408,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cache as *mut sys::ecs_component_record_t };
+            let idr = unsafe { (*tr).hdr.cr };
             let world_ref = &self.world;
 
             Some(FieldAtMut::<T::UnderlyingType>::new(

@@ -375,150 +375,151 @@ pub(crate) const ECS_REFLEXIVE: u64 = FLECS_HI_COMPONENT_ID + 19;
 pub(crate) const ECS_SYMMETRIC: u64 = FLECS_HI_COMPONENT_ID + 20;
 pub(crate) const ECS_FINAL: u64 = FLECS_HI_COMPONENT_ID + 21;
 pub(crate) const ECS_INHERITABLE: u64 = FLECS_HI_COMPONENT_ID + 22;
-pub(crate) const ECS_ON_INSTANTIATE: u64 = FLECS_HI_COMPONENT_ID + 23;
-pub(crate) const ECS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 24;
-pub(crate) const ECS_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 25;
-pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 26;
-pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 27;
-pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 28;
-pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 29;
-pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 30;
-pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 31;
-pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 32;
-pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 33;
-pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 34;
-pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 35;
-pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 36;
+pub(crate) const ECS_SINGLETON: u64 = FLECS_HI_COMPONENT_ID + 23;
+pub(crate) const ECS_ON_INSTANTIATE: u64 = FLECS_HI_COMPONENT_ID + 24;
+pub(crate) const ECS_OVERRIDE: u64 = FLECS_HI_COMPONENT_ID + 25;
+pub(crate) const ECS_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 26;
+pub(crate) const ECS_DONT_INHERIT: u64 = FLECS_HI_COMPONENT_ID + 27;
+pub(crate) const ECS_PAIR_IS_TAG: u64 = FLECS_HI_COMPONENT_ID + 28;
+pub(crate) const ECS_EXCLUSIVE: u64 = FLECS_HI_COMPONENT_ID + 29;
+pub(crate) const ECS_ACYCLIC: u64 = FLECS_HI_COMPONENT_ID + 30;
+pub(crate) const ECS_TRAVERSABLE: u64 = FLECS_HI_COMPONENT_ID + 31;
+pub(crate) const ECS_WITH: u64 = FLECS_HI_COMPONENT_ID + 32;
+pub(crate) const ECS_ONE_OF: u64 = FLECS_HI_COMPONENT_ID + 33;
+pub(crate) const ECS_CAN_TOGGLE: u64 = FLECS_HI_COMPONENT_ID + 34;
+pub(crate) const ECS_TRAIT: u64 = FLECS_HI_COMPONENT_ID + 35;
+pub(crate) const ECS_RELATIONSHIP: u64 = FLECS_HI_COMPONENT_ID + 36;
+pub(crate) const ECS_TARGET: u64 = FLECS_HI_COMPONENT_ID + 37;
 
 // Builtin relationships
-pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 37;
-pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 38;
-pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 39;
+pub(crate) const ECS_CHILD_OF: u64 = FLECS_HI_COMPONENT_ID + 38;
+pub(crate) const ECS_IS_A: u64 = FLECS_HI_COMPONENT_ID + 39;
+pub(crate) const ECS_DEPENDS_ON: u64 = FLECS_HI_COMPONENT_ID + 40;
 
 // Identifier tags
-pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 40;
-pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 41;
-pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 42;
+pub(crate) const ECS_NAME: u64 = FLECS_HI_COMPONENT_ID + 41;
+pub(crate) const ECS_SYMBOL: u64 = FLECS_HI_COMPONENT_ID + 42;
+pub(crate) const ECS_ALIAS: u64 = FLECS_HI_COMPONENT_ID + 43;
 
 // Events
-pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 43;
-pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 44;
-pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 45;
-pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 46;
-pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 47;
-pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 48;
-pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 49;
+pub(crate) const ECS_ON_ADD: u64 = FLECS_HI_COMPONENT_ID + 44;
+pub(crate) const ECS_ON_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 45;
+pub(crate) const ECS_ON_SET: u64 = FLECS_HI_COMPONENT_ID + 46;
+pub(crate) const ECS_ON_DELETE: u64 = FLECS_HI_COMPONENT_ID + 47;
+pub(crate) const ECS_ON_DELETE_TARGET: u64 = FLECS_HI_COMPONENT_ID + 48;
+pub(crate) const ECS_ON_TABLE_CREATE: u64 = FLECS_HI_COMPONENT_ID + 49;
+pub(crate) const ECS_ON_TABLE_DELETE: u64 = FLECS_HI_COMPONENT_ID + 50;
 
 // Timers
-pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 50;
-pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 51;
-pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 52;
+pub(crate) const ECS_TICK_SOURCE: u64 = FLECS_HI_COMPONENT_ID + 51;
+pub(crate) const ECS_TIMER: u64 = FLECS_HI_COMPONENT_ID + 52;
+pub(crate) const ECS_RATE_FILTER: u64 = FLECS_HI_COMPONENT_ID + 53;
 
 // Actions
-pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 53;
-pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 54;
-pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 55;
+pub(crate) const ECS_REMOVE: u64 = FLECS_HI_COMPONENT_ID + 54;
+pub(crate) const ECS_DELETE: u64 = FLECS_HI_COMPONENT_ID + 55;
+pub(crate) const ECS_PANIC: u64 = FLECS_HI_COMPONENT_ID + 56;
 
-pub(crate) const ECS_SPARSE: u64 = FLECS_HI_COMPONENT_ID + 56;
-pub(crate) const ECS_DONT_FRAGMENT: u64 = FLECS_HI_COMPONENT_ID + 57;
+pub(crate) const ECS_SPARSE: u64 = FLECS_HI_COMPONENT_ID + 57;
+pub(crate) const ECS_DONT_FRAGMENT: u64 = FLECS_HI_COMPONENT_ID + 58;
 
 // Misc
-pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 58;
-pub(crate) const ECS_ORDERED_CHILDREN: u64 = FLECS_HI_COMPONENT_ID + 59;
+pub(crate) const ECS_DEFAULT_CHILD_COMPONENT: u64 = FLECS_HI_COMPONENT_ID + 59;
+pub(crate) const ECS_ORDERED_CHILDREN: u64 = FLECS_HI_COMPONENT_ID + 60;
 
 // Builtin predicate ids (used by rule engine)
-pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 60;
-pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 61;
-pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 62;
-pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 63;
-pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 64;
+pub(crate) const ECS_PRED_EQ: u64 = FLECS_HI_COMPONENT_ID + 61;
+pub(crate) const ECS_PRED_MATCH: u64 = FLECS_HI_COMPONENT_ID + 62;
+pub(crate) const ECS_PRED_LOOKUP: u64 = FLECS_HI_COMPONENT_ID + 63;
+pub(crate) const ECS_SCOPE_OPEN: u64 = FLECS_HI_COMPONENT_ID + 64;
+pub(crate) const ECS_SCOPE_CLOSE: u64 = FLECS_HI_COMPONENT_ID + 65;
 
 // Systems
-pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 65;
-pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 66;
-pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 67;
-pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 68;
-pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 69;
-pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 70;
-pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 71;
-pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 72;
-pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 73;
-pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 74;
-pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 75;
-pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 76;
-pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 77;
-pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 78;
-pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 79;
+pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 66;
+pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 67;
+pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 68;
+pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 69;
+pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 70;
+pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 71;
+pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 72;
+pub(crate) const ECS_PRE_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 73;
+pub(crate) const ECS_ON_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 74;
+pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 75;
+pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 76;
+pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 77;
+pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 78;
+pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 79;
+pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 80;
 
 // Meta primitive components (don't use low ids to save id space)
-pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 80;
-pub(crate) const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 81;
-pub(crate) const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 82;
-pub(crate) const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 83;
-pub(crate) const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 84;
-pub(crate) const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 85;
-pub(crate) const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 86;
-pub(crate) const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 87;
-pub(crate) const ECS_I8_T: u64 = FLECS_HI_COMPONENT_ID + 88;
-pub(crate) const ECS_I16_T: u64 = FLECS_HI_COMPONENT_ID + 89;
-pub(crate) const ECS_I32_T: u64 = FLECS_HI_COMPONENT_ID + 90;
-pub(crate) const ECS_I64_T: u64 = FLECS_HI_COMPONENT_ID + 91;
-pub(crate) const ECS_IPTR_T: u64 = FLECS_HI_COMPONENT_ID + 92;
-pub(crate) const ECS_F32_T: u64 = FLECS_HI_COMPONENT_ID + 93;
-pub(crate) const ECS_F64_T: u64 = FLECS_HI_COMPONENT_ID + 94;
-pub(crate) const ECS_STRING_T: u64 = FLECS_HI_COMPONENT_ID + 95;
-pub(crate) const ECS_ENTITY_T: u64 = FLECS_HI_COMPONENT_ID + 96;
-pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 97;
+pub(crate) const ECS_BOOL_T: u64 = FLECS_HI_COMPONENT_ID + 81;
+pub(crate) const ECS_CHAR_T: u64 = FLECS_HI_COMPONENT_ID + 82;
+pub(crate) const ECS_BYTE_T: u64 = FLECS_HI_COMPONENT_ID + 83;
+pub(crate) const ECS_U8_T: u64 = FLECS_HI_COMPONENT_ID + 84;
+pub(crate) const ECS_U16_T: u64 = FLECS_HI_COMPONENT_ID + 85;
+pub(crate) const ECS_U32_T: u64 = FLECS_HI_COMPONENT_ID + 86;
+pub(crate) const ECS_U64_T: u64 = FLECS_HI_COMPONENT_ID + 87;
+pub(crate) const ECS_UPTR_T: u64 = FLECS_HI_COMPONENT_ID + 88;
+pub(crate) const ECS_I8_T: u64 = FLECS_HI_COMPONENT_ID + 89;
+pub(crate) const ECS_I16_T: u64 = FLECS_HI_COMPONENT_ID + 90;
+pub(crate) const ECS_I32_T: u64 = FLECS_HI_COMPONENT_ID + 91;
+pub(crate) const ECS_I64_T: u64 = FLECS_HI_COMPONENT_ID + 92;
+pub(crate) const ECS_IPTR_T: u64 = FLECS_HI_COMPONENT_ID + 93;
+pub(crate) const ECS_F32_T: u64 = FLECS_HI_COMPONENT_ID + 94;
+pub(crate) const ECS_F64_T: u64 = FLECS_HI_COMPONENT_ID + 95;
+pub(crate) const ECS_STRING_T: u64 = FLECS_HI_COMPONENT_ID + 96;
+pub(crate) const ECS_ENTITY_T: u64 = FLECS_HI_COMPONENT_ID + 97;
+pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 98;
 
 // Meta module component ids
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 98;
+pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 99;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 100;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 100;
+pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 101;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 101;
+pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 102;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 102;
+pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 103;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 103;
+pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 104;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 104;
+pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 105;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 105;
+pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 106;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 106;
+pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 107;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 107;
+pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 108;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 108;
+pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 109;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 109;
+pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 110;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 110;
+pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 111;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 112;
 
-pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 111;
+pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 113;
 
 // Doc module components
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 113;
+pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 114;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 114;
+pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 115;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 115;
+pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 116;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 116;
+pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 117;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 117;
+pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 118;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 118;
+pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 119;
 
 // REST module components
 #[cfg(feature = "flecs_rest")]
-pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 119;
+pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 120;
 
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {

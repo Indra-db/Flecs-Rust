@@ -295,6 +295,7 @@ impl Default for ecs_type_hooks_t {
             on_add: None,
             on_set: None,
             on_remove: None,
+            on_replace: None,
             ctx: core::ptr::null_mut(),
             binding_ctx: core::ptr::null_mut(),
             ctx_free: None,

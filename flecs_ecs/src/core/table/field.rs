@@ -961,7 +961,7 @@ pub(crate) fn flecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
 
     ecs_assert!(
         unsafe { sys::ecs_field_size(it, index) } == _size
-            || unsafe { sys::ecs_field_size(it, index) } != 0,
+            || unsafe { sys::ecs_field_size(it, index) } == 0,
         FlecsErrorCode::InvalidParameter,
         "mismatching size for field {}",
         index
@@ -1005,11 +1005,9 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let index_usize = index as usize;
     let tr = unsafe { *it.trs.add(index_usize) };
     if tr.is_null() {
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_set(it, index) },
-            FlecsErrorCode::InternalError,
-            "field is set but no table record found"
-        );
+        /* We're just passing in a pointer to a value that may not be
+         * a component on the entity (such as a pointer to a new value
+         * in an on_replace hook). */
         return core::ptr::null_mut();
     }
 
@@ -1106,7 +1104,7 @@ pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) 
 
     ecs_assert!(
         unsafe { sys::ecs_field_size(it, index) } == _size
-            || unsafe { sys::ecs_field_size(it, index) } != 0,
+            || unsafe { sys::ecs_field_size(it, index) } == 0,
         FlecsErrorCode::InvalidParameter,
         "mismatching size for field {}",
         index

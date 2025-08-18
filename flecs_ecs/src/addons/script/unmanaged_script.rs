@@ -69,6 +69,7 @@ impl<'a> Script<'a> {
                     name.as_ptr() as *const _,
                     code.as_ptr() as *const _,
                     &desc,
+                    core::ptr::null_mut(),
                 )
             } else {
                 sys::ecs_script_parse(
@@ -76,6 +77,7 @@ impl<'a> Script<'a> {
                     name.as_ptr() as *const _,
                     code.as_ptr() as *const _,
                     core::ptr::null(),
+                    core::ptr::null_mut(),
                 )
             }
         };
@@ -101,9 +103,11 @@ impl<'a> Script<'a> {
     /// * C API: `ecs_script_eval`
     pub fn eval(&self, desc: Option<sys::ecs_script_eval_desc_t>) -> bool {
         if let Some(desc) = desc {
-            unsafe { sys::ecs_script_eval(self.script, &desc) == 0 }
+            unsafe { sys::ecs_script_eval(self.script, &desc, core::ptr::null_mut()) == 0 }
         } else {
-            unsafe { sys::ecs_script_eval(self.script, core::ptr::null()) == 0 }
+            unsafe {
+                sys::ecs_script_eval(self.script, core::ptr::null(), core::ptr::null_mut()) == 0
+            }
         }
     }
 
@@ -137,6 +141,7 @@ impl<'a> Script<'a> {
                 world_ptr,
                 name.as_ptr() as *const _,
                 code.as_ptr() as *const _,
+                core::ptr::null_mut(),
             ) == 0
         }
     }

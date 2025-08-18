@@ -285,7 +285,7 @@ where
                     let id_underlying_type = world.component_id::<i32>();
                     let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
                     let record = unsafe { sys::ecs_record_find(world_ptr, target) };
-                    let constant_value = unsafe { sys::ecs_get_id_from_record(world_ptr, target, record, pair_id) };
+                    let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, target, record, pair_id) };
                     ecs_assert!(
                         !constant_value.component_ptr.is_null(),
                         FlecsErrorCode::InternalError,
@@ -301,7 +301,7 @@ where
                 {
                     // get constant value from constant entity
                     let constant_value =
-                       unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+                       unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
 
                     ecs_assert!(
                         !constant_value.component_ptr.is_null(),
@@ -314,12 +314,12 @@ where
                 }
             } else {
                 // if there is no matching pair for (r,*), try just r
-                unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) }
+                unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
             }
         } else if A::IS_IMMUTABLE {
-            unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) }
+            unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
         } else {
-            unsafe { sys::ecs_get_mut_id_from_record(world_ptr, entity, record, id) }
+            unsafe { sys::flecs_get_mut_id_from_record(world_ptr, record, id) }
         };
 
         let component_ptr = get_ptr.component_ptr;
@@ -464,7 +464,7 @@ macro_rules! impl_get_tuple {
                                 let id_underlying_type = world_ref.component_id::<i32>();
                                 let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
                                 let record = unsafe { sys::ecs_record_find(world_ptr, target) };
-                                let constant_value = unsafe { sys::ecs_get_id_from_record(world_ptr, target, record, pair_id) };
+                                let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, target, record, pair_id) };
 
                                 ecs_assert!(
                                     !constant_value.component_ptr.is_null(),
@@ -480,7 +480,7 @@ macro_rules! impl_get_tuple {
                            #[cfg(not(feature = "flecs_meta"))]
                            {
                              // get constant value from constant entity
-                             let constant_value = unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record, id) };
+                             let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
 
                              ecs_assert!(
                                  !constant_value.is_null(),
@@ -493,12 +493,12 @@ macro_rules! impl_get_tuple {
                            }
                         } else {
                             // if there is no matching pair for (r,*), try just r
-                            unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record,id) }
+                            unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record,id) }
                         }
                     } else if $t::IS_IMMUTABLE {
-                        unsafe { sys::ecs_get_id_from_record(world_ptr, entity, record,id) }
+                        unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record,id) }
                      } else {
-                       unsafe { sys::ecs_get_mut_id_from_record(world_ptr, entity, record,id) }
+                       unsafe { sys::flecs_get_mut_id_from_record(world_ptr, record,id) }
                      };
 
                     let component_ptr = get_ptr.component_ptr;

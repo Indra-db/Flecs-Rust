@@ -488,8 +488,9 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
         let pair = ecs_pair(flecs::Constant::ID, *id);
 
         unsafe {
-            let ptr =
-                sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut T::UnderlyingTypeOfEnum;
+            let size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
+            let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair, size)
+                as *mut T::UnderlyingTypeOfEnum;
             *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }
@@ -679,8 +680,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 
@@ -701,8 +703,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 
@@ -723,8 +726,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 

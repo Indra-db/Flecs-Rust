@@ -279,7 +279,7 @@ fn meta_partial_struct_custom_offset() {
 
     let c = world
         .component::<Position>()
-        .member(f32::id(), ("y", Count(1), offset_of!(Position, y)));
+        .member(f32::id(), ("y", Count(0), offset_of!(Position, y)));
 
     assert_ne!(c.id(), 0);
 
@@ -361,7 +361,7 @@ fn meta_bitmask() {
 
     world.component::<Sandwich>().member(
         Toppings::id(),
-        ("toppings", Count(1), offset_of!(Sandwich, toppings)),
+        ("toppings", Count(0), offset_of!(Sandwich, toppings)),
     );
 
     // Create entity with Sandwich as usual
@@ -810,7 +810,7 @@ fn meta_struct_member_ptr() {
 
     let n = world
         .component::<Nested>()
-        .member(Test::id(), ("a", Count(1), offset_of!(Nested, a)))
+        .member(Test::id(), ("a", Count(0), offset_of!(Nested, a)))
         .member(t2, ("b", Count(2), offset_of!(Nested, b)));
 
     //validate Test #1

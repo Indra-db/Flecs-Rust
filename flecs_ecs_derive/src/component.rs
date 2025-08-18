@@ -436,7 +436,7 @@ pub(crate) fn impl_meta(
 
                     if let Some(field_name) = field_name {
                         meta_fields_impl.push(quote! {
-                            .member(id!(world, #field_type), (stringify!(#field_name), flecs_ecs::addons::meta::Count(1), core::mem::offset_of!(#struct_name, #field_name)))
+                            .member(id!(world, #field_type), (stringify!(#field_name), flecs_ecs::addons::meta::Count(0), core::mem::offset_of!(#struct_name, #field_name)))
                         });
                     } else {
                         meta_fields_impl.push( quote! {

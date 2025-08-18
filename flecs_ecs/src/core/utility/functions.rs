@@ -370,24 +370,46 @@ pub(crate) fn set_helper<T: ComponentId>(
             if T::NEEDS_DROP {
                 if T::IMPLS_DEFAULT {
                     //use set batching //faster performance, no panic possible
-                    let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                    //SAFETY: ecs_ensure_modified_id will default initialize the component
+                    let res = sys::ecs_cpp_assign(
+                        world,
+                        entity,
+                        id,
+                        &value as *const _ as *const _,
+                        const { core::mem::size_of::<T>() },
+                    );
+                    let comp = &mut *(res.ptr as *mut T);
                     core::ptr::drop_in_place(comp);
                     core::ptr::write(comp, value);
+
+                    if res.call_modified {
+                        sys::ecs_modified_id(world, entity, id);
+                    }
                 } else {
                     //when it has the component, we know it won't panic using set and impl drop.
                     if sys::ecs_has_id(world, entity, id) {
                         //use set batching //faster performance, no panic possible since it's already present
-                        let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                        //SAFETY: ecs_ensure_modified_id will default initialize the component
+                        let res = sys::ecs_cpp_assign(
+                            world,
+                            entity,
+                            id,
+                            &value as *const _ as *const _,
+                            const { core::mem::size_of::<T>() },
+                        );
+                        let comp = &mut *(res.ptr as *mut T);
                         core::ptr::drop_in_place(comp);
                         core::ptr::write(comp, value);
+
+                        if res.call_modified {
+                            sys::ecs_modified_id(world, entity, id);
+                        }
+
                         return;
                     }
 
                     // if does not impl default or not have the id
                     // use insert //slower performance
-                    let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+                    let size = const { core::mem::size_of::<T>() };
+                    let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
 
                     if !is_new {
                         core::ptr::drop_in_place(ptr);
@@ -396,15 +418,39 @@ pub(crate) fn set_helper<T: ComponentId>(
                     sys::ecs_modified_id(world, entity, id);
                 }
             } else {
-                //if not needs drop, use set batching, faster performance
-                let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                core::ptr::drop_in_place(comp);
-                core::ptr::write(comp, value);
+                if sys::ecs_has_id(world, entity, id) {
+                    //if not needs drop, use set batching, faster performance
+                    let res = sys::ecs_cpp_assign(
+                        world,
+                        entity,
+                        id,
+                        &value as *const _ as *const _,
+                        core::mem::size_of::<T>(),
+                    );
+
+                    let comp = &mut *(res.ptr as *mut T);
+                    core::ptr::drop_in_place(comp);
+                    core::ptr::write(comp, value);
+
+                    if res.call_modified {
+                        sys::ecs_modified_id(world, entity, id);
+                    }
+                } else {
+                    let size = const { core::mem::size_of::<T>() };
+                    let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
+
+                    if !is_new {
+                        core::ptr::drop_in_place(ptr);
+                    }
+                    core::ptr::write(ptr, value);
+                    sys::ecs_modified_id(world, entity, id);
+                }
             }
         } else
         /* not deferred */
         {
-            let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+            let size = const { core::mem::size_of::<T>() };
+            let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
 
             if !is_new {
                 core::ptr::drop_in_place(ptr);
@@ -414,6 +460,23 @@ pub(crate) fn set_helper<T: ComponentId>(
         }
     }
 }
+
+/*
+inline void assign(world_t *world, flecs::entity_t entity, T&& value, flecs::id_t id) {
+    ecs_assert(_::type<remove_reference_t<T>>::size() != 0,
+        ECS_INVALID_PARAMETER, "operation invalid for empty type");
+
+    ecs_cpp_get_mut_t res = ecs_cpp_assign(
+        world, entity, id, &value, sizeof(T));
+
+    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
+    dst = FLECS_FWD(value);
+
+    if (res.call_modified) {
+        ecs_modified_id(world, entity, id);
+    }
+}
+*/
 
 pub(crate) fn assign_helper<T: ComponentId>(
     world: *mut sys::ecs_world_t,
@@ -427,28 +490,24 @@ pub(crate) fn assign_helper<T: ComponentId>(
         "operation invalid for empty type"
     );
 
-    if !unsafe { sys::ecs_is_deferred(world) } {
-        let dst_ptr = unsafe { sys::ecs_get_mut_id(world, entity, id) };
-        ecs_assert!(
-            !dst_ptr.is_null(),
-            FlecsErrorCode::InvalidOperation,
-            "entity does not have component, use set() instead"
-        );
+    let res = unsafe {
+        sys::ecs_cpp_assign(
+            world,
+            entity,
+            id,
+            &value as *const _ as *const _,
+            core::mem::size_of::<T>(),
+        )
+    };
 
-        let dst = unsafe { &mut *(dst_ptr as *mut T) };
-        *dst = value;
+    let dst = unsafe { &mut *(res.ptr as *mut T) };
+    unsafe {
+        core::ptr::drop_in_place(dst);
+        core::ptr::write(dst, value);
+    }
 
+    if res.call_modified {
         unsafe { sys::ecs_modified_id(world, entity, id) };
-    } else {
-        let dst_ptr = unsafe { sys::ecs_get_mut_modified_id(world, entity, id) };
-        ecs_assert!(
-            !dst_ptr.is_null(),
-            FlecsErrorCode::InvalidOperation,
-            "entity does not have component, use set() instead"
-        );
-
-        let dst = unsafe { &mut *(dst_ptr as *mut T) };
-        *dst = value;
     }
 }
 

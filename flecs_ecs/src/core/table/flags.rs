@@ -21,8 +21,6 @@ bitflags::bitflags! {
         const HasOnAdd = sys::EcsTableHasOnAdd;
         const HasOnRemove = sys::EcsTableHasOnRemove;
         const HasOnSet = sys::EcsTableHasOnSet;
-        const HasOnTableFill = sys::EcsTableHasOnTableFill;
-        const HasOnTableEmpty = sys::EcsTableHasOnTableEmpty;
         const HasOnTableCreate = sys::EcsTableHasOnTableCreate;
         const HasOnTableDelete = sys::EcsTableHasOnTableDelete;
         const HasSparse = sys::EcsTableHasSparse;

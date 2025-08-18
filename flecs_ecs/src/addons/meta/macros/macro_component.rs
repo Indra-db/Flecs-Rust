@@ -117,7 +117,7 @@ macro_rules! member_ext {
     };
     ($world:expr, $compvar:ident: $component:ty, $name:tt : $type:ty) => {
         $crate::assert_is_type!($component, $name: $type);
-        $compvar.member(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), flecs_ecs::addons::meta::Count(1), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
+        $compvar.member(::flecs_ecs::prelude::id!($world, $type), (::core::stringify!($name), flecs_ecs::addons::meta::Count(0), ::core::mem::offset_of!($component, $name).try_into().unwrap()))
     };
     ($world:expr, $component:ty, $name:tt : $($tail:tt)*) => {{
         let world = $world;
@@ -305,7 +305,7 @@ macro_rules! component_ext {
     ($world:expr, #[name=$regname:literal] $component:ty {$($name:tt),* $(,)?}) => {{
         let world = $world;
         let component = world.component_named_ext(::flecs_ecs::prelude::id!(world, $component), $regname);
-        const _: () = assert!(::core::mem::size_of::<$component>() == 4, "Flecs demands that enums are 4 bytes");
+        //const _: () = assert!(::core::mem::size_of::<$component>() == 4, "Flecs demands that enums are 4 bytes");
         $(component.constant(::core::stringify!($name), <$component>::$name as i32);)*
         component
     }};
@@ -313,7 +313,7 @@ macro_rules! component_ext {
     ($world:expr, $component:ty {$($name:tt),* $(,)?}) => {{
         let world = $world;
         let component = world.component_named_ext(::flecs_ecs::prelude::id!(world, $component), $crate::component_type_stringify!($component));
-        const _: () = assert!(::core::mem::size_of::<$component>() == 4, "Flecs demands that enums are 4 bytes");
+        //const _: () = assert!(::core::mem::size_of::<$component>() == 4, "Flecs demands that enums are 4 bytes");
         $(component.constant(::core::stringify!($name), <$component>::$name as i32);)*
         component
     }};
@@ -335,11 +335,11 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
     if !dummy.has(crate::core::utility::id::<flecs::meta::Type>()) {
         dummy.member(
             id!(&world, bool),
-            ("None", Count(1), core::mem::offset_of!(Dummy<T>, None)),
+            ("None", Count(0), core::mem::offset_of!(Dummy<T>, None)),
         );
         dummy.member(
             id!(&world, T),
-            ("Some", Count(1), core::mem::offset_of!(Dummy<T>, Some)),
+            ("Some", Count(0), core::mem::offset_of!(Dummy<T>, Some)),
         );
     }
     ts.as_type(dummy.id());
