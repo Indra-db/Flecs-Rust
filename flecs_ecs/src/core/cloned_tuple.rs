@@ -176,7 +176,7 @@ where
         let world_ref = world.world();
         let world_ptr = unsafe {
             sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t
-        };
+        }; 
         let table = unsafe { (*record).table };
         let entity = *entity;
         let mut has_all_components = true;

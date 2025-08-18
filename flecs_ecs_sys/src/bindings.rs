@@ -3,7 +3,8 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 use super::*;
-use libc::FILE;
+#[cfg(not(target_arch = "wasm32"))] use libc::FILE;
+#[cfg(target_arch = "wasm32")] type FILE = core::ffi::c_void;
 pub const FLECS_TERM_COUNT_MAX: u32 = 32;
 
 #[repr(C)]

@@ -41,7 +41,9 @@ fn generate_bindings() {
     // Other platforms can use "C-unwind" ABI
     let target = env::var("TARGET").unwrap();
     if target.contains("wasm") {
-        bindings = bindings.override_abi(bindgen::Abi::C, ".*");
+        bindings = bindings
+            .override_abi(bindgen::Abi::C, ".*")
+            .clang_arg("-Iwasm_shim/include");
     } else {
         bindings = bindings.override_abi(bindgen::Abi::CUnwind, ".*");
     }
@@ -79,7 +81,8 @@ fn generate_bindings() {
         .raw_line("#![allow(clippy::all)]")
         .raw_line("#![allow(warnings)]")
         .raw_line("use super::*;")
-        .raw_line("use libc::FILE;")
+        .raw_line("#[cfg(not(target_arch = \"wasm32\"))] use libc::FILE;")
+        .raw_line("#[cfg(target_arch = \"wasm32\")] type FILE = core::ffi::c_void;")
         .clang_arg("-DFLECS_CUSTOM_BUILD")
         .clang_arg("-DFLECS_CPP");
 
@@ -231,16 +234,31 @@ fn main() {
     println!("cargo:rerun-if-changed=src/flecs_rust.c");
     println!("cargo:rerun-if-changed=build.rs");
 
+    let target_is_wasm = std::env::var("TARGET")
+        .map(|t| t.starts_with("wasm"))
+        .unwrap_or(false);
+
     #[cfg(not(feature = "disable_build_c"))]
     {
         let mut build = cc::Build::new();
-
         build
-            .file("src/flecs_rust.c") // This includes flecs.c
+            .file("src/flecs_rust.c")
             .warnings(true)
             .extra_warnings(true)
             .define("FLECS_CUSTOM_BUILD", None)
             .define("FLECS_CPP", None);
+
+        if target_is_wasm {
+            build
+                .include("wasm_shim/include")
+                .file("wasm_shim/libc_stubs.c")
+                .flag("-ffreestanding")
+                .flag("-fno-exceptions")
+                .flag("-fno-unwind-tables")
+                .flag("-fno-asynchronous-unwind-tables")
+                .flag("-fvisibility=hidden")
+                .define("FLECS_NO_OS_API_IMPL", None);
+        }
 
         #[cfg(feature = "flecs_perf_trace")]
         build.define("FLECS_PERF_TRACE", None);
@@ -338,9 +356,6 @@ fn main() {
         );
 
         build.compile("flecs");
-
-        //TODO C might complain about unused functions when disabling certain features, turn the warning off?
-
         #[cfg(feature = "regenerate_binding")]
         generate_bindings();
     }
