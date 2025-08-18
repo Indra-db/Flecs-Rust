@@ -281,7 +281,9 @@ pub(crate) fn collect_flecs_traits_calls(
                                     Item::OnRemove(hook) => {
                                         out.extend(quote! { _component.on_remove(#hook); });
                                     }
-                                    Item::OnReplace(_hook) => { /* not supported yet */ }
+                                    Item::OnReplace(hook) => {
+                                        out.extend(quote! { _component.on_replace(#hook); });
+                                    }
                                     _ => {}
                                 }
                             }

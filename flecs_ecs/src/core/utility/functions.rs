@@ -364,119 +364,30 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
-    let mut is_new = false;
     unsafe {
-        if sys::ecs_is_deferred(world) {
-            if T::NEEDS_DROP {
-                if T::IMPLS_DEFAULT {
-                    //use set batching //faster performance, no panic possible
-                    let res = sys::ecs_cpp_assign(
-                        world,
-                        entity,
-                        id,
-                        &value as *const _ as *const _,
-                        const { core::mem::size_of::<T>() },
-                    );
-                    let comp = &mut *(res.ptr as *mut T);
-                    core::ptr::drop_in_place(comp);
-                    core::ptr::write(comp, value);
-
-                    if res.call_modified {
-                        sys::ecs_modified_id(world, entity, id);
-                    }
-                } else {
-                    //when it has the component, we know it won't panic using set and impl drop.
-                    if sys::ecs_has_id(world, entity, id) {
-                        //use set batching //faster performance, no panic possible since it's already present
-                        let res = sys::ecs_cpp_assign(
-                            world,
-                            entity,
-                            id,
-                            &value as *const _ as *const _,
-                            const { core::mem::size_of::<T>() },
-                        );
-                        let comp = &mut *(res.ptr as *mut T);
-                        core::ptr::drop_in_place(comp);
-                        core::ptr::write(comp, value);
-
-                        if res.call_modified {
-                            sys::ecs_modified_id(world, entity, id);
-                        }
-
-                        return;
-                    }
-
-                    // if does not impl default or not have the id
-                    // use insert //slower performance
-                    let size = const { core::mem::size_of::<T>() };
-                    let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
-
-                    if !is_new {
-                        core::ptr::drop_in_place(ptr);
-                    }
-                    core::ptr::write(ptr, value);
-                    sys::ecs_modified_id(world, entity, id);
-                }
-            } else {
-                if sys::ecs_has_id(world, entity, id) {
-                    //if not needs drop, use set batching, faster performance
-                    let res = sys::ecs_cpp_assign(
-                        world,
-                        entity,
-                        id,
-                        &value as *const _ as *const _,
-                        core::mem::size_of::<T>(),
-                    );
-
-                    let comp = &mut *(res.ptr as *mut T);
-                    core::ptr::drop_in_place(comp);
-                    core::ptr::write(comp, value);
-
-                    if res.call_modified {
-                        sys::ecs_modified_id(world, entity, id);
-                    }
-                } else {
-                    let size = const { core::mem::size_of::<T>() };
-                    let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
-
-                    if !is_new {
-                        core::ptr::drop_in_place(ptr);
-                    }
-                    core::ptr::write(ptr, value);
-                    sys::ecs_modified_id(world, entity, id);
-                }
+        if T::NEEDS_DROP {
+            if sys::ecs_has_id(world, entity, id) {
+                assign_helper(world, entity, value, id);
+                return;
             }
-        } else
-        /* not deferred */
-        {
-            let size = const { core::mem::size_of::<T>() };
-            let ptr = sys::ecs_emplace_id(world, entity, id, size, &mut is_new) as *mut T;
+        }
 
-            if !is_new {
-                core::ptr::drop_in_place(ptr);
-            }
-            core::ptr::write(ptr, value);
+        let res = sys::ecs_cpp_set(
+            world,
+            entity,
+            id,
+            &value as *const _ as *const _,
+            const { core::mem::size_of::<T>() },
+        );
+
+        let comp = res.ptr as *mut T;
+        core::ptr::write(comp, value);
+
+        if res.call_modified {
             sys::ecs_modified_id(world, entity, id);
         }
     }
 }
-
-/*
-inline void assign(world_t *world, flecs::entity_t entity, T&& value, flecs::id_t id) {
-    ecs_assert(_::type<remove_reference_t<T>>::size() != 0,
-        ECS_INVALID_PARAMETER, "operation invalid for empty type");
-
-    ecs_cpp_get_mut_t res = ecs_cpp_assign(
-        world, entity, id, &value, sizeof(T));
-
-    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
-    dst = FLECS_FWD(value);
-
-    if (res.call_modified) {
-        ecs_modified_id(world, entity, id);
-    }
-}
-*/
 
 pub(crate) fn assign_helper<T: ComponentId>(
     world: *mut sys::ecs_world_t,
