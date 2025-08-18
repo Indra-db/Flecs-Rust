@@ -3756,4 +3756,26 @@ impl World {
             sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);
         }
     }
+
+    /// Return component id if it has been registered.
+    ///
+    /// This is similar to `component_id::<T>()` but will never register the
+    /// component with the world. If `T` is not registered in this world, returns `None`.
+    #[inline(always)]
+    pub fn get_component_id<T: ComponentId>(&self) -> Option<Entity> {
+        if <T as ComponentId>::is_registered_with_world(self) {
+            Some(Entity(T::entity_id(self)))
+        } else {
+            None
+        }
+    }
+
+    /// Return raw type info for an id (component, tag, or pair).
+    ///
+    /// Returns `None` when no type info is available for the provided id.
+    #[inline(always)]
+    pub fn type_info_from(&self, id: impl IntoId) -> Option<*const sys::ecs_type_info_t> {
+        let ptr = unsafe { sys::ecs_get_type_info(self.raw_world.as_ptr(), *id.into_entity(self)) };
+        if ptr.is_null() { None } else { Some(ptr) }
+    }
 }
