@@ -17,12 +17,14 @@ pub struct Velocity {
 fn main() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Position { x: 1, y: 2 });
 
     let query = world
         .query::<(&Position, &Velocity)>()
-        .term_at(0)
-        .singleton()
         // setting it cached is important! otherwise the query will go out of scope since it's not associated with an entity
         // uncached queries are meant to be shortlived, but faster to create in general. More dynamic in nature.
         .set_cached()

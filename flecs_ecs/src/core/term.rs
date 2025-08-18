@@ -815,33 +815,6 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         self.set_oper(OperKind::NotFrom)
     }
 
-    /// Match singleton
-    fn singleton(&mut self) -> &mut Self {
-        ecs_assert!(
-            self.current_term_mut().id != 0 || self.current_term_mut().first.id != 0,
-            FlecsErrorCode::InvalidParameter,
-            "no component specified for singleton"
-        );
-
-        unsafe {
-            let sid = if self.current_term_mut().id != 0 {
-                self.current_term_mut().id
-            } else {
-                self.current_term_mut().first.id
-            };
-
-            ecs_assert!(sid != 0, FlecsErrorCode::InvalidParameter, "invalid id");
-
-            if !ecs_is_pair(sid) {
-                self.current_term_mut().src.id = sid;
-            } else {
-                self.current_term_mut().src.id =
-                    sys::ecs_get_alive(self.world_ptr_mut(), *ecs_first(sid, self.world()));
-            }
-        }
-        self
-    }
-
     /// Query terms are not triggered on by observers
     #[inline(always)]
     fn filter(&mut self) -> &mut Self {

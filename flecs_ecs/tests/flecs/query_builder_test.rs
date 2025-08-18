@@ -937,12 +937,13 @@ fn query_builder_string_term() {
 fn query_builder_singleton_term() {
     let world = World::new();
 
+    world.component::<Other>().add_trait::<flecs::Singleton>();
+
     world.set(Other { value: 10 });
 
     let q = world
         .query::<&SelfRef>()
         .with(&Other::id())
-        .singleton()
         .set_inout()
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
@@ -1627,13 +1628,16 @@ fn query_builder_template_term() {
 fn query_builder_typed_term_at() {
     let world = World::new();
 
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
 
     let s = world
         .system::<&Velocity>()
         .with(&mut RelFoo::id())
         .term_at_type::<Velocity>()
-        .singleton()
         .term_at_type::<RelFoo>()
         .set_second(flecs::Wildcard::ID)
         .run(|mut it| {
@@ -1659,13 +1663,16 @@ fn query_builder_typed_term_at() {
 fn query_builder_typed_term_at_indexed() {
     let world = World::new();
 
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
 
     let s = world
         .system::<&Velocity>()
         .with(&mut RelFoo::id())
         .term_at_checked::<Velocity>(0)
-        .singleton()
         .term_at_checked::<RelFoo>(1)
         .set_second(flecs::Wildcard::ID)
         .run(|mut it| {
@@ -1936,10 +1943,13 @@ fn query_builder_2_subsequent_args() {
 
     let world = create_world_with_flags::<Flags>();
 
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
+
     let s = world
         .system::<(&mut (RelFoo, flecs::Wildcard), &Velocity)>()
         .term_at(1)
-        .singleton()
         .run(|mut it| {
             while it.next() {
                 it.real_world().get::<&mut Flags>(|f| f.count += it.count());

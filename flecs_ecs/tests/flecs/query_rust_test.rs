@@ -7,14 +7,13 @@ use crate::common_test::*;
 fn query_rust_pass_query_to_system() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Position { x: 1, y: 2 });
 
-    let query = world
-        .query::<(&Position, &Velocity)>()
-        .term_at(0)
-        .singleton()
-        .set_cached()
-        .build();
+    let query = world.query::<(&Position, &Velocity)>().set_cached().build();
 
     world.entity().set(Velocity { x: 590, y: 20 });
 

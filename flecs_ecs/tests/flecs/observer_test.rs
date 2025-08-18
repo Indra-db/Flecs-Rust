@@ -855,11 +855,14 @@ fn observer_on_set_w_set_sparse() {
 fn observer_on_add_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     world
         .observer::<flecs::OnSet, &Position>()
         .term_at(0)
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -883,12 +886,15 @@ fn observer_on_add_singleton() {
 fn observer_on_add_pair_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
         .with((Position::id(), tgt))
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -910,13 +916,16 @@ fn observer_on_add_pair_singleton() {
 fn observer_on_add_pair_wildcard_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt_1 = world.entity();
     let tgt_2 = world.entity();
     world
         .observer::<flecs::OnSet, &(Position, flecs::Wildcard)>()
         .term_at(0)
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -946,12 +955,15 @@ fn observer_on_add_pair_wildcard_singleton() {
 fn observer_on_add_with_pair_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
         .with((Position::id(), tgt))
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
