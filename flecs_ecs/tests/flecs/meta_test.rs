@@ -900,3 +900,54 @@ fn meta_ser_deser_std_vector_string() {
     let json = world.to_json_dyn(id!(&world, Vec<String>), &vec);
     assert_eq!(json, "[\"Hello\", \"World\", \"Foo\"]");
 }
+
+/*
+
+void Meta_script_to_std_vector_int(void) {
+    flecs::world world;
+
+    world.component<std::vector<int>>("IntVec")
+        .opaque(std_vector_support<int>);
+
+    flecs::entity s = world.script()
+        .code("e { IntVec: [10, 20, 30] }")
+        .run();
+
+    const flecs::Script& sptr = s.get<flecs::Script>();
+    test_assert(sptr.error == nullptr);
+
+    flecs::entity e = world.lookup("e");
+    test_assert(e != 0);
+
+    const std::vector<int>& v = e.get<std::vector<int>>();
+    test_int(v.size(), 3);
+    test_int(v.at(0), 10);
+    test_int(v.at(1), 20);
+    test_int(v.at(2), 30);
+}
+
+void Meta_script_to_std_vector_std_string(void) {
+    flecs::world world;
+
+    world.component<std::string>()
+        .opaque(std_string_support);
+
+    world.component<std::vector<std::string>>("StringVec")
+        .opaque(std_vector_support<std::string>);
+
+    flecs::entity s = world.script()
+        .code("e { StringVec: [\"Hello\", \"World\"] }")
+        .run();
+
+    const flecs::Script& sptr = s.get<flecs::Script>();
+    test_assert(sptr.error == nullptr);
+
+    flecs::entity e = world.lookup("e");
+    test_assert(e != 0);
+
+    const std::vector<std::string>& v = e.get<std::vector<std::string>>();
+    test_int(v.size(), 2);
+    test_str(v.at(0).c_str(), "Hello");
+    test_str(v.at(1).c_str(), "World");
+}
+*/
