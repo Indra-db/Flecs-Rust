@@ -514,7 +514,7 @@ fn test_compile_doc() {
     let query = world.query::<()>().set_cached().build();
     query.set_doc_name("name");
 
-    let system = world.system::<()>().build();
+    let system = world.system::<()>().each(|_| {});
     system.set_doc_name("name");
 
     let observer = world.observer::<flecs::OnAdd, ()>().with(Tag).run(|_| {});
