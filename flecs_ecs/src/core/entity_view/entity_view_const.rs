@@ -407,7 +407,10 @@ impl<'a> EntityView<'a> {
 
     /// Check if entity is valid.
     ///
-    /// Entities are valid if they are not 0 and if they are alive. This function
+    /// Entities are valid if :
+    /// - they are not 0
+    /// - if they are alive
+    /// - the id contains a valid bit pattern for an entity
     ///
     ///
     /// # Examples
@@ -2301,32 +2304,19 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        #[cfg(feature = "flecs_meta")]
-        {
-            let id_underlying_type = self.world.component_id::<i32>();
-            let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
-            let constant_value =
-                unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
+        let id_underlying_type = self.world.component_id::<i32>();
+        let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+        let constant_value =
+            unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
 
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                core::any::type_name::<T>()
-            );
+        ecs_assert!(
+            !constant_value.is_null(),
+            FlecsErrorCode::InternalError,
+            "missing enum constant value {}",
+            core::any::type_name::<T>()
+        );
 
-            unsafe { (constant_value.add(0) as *mut T).read() }
-        }
-
-        #[cfg(not(feature = "flecs_meta"))]
-        {
-            ecs_assert!(
-                false,
-                FlecsErrorCode::Unsupported,
-                "operation not supported without FLECS_META addon"
-            );
-            unsafe { std::mem::zeroed() }
-        }
+        unsafe { (constant_value.add(0) as *mut T).read() }
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).

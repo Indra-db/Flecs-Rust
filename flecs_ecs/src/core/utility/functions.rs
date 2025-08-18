@@ -365,11 +365,9 @@ pub(crate) fn set_helper<T: ComponentId>(
     };
 
     unsafe {
-        if T::NEEDS_DROP {
-            if sys::ecs_has_id(world, entity, id) {
-                assign_helper(world, entity, value, id);
-                return;
-            }
+        if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
+            assign_helper(world, entity, value, id);
+            return;
         }
 
         let res = sys::ecs_cpp_set(
