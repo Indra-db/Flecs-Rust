@@ -313,7 +313,11 @@ where
     ///
     /// Returns whether field is set
     pub fn is_set(&self, index: i8) -> bool {
-        self.iter.set_fields & (1u32 << (index as usize)) != 0
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        self.iter.set_fields & val != 0
     }
 
     /// # Arguments
@@ -587,7 +591,11 @@ where
     ) -> FieldAt<'a, T::UnderlyingType> {
         self.field_safety_checks::<T, true, true>(index);
         let row = row.into();
-        if self.iter.row_fields & (1u32 << index) == 0 {
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        if self.iter.row_fields & val == 0 {
             panic!(
                 "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
                 T::name()
@@ -614,7 +622,11 @@ where
     ) -> Option<FieldAt<'a, T::UnderlyingType>> {
         self.field_safety_checks::<T, true, true>(index);
         let row = row.into();
-        if self.iter.row_fields & (1u32 << index) == 0 {
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        if self.iter.row_fields & val == 0 {
             panic!(
                 "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
                 T::name()
@@ -634,7 +646,11 @@ where
         self.field_safety_checks::<T, false, true>(index);
         let row = row.into();
 
-        if self.iter.row_fields & (1u32 << index) == 0 {
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        if self.iter.row_fields & val == 0 {
             panic!(
                 "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
                 T::name()
@@ -655,7 +671,11 @@ where
         self.field_safety_checks::<T, false, true>(index);
         let row = row.into();
 
-        if self.iter.row_fields & (1u32 << index) == 0 {
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        if self.iter.row_fields & val == 0 {
             panic!(
                 "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
                 T::name()
@@ -669,7 +689,12 @@ where
     /// This function may be used to access shared fields when row is set to 0.
     pub fn field_at_untyped(&self, index: i8, row: usize) -> *const c_void {
         self.field_safety_checks::<(), true, false>(index);
-        if self.iter.row_fields & (1u32 << index) != 0 {
+
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+        if self.iter.row_fields & val != 0 {
             self.field_at_untyped_internal(index, row)
         } else {
             let field = self.get_field_untyped_internal(index);
@@ -685,7 +710,13 @@ where
     /// This function may be used to access shared fields when row is set to 0.
     pub fn field_at_untyped_mut(&self, index: i8, row: usize) -> *mut c_void {
         self.field_safety_checks::<(), false, false>(index);
-        if self.iter.row_fields & (1u32 << index) != 0 {
+
+        #[cfg(not(feature = "flecs_term_count_64"))]
+        let val = 1u32 << (index as usize);
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << (index as usize);
+
+        if self.iter.row_fields & val != 0 {
             self.field_at_untyped_internal_mut(index, row)
         } else {
             let field = self.get_field_untyped_internal_mut(index);

@@ -80,7 +80,7 @@ flecs_stats = ["flecs_pipeline", "flecs_timer", "flecs_module"]
 flecs_metrics = ["flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_pipeline", "flecs_metrics", "flecs_script"]
+flecs_alerts = ["flecs_pipeline", "flecs_metrics", "flecs_script", "flecs_timer"]
 
 # System support
 flecs_system = ["flecs_module"]

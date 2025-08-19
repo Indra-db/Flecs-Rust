@@ -444,7 +444,11 @@ where
             tr.table_record = unsafe { *it.trs.add(0) };
         }
 
-        if it.row_fields & (1u32 << 0) != 0 {
+        #[cfg(not(feature = "flecs_term_count_64"))] 
+        let val = 1u32 << 0;
+        #[cfg(feature = "flecs_term_count_64")]
+        let val = 1u64 << 0;
+        if it.row_fields & val != 0 {
             // Need to fetch the value with flecs_field_at()
             is_ref[0] = true;
             is_row[0] = true;
@@ -698,7 +702,11 @@ macro_rules! impl_iterable {
                         *idx += 1;
                     }
 
-                    if (it.row_fields & (1u32 << index)) != 0 {
+                    #[cfg(not(feature = "flecs_term_count_64"))]
+                    let val = 1u32 << 0;
+                    #[cfg(feature = "flecs_term_count_64")]
+                    let val = 1u64 << 0;
+                    if (it.row_fields & val) != 0 {
                         // Need to fetch the value with flecs_field_at()
                         is_ref[index] =  true;
                         is_row[index] = true;

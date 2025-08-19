@@ -320,16 +320,16 @@ unsafe impl Send for EcsStruct {}
 #[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsStruct {}
 
-#[cfg(feature = "flecs_units")]
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsUnit {}
 
-#[cfg(feature = "flecs_units")]
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsUnit {}
 
-#[cfg(feature = "flecs_units")]
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsUnitPrefix {}
 
-#[cfg(feature = "flecs_units")]
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsUnitPrefix {}
 
 #[cfg(feature = "flecs_script")]

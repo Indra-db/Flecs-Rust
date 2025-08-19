@@ -135,7 +135,7 @@ flecs_stats = ["flecs_ecs_sys/flecs_stats", "flecs_pipeline", "flecs_timer", "fl
 flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_pipeline", "flecs_metrics"]
+flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_pipeline", "flecs_metrics", "flecs_timer"]
 
 # System support
 flecs_system = ["flecs_ecs_sys/flecs_system", "flecs_module"]
@@ -197,7 +197,7 @@ flecs_base = [
 ]
 
 default = [
-    "flecs_regenerate_binding_c",
+    #"flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
