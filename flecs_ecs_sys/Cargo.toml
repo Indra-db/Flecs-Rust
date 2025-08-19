@@ -135,5 +135,4 @@ flecs_base = [
 
 # Default features
 default = [
-    "flecs_meta_c",
 ]
