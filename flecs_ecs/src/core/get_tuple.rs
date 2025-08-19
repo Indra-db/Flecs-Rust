@@ -483,7 +483,7 @@ macro_rules! impl_get_tuple {
                              let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
 
                              ecs_assert!(
-                                 !constant_value.is_null(),
+                                 !constant_value.component_ptr.is_null(),
                                  FlecsErrorCode::InternalError,
                                  "missing enum constant value {}",
                                  core::any::type_name::<$t>()

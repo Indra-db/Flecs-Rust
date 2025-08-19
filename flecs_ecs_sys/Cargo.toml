@@ -73,9 +73,6 @@ flecs_module = []
 # ECS data definition format
 flecs_script = ["flecs_module", "flecs_meta", "flecs_doc"]
 
-# Snapshot & restore ECS data
-flecs_snapshot = []
-
 # Access runtime statistics
 flecs_stats = ["flecs_pipeline", "flecs_timer", "flecs_module"]
 

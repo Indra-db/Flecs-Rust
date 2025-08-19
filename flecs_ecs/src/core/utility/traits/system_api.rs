@@ -607,6 +607,7 @@ macro_rules! implement_reactor_api {
     };
 }
 
+#[cfg(feature = "flecs_system")]
 macro_rules! implement_reactor_par_api {
     ($param:ty, $type:ty) => {
         impl<'a, T> internal_ParSystemAPI<'a, $param, T> for $type
@@ -641,4 +642,5 @@ macro_rules! implement_reactor_par_api {
 }
 
 pub(crate) use implement_reactor_api;
+#[cfg(feature = "flecs_system")]
 pub(crate) use implement_reactor_par_api;

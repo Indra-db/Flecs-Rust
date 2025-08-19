@@ -5,6 +5,7 @@
 
 use super::*;
 
+#[cfg(feature = "flecs_alerts")]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 //#[cfg(feature = "flecs_alerts")] //TODO flecs ecs_alert_init not properly defined in flecs c api.
@@ -271,46 +272,68 @@ impl Default for ecs_get_ptr_t {
     }
 }
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Send for EcsWorldStats {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Sync for EcsWorldStats {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Send for EcsWorldSummary {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Sync for EcsWorldSummary {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Send for EcsPipelineStats {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Sync for EcsPipelineStats {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Send for EcsSystemStats {}
 
+#[cfg(feature = "flecs_stats")]
 unsafe impl Sync for EcsSystemStats {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsTypeSerializer {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsTypeSerializer {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsEnum {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsEnum {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsBitmask {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsBitmask {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Send for EcsStruct {}
 
+#[cfg(feature = "flecs_meta")]
 unsafe impl Sync for EcsStruct {}
 
+#[cfg(feature = "flecs_units")]
 unsafe impl Send for EcsUnit {}
 
+#[cfg(feature = "flecs_units")]
 unsafe impl Sync for EcsUnit {}
 
+#[cfg(feature = "flecs_units")]
 unsafe impl Send for EcsUnitPrefix {}
 
+#[cfg(feature = "flecs_units")]
 unsafe impl Sync for EcsUnitPrefix {}
 
+#[cfg(feature = "flecs_script")]
 unsafe impl Send for EcsScript {}
 
+#[cfg(feature = "flecs_script")]
 unsafe impl Sync for EcsScript {}

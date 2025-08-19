@@ -17,6 +17,12 @@ command = "cargo"
 args = ["build"]
 workspace = false
 
+[tasks.build-workspace]
+description = "Build all workspace members (equivalent to `cargo build --workspace`)"
+command = "cargo"
+args = ["build", "--workspace"]
+workspace = true
+
 [tasks.test]
 command = "cargo"
 args = ["test", "-p", "flecs_ecs"]

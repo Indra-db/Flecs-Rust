@@ -14,9 +14,11 @@ use alloc::vec::Vec;
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Data, DeriveInput, Fields, Ident, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, parse_macro_input};
 
 use crate::tuples::Tuples;
+#[cfg(feature = "flecs_query_rust_traits")]
+use syn::Ident;
 
 mod component;
 mod dsl;

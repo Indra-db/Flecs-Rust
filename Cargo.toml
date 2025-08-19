@@ -1,6 +1,20 @@
 [workspace]
-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys", "test_crash_handler"]
+members = [
+    "flecs_ecs",
+    "flecs_ecs_derive",
+    "flecs_ecs_sys",
+    "test_crash_handler",
+    "build_tests/flecs_base",
+    "build_tests/no_features",
+    "build_tests/flecs_module",
+    "build_tests/flecs_system",
+    "build_tests/flecs_pipeline",
+    "build_tests/flecs_timer",
+    "build_tests/flecs_os_api_impl",
+    "build_tests/flecs_safety_locks",
+]
 resolver = "2"
+default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys", "test_crash_handler"]
 
 exclude = [
     "flecs_ecs_test",

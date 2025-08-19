@@ -128,9 +128,6 @@ flecs_module = ["flecs_ecs_sys/flecs_module"]
 # ECS data definition format
 flecs_script = ["flecs_ecs_sys/flecs_script", "flecs_meta", "flecs_doc", "flecs_module"]
 
-# Snapshot & restore ECS data
-flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
-
 # Access runtime statistics
 flecs_stats = ["flecs_ecs_sys/flecs_stats", "flecs_pipeline", "flecs_timer", "flecs_module"]
 
@@ -200,11 +197,10 @@ flecs_base = [
 ]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    "flecs_regenerate_binding_c",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
-    "flecs_snapshot",
     "flecs_stats",
     "flecs_metrics",
     "flecs_alerts",
