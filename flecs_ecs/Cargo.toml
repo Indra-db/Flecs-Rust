@@ -237,3 +237,7 @@ bench = false
 name = "main"
 path = "benches/flecs/_main.rs"
 harness = false
+
+
+#  build test command for testing build each feature
+#  cargo hack check -p flecs_ecs --each-feature --exclude-features flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c --no-dev-deps -v --features std,flecs_regenerate_binding_c  
