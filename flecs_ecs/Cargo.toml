@@ -65,7 +65,7 @@ getrandom = { version = "0.3.3", features = ["wasm_js"] }
 flecs_safety_locks = ["flecs_ecs_sys/flecs_safety_locks"]
 
 # Regenerate the C binding for flecs C
-flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
+flecs_regenerate_binding = ["flecs_ecs_sys/regenerate_binding"]
 
 # force build debug for flecs C, even in release mode
 flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
@@ -197,7 +197,7 @@ flecs_base = [
 ]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    #"flecs_regenerate_binding",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
@@ -240,4 +240,4 @@ harness = false
 
 
 #  build test command for testing build each feature
-#  cargo hack check -p flecs_ecs --each-feature --exclude-features flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c --no-dev-deps -v --features std,flecs_regenerate_binding_c  
+#  cargo hack check -p flecs_ecs --each-feature --exclude-features flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c --no-dev-deps -v --features std,flecs_regenerate_binding  
