@@ -464,11 +464,6 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 #[cfg(not(feature = "flecs_query_rust_traits"))]
 pub fn ecs_rust_trait(_: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    const {
-        panic!(
-            "The `flecs_query_rust_traits` feature must be enabled to use this procedural macro."
-        )
-    };
     ProcMacroTokenStream::new()
 }
 
