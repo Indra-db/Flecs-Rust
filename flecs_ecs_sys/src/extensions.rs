@@ -1,10 +1,8 @@
 #[cfg(feature = "flecs_meta")]
 use crate::EcsOpaque;
+
 #[cfg(feature = "flecs_app")]
 use crate::ecs_app_desc_t;
-
-#[cfg(feature = "flecs_meta")]
-use crate::EcsOpaque;
 
 #[cfg(feature = "flecs_alerts")]
 use crate::{ecs_alert_desc_t, ecs_alert_severity_filter_t};
@@ -13,13 +11,9 @@ use crate::{ecs_alert_desc_t, ecs_alert_severity_filter_t};
 use crate::ecs_metric_desc_t;
 
 use crate::{
-    EcsComponent, EcsComponent, EcsPoly, EcsPoly, ecs_entity_desc_t, ecs_entity_desc_t,
-    ecs_event_desc_t, ecs_event_desc_t, ecs_header_t, ecs_header_t, ecs_observer_desc_t,
-    ecs_observer_desc_t, ecs_query_desc_t, ecs_term_ref_t, ecs_term_t, ecs_type_hooks_t,
-    ecs_type_t,
+    EcsComponent, EcsPoly, ecs_entity_desc_t, ecs_event_desc_t, ecs_header_t, ecs_observer_desc_t,
+    ecs_query_desc_t, ecs_term_ref_t, ecs_term_t, ecs_type_hooks_t, ecs_type_t,
 };
-#[cfg(feature = "flecs_alerts")]
-use crate::{ecs_alert_desc_t, ecs_alert_severity_filter_t};
 
 #[cfg(feature = "flecs_system")]
 use crate::{EcsTickSource, ecs_system_desc_t};
