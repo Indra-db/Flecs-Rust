@@ -513,11 +513,11 @@ pub fn extern_abi(
 
     let output = quote! {
         #(#fn_attrs)*
-        #[cfg(target_family = "wasm")]
+        #[cfg(any(target_family = "wasm", feature = "wasm32"))]
         #fn_vis extern "C" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
 
         #(#fn_attrs)*
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
         #fn_vis extern "C-unwind" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
     };
 

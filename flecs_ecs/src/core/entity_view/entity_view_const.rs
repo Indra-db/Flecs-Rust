@@ -17,9 +17,9 @@ extern crate alloc;
 use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
 
 // Type definitions for function pointers that need different ABIs for WASM vs non-WASM
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type ObserverIterFnPtr = extern "C-unwind" fn(*mut sys::ecs_iter_t);
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type ObserverIterFnPtr = extern "C" fn(*mut sys::ecs_iter_t);
 
 /// A view into an entity in the world that provides both read and write access to components and relationships.

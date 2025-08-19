@@ -238,7 +238,7 @@ where
 }
 
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type GroupByFn = extern "C-unwind" fn(
     *mut sys::ecs_world_t,
     *mut sys::ecs_table_t,
@@ -246,40 +246,40 @@ type GroupByFn = extern "C-unwind" fn(
     *mut c_void,
 ) -> u64;
 
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type GroupByFn =
     extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
 
 // Type definitions for OrderBy function pointers
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type OrderByFnPtr<T> = extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32;
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type OrderByFnPtr<T> = extern "C" fn(Entity, &T, Entity, &T) -> i32;
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type OrderByFnPtrUnsafe = unsafe extern "C-unwind" fn(
     u64,
     *const core::ffi::c_void,
     u64,
     *const core::ffi::c_void,
 ) -> i32;
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type OrderByFnPtrUnsafe =
     unsafe extern "C" fn(u64, *const core::ffi::c_void, u64, *const core::ffi::c_void) -> i32;
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type OrderByFnVoidPtr = extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type OrderByFnVoidPtr = extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 type OrderByFnVoidPtrUnsafe = unsafe extern "C-unwind" fn(
     u64,
     *const core::ffi::c_void,
     u64,
     *const core::ffi::c_void,
 ) -> i32;
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 type OrderByFnVoidPtrUnsafe =
     unsafe extern "C" fn(u64, *const core::ffi::c_void, u64, *const core::ffi::c_void) -> i32;
 

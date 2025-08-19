@@ -582,10 +582,10 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
         unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
 
     /// Type alias for extern function pointers that adapts to target platform
-    #[cfg(target_family = "wasm")]
+    #[cfg(any(target_family = "wasm", feature = "wasm32"))]
     type ExternDefaultCtorFn =
         unsafe extern "C" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
     type ExternDefaultCtorFn =
         unsafe extern "C-unwind" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
 

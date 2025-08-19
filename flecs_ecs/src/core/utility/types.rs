@@ -4,9 +4,9 @@ use core::ffi::c_void;
 pub type FTime = f32;
 
 /// Type alias for extern function pointers that adapts to target platform
-#[cfg(target_family = "wasm")]
+#[cfg(any(target_family = "wasm", feature = "wasm32"))]
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "wasm32")))]
 pub(crate) type EcsCtxFreeT = extern "C-unwind" fn(*mut c_void);
 
 // #[doc(hidden)]

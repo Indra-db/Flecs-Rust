@@ -134,6 +134,6 @@ args = [
     "--no-dev-deps",
     "-v",
     "--features",
-    "std,flecs_regenerate_binding"
+    "std,flecs_bindgen"
 ]
 workspace = false

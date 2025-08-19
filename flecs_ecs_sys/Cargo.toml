@@ -18,13 +18,15 @@ workspace = true
 libc.workspace = true
 
 [build-dependencies]
-bindgen = "0.71.1"
+bindgen = "0.72.0"
 cc = "1.2.2"
 regex = "1.11.1"
 
 [features]
 # Regenerate the C binding for flecs C
-regenerate_binding = []
+bindgen = []
+
+wasm32 = []
 
 # force enables both rust and c ecs asserts, useful when running release mode, but wanting the asserts for safety
 flecs_force_enable_ecs_asserts = []
@@ -129,7 +131,6 @@ flecs_base = [
     "flecs_system",
     "flecs_pipeline",
     "flecs_timer",
-    "flecs_os_api_impl",
     "flecs_safety_locks"
 ]
 

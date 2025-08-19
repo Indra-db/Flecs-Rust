@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
-#[cfg(feature = "regenerate_binding")]
+#[cfg(feature = "bindgen")]
 fn generate_bindings() {
     use std::{env, path::PathBuf};
 
@@ -28,6 +28,13 @@ fn generate_bindings() {
         }
     }
 
+    let target = env::var("TARGET").unwrap();
+    if target.contains("wasm") {
+        panic!(
+            "WASM target binding generation causes issues, don't use `bindgen` feature. generate bindings with `wasm32` feature instead and then target `wasm32-unknown-unknown` afterwards"
+        );
+    }
+
     let mut bindings = bindgen::Builder::default()
         .header("src/flecs_rust.h")
         // Only keep things that we've allowlisted rather than
@@ -39,12 +46,14 @@ fn generate_bindings() {
     // Use appropriate ABI based on target platform
     // WASM doesn't support unwinding, so use "C" ABI
     // Other platforms can use "C-unwind" ABI
-    let target = env::var("TARGET").unwrap();
-    if target.contains("wasm") {
-        bindings = bindings
-            .override_abi(bindgen::Abi::C, ".*")
-            .clang_arg("-Iwasm_shim/include");
-    } else {
+
+    #[cfg(feature = "wasm32")]
+    {
+        bindings = bindings.override_abi(bindgen::Abi::C, ".*");
+        bindings = bindings.clang_arg("-DFLECS_NO_OS_API_IMPL");
+    }
+    #[cfg(not(feature = "wasm32"))]
+    {
         bindings = bindings.override_abi(bindgen::Abi::CUnwind, ".*");
     }
 
@@ -178,6 +187,10 @@ fn generate_bindings() {
 
     #[cfg(feature = "flecs_os_api_impl")]
     {
+        #[cfg(feature = "wasm32")]
+        {
+            panic!("FLECS_OS_API_IMPL is not supported on wasm32");
+        }
         bindings = bindings.clang_arg("-DFLECS_OS_API_IMPL");
     }
 
@@ -356,7 +369,8 @@ fn main() {
         );
 
         build.compile("flecs");
-        #[cfg(feature = "regenerate_binding")]
+
+        #[cfg(feature = "bindgen")]
         generate_bindings();
     }
 }
