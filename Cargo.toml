@@ -4,32 +4,6 @@ members = [
     "flecs_ecs_derive",
     "flecs_ecs_sys",
     "test_crash_handler",
-    "build_tests/flecs_base",
-    "build_tests/no_features",
-    "build_tests/flecs_module",
-    "build_tests/flecs_system",
-    "build_tests/flecs_pipeline",
-    "build_tests/flecs_timer",
-    "build_tests/flecs_os_api_impl",
-    "build_tests/flecs_safety_locks",
-    "build_tests/flecs_script",
-    "build_tests/flecs_stats",
-    "build_tests/flecs_metrics",
-    "build_tests/flecs_alerts",
-    "build_tests/flecs_meta",
-    "build_tests/flecs_units",
-    "build_tests/flecs_json",
-    "build_tests/flecs_doc",
-    "build_tests/flecs_log",
-    "build_tests/flecs_app",
-    "build_tests/flecs_http",
-    "build_tests/flecs_rest",
-    "build_tests/flecs_query_rust_traits",
-    "build_tests/flecs_journal",
-    "build_tests/flecs_term_count_64",
-    "build_tests/flecs_perf_trace",
-    "build_tests/flecs_rust_no_enum_reflection",
-    "build_tests/flecs_use_os_alloc",
 ]
 resolver = "2"
 default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
@@ -69,7 +43,7 @@ rust.unused_lifetimes = "warn"
 flecs_ecs = { version = "0.1.2", path = "flecs_ecs" }
 flecs_ecs_derive = { version = "0.1.0", path = "flecs_ecs_derive" }
 flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
-libc = "0.2.169"
+libc = "0.2.175"
 
 [profile.release]
 lto = "thin"
