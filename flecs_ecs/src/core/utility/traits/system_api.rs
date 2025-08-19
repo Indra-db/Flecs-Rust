@@ -447,6 +447,15 @@ where
         self.each_entity(func)
     }
 
+    /// Variant of [`SystemAPI::each_iter`] which allows the system to run in multiple threads
+    fn par_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        self.each_iter(func)
+    }
+
     /// Variant of [`SystemAPI::run`] which allows the system to run in multiple threads
     fn par_run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
