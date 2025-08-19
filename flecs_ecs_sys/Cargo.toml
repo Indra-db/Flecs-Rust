@@ -127,6 +127,15 @@ flecs_rest = ["flecs_http", "flecs_json", "flecs_pipeline"]
 # Journaling addon (disabled by default)
 flecs_journal = ["flecs_log"]
 
+flecs_base = [
+    "flecs_module",
+    "flecs_system",
+    "flecs_pipeline",
+    "flecs_timer",
+    "flecs_os_api_impl",
+    "flecs_safety_locks"
+]
+
 # Default features
 default = [
     "flecs_meta_c",

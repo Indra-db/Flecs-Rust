@@ -186,7 +186,9 @@ flecs_nightly_tests = []
 test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
 # most common base features
+# must be kept in sync with base features on flecs_ecs_sys cargo.toml
 flecs_base = [
+    "flecs_ecs_sys/flecs_base",
    # this is commented since `no_std` is not ready yet
     "std",
     "flecs_module",
