@@ -35,18 +35,18 @@ alloc_instead_of_core = "warn"
 rust.unused_lifetimes = "warn"
 
 [workspace.dependencies]
-flecs_ecs = { version = "0.1.2", path = "flecs_ecs" }
-flecs_ecs_derive = { version = "0.1.0", path = "flecs_ecs_derive" }
-flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
+flecs_ecs = { path = "flecs_ecs" }
+flecs_ecs_derive = { path = "flecs_ecs_derive" }
+flecs_ecs_sys = { path = "flecs_ecs_sys" }
 libc = "0.2.169"
 
-[profile.release]
-lto = "thin"
-panic = "abort"
+# [profile.release]
+# lto = "thin"
+# panic = "abort"
 
-[profile.bench]
-inherits = "release"
+# [profile.bench]
+# inherits = "release"
 
-[profile.dev.package]
-insta.opt-level = 3
-similar.opt-level = 3
+# [profile.dev.package]
+# insta.opt-level = 3
+# similar.opt-level = 3
