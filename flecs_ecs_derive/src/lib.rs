@@ -14,7 +14,7 @@ use alloc::vec::Vec;
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Data, DeriveInput, Fields, Ident, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, Ident, ItemFn, parse_macro_input};
 
 use crate::tuples::Tuples;
 
@@ -496,7 +496,7 @@ pub fn extern_abi(
     _args: ProcMacroTokenStream,
     input: ProcMacroTokenStream,
 ) -> ProcMacroTokenStream {
-    let input_fn = parse_macro_input!(input as syn::ItemFn);
+    let input_fn = parse_macro_input!(input as ItemFn);
 
     let fn_name = &input_fn.sig.ident;
     let fn_inputs = &input_fn.sig.inputs;
