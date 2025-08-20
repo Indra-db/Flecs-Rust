@@ -27,16 +27,15 @@ where
             );
         }
 
-        let each_func = Box::new(func);
-        let each_static_ref = Box::leak(each_func);
-
-        self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_callback(Some(
-            Self::execute_each::<false, Func> as unsafe extern "C" fn(_),
-        ));
-
-        self.build()
+        // Faster version of each() that iterates the query on the Rust side instead of C side.
+        self.run_each(
+            move |mut it| {
+                while it.next() {
+                    it.each();
+                }
+            },
+            func,
+        )
     }
 
     fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
@@ -50,16 +49,15 @@ where
             );
         }
 
-        let each_entity_func = Box::new(func);
-        let each_entity_static_ref = Box::leak(each_entity_func);
-
-        self.set_callback_binding_context(each_entity_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_callback(Some(
-            Self::execute_each_entity::<false, Func> as unsafe extern "C" fn(_),
-        ));
-
-        self.build()
+        // Faster version of each_entity() that iterates the query on the Rust side instead of C side.
+        self.run_each_entity(
+            move |mut it| {
+                while it.next() {
+                    it.each();
+                }
+            },
+            func,
+        )
     }
 
     /// Run iterator. This operation expects manual iteration over the tables with `iter.next()` and `iter.iter()`.
