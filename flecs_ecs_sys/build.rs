@@ -370,7 +370,7 @@ fn main() {
 
         build.compile("flecs");
 
-        #[cfg(feature = "bindgen")]
+        #[cfg(all(not(target_family = "wasm"), feature = "bindgen"))]
         generate_bindings();
     }
 }

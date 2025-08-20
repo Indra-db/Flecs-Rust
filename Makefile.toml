@@ -137,3 +137,22 @@ args = [
     "std,flecs_bindgen"
 ]
 workspace = false
+
+
+# Build bindgen for wasm and build wasm
+[tasks.build-wasm]
+description = "Build flecs_ecs for wasm32-unknown-unknown"
+script = [
+  'cargo build --no-default-features --features "${FLECS_FEATURES},wasm32"',
+  'cargo build --target wasm32-unknown-unknown --no-default-features --features "${FLECS_FEATURES}"'
+]
+env = { FLECS_FEATURES = "flecs_base" }
+workspace = false
+
+[tasks.run-wasm]
+description = "Run the built wasm module via Node script"
+dependencies = ["build-wasm"]
+command = "node"
+args = ["scripts/run_wasm.mjs", "${WASM_PATH}"]
+env = { WASM_PATH = "target/wasm32-unknown-unknown/debug/flecs_ecs.wasm" }
+workspace = false
