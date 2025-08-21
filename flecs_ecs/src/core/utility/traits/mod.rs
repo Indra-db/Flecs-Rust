@@ -78,7 +78,7 @@ pub mod private {
         /// # See also
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        unsafe fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(T::TupleType<'_>),
         {
@@ -109,7 +109,7 @@ pub mod private {
         /// # See also
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        unsafe fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
@@ -152,7 +152,7 @@ pub mod private {
         /// # See also
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        unsafe fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
         {
@@ -183,7 +183,7 @@ pub mod private {
         /// # See also
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        unsafe fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<true, P>),
         {
@@ -202,22 +202,39 @@ pub mod private {
             };
         }
 
-        unsafe extern "C" fn execute_run_each<Func>(iter: *mut sys::ecs_iter_t)
+        #[extern_abi]
+        fn execute_run_each<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(T::TupleType<'_>),
         {
             unsafe {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
+                let world = WorldRef::from_ptr(iter.world);
                 let each = &mut *(iter.run_ctx as *mut Func);
-                let mut table_iter = TableIter::<true, ()>::new(iter);
-                while table_iter.internal_next() {
-                    internal_each_iter_next::<T, true>(table_iter.iter, each);
+                let mut table_iter = TableIter::<true, ()>::new(iter, world);
+                #[cfg(feature = "flecs_safety_locks")]
+                if table_iter.iter.row_fields == 0 {
+                    while table_iter.internal_next() {
+                        internal_each_iter_next::<T, true, false>(table_iter.iter, &world, each);
+                    }
+                } else {
+                    while table_iter.internal_next() {
+                        internal_each_iter_next::<T, true, true>(table_iter.iter, &world, each);
+                    }
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    while table_iter.internal_next() {
+                        internal_each_iter_next::<T, true, false>(table_iter.iter, &world, each);
+                    }
                 }
             }
         }
 
-        unsafe extern "C" fn execute_run_each_entity<Func>(iter: *mut sys::ecs_iter_t)
+        #[extern_abi]
+        fn execute_run_each_entity<Func>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
@@ -226,9 +243,35 @@ pub mod private {
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
                 let each_entity = &mut *(iter.run_ctx as *mut Func);
-                let mut table_iter = TableIter::<true, ()>::new(iter);
-                while table_iter.internal_next() {
-                    internal_each_entity_iter_next::<T, true>(table_iter.iter, &world, each_entity);
+                let mut table_iter = TableIter::<true, ()>::new(iter, world);
+                #[cfg(feature = "flecs_safety_locks")]
+                if table_iter.iter.row_fields == 0 {
+                    while table_iter.internal_next() {
+                        internal_each_entity_iter_next::<T, true, false>(
+                            table_iter.iter,
+                            &world,
+                            each_entity,
+                        );
+                    }
+                } else {
+                    while table_iter.internal_next() {
+                        internal_each_entity_iter_next::<T, true, true>(
+                            table_iter.iter,
+                            &world,
+                            each_entity,
+                        );
+                    }
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    while table_iter.internal_next() {
+                        internal_each_entity_iter_next::<T, true, false>(
+                            table_iter.iter,
+                            &world,
+                            each_entity,
+                        );
+                    }
                 }
             }
         }

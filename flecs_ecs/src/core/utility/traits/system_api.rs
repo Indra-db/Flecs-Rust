@@ -33,9 +33,7 @@ where
 
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_run(Some(
-            Self::execute_run_each::<Func> as unsafe extern "C" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run_each::<Func> as ExternIterFn));
 
         self.build()
     }
@@ -57,9 +55,7 @@ where
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run_each_entity::<Func> as unsafe extern "C" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run_each_entity::<Func> as ExternIterFn));
 
         self.build()
     }
