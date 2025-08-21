@@ -1082,22 +1082,16 @@ where
             i += 1;
         }
     }
-}
 
-impl<P> TableIter<'_, true, P>
-where
-    P: ComponentId,
-{
-    /// Progress iterator.
-    /// this operation is not available on functions where the iterator is not from `.run()`
-    #[allow(clippy::should_implement_trait)]
     #[inline(always)]
-    pub fn next(&mut self) -> bool {
-        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
-            unsafe {
-                sys::ecs_table_unlock(self.iter.world, self.iter.table);
-            };
+    pub(crate) fn internal_next(&mut self) -> bool {
+        if IS_RUN {
+            #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+            if self.iter.flags & sys::EcsIterIsValid != 0 && !self.iter.table.is_null() {
+                unsafe {
+                    sys::ecs_table_unlock(self.iter.world, self.iter.table);
+                };
+            }
         }
 
         let result = match self.iter.next {
@@ -1114,16 +1108,31 @@ where
         };
 
         self.iter.flags |= sys::EcsIterIsValid;
-        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        {
-            if result && !self.iter.table.is_null() {
-                unsafe {
-                    sys::ecs_table_lock(self.iter.world, self.iter.table);
-                };
+        if IS_RUN {
+            #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+            {
+                if result && !self.iter.table.is_null() {
+                    unsafe {
+                        sys::ecs_table_lock(self.iter.world, self.iter.table);
+                    };
+                }
             }
         }
 
         result
+    }
+}
+
+impl<P> TableIter<'_, true, P>
+where
+    P: ComponentId,
+{
+    /// Progress iterator.
+    /// this operation is not available on functions where the iterator is not from `.run()`
+    #[allow(clippy::should_implement_trait)]
+    #[inline(always)]
+    pub fn next(&mut self) -> bool {
+        self.internal_next()
     }
 
     /// Free iterator resources.
