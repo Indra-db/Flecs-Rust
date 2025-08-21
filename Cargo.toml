@@ -9,8 +9,9 @@ resolver = "2"
 default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
 
 exclude = [
+    "docreplace",
     "flecs_ecs_test",
-    "docreplace"
+    "test_projects/bench_bevy_vs_flecs"
 ] 
 
 [workspace.package]
