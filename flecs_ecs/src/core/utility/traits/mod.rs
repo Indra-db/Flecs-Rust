@@ -137,7 +137,8 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
-                let each = &mut *(iter.callback_ctx as *mut Func);
+                iter.flags &= !sys::EcsIterIsValid;
+                let each = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter);
                 while table_iter.internal_next() {
                     internal_each_iter_next::<T, true>(table_iter.iter, each);
@@ -151,8 +152,9 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
+                iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each_entity = &mut *(iter.callback_ctx as *mut Func);
+                let each_entity = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter);
                 while table_iter.internal_next() {
                     internal_each_entity_iter_next::<T, true>(table_iter.iter, &world, each_entity);
