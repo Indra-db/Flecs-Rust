@@ -197,21 +197,22 @@ flecs_base = [
 ]
 
 default = [
-    #"flecs_regenerate_binding",
+    "flecs_regenerate_binding",
     #"flecs_nightly_tests",
+    "flecs_force_build_release_c",
     "flecs_base",
-    "flecs_script",
-    "flecs_stats",
-    "flecs_metrics",
-    "flecs_alerts",
-    "flecs_meta",
-    "flecs_units",
-    "flecs_json",
-    "flecs_doc",
-    "flecs_log",
-    "flecs_app",
-    "flecs_http",
-    "flecs_rest",
+    # "flecs_script",
+    # "flecs_stats",
+    # "flecs_metrics",
+    # "flecs_alerts",
+    # "flecs_meta",
+    # "flecs_units",
+    # "flecs_json",
+    # "flecs_doc",
+    # "flecs_log",
+    # "flecs_app",
+    # "flecs_http",
+    # "flecs_rest",
     "flecs_query_rust_traits"
 ]
 

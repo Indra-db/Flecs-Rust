@@ -12509,10 +12509,9 @@ void* ecs_field_w_size(
         "field index %d out of bounds", index);
     ecs_check(size != 0, ECS_INVALID_PARAMETER, 
         "missing size for field %d", index);
-    size_t ecs_size = ecs_field_size(it, index);
     //ecs_check(false, ECS_INVALID_PARAMETER, "");
-    ecs_check(ecs_size == size || 
-        !ecs_size,
+    ecs_check(ecs_field_size(it, index) == size || 
+        !ecs_field_size(it, index),
             ECS_INVALID_PARAMETER, "mismatching size for field %d", index);
     (void)size;
 

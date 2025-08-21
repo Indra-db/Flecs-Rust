@@ -310,10 +310,8 @@ fn main() {
             feature = "force_build_release"
         ))]
         {
-            build
-                .opt_level(3)
-                .define("NDEBUG", None)
-                .define("flto", None);
+            build.opt_level(3).define("NDEBUG", None);
+            //.define("flto", None);
         }
 
         #[cfg(feature = "use_os_alloc")]

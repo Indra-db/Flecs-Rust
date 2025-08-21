@@ -46,12 +46,12 @@ flecs_ecs_derive = { version = "0.1.0", path = "flecs_ecs_derive" }
 flecs_ecs_sys = { version = "0.1.2", path = "flecs_ecs_sys" }
 libc = "0.2.175"
 
-[profile.release]
-lto = "thin"
-panic = "abort"
+# [profile.release]
+# lto = "thin"
+# panic = "abort"
 
-[profile.bench]
-inherits = "release"
+# [profile.bench]
+# inherits = "release"
 
 [profile.dev.package]
 insta.opt-level = 3
