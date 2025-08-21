@@ -28,14 +28,16 @@ where
         }
 
         // Faster version of each() that iterates the query on the Rust side instead of C side.
-        self.run_each(
-            move |mut it| {
-                while it.next() {
-                    it.each();
-                }
-            },
-            func,
-        )
+        let each_func = Box::new(func);
+        let each_static_ref = Box::leak(each_func);
+
+        self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
+        self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
+        self.set_desc_run(Some(
+            Self::execute_run_each::<Func> as unsafe extern "C" fn(_),
+        ));
+
+        self.build()
     }
 
     fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
@@ -49,15 +51,17 @@ where
             );
         }
 
-        // Faster version of each_entity() that iterates the query on the Rust side instead of C side.
-        self.run_each_entity(
-            move |mut it| {
-                while it.next() {
-                    it.each();
-                }
-            },
-            func,
-        )
+        let each_func = Box::new(func);
+        let each_static_ref = Box::leak(each_func);
+
+        self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
+        self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
+
+        self.set_desc_run(Some(
+            Self::execute_run_each_entity::<Func> as unsafe extern "C" fn(_),
+        ));
+
+        self.build()
     }
 
     /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,

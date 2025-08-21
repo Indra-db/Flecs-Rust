@@ -202,6 +202,37 @@ pub mod private {
             };
         }
 
+        unsafe extern "C" fn execute_run_each<Func>(iter: *mut sys::ecs_iter_t)
+        where
+            Func: FnMut(T::TupleType<'_>),
+        {
+            unsafe {
+                let iter = &mut *iter;
+                iter.flags &= !sys::EcsIterIsValid;
+                let each = &mut *(iter.run_ctx as *mut Func);
+                let mut table_iter = TableIter::<true, ()>::new(iter);
+                while table_iter.internal_next() {
+                    internal_each_iter_next::<T, true>(table_iter.iter, each);
+                }
+            }
+        }
+
+        unsafe extern "C" fn execute_run_each_entity<Func>(iter: *mut sys::ecs_iter_t)
+        where
+            Func: FnMut(EntityView, T::TupleType<'_>),
+        {
+            unsafe {
+                let iter = &mut *iter;
+                iter.flags &= !sys::EcsIterIsValid;
+                let world = WorldRef::from_ptr(iter.world);
+                let each_entity = &mut *(iter.run_ctx as *mut Func);
+                let mut table_iter = TableIter::<true, ()>::new(iter);
+                while table_iter.internal_next() {
+                    internal_each_entity_iter_next::<T, true>(table_iter.iter, &world, each_entity);
+                }
+            }
+        }
+
         // /// Get the binding context
         // fn get_binding_context(&mut self, is_run: bool) -> &mut ReactorBindingType {
         //     let mut binding_ctx: *mut ReactorBindingType = self.desc_binding_context() as *mut _;
