@@ -83,6 +83,9 @@ pub fn register_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
 
 pub fn register_ctor_lifecycle_actions<T: Default>(type_hooks: &mut sys::ecs_type_hooks_t) {
     type_hooks.ctor = Some(ctor::<T>);
+    // if let Some(_) = type_hooks.move_dtor {
+    //     type_hooks.move_dtor = Some(move_dtor_impls_default::<T>); //same implementation as move_dtor
+    // }
 }
 
 pub fn register_ctor_panic_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
@@ -258,6 +261,34 @@ fn panic_copy<T>(
 /// It will move the memory
 #[extern_abi]
 fn move_dtor<T>(
+    dst_ptr: *mut c_void,
+    src_ptr: *mut c_void,
+    count: i32,
+    _type_info: *const sys::ecs_type_info_t,
+) {
+    ecs_assert!(
+        check_type_info::<T>(_type_info),
+        FlecsErrorCode::InternalError
+    );
+    let dst_arr = dst_ptr as *mut T;
+    let src_arr = src_ptr as *mut T;
+    for i in 0..count as isize {
+        //this is safe because C manages the memory and we are just moving the internal data around
+        unsafe {
+            let src_value = src_arr.offset(i); //get value of src
+            let dst_value = dst_arr.offset(i); // get ptr to dest
+
+            //memcpy the bytes of src to dest
+            //src value and dest value point to the same thing
+            core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+        }
+    }
+}
+
+/// This is the generic move for non-trivial types
+/// It will move the memory
+#[extern_abi]
+fn move_dtor_impls_default<T: Default>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
