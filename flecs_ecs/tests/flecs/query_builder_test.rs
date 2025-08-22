@@ -643,7 +643,7 @@ fn query_builder_expr_w_var() {
         while it.next() {
             for i in it.iter() {
                 assert_eq!(it.get_entity(i).unwrap(), e);
-                assert_eq!(it.pair(0).unwrap().second_id(), obj);
+                assert_eq!(it.pair(0).second_id(), obj);
                 count += 1;
             }
         }

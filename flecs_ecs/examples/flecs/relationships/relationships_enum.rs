@@ -85,7 +85,7 @@ fn main() {
         .with_enum_wildcard::<&Tile>()
         .build()
         .each_iter(|it, _, _| {
-            let pair = it.pair(0).unwrap();
+            let pair = it.pair(0);
             let tile_constant = pair.second_id();
             println!("{}", tile_constant.path().unwrap());
         });
@@ -104,7 +104,7 @@ fn main() {
         .with_enum(TileStatus::Occupied)
         .build()
         .each_iter(|it, _, _| {
-            let pair = it.pair(0).unwrap();
+            let pair = it.pair(0);
             let tile_constant = pair.second_id();
             println!("{}", tile_constant.path().unwrap());
         });

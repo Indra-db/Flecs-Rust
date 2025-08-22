@@ -369,13 +369,36 @@ where
     /// # Arguments
     ///
     /// * `index` - The field index.
-    pub fn pair(&self, index: i8) -> Option<IdView<'a>> {
+    ///
+    /// # See also
+    /// * [`TableIter::pair`]
+    pub fn get_pair(&self, index: i8) -> Option<IdView<'a>> {
         unsafe {
             let id = sys::ecs_field_id(self.iter, index);
             if sys::ecs_id_is_pair(id) {
                 Some(IdView::new_from_id(self.world(), id))
             } else {
                 None
+            }
+        }
+    }
+
+    /// Obtain pair id matched for field.
+    /// This operation will panic if the field is not a pair.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # See also
+    /// * [`TableIter::get_pair`]
+    pub fn pair(&self, index: i8) -> IdView<'a> {
+        unsafe {
+            let id = sys::ecs_field_id(self.iter, index);
+            if sys::ecs_id_is_pair(id) {
+                IdView::new_from_id(self.world(), id)
+            } else {
+                panic!("Field at index {} is not a pair", index);
             }
         }
     }

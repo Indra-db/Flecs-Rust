@@ -34,7 +34,7 @@ fn main() {
     // the pair that we are currently matched with.
     query.each_iter(|it, index, eats| {
         let entity = it.entity(index);
-        let pair = it.pair(0).unwrap();
+        let pair = it.pair(0);
         let food = pair.second_id();
 
         println!("{} eats {} {}", entity, eats.amount, food);
