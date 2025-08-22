@@ -161,7 +161,7 @@ where
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
             while self.iter_next(&mut iter) {
-                internal_each_iter::<T, P, false, false>(&mut iter, &mut func, &world);
+                internal_each_iter::<T, P, false, false>(&mut iter, &world, &mut func);
             }
         }
         #[cfg(feature = "flecs_safety_locks")]
