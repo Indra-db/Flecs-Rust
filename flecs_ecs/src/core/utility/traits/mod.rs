@@ -143,37 +143,6 @@ pub mod private {
             }
         }
 
-        /// Callback of the `each_entity` functionality
-        ///
-        /// # Arguments
-        ///
-        /// * `iter` - The iterator which gets passed in from `C`
-        ///
-        /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
-        #[extern_abi]
-        fn execute_each_iter<Func>(iter: *mut sys::ecs_iter_t)
-        where
-            Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
-        {
-            unsafe {
-                let iter = &mut *iter;
-                let world = WorldRef::from_ptr(iter.world);
-                let each_iter = &mut *(iter.callback_ctx as *mut Func);
-                #[cfg(feature = "flecs_safety_locks")]
-                if iter.row_fields == 0 {
-                    internal_each_iter::<T, P, false, false>(iter, each_iter, &world);
-                } else {
-                    internal_each_iter::<T, P, false, true>(iter, each_iter, &world);
-                }
-
-                #[cfg(not(feature = "flecs_safety_locks"))]
-                {
-                    internal_each_iter::<T, P, false, false>(iter, each_iter, &world);
-                }
-            }
-        }
-
         /// Callback of the `iter_only` functionality
         ///
         /// # Arguments
@@ -270,6 +239,45 @@ pub mod private {
                             table_iter.iter,
                             &world,
                             each_entity,
+                        );
+                    }
+                }
+            }
+        }
+
+        #[extern_abi]
+        fn execute_run_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        where
+            Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
+        {
+            unsafe {
+                let iter = &mut *iter;
+                iter.flags &= !sys::EcsIterIsValid;
+                let mut world = WorldRef::from_ptr(iter.world);
+                let each_iter = &mut *(iter.run_ctx as *mut Func);
+                let mut table_iter = TableIter::<true, ()>::new(iter, world);
+                #[cfg(feature = "flecs_safety_locks")]
+                if table_iter.iter.row_fields == 0 {
+                    while table_iter.internal_next() {
+                        internal_each_iter::<T, P, false, false>(
+                            table_iter.iter,
+                            &mut world,
+                            each_iter,
+                        );
+                    }
+                } else {
+                    while table_iter.internal_next() {
+                        internal_each_iter::<T, P, false, true>(table_iter.iter, &world, each_iter);
+                    }
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    while table_iter.internal_next() {
+                        internal_each_iter::<T, P, false, false>(
+                            table_iter.iter,
+                            &world,
+                            each_iter,
                         );
                     }
                 }
@@ -552,8 +560,8 @@ pub(crate) fn internal_each_iter<
     const ANY_SPARSE_TERMS: bool,
 >(
     iter: &mut sys::ecs_iter_t,
-    func: &mut impl FnMut(TableIter<CALLED_FROM_RUN, P>, FieldIndex, T::TupleType<'_>),
     world: &WorldRef<'_>,
+    func: &mut impl FnMut(TableIter<CALLED_FROM_RUN, P>, FieldIndex, T::TupleType<'_>),
 ) {
     const {
         assert!(

@@ -168,11 +168,11 @@ where
         {
             if iter.row_fields == 0 {
                 while self.iter_next(&mut iter) {
-                    internal_each_iter::<T, P, false, false>(&mut iter, &mut func, &world);
+                    internal_each_iter::<T, P, false, false>(&mut iter, &world, &mut func);
                 }
             } else {
                 while self.iter_next(&mut iter) {
-                    internal_each_iter::<T, P, false, true>(&mut iter, &mut func, &world);
+                    internal_each_iter::<T, P, false, true>(&mut iter, &world, &mut func);
                 }
             }
         }
@@ -586,7 +586,7 @@ where
         mut func_each: FuncEachIter,
     ) where
         P: ComponentId,
-        FuncEachIter: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>),
+        FuncEachIter: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
     {
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
@@ -1422,7 +1422,7 @@ fn __internal_find_impl<'a, T, const ANY_SPARSE_TERMS: bool>(
 
 #[inline(always)]
 #[extern_abi]
-unsafe fn __internal_query_execute_each_from_run<T, Func>(iter: *mut sys::ecs_iter_t)
+fn __internal_query_execute_each_from_run<T, Func>(iter: *mut sys::ecs_iter_t)
 where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
@@ -1476,11 +1476,11 @@ where
 
 #[inline(always)]
 #[extern_abi]
-unsafe fn __internal_query_execute_each_iter_from_run<T, P, Func>(iter: *mut sys::ecs_iter_t)
+fn __internal_query_execute_each_iter_from_run<T, P, Func>(iter: *mut sys::ecs_iter_t)
 where
     T: QueryTuple,
     P: ComponentId,
-    Func: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>),
+    Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
 {
     unsafe {
         let iter = &mut *iter;
@@ -1489,14 +1489,14 @@ where
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            internal_each_iter::<T, P, true, false>(iter, func, &world);
+            internal_each_iter::<T, P, false, false>(iter, &world, func);
         }
         #[cfg(feature = "flecs_safety_locks")]
         {
             if iter.row_fields == 0 {
-                internal_each_iter::<T, P, true, false>(iter, func, &world);
+                internal_each_iter::<T, P, false, false>(iter, &world, func);
             } else {
-                internal_each_iter::<T, P, true, true>(iter, func, &world);
+                internal_each_iter::<T, P, false, true>(iter, &world, func);
             }
         }
     }

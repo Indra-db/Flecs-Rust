@@ -113,10 +113,10 @@ where
         let each_iter_func = Box::new(func);
         let each_iter_static_ref = Box::leak(each_iter_func);
 
-        self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
-        self.set_callback_binding_context_free(Some(Self::free_callback::<Func>));
+        self.set_run_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
+        self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_callback(Some(Self::execute_each_iter::<Func> as ExternIterFn));
+        self.set_desc_run(Some(Self::execute_run_each_iter::<Func> as ExternIterFn));
 
         self.build()
     }
