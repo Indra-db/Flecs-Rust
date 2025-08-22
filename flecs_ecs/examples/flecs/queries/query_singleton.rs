@@ -29,9 +29,6 @@ fn main() {
     // Create query that matches Gravity as singleton
     let query = world.query::<(&mut Velocity, &Gravity)>().build();
 
-    // In a query string expression you can use the $ shortcut for singletons:
-    //   Velocity, Gravity($)
-
     query.each_entity(|entity, (velocity, gravity)| {
         velocity.y += gravity.value;
         println!("Entity {} has {:?}", entity.path().unwrap(), velocity);

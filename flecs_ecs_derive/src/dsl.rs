@@ -80,7 +80,6 @@ pub enum TermIdent {
     Literal(LitStr),
     SelfType,
     SelfVar,
-    Singleton,
     Wildcard,
     Any,
 }
@@ -104,7 +103,10 @@ impl Parse for TermIdent {
                 input.parse::<Token![self]>()?;
                 Ok(TermIdent::SelfVar)
             } else {
-                Ok(TermIdent::Singleton)
+                panic!(
+                    "unexpected token after `self`, token: {:?}",
+                    input.cursor().token_stream()
+                );
             }
         } else if input.peek(LitStr) {
             Ok(TermIdent::Literal(input.parse::<LitStr>()?))
@@ -540,7 +542,6 @@ pub fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_first(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_first(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_first(#lit) }),
-                        TermIdent::Singleton => ops.push(quote_spanned!{ first.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
                                 ops.push(quote! { .set_first(id::<#first_ty>()) });
@@ -556,7 +557,6 @@ pub fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_second(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_second(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .set_second(#lit) }),
-                        TermIdent::Singleton => ops.push(quote_spanned!{ second.span => ; compile_error!("Unexpected singleton identifier.") }),
                         _ => {
                             if !iter_term {
                                 ops.push(quote! { .set_second(id::<#second_ty>()) });
@@ -588,7 +588,6 @@ pub fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                         TermIdent::SelfVar => ops.push(quote! { .set_id(self) }),
                         TermIdent::Local(ident) => ops.push(quote! { .set_id(#ident) }),
                         TermIdent::Literal(lit) => ops.push(quote! { .name(#lit) }),
-                        TermIdent::Singleton => ops.push(quote_spanned!{ term.span => ; compile_error!("Unexpected singleton identifier.") }),
                         TermIdent::EnumType(_) => {
                             if !iter_term {
                                 term_accessor = quote! { .with_enum(#ty) };
@@ -622,7 +621,6 @@ pub fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
                     TermIdent::SelfVar => ops.push(quote! { .set_src(self) }),
                     TermIdent::Local(ident) => ops.push(quote! { .set_src(#ident) }),
                     TermIdent::Literal(lit) => ops.push(quote! { .set_src(#lit) }),
-                    TermIdent::Singleton => ops.push(quote! { .singleton() }),
                     _ => ops.push(quote! { .set_src(id::<#ty>()) }),
                 };
             }

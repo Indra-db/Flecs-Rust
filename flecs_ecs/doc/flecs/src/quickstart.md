@@ -446,10 +446,9 @@ The following examples show how to query for a singleton component:
 # 
 # fn main() {
 # let world = World::new();
+world.component::<Gravity>().add_trait(flecs::Singleton);
 world
     .query::<(&Velocity, &Gravity)>()
-    .term_at(1)
-    .singleton()
     .build();
 # }
 ```
