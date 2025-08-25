@@ -17,8 +17,16 @@ extern crate std;
 
 extern crate alloc;
 use alloc::{boxed::Box, vec::Vec};
+use flecs_ecs_derive::extern_abi;
 
 pub(crate) type FlecsArray = Vec<u64>;
+
+#[extern_abi]
+unsafe fn c_run_post_frame(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
+    let action: fn(WorldRef) = unsafe { std::mem::transmute(ctx as *const ()) };
+    let world = unsafe { WorldRef::from_ptr(world) };
+    (action)(world);
+}
 
 /// The `World` is the container for all ECS data. It stores the entities and
 /// their components, does queries and runs systems.
@@ -2538,9 +2546,10 @@ impl World {
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
     #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-    pub fn run_post_frame(&self, action: sys::ecs_fini_action_t, ctx: *mut c_void) {
+    pub fn run_post_frame(&self, action: fn(WorldRef)) {
+        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
         unsafe {
-            sys::ecs_run_post_frame(self.raw_world.as_ptr(), action, ctx);
+            sys::ecs_run_post_frame(self.raw_world.as_ptr(), Some(c_run_post_frame), ctx);
         }
     }
 }
