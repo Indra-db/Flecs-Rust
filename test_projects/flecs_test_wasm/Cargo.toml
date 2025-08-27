@@ -1,0 +1,28 @@
+[package]
+name = "flecs_test_wasm"
+version = "0.1.0"
+edition = "2024"
+autobins = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Use the local flecs_ecs crate from the workspace
+flecs_ecs = { path = "../../flecs_ecs", default-features = false }
+wasm-bindgen = { version = "0.2.100", default-features = false }
+js-sys = "0.3.77"
+
+[features]
+# Keep this crate lean; opt-in to features explicitly
+default = []
+# Forward these features to flecs_ecs
+wasm32 = ["flecs_ecs/wasm32"]
+flecs_base = ["flecs_ecs/flecs_base"]
+flecs_use_os_alloc = ["flecs_ecs/flecs_use_os_alloc"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -4,6 +4,7 @@ members = [
     "flecs_ecs_derive",
     "flecs_ecs_sys",
     "test_crash_handler",
+    "test_projects/flecs_test_wasm",
 ]
 resolver = "2"
 default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
@@ -11,8 +12,10 @@ default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]
 exclude = [
     "docreplace",
     "flecs_ecs_test",
-    "test_projects/bench_bevy_vs_flecs"
+    "test_projects/bench_bevy_vs_flecs",
+    
 ] 
+
 
 [workspace.package]
 edition = "2024"
