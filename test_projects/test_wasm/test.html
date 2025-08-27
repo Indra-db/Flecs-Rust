@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WASM String Length</title>
+</head>
+<body>
+    <h1>WASM String Length Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        async function loadWasm() {
+            try {
+                // Load the WASM module
+                const wasmModule = await WebAssembly.instantiateStreaming(
+                    fetch('./test_wasm.wasm')
+                );
+                
+                const { test_string_length, wasm_get_string_length } = wasmModule.instance.exports;
+                
+                // Test the built-in test function
+                const testResult = test_string_length();
+                
+                document.getElementById('output').innerHTML = `
+                    <p>Test string length result: ${testResult}</p>
+                    <p>Expected: 13 (length of "Hello, WASM!")</p>
+                    <p>Status: ${testResult === 13 ? '✅ SUCCESS' : '❌ FAILED'}</p>
+                `;
+                
+                console.log('WASM module loaded successfully');
+                console.log('Test result:', testResult);
+                
+            } catch (error) {
+                console.error('Error loading WASM:', error);
+                document.getElementById('output').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        loadWasm();
+    </script>
+</body>
+</html>
