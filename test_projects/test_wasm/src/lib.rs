@@ -29,23 +29,23 @@ pub extern "C" fn test_malloc_free() -> i32 {
     unsafe {
         // Allocate 100 bytes
         let ptr = malloc(100);
-        
+
         // Check if allocation succeeded
         if ptr.is_null() {
             return -1; // Failed to allocate
         }
-        
+
         // Write some data to the allocated memory
         *ptr = 42;
         *(ptr.add(99)) = 84; // Write to the last byte
-        
+
         // Read back the data to verify it works
         let first_byte = *ptr;
         let last_byte = *(ptr.add(99));
-        
+
         // Free the memory
         free(ptr);
-        
+
         // Return success if the values match what we wrote
         if first_byte == 42 && last_byte == 84 {
             1 // Success
@@ -61,25 +61,25 @@ pub extern "C" fn test_malloc_string_copy() -> usize {
     unsafe {
         let source_str = b"Hello from malloc!\0";
         let str_len = strlen(source_str.as_ptr() as *const i8);
-        
+
         // Allocate memory for the string + null terminator
         let allocated_str = malloc(str_len + 1) as *mut i8;
-        
+
         if allocated_str.is_null() {
             return 0; // Failed to allocate
         }
-        
+
         // Copy the string byte by byte
         for i in 0..=str_len {
             *allocated_str.add(i) = *(source_str.as_ptr() as *const i8).add(i);
         }
-        
+
         // Get the length of the copied string
         let copied_len = strlen(allocated_str);
-        
+
         // Free the allocated memory
         free(allocated_str as *mut u8);
-        
+
         // Return the length of the copied string
         copied_len
     }

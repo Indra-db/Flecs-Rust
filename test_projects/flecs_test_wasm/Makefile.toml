@@ -4,11 +4,9 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 # Build flecs_ecs with wasm feature set, then this crate for wasm target
 [tasks.build-wasm]
 description = "Build flecs_test_wasm for wasm32-unknown-unknown"
-dependencies = ["install-wasm-bindgen-cli"]
 script = [
   'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
   'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
-  'wasm-bindgen --target nodejs --out-dir ./web/pkg ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm',
 ]
 workspace = false 
 
@@ -18,6 +16,3 @@ dependencies = ["build-wasm"]
 command = "node"
 args = ["./web/run.js"]
 workspace = false
-
-[tasks.install-wasm-bindgen-cli]
-install_crate = { crate_name = "wasm-bindgen-cli", binary = "wasm-bindgen", test_arg = "--version" }

@@ -264,7 +264,6 @@ fn main() {
         if target_is_wasm {
             build
                 .include("wasm_shim/include")
-                .file("wasm_shim/libc_stubs.c")
                 .flag("-ffreestanding")
                 .flag("-fno-exceptions")
                 .flag("-fno-unwind-tables")

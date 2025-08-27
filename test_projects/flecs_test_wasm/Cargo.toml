@@ -1,7 +1,7 @@
 [package]
 name = "flecs_test_wasm"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 autobins = false
 
 [lib]
@@ -10,8 +10,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 # Use the local flecs_ecs crate from the workspace
 flecs_ecs = { path = "../../flecs_ecs", default-features = false }
-wasm-bindgen = { version = "0.2.100", default-features = false }
-js-sys = "0.3.77"
 
 [features]
 # Keep this crate lean; opt-in to features explicitly
