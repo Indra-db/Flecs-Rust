@@ -16,3 +16,14 @@ dependencies = ["build-wasm"]
 command = "node"
 args = ["./web/run.js"]
 workspace = false
+
+[tasks.serve-web]
+description = "Build WASM and serve the web demo on localhost"
+dependencies = ["build-wasm"]
+script = [
+  'echo "🦀 Flecs ECS WASM Demo"',
+  'echo "Building and serving web demo..."',
+  'echo "Open http://localhost:8000/web/ in your browser"',
+  'python3 -m http.server 8000'
+]
+workspace = false

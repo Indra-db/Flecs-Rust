@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Flecs ECS WASM Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            color: #007bff;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 Flecs ECS WASM Test</h1>
+        <p>This page demonstrates the Flecs ECS library running in WebAssembly with Rust.</p>
+        
+        <div class="test-section">
+            <h3>Position Component Test</h3>
+            <p>Testing the <code>example_pos_x()</code> function which:</p>
+            <ul>
+                <li>Creates a Flecs ECS World</li>
+                <li>Creates an entity with Position component (x: 10, y: 20)</li>
+                <li>Runs a system that increments x by 1</li>
+                <li>Returns the updated x value</li>
+            </ul>
+            
+            <button id="runTest" onclick="runPosTest()">Run Position Test</button>
+            <button id="runLoop" onclick="startAnimation()">Start Animation Loop</button>
+            <button id="stopLoop" onclick="stopAnimation()">Stop Animation</button>
+            
+            <div id="output">
+                <p>Click "Run Position Test" to execute the WASM function.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Animation Output</h3>
+            <div id="animation" style="font-family: monospace; font-size: 14px; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">
+                <p>Animation will appear here when started...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wasmModule = null;
+        let animationId = null;
+        let frameCount = 0;
+
+        async function loadWasm() {
+            try {
+                // First, try to fetch the WASM file to see if it exists
+                const response = await fetch('./flecs_test_wasm.wasm');
+                if (!response.ok) {
+                    throw new Error(`WASM file not found (${response.status}). Please run 'cargo make build-wasm' first.`);
+                }
+                
+                const wasmBuffer = await response.arrayBuffer();
+                
+                // Provide imports that the WASM module requires
+                const imports = {
+                    env: {
+                        backtrace: () => 0,
+                        backtrace_symbols: () => 0,
+                    },
+                    wasi_snapshot_preview1: {
+                        environ_get: () => 0,
+                        environ_sizes_get: () => 0,
+                        fd_close: () => 0,
+                        fd_fdstat_get: () => 0,
+                        fd_prestat_get: () => 0,
+                        fd_prestat_dir_name: () => 0,
+                        fd_read: () => 0,
+                        fd_seek: () => 0,
+                        fd_write: () => 0,
+                        proc_exit: () => 0,
+                        random_get: () => 0,
+                    }
+                };
+                
+                // Instantiate the WASM module
+                wasmModule = await WebAssembly.instantiate(wasmBuffer, imports);
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="result success">✅ WASM module loaded successfully!</div>
+                    <p><strong>Available exports:</strong> ${Object.keys(wasmModule.instance.exports).join(', ')}</p>
+                `;
+                
+                // Enable the test button
+                document.getElementById('runTest').disabled = false;
+                document.getElementById('runLoop').disabled = false;
+                
+                console.log('WASM module loaded successfully!');
+                console.log('Available exports:', Object.keys(wasmModule.instance.exports));
+                
+            } catch (error) {
+                console.error('Error loading WASM module:', error);
+                document.getElementById('output').innerHTML = `
+                    <div class="result error">❌ Error loading WASM module:</div>
+                    <p>${error.message}</p>
+                    <p><strong>Solution:</strong> Run <code>cargo make build-wasm</code> in the terminal first.</p>
+                `;
+                
+                // Disable buttons
+                document.getElementById('runTest').disabled = true;
+                document.getElementById('runLoop').disabled = true;
+            }
+        }
+
+        function runPosTest() {
+            if (!wasmModule) {
+                document.getElementById('output').innerHTML = `
+                    <div class="result error">❌ WASM module not loaded yet.</div>
+                `;
+                return;
+            }
+
+            try {
+                console.log('Running example_pos_x() function...');
+                const startTime = performance.now();
+                
+                const result = wasmModule.instance.exports.example_pos_x();
+                
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="result success">✅ Test completed successfully!</div>
+                    <p><strong>Result:</strong> example_pos_x() returned <code>${result}</code></p>
+                    <p><strong>Expected:</strong> 11 (10 + 1 from system)</p>
+                    <p><strong>Status:</strong> ${result === 11 ? '✅ CORRECT' : '❌ UNEXPECTED'}</p>
+                    <p><strong>Execution time:</strong> ${executionTime} ms</p>
+                    <hr>
+                    <p><strong>What happened:</strong></p>
+                    <ol>
+                        <li>Created Flecs ECS World in WASM</li>
+                        <li>Created entity with Position component (x: 10, y: 20)</li>
+                        <li>System incremented x by 1 (10 → ${result})</li>
+                        <li>Returned the updated x value</li>
+                    </ol>
+                `;
+                
+                console.log(`example_pos_x() returned: ${result} (execution time: ${executionTime}ms)`);
+                
+            } catch (error) {
+                console.error('Error calling example_pos_x():', error);
+                document.getElementById('output').innerHTML = `
+                    <div class="result error">❌ Error executing test:</div>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        function startAnimation() {
+            if (!wasmModule) {
+                document.getElementById('animation').innerHTML = `
+                    <p style="color: red;">❌ WASM module not loaded yet.</p>
+                `;
+                return;
+            }
+
+            document.getElementById('runLoop').disabled = true;
+            document.getElementById('stopLoop').disabled = false;
+            frameCount = 0;
+
+            function animate() {
+                try {
+                    const result = wasmModule.instance.exports.example_pos_x();
+                    frameCount++;
+                    
+                    document.getElementById('animation').innerHTML = `
+                        <p><strong>Frame ${frameCount}:</strong> Position X = ${result}</p>
+                        <p>🎮 ECS System running at ~60 FPS in WASM!</p>
+                        <p>📊 Each call: Create World → Add Entity → Run System → Get Result</p>
+                        <div style="margin-top: 10px;">
+                            <div style="width: ${Math.min(result * 10, 300)}px; height: 20px; background-color: #007bff; border-radius: 3px;"></div>
+                            <small>Visual representation of X position</small>
+                        </div>
+                    `;
+                    
+                    if (animationId) {
+                        animationId = requestAnimationFrame(animate);
+                    }
+                } catch (error) {
+                    console.error('Animation error:', error);
+                    stopAnimation();
+                }
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            document.getElementById('runLoop').disabled = false;
+            document.getElementById('stopLoop').disabled = true;
+            
+            document.getElementById('animation').innerHTML += `
+                <p style="color: green; margin-top: 10px;">✅ Animation stopped after ${frameCount} frames.</p>
+            `;
+        }
+
+        // Initialize buttons as disabled
+        document.getElementById('runTest').disabled = true;
+        document.getElementById('runLoop').disabled = true;
+        document.getElementById('stopLoop').disabled = true;
+
+        // Load WASM when page loads
+        loadWasm();
+    </script>
+</body>
+</html>
