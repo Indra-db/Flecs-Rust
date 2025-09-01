@@ -262,13 +262,58 @@ fn main() {
             .define("FLECS_CPP", None);
 
         if target_is_wasm {
+            // Add WASM-specific stub file
+            build.file("src/wasm_stubs.c");
+
+            // Try to find wasi-libc headers
+            let wasi_include = if let Ok(output) = std::process::Command::new("brew")
+                .args(["--prefix", "wasi-libc"])
+                .output()
+            {
+                let prefix = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                format!("{}/share/wasi-sysroot/include/wasm32-wasi", prefix)
+            } else {
+                // Fallback to common locations
+                let fallback_paths = [
+                    "/opt/homebrew/share/wasi-sysroot/include/wasm32-wasi",
+                    "/usr/local/share/wasi-sysroot/include/wasm32-wasi",
+                    "/opt/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi",
+                ];
+
+                fallback_paths
+                    .iter()
+                    .find(|path| std::path::Path::new(path).exists())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| {
+                        panic!("Could not find wasi-libc headers. Please install wasi-libc or wasi-sdk.")
+                    })
+            };
+
             build
-                .include("wasm_shim/include")
+                .include(&wasi_include)
+                .include("src") // For our custom execinfo.h
                 .flag("-ffreestanding")
                 .flag("-fno-exceptions")
                 .flag("-fno-unwind-tables")
                 .flag("-fno-asynchronous-unwind-tables")
                 .flag("-fvisibility=hidden")
+                // Define macros to bypass WASI platform checks
+                .define("__wasi__", None)
+                .define("_WASI_EMULATED_MMAN", None)
+                .define("_WASI_EMULATED_SIGNAL", None)
+                .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
+                // Provide missing safe string functions as macros
+                .define("strcpy_s(dst, dsz, src)", "strcpy(dst, src)")
+                .define("strcat_s(dst, dsz, src)", "strcat(dst, src)")
+                .define("strncpy_s(dst, dsz, src, cnt)", "strncpy(dst, src, cnt)")
+                .define(
+                    "sprintf_s(dst, dsz, ...)",
+                    "snprintf(dst, dsz, __VA_ARGS__)",
+                )
+                .define(
+                    "fopen_s(pFile, filename, mode)",
+                    "(*pFile = fopen(filename, mode)) ? 0 : errno",
+                )
                 .define("FLECS_NO_OS_API_IMPL", None);
         }
 
