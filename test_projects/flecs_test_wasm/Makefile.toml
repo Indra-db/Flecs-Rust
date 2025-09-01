@@ -23,7 +23,9 @@ dependencies = ["build-wasm"]
 script = [
   'echo "🦀 Flecs ECS WASM Demo"',
   'echo "Building and serving web demo..."',
-  'echo "Open http://localhost:8000/web/ in your browser"',
+  'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm web/',
+  'echo "✅ WASM file copied to web/ directory"',
+  'echo "🌐 Open http://localhost:8000/web/ in your browser"',
   'python3 -m http.server 8000'
 ]
 workspace = false

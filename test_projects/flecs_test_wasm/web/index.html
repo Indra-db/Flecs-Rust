@@ -6,50 +6,72 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             background-color: #f5f5f5;
+            font-size: 14px;
         }
         .container {
             background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         h1 {
             color: #333;
             text-align: center;
+            margin: 0 0 10px 0;
+            font-size: 24px;
         }
-        .test-section {
-            margin: 20px 0;
-            padding: 15px;
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin: 0 0 20px 0;
+            font-size: 14px;
+        }
+        
+        /* Main Layout - Two columns */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        /* Controls Panel */
+        .controls-panel {
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #f8f9fa;
         }
-        .result {
+        .controls-title {
+            margin: 0 0 15px 0;
+            font-size: 16px;
             font-weight: bold;
-            font-size: 18px;
-            margin: 10px 0;
+            color: #333;
         }
-        .success {
-            color: #28a745;
+        
+        /* Status Panel */
+        .status-panel {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #fff;
         }
-        .error {
-            color: #dc3545;
-        }
-        .info {
-            color: #007bff;
-        }
+        
+        /* Compact Buttons */
         button {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 6px 12px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
+            font-size: 12px;
+            margin: 3px;
+            min-width: 100px;
         }
         button:hover {
             background-color: #0056b3;
@@ -58,48 +80,234 @@
             background-color: #6c757d;
             cursor: not-allowed;
         }
+        .create-btn { background-color: #28a745; }
+        .create-btn:hover { background-color: #218838; }
+        .progress-btn { background-color: #17a2b8; }
+        .progress-btn:hover { background-color: #138496; }
+        .destroy-btn { background-color: #dc3545; }
+        .destroy-btn:hover { background-color: #c82333; }
+        
+        /* Button groups */
+        .btn-group {
+            margin-bottom: 10px;
+        }
+        
+        /* Status Table */
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        .status-table th,
+        .status-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .status-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-table td {
+            font-family: monospace;
+        }
+        
+        /* Activity Log - Compact */
+        .activity-log {
+            height: 120px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        /* Status indicators */
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007bff; }
+        .warning { color: #ffc107; }
+        
+        /* Status indicator badge */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-badge.active {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-badge.inactive {
+            background-color: #6c757d;
+            color: white;
+        }
+        .status-badge.loading {
+            background-color: #ffc107;
+            color: black;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🦀 Flecs ECS WASM Test</h1>
-        <p>This page demonstrates the Flecs ECS library running in WebAssembly with Rust.</p>
+        <h1>🦀 Flecs ECS WASM</h1>
         
-        <div class="test-section">
-            <h3>Position Component Test</h3>
-            <p>Testing the <code>example_pos_x()</code> function which:</p>
-            <ul>
-                <li>Creates a Flecs ECS World</li>
-                <li>Creates an entity with Position component (x: 10, y: 20)</li>
-                <li>Runs a system that increments x by 1</li>
-                <li>Returns the updated x value</li>
-            </ul>
+        <div class="main-layout">
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <div class="controls-title">🎮 Controls</div>
+                
+                <div class="btn-group">
+                    <button id="createWorldBtn" class="create-btn" onclick="createWorld()">
+                        🌍 Create World
+                    </button>
+                    <button id="destroyWorldBtn" class="destroy-btn" onclick="destroyWorld()" disabled>
+                        � Destroy
+                    </button>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="getPositionBtn" onclick="getPosition()" disabled>
+                        📍 Get Position
+                    </button>
+                    <button id="progressBtn" class="progress-btn" onclick="progressWorld()" disabled>
+                        ⏭️ Progress
+                    </button>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="progressTwiceBtn" onclick="progressTwice()" disabled>
+                        ⏭️⏭️ Progress x2
+                    </button>
+                    <button id="autoProgressBtn" onclick="toggleAutoProgress()" disabled>
+                        🔄 Auto Progress
+                    </button>
+                </div>
+            </div>
             
-            <button id="runTest" onclick="runPosTest()">Run Position Test</button>
-            <button id="runLoop" onclick="startAnimation()">Start Animation Loop</button>
-            <button id="stopLoop" onclick="stopAnimation()">Stop Animation</button>
-            
-            <div id="output">
-                <p>Click "Run Position Test" to execute the WASM function.</p>
+            <!-- Status Panel -->
+            <div class="status-panel">
+                <div class="controls-title">📊 Status</div>
+                
+                <table class="status-table">
+                    <tr>
+                        <th>WASM Status</th>
+                        <td id="wasmStatus">Loading...</td>
+                    </tr>
+                    <tr>
+                        <th>World Status</th>
+                        <td id="worldStatusCell">Not Created</td>
+                    </tr>
+                    <tr>
+                        <th>World Pointer</th>
+                        <td id="worldPointer">--</td>
+                    </tr>
+                    <tr>
+                        <th>Progress Count</th>
+                        <td id="progressCounter">0</td>
+                    </tr>
+                    <tr>
+                        <th>Auto Progress</th>
+                        <td id="autoProgressStatus">Inactive</td>
+                    </tr>
+                    <tr>
+                        <th>Current Position</th>
+                        <td id="currentPosition">--</td>
+                    </tr>
+                </table>
             </div>
         </div>
         
-        <div class="test-section">
-            <h3>Animation Output</h3>
-            <div id="animation" style="font-family: monospace; font-size: 14px; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">
-                <p>Animation will appear here when started...</p>
+        <!-- Activity Log -->
+        <div class="status-panel">
+            <div class="controls-title">📝 Activity Log</div>
+            <div id="activityLog" class="activity-log">
+                <!-- Log entries will be added dynamically -->
             </div>
         </div>
     </div>
 
     <script>
         let wasmModule = null;
-        let animationId = null;
-        let frameCount = 0;
+        let worldPtr = null;
+        let autoProgressInterval = null;
+        let progressCount = 0;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('activityLog');
+            const colorMap = {
+                info: '#007bff',
+                success: '#28a745',
+                error: '#dc3545',
+                warning: '#ffc107'
+            };
+            
+            // Create a new div element instead of using innerHTML +=
+            const logEntry = document.createElement('div');
+            logEntry.style.color = colorMap[type];
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Keep only the last 50 log entries to prevent memory issues
+            while (logElement.children.length > 50) {
+                logElement.removeChild(logElement.firstChild);
+            }
+        }
+
+        function updateStatusTable() {
+            // Update WASM status
+            document.getElementById('wasmStatus').innerHTML = wasmModule ? 
+                '<span class="status-badge active">Ready</span>' : 
+                '<span class="status-badge loading">Loading</span>';
+                
+            // Update world status
+            document.getElementById('worldStatusCell').innerHTML = worldPtr ? 
+                '<span class="status-badge active">Active</span>' : 
+                '<span class="status-badge inactive">Not Created</span>';
+                
+            // Update world pointer
+            document.getElementById('worldPointer').textContent = worldPtr || '--';
+            
+            // Update progress count
+            document.getElementById('progressCounter').textContent = progressCount;
+            
+            // Update auto progress status
+            document.getElementById('autoProgressStatus').innerHTML = autoProgressInterval ? 
+                '<span class="status-badge active">Running</span>' : 
+                '<span class="status-badge inactive">Stopped</span>';
+        }
+
+        function updatePositionDisplay(x) {
+            document.getElementById('currentPosition').textContent = x;
+        }
+
+        function updateButtonStates() {
+            const hasWorld = worldPtr !== null;
+            document.getElementById('createWorldBtn').disabled = hasWorld;
+            document.getElementById('getPositionBtn').disabled = !hasWorld;
+            document.getElementById('progressBtn').disabled = !hasWorld;
+            document.getElementById('destroyWorldBtn').disabled = !hasWorld;
+            document.getElementById('autoProgressBtn').disabled = !hasWorld;
+            document.getElementById('progressTwiceBtn').disabled = !hasWorld;
+            
+            updateStatusTable();
+        }
 
         async function loadWasm() {
             try {
-                // First, try to fetch the WASM file to see if it exists
+                log('Loading WASM module...');
+                updateStatusTable();
+                
                 const response = await fetch('./flecs_test_wasm.wasm');
                 if (!response.ok) {
                     throw new Error(`WASM file not found (${response.status}). Please run 'cargo make build-wasm' first.`);
@@ -107,11 +315,28 @@
                 
                 const wasmBuffer = await response.arrayBuffer();
                 
-                // Provide imports that the WASM module requires
+                // Add console logging functions for WASM debugging
+                const consoleImports = {
+                    console_log: (ptr, len) => {
+                        const view = new Uint8Array(wasmModule.instance.exports.memory.buffer, ptr, len);
+                        const str = new TextDecoder().decode(view);
+                        log(`[WASM] ${str}`, 'info');
+                    },
+                    console_error: (ptr, len) => {
+                        const view = new Uint8Array(wasmModule.instance.exports.memory.buffer, ptr, len);
+                        const str = new TextDecoder().decode(view);
+                        log(`[WASM ERROR] ${str}`, 'error');
+                    },
+                    debug_trace: (value) => {
+                        log(`[WASM TRACE] ${value}`, 'info');
+                    }
+                };
+                
                 const imports = {
                     env: {
                         backtrace: () => 0,
                         backtrace_symbols: () => 0,
+                        ...consoleImports,
                     },
                     wasi_snapshot_preview1: {
                         environ_get: () => 0,
@@ -123,142 +348,166 @@
                         fd_read: () => 0,
                         fd_seek: () => 0,
                         fd_write: () => 0,
-                        proc_exit: () => 0,
+                        proc_exit: (code) => {
+                            log(`[WASM] Process exit with code: ${code}`, code === 0 ? 'info' : 'error');
+                            return 0;
+                        },
                         random_get: () => 0,
                     }
                 };
                 
-                // Instantiate the WASM module
                 wasmModule = await WebAssembly.instantiate(wasmBuffer, imports);
                 
-                document.getElementById('output').innerHTML = `
-                    <div class="result success">✅ WASM module loaded successfully!</div>
-                    <p><strong>Available exports:</strong> ${Object.keys(wasmModule.instance.exports).join(', ')}</p>
-                `;
+                log('✅ WASM module loaded successfully!', 'success');
                 
-                // Enable the test button
-                document.getElementById('runTest').disabled = false;
-                document.getElementById('runLoop').disabled = false;
+                // Debug: Log available exports
+                const exports = Object.keys(wasmModule.instance.exports);
+                log(`📋 Available exports: ${exports.join(', ')}`, 'info');
                 
-                console.log('WASM module loaded successfully!');
-                console.log('Available exports:', Object.keys(wasmModule.instance.exports));
+                // Check if our required functions exist
+                const requiredFunctions = ['create_world', 'get_pos_x', 'progress_world_ptr', 'destroy_world'];
+                const missingFunctions = requiredFunctions.filter(fn => !wasmModule.instance.exports[fn]);
+                
+                if (missingFunctions.length > 0) {
+                    log(`❌ Missing functions: ${missingFunctions.join(', ')}`, 'error');
+                } else {
+                    log('✅ All required functions found!', 'success');
+                }
+                
+                // Enable the create world button
+                document.getElementById('createWorldBtn').disabled = false;
+                updateStatusTable();
                 
             } catch (error) {
-                console.error('Error loading WASM module:', error);
-                document.getElementById('output').innerHTML = `
-                    <div class="result error">❌ Error loading WASM module:</div>
-                    <p>${error.message}</p>
-                    <p><strong>Solution:</strong> Run <code>cargo make build-wasm</code> in the terminal first.</p>
-                `;
-                
-                // Disable buttons
-                document.getElementById('runTest').disabled = true;
-                document.getElementById('runLoop').disabled = true;
+                log(`❌ Error loading WASM module: ${error.message}`, 'error');
+                updateStatusTable();
             }
         }
 
-        function runPosTest() {
+        function createWorld() {
             if (!wasmModule) {
-                document.getElementById('output').innerHTML = `
-                    <div class="result error">❌ WASM module not loaded yet.</div>
-                `;
+                log('❌ WASM module not loaded yet', 'error');
                 return;
             }
 
             try {
-                console.log('Running example_pos_x() function...');
-                const startTime = performance.now();
+                log('🌍 Creating new Flecs world...');
+                worldPtr = wasmModule.instance.exports.create_world();
+                progressCount = 0;
                 
-                const result = wasmModule.instance.exports.example_pos_x();
+                if (worldPtr !== 0) {
+                    log(`✅ World created successfully! Pointer: ${worldPtr}`, 'success');
+                    
+                    // Get initial position
+                    getPosition();
+                } else {
+                    log('❌ Failed to create world (returned null pointer)', 'error');
+                }
                 
-                const endTime = performance.now();
-                const executionTime = (endTime - startTime).toFixed(2);
-                
-                document.getElementById('output').innerHTML = `
-                    <div class="result success">✅ Test completed successfully!</div>
-                    <p><strong>Result:</strong> example_pos_x() returned <code>${result}</code></p>
-                    <p><strong>Expected:</strong> 11 (10 + 1 from system)</p>
-                    <p><strong>Status:</strong> ${result === 11 ? '✅ CORRECT' : '❌ UNEXPECTED'}</p>
-                    <p><strong>Execution time:</strong> ${executionTime} ms</p>
-                    <hr>
-                    <p><strong>What happened:</strong></p>
-                    <ol>
-                        <li>Created Flecs ECS World in WASM</li>
-                        <li>Created entity with Position component (x: 10, y: 20)</li>
-                        <li>System incremented x by 1 (10 → ${result})</li>
-                        <li>Returned the updated x value</li>
-                    </ol>
-                `;
-                
-                console.log(`example_pos_x() returned: ${result} (execution time: ${executionTime}ms)`);
+                updateButtonStates();
                 
             } catch (error) {
-                console.error('Error calling example_pos_x():', error);
-                document.getElementById('output').innerHTML = `
-                    <div class="result error">❌ Error executing test:</div>
-                    <p>${error.message}</p>
-                `;
+                log(`❌ Error creating world: ${error.message}`, 'error');
+                updateStatusTable();
             }
         }
 
-        function startAnimation() {
-            if (!wasmModule) {
-                document.getElementById('animation').innerHTML = `
-                    <p style="color: red;">❌ WASM module not loaded yet.</p>
-                `;
+        function getPosition() {
+            if (!worldPtr) {
+                log('❌ No world exists', 'error');
                 return;
             }
 
-            document.getElementById('runLoop').disabled = true;
-            document.getElementById('stopLoop').disabled = false;
-            frameCount = 0;
+            try {
+                const x = wasmModule.instance.exports.get_pos_x(worldPtr);
+                log(`📍 Current position X: ${x}`);
+                updatePositionDisplay(x);
+                return x;
+            } catch (error) {
+                log(`❌ Error getting position: ${error.message}`, 'error');
+            }
+        }
 
-            function animate() {
-                try {
-                    const result = wasmModule.instance.exports.example_pos_x();
-                    frameCount++;
-                    
-                    document.getElementById('animation').innerHTML = `
-                        <p><strong>Frame ${frameCount}:</strong> Position X = ${result}</p>
-                        <p>🎮 ECS System running at ~60 FPS in WASM!</p>
-                        <p>📊 Each call: Create World → Add Entity → Run System → Get Result</p>
-                        <div style="margin-top: 10px;">
-                            <div style="width: ${Math.min(result * 10, 300)}px; height: 20px; background-color: #007bff; border-radius: 3px;"></div>
-                            <small>Visual representation of X position</small>
-                        </div>
-                    `;
-                    
-                    if (animationId) {
-                        animationId = requestAnimationFrame(animate);
-                    }
-                } catch (error) {
-                    console.error('Animation error:', error);
-                    stopAnimation();
+        function progressWorld() {
+            if (!worldPtr) {
+                log('❌ No world exists', 'error');
+                return;
+            }
+
+            try {
+                // Call progress function (returns void)
+                wasmModule.instance.exports.progress_world_ptr(worldPtr);
+                // Then get the current position
+                const x = wasmModule.instance.exports.get_pos_x(worldPtr);
+                progressCount++;
+                log(`⏭️ World progressed! Position X: ${x} (progress #${progressCount})`, 'success');
+                updatePositionDisplay(x);
+                updateStatusTable();
+                return x;
+            } catch (error) {
+                log(`❌ Error progressing world: ${error.message}`, 'error');
+            }
+        }
+
+        function progressTwice() {
+            log('⏭️⏭️ Progressing world twice...');
+            const x1 = progressWorld();
+            const x2 = progressWorld();
+            log(`🎯 After two progressions: ${x1} → ${x2}`, 'success');
+        }
+
+        function destroyWorld() {
+            if (!worldPtr) {
+                log('❌ No world exists', 'error');
+                return;
+            }
+
+            try {
+                log('💥 Destroying world...');
+                wasmModule.instance.exports.destroy_world(worldPtr);
+                log('✅ World destroyed successfully!', 'success');
+                
+                worldPtr = null;
+                progressCount = 0;
+                updatePositionDisplay('--');
+                updateButtonStates();
+                
+                // Stop auto progress if running
+                if (autoProgressInterval) {
+                    clearInterval(autoProgressInterval);
+                    autoProgressInterval = null;
+                    document.getElementById('autoProgressBtn').innerHTML = '🔄 Auto Progress';
                 }
+                
+            } catch (error) {
+                log(`❌ Error destroying world: ${error.message}`, 'error');
             }
-
-            animationId = requestAnimationFrame(animate);
         }
 
-        function stopAnimation() {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
+        function toggleAutoProgress() {
+            if (!worldPtr) {
+                log('❌ No world exists', 'error');
+                return;
             }
-            document.getElementById('runLoop').disabled = false;
-            document.getElementById('stopLoop').disabled = true;
-            
-            document.getElementById('animation').innerHTML += `
-                <p style="color: green; margin-top: 10px;">✅ Animation stopped after ${frameCount} frames.</p>
-            `;
+
+            if (autoProgressInterval) {
+                clearInterval(autoProgressInterval);
+                autoProgressInterval = null;
+                document.getElementById('autoProgressBtn').innerHTML = '🔄 Auto Progress';
+                log('⏸️ Auto progress stopped', 'warning');
+            } else {
+                autoProgressInterval = setInterval(() => {
+                    progressWorld();
+                }, 500); // Progress every 500ms
+                document.getElementById('autoProgressBtn').innerHTML = '⏸️ Stop Auto';
+                log('▶️ Auto progress started (every 500ms)', 'success');
+            }
+            updateStatusTable();
         }
 
-        // Initialize buttons as disabled
-        document.getElementById('runTest').disabled = true;
-        document.getElementById('runLoop').disabled = true;
-        document.getElementById('stopLoop').disabled = true;
-
-        // Load WASM when page loads
+        // Initialize page
+        log('Ready to load WASM module...', 'info');
+        updateButtonStates();
         loadWasm();
     </script>
 </body>

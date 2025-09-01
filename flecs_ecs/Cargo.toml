@@ -193,24 +193,24 @@ flecs_base = [
     "flecs_timer",
     "flecs_safety_locks",
 ]
-
+ 
 default = [
     #"flecs_bindgen",
     #"flecs_nightly_tests",
     "flecs_base",
-    "flecs_script",
-    "flecs_stats",
-    "flecs_metrics",
-    "flecs_alerts",
-    "flecs_meta",
-    "flecs_units",
-    "flecs_json",
-    "flecs_doc",
-    "flecs_log",
-    "flecs_app",
-    "flecs_http",
-    "flecs_rest",
-    "flecs_query_rust_traits"
+    # "flecs_script",
+    # "flecs_stats",
+    # "flecs_metrics",
+    # "flecs_alerts",
+    # "flecs_meta",
+    # "flecs_units",
+    # "flecs_json",
+    # "flecs_doc",
+    # "flecs_log",
+    # "flecs_app",
+    # "flecs_http",
+    # "flecs_rest",
+    # "flecs_query_rust_traits"
 ]
 
 ######################

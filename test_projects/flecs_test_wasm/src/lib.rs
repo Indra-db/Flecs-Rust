@@ -21,6 +21,51 @@ extern "C" {
     fn calloc(count: usize, size: usize) -> *mut c_void;
 }
 
+// External declarations for JavaScript console functions (for debugging)
+#[cfg(target_arch = "wasm32")]
+extern "C" {
+    fn console_log(ptr: *const u8, len: usize);
+    fn console_error(ptr: *const u8, len: usize);
+    fn debug_trace(value: i32);
+}
+
+// Helper functions for debugging
+#[cfg(target_arch = "wasm32")]
+fn js_log(msg: &str) {
+    unsafe {
+        console_log(msg.as_ptr(), msg.len());
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn js_log(msg: &str) {
+    println!("[JS_LOG] {}", msg);
+}
+
+#[cfg(target_arch = "wasm32")]
+fn js_error(msg: &str) {
+    unsafe {
+        console_error(msg.as_ptr(), msg.len());
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn js_error(msg: &str) {
+    eprintln!("[JS_ERROR] {}", msg);
+}
+
+#[cfg(target_arch = "wasm32")]
+fn js_trace(value: i32) {
+    unsafe {
+        debug_trace(value);
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn js_trace(value: i32) {
+    println!("[JS_TRACE] {}", value);
+}
+
 // WASM-compatible OS API implementations with correct signatures
 unsafe extern "C" fn wasm_malloc(size: ecs_size_t) -> *mut c_void {
     malloc(size as usize)
@@ -58,8 +103,13 @@ unsafe extern "C" fn wasm_get_time(time_out: *mut ecs_time_t) {
 }
 
 unsafe extern "C" fn wasm_abort() {
-    // Proper abort - this will help us identify the real issue
-    panic!("Flecs abort called in WASM - there's a real problem to fix");
+    // Log detailed abort information to JavaScript console
+    js_error("WASM ABORT TRIGGERED!");
+    js_error("This abort was called from within Flecs C code");
+    js_error("Most likely cause: frame/timing system incompatibility with WASM");
+
+    // Call the panic with a more specific message
+    panic!("Flecs internal abort - check JavaScript console for details");
 }
 
 unsafe extern "C" fn wasm_log(
@@ -68,7 +118,23 @@ unsafe extern "C" fn wasm_log(
     _line: c_int,
     _msg: *const c_char,
 ) {
-    // No-op for WASM - logging can be handled elsewhere
+    // // Convert the C string to a Rust string and log it
+    // if !_msg.is_null() {
+    //     let c_str = std::ffi::CStr::from_ptr(_msg);
+    //     if let Ok(rust_str) = c_str.to_str() {
+    //         js_log(&format!("[FLECS] {}", rust_str));
+    //     }
+    // }
+}
+
+unsafe extern "C" fn wasm_sleep(sec: i32, nanosec: i32) {
+    // No-op for WASM - we can't actually sleep in single-threaded WASM
+    // But we need to provide this function for ecs_os_has_time() to return true
+    let total_ms = (sec as f64) * 1000.0 + (nanosec as f64) / 1_000_000.0;
+    js_log(&format!(
+        "WASM sleep called with {}s, {}ns (total: {:.2}ms, no-op)",
+        sec, nanosec, total_ms
+    ));
 }
 
 // Threading and synchronization stubs for WASM (single-threaded environment)
@@ -165,69 +231,135 @@ unsafe extern "C" fn wasm_ladec(value: *mut i64) -> i64 {
 
 // Set up the WASM-compatible OS API using the hook system
 fn setup_wasm_os_api() {
-    ecs_os_api::add_init_hook(Box::new(|api| {
-        // Set memory management functions
-        api.malloc_ = Some(wasm_malloc);
-        api.free_ = Some(wasm_free);
-        api.realloc_ = Some(wasm_realloc);
-        api.calloc_ = Some(wasm_calloc);
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static SETUP_DONE: AtomicBool = AtomicBool::new(false);
 
-        // Set time functions
-        api.now_ = Some(wasm_now);
-        api.get_time_ = Some(wasm_get_time);
+    // Only set up once to avoid multiple hook registrations
+    if SETUP_DONE
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::Relaxed)
+        .is_ok()
+    {
+        ecs_os_api::add_init_hook(Box::new(|api| {
+            // Set memory management functions
+            api.malloc_ = Some(wasm_malloc);
+            api.free_ = Some(wasm_free);
+            api.realloc_ = Some(wasm_realloc);
+            api.calloc_ = Some(wasm_calloc);
 
-        // Set threading functions (no-ops for WASM)
-        api.thread_new_ = Some(wasm_thread_new);
-        api.thread_join_ = Some(wasm_thread_join);
-        api.thread_self_ = Some(wasm_thread_self);
-        api.task_new_ = Some(wasm_thread_new); // Same as thread_new
-        api.task_join_ = Some(wasm_thread_join); // Same as thread_join
+            // Set time functions
+            api.now_ = Some(wasm_now);
+            api.get_time_ = Some(wasm_get_time);
+            api.sleep_ = Some(wasm_sleep); // Set threading functions (no-ops for WASM)
+            api.thread_new_ = Some(wasm_thread_new);
+            api.thread_join_ = Some(wasm_thread_join);
+            api.thread_self_ = Some(wasm_thread_self);
+            api.task_new_ = Some(wasm_thread_new); // Same as thread_new
+            api.task_join_ = Some(wasm_thread_join); // Same as thread_join
 
-        // Set mutex functions (no-ops for WASM)
-        api.mutex_new_ = Some(wasm_mutex_new);
-        api.mutex_free_ = Some(wasm_mutex_free);
-        api.mutex_lock_ = Some(wasm_mutex_lock);
-        api.mutex_unlock_ = Some(wasm_mutex_unlock);
+            // Set mutex functions (no-ops for WASM)
+            api.mutex_new_ = Some(wasm_mutex_new);
+            api.mutex_free_ = Some(wasm_mutex_free);
+            api.mutex_lock_ = Some(wasm_mutex_lock);
+            api.mutex_unlock_ = Some(wasm_mutex_unlock);
 
-        // Set condition variable functions (no-ops for WASM)
-        api.cond_new_ = Some(wasm_cond_new);
-        api.cond_free_ = Some(wasm_cond_free);
-        api.cond_signal_ = Some(wasm_cond_signal);
-        api.cond_broadcast_ = Some(wasm_cond_broadcast);
-        api.cond_wait_ = Some(wasm_cond_wait);
+            // Set condition variable functions (no-ops for WASM)
+            api.cond_new_ = Some(wasm_cond_new);
+            api.cond_free_ = Some(wasm_cond_free);
+            api.cond_signal_ = Some(wasm_cond_signal);
+            api.cond_broadcast_ = Some(wasm_cond_broadcast);
+            api.cond_wait_ = Some(wasm_cond_wait);
 
-        // Set atomic functions
-        api.ainc_ = Some(wasm_ainc);
-        api.adec_ = Some(wasm_adec);
-        api.lainc_ = Some(wasm_lainc);
-        api.ladec_ = Some(wasm_ladec);
+            // Set atomic functions
+            api.ainc_ = Some(wasm_ainc);
+            api.adec_ = Some(wasm_adec);
+            api.lainc_ = Some(wasm_lainc);
+            api.ladec_ = Some(wasm_ladec);
 
-        // Set abort function
-        api.abort_ = Some(wasm_abort);
+            // Set abort function
+            api.abort_ = Some(wasm_abort);
 
-        // Set log function to no-op
-        api.log_ = Some(wasm_log);
-    }));
+            // Set log function to no-op
+            api.log_ = Some(wasm_log);
+        }));
+    }
 }
+
 #[no_mangle]
-pub extern "C" fn example_pos_x() -> i32 {
-    // Set up WASM-compatible OS API hooks before creating world
+pub extern "C" fn test_progress() -> i32 {
     setup_wasm_os_api();
 
-    // Create world and basic entities
     let world = World::new();
 
-    // Define component and create entity
-    let entity = world.entity().set(Position { x: 10, y: 20 });
+    let e = world.entity().set(Position { x: 10, y: 10 });
 
-    // Create a simple system
-    let system = world.system::<&mut Position>().each(|pos| {
+    world.system::<&mut Position>().each(|pos| {
         pos.x += 1;
+        pos.y += 1;
     });
 
-    // Use manual system.run() which we know works
-    system.run();
+    world.progress();
 
-    // Get the x value to verify the system ran
-    entity.get::<&Position>(|pos| pos.x)
+    let pos = e.cloned::<&Position>();
+    pos.x
+}
+
+// Create a new world and return its pointer along with the entity ID
+#[no_mangle]
+pub extern "C" fn create_world() -> *mut WorldState {
+    setup_wasm_os_api();
+
+    let world = World::new();
+    let entity = world.entity().set(Position { x: 10, y: 10 });
+    let entity_id = entity.id();
+
+    // Set up the system
+    world.system::<&mut Position>().each(|pos| {
+        pos.x += 1;
+        pos.y += 1;
+    });
+
+    let world_state = WorldState {
+        world,
+        entity: entity_id,
+    };
+
+    let boxed = Box::new(world_state);
+    Box::into_raw(boxed)
+}
+
+// Progress the world and return the current x position
+#[no_mangle]
+pub extern "C" fn progress_world_ptr(world_ptr: *mut WorldState) {
+    unsafe {
+        let world_state = &mut *world_ptr;
+        world_state.world.progress();
+    }
+}
+
+// Get current position without progressing
+#[no_mangle]
+pub extern "C" fn get_pos_x(world_ptr: *mut WorldState) -> i32 {
+    unsafe {
+        let world_state = &*world_ptr;
+        let entity = world_state.world.entity_from_id(world_state.entity);
+        let pos = entity.cloned::<&Position>();
+        pos.x
+    }
+}
+
+// Destroy the world and free memory
+#[no_mangle]
+pub extern "C" fn destroy_world(world_ptr: *mut WorldState) {
+    if !world_ptr.is_null() {
+        unsafe {
+            let _ = Box::from_raw(world_ptr);
+        }
+    }
+}
+
+// Helper struct to hold world and entity together
+#[repr(C)]
+pub struct WorldState {
+    world: World,
+    entity: Entity,
 }

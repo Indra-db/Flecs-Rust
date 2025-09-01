@@ -25,8 +25,8 @@ function getStringFromWasm0(ptr, len) {
 /**
  * @returns {number}
  */
-module.exports.example_pos_x = function() {
-    const ret = wasm.example_pos_x();
+module.exports.test_progress = function() {
+    const ret = wasm.test_progress();
     return ret;
 };
 

@@ -13,7 +13,9 @@ flecs_ecs = { path = "../../flecs_ecs", default-features = false }
 
 [features]
 # Keep this crate lean; opt-in to features explicitly
-default = []
+default = [
+    "flecs_base",
+]
 # Forward these features to flecs_ecs
 wasm32 = ["flecs_ecs/wasm32"]
 flecs_base = ["flecs_ecs/flecs_base"]
