@@ -30,6 +30,7 @@ script = [
   'echo "✅ Generated JS bindings successfully"',
   'echo ""',
   'echo "Stage 2: Build full Flecs runtime WASM (with WASI)..."',
+  'cargo build --no-default-features --features "flecs_base,wasm32"',
   'cargo build --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
   'echo "✅ Built full runtime with WASI support"',
   'echo ""',
