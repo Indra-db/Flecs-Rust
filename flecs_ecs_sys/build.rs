@@ -239,6 +239,86 @@ fn generate_bindings() {
         .unwrap();
 }
 
+/// Attempts to find wasi-libc headers using multiple detection methods
+fn find_wasi_headers() -> Option<String> {
+    use std::process::Command;
+    
+    // Method 1: Check environment variable
+    if let Ok(path) = std::env::var("WASI_SYSROOT_INCLUDE") {
+        if std::path::Path::new(&path).exists() {
+            println!("cargo:rerun-if-env-changed=WASI_SYSROOT_INCLUDE");
+            return Some(path);
+        }
+    }
+    
+    // Method 2: Try Homebrew (macOS)
+    if let Ok(output) = Command::new("brew").args(["--prefix", "wasi-libc"]).output() {
+        if output.status.success() {
+            let prefix_str = String::from_utf8_lossy(&output.stdout);
+            let prefix = prefix_str.trim();
+            let wasi_path = format!("{}/share/wasi-sysroot/include/wasm32-wasi", prefix);
+            if std::path::Path::new(&wasi_path).exists() {
+                return Some(wasi_path);
+            }
+        }
+    }
+    
+    // Method 3: Try pkg-config (Linux)
+    if let Ok(output) = Command::new("pkg-config").args(["--variable=includedir", "wasi-libc"]).output() {
+        if output.status.success() {
+            let include_str = String::from_utf8_lossy(&output.stdout);
+            let include_dir = include_str.trim();
+            let wasi_path = format!("{}/wasm32-wasi", include_dir);
+            if std::path::Path::new(&wasi_path).exists() {
+                return Some(wasi_path);
+            }
+        }
+    }
+    
+    // Method 4: Check common installation paths
+    let common_paths = [
+        // Homebrew paths (both Intel and Apple Silicon)
+        "/opt/homebrew/share/wasi-sysroot/include/wasm32-wasi",
+        "/usr/local/share/wasi-sysroot/include/wasm32-wasi",
+        // Linux package manager paths
+        "/usr/include/wasm32-wasi",
+        "/usr/local/include/wasm32-wasi",
+        // wasi-sdk installation paths
+        "/opt/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi",
+        "/usr/local/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi",
+        // Windows paths (if using wasi-sdk)
+        "C:/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi",
+        // Common manual installation paths
+        "/opt/wasi-libc/include/wasm32-wasi",
+        "/usr/local/wasi-libc/include/wasm32-wasi",
+    ];
+    
+    for path in &common_paths {
+        if std::path::Path::new(path).exists() {
+            return Some(path.to_string());
+        }
+    }
+    
+    // Method 5: Try to find wasi-sdk binary and infer path
+    if let Ok(output) = Command::new("which").arg("wasi-clang").output() {
+        if output.status.success() {
+            let clang_str = String::from_utf8_lossy(&output.stdout);
+            let wasi_clang_path = clang_str.trim();
+            // wasi-clang is typically in bin/, so go up and look for share/wasi-sysroot
+            if let Some(parent) = std::path::Path::new(wasi_clang_path).parent() {
+                if let Some(grandparent) = parent.parent() {
+                    let wasi_path = grandparent.join("share/wasi-sysroot/include/wasm32-wasi");
+                    if wasi_path.exists() {
+                        return Some(wasi_path.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+    }
+    
+    None
+}
+
 fn main() {
     // Tell cargo to invalidate the built crate whenever the sources change
     println!("cargo:rerun-if-changed=src/flecs.h");
@@ -265,33 +345,32 @@ fn main() {
             // Add WASM-specific stub file
             build.file("src/wasm_stubs.c");
 
-            // Try to find wasi-libc headers
-            let wasi_include = if let Ok(output) = std::process::Command::new("brew")
-                .args(["--prefix", "wasi-libc"])
-                .output()
-            {
-                let prefix = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                format!("{}/share/wasi-sysroot/include/wasm32-wasi", prefix)
-            } else {
-                // Fallback to common locations
-                let fallback_paths = [
-                    "/opt/homebrew/share/wasi-sysroot/include/wasm32-wasi",
-                    "/usr/local/share/wasi-sysroot/include/wasm32-wasi",
-                    "/opt/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi",
-                ];
-
-                fallback_paths
-                    .iter()
-                    .find(|path| std::path::Path::new(path).exists())
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| {
-                        panic!("Could not find wasi-libc headers. Please install wasi-libc or wasi-sdk.")
-                    })
-            };
+            // Try to find wasi-libc headers using multiple methods
+            let wasi_include = find_wasi_headers().unwrap_or_else(|| {
+                eprintln!("Error: Could not find wasi-libc headers.");
+                eprintln!("wasi-libc is required for WASM compilation. Please install it:");
+                eprintln!();
+                eprintln!("  macOS (Homebrew):");
+                eprintln!("    brew install wasi-libc");
+                eprintln!();
+                eprintln!("  Ubuntu/Debian:");
+                eprintln!("    sudo apt install wasi-libc-dev");
+                eprintln!();
+                eprintln!("  Arch Linux:");
+                eprintln!("    sudo pacman -S wasi-libc");
+                eprintln!();
+                eprintln!("  Manual installation:");
+                eprintln!("    Download wasi-sdk from https://github.com/WebAssembly/wasi-sdk/releases");
+                eprintln!();
+                eprintln!("  Or set the WASI_SYSROOT_INCLUDE environment variable:");
+                eprintln!("    export WASI_SYSROOT_INCLUDE=/path/to/wasi-libc/include/wasm32-wasi");
+                eprintln!();
+                panic!("wasi-libc headers not found. See error message above for installation instructions.");
+            });
 
             build
                 .include(&wasi_include)
-                .include("src") // For our custom execinfo.h
+                .include("src") // Always include src for our custom headers
                 .flag("-ffreestanding")
                 .flag("-fno-exceptions")
                 .flag("-fno-unwind-tables")

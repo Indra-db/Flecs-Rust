@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flecs WASM-Bindgen Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #output {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flecs WASM-Bindgen Test</h1>
+    
+    <div>
+        <button onclick="testBasicFunctions()">Test Basic Functions</button>
+        <button onclick="testFlecs()">Test Flecs ECS</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script type="module">
+        import init, { add, greet, run_flecs_bindgen_test } from './pkg/flecs_bindgen_minimal.js';
+        
+        let wasmModule;
+        
+        async function initWasm() {
+            try {
+                // Provide comprehensive WASI stubs for the runtime WASM
+                const wasiImports = {
+                    wasi_snapshot_preview1: {
+                        clock_time_get: (id, precision, time_ptr) => {
+                            // Provide high-resolution time for Flecs systems
+                            const timeNs = BigInt(Math.floor(performance.now() * 1000000));
+                            const memory = new DataView(wasmModule.exports.memory.buffer);
+                            memory.setBigUint64(time_ptr, timeNs, true);
+                            return 0;
+                        },
+                        proc_exit: (code) => {
+                            appendOutput(`Process exit called with code: ${code}\n`);
+                        },
+                        environ_get: () => 0,
+                        environ_sizes_get: () => 0,
+                        fd_write: (fd, iov, iovcnt, nwritten) => {
+                            // Handle stdout/stderr writes
+                            if (fd === 1 || fd === 2) {
+                                // This is a simplified implementation
+                                return 0;
+                            }
+                            return 8; // EBADF
+                        },
+                        fd_close: () => 0,
+                        fd_seek: () => 0,
+                        random_get: (buf, buf_len) => {
+                            // Provide random data
+                            const memory = new Uint8Array(wasmModule.exports.memory.buffer);
+                            for (let i = 0; i < buf_len; i++) {
+                                memory[buf + i] = Math.floor(Math.random() * 256);
+                            }
+                            return 0;
+                        },
+                    }
+                };
+                
+                wasmModule = await init(undefined, wasiImports);
+                appendOutput('WASM module initialized successfully!\n');
+                appendOutput('✅ Two-stage build: JS bindings (no WASI) + Runtime WASM (full WASI)\n\n');
+                
+                // Make functions available globally
+                window.add = add;
+                window.greet = greet;
+                window.run_flecs_bindgen_test = run_flecs_bindgen_test;
+                
+            } catch (error) {
+                appendOutput(`Error initializing WASM: ${error}\n`);
+                console.error('Detailed WASM init error:', error);
+            }
+        }
+        
+        function appendOutput(text) {
+            const output = document.getElementById('output');
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Override console.log to capture output
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            appendOutput(args.join(' ') + '\n');
+        };
+        
+        window.testBasicFunctions = function() {
+            try {
+                appendOutput('--- Testing Basic Functions ---\n');
+                
+                const sum = window.add(5, 3);
+                appendOutput(`add(5, 3) = ${sum}\n`);
+                
+                const greeting = window.greet('WASM');
+                appendOutput(`greet('WASM') = ${greeting}\n`);
+                
+                appendOutput('Basic functions test completed!\n\n');
+            } catch (error) {
+                appendOutput(`Error in basic functions test: ${error}\n`);
+            }
+        };
+        
+        window.testFlecs = function() {
+            try {
+                appendOutput('--- Testing Flecs ECS ---\n');
+                window.run_flecs_bindgen_test();
+                appendOutput('\n');
+            } catch (error) {
+                appendOutput(`Error in Flecs test: ${error}\n`);
+            }
+        };
+        
+        window.clearOutput = function() {
+            document.getElementById('output').textContent = '';
+        };
+        
+        // Initialize WASM when the page loads
+        initWasm();
+    </script>
+</body>
+</html>

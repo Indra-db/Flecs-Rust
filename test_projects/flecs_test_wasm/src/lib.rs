@@ -7,6 +7,9 @@ use flecs_ecs::sys::{
 use std::ffi::c_void;
 use std::os::raw::{c_char, c_int};
 
+// Include wasm-bindgen module
+pub mod bindgen;
+
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Position {
     pub x: i32,
@@ -230,7 +233,7 @@ unsafe extern "C" fn wasm_ladec(value: *mut i64) -> i64 {
 }
 
 // Set up the WASM-compatible OS API using the hook system
-fn setup_wasm_os_api() {
+pub fn setup_wasm_os_api() {
     use std::sync::atomic::{AtomicBool, Ordering};
     static SETUP_DONE: AtomicBool = AtomicBool::new(false);
 
