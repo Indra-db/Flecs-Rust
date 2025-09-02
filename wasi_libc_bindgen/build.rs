@@ -56,7 +56,6 @@ fn build_libc() {
     println!("cargo:rerun-if-changed=src/libc-top-half");
     
     let out_dir = env::var("OUT_DIR").unwrap();
-    let out_path = PathBuf::from(&out_dir);
     
     let mut build = cc::Build::new();
     
@@ -76,6 +75,7 @@ fn build_libc() {
         .flag("-fdata-sections")
         .define("__wasm32__", None)
         .define("__wasm__", None)
+        .define("__wasilibc_unmodified_upstream", None)
         .define("_WASI_EMULATED_MMAN", None)
         .define("_WASI_EMULATED_SIGNAL", None)
         .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
@@ -119,24 +119,6 @@ fn build_libc() {
     // Output library path for linking
     println!("cargo:rustc-link-search=native={}", out_dir);
     println!("cargo:rustc-link-lib=static=wasi_libc");
-}
-
-#[cfg(feature = "build-libc")]
-fn add_c_files_recursive(build: &mut cc::Build, dir: &std::path::Path) {
-    for entry in std::fs::read_dir(dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        
-        if path.is_dir() {
-            // Skip certain directories that might cause issues
-            let dir_name = path.file_name().unwrap().to_str().unwrap();
-            if !["ldso", "crt", "arch"].contains(&dir_name) {
-                add_c_files_recursive(build, &path);
-            }
-        } else if path.extension().and_then(|s| s.to_str()) == Some("c") {
-            build.file(&path);
-        }
-    }
 }
 
 use std::env;
