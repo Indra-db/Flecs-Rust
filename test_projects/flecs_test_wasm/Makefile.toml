@@ -13,10 +13,10 @@ workspace = false
 [tasks.build-wasm2]
 description = "Build flecs_test_wasm for wasm32-unknown-unknown (legacy approach)"
 script = [
-  'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
-  'wasm-bindgen -p flecs_test_wasm --target web --no-typescript --out-dir pkg ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm',
+  #'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
   'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
-  'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm ./pkg/flecs_test_wasm_bg.wasm',
+  'wasm-bindgen --target web --no-typescript --out-dir pkg ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm',
+  # 'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm ./pkg/flecs_test_wasm_bg.wasm',
 ]
 workspace = false 
 

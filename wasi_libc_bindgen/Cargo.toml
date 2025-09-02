@@ -1,0 +1,21 @@
+[package]
+name = "wasi_libc_bindgen"
+version = "0.1.0"
+edition = "2021"
+description = "Rust FFI bindings for wasi-libc generated via bindgen"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.72"
+cc = "1.0"
+
+[features]
+default = []
+# Regenerate the C bindings for wasi-libc
+bindgen = []
+# Build libc.a from the libc-top-half sources
+build-libc = []
+# Optional feature to include the compiled libc.a
+link-libc = []
