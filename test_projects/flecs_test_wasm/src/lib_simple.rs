@@ -26,7 +26,7 @@ pub fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
 }
 
-// Conditional Flecs functionality - only when flecs_ecs dependency is available
+// Conditional Flecs functionality
 #[cfg(feature = "flecs_ecs")]
 mod flecs_impl {
     use super::*;
@@ -48,7 +48,7 @@ mod flecs_impl {
     pub fn run_flecs_bindgen_test() {
         console_log!("Starting Flecs wasm-bindgen test with full runtime...");
 
-        // Set up the WASM OS API (when not in bindgen_only mode)
+        // Set up the WASM OS API (when available)
         #[cfg(not(feature = "bindgen_only"))]
         crate::setup_wasm_os_api();
 
@@ -81,7 +81,7 @@ mod flecs_impl {
 
         // Run a few iterations
         for i in 0..5 {
-            world.progress(); // Run one frame
+            world.progress(0.016); // 60 FPS
 
             entity.try_get::<&Position>(|pos| {
                 console_log!("Frame {}: position: ({:.2}, {:.2})", i + 1, pos.x, pos.y);
@@ -92,7 +92,7 @@ mod flecs_impl {
     }
 }
 
-// Stub implementation for bindgen_only builds (no flecs_ecs dependency)
+// Stub implementation for bindgen_only builds
 #[cfg(not(feature = "flecs_ecs"))]
 mod flecs_stub {
     use super::*;
@@ -112,7 +112,7 @@ pub use flecs_impl::*;
 #[cfg(not(feature = "flecs_ecs"))]
 pub use flecs_stub::*;
 
-// Include the full WASM OS API setup only when Flecs is available AND not bindgen_only
+// Include the full WASM OS API setup only when Flecs is available
 #[cfg(all(feature = "flecs_ecs", not(feature = "bindgen_only")))]
 mod wasm_os_api {
     use flecs_ecs::core::ecs_os_api;
@@ -133,39 +133,35 @@ mod wasm_os_api {
 
     // WASM-compatible OS API implementations
     unsafe extern "C" fn wasm_malloc(size: ecs_size_t) -> *mut c_void {
-        unsafe { malloc(size as usize) }
+        malloc(size as usize)
     }
 
     unsafe extern "C" fn wasm_free(ptr: *mut c_void) {
-        unsafe { free(ptr) }
+        free(ptr)
     }
 
     unsafe extern "C" fn wasm_realloc(ptr: *mut c_void, size: ecs_size_t) -> *mut c_void {
-        unsafe { realloc(ptr, size as usize) }
+        realloc(ptr, size as usize)
     }
 
     unsafe extern "C" fn wasm_calloc(size: ecs_size_t) -> *mut c_void {
-        unsafe { calloc(1, size as usize) }
+        calloc(1, size as usize)
     }
 
     unsafe extern "C" fn wasm_now() -> u64 {
         static mut TIME: u64 = 0;
-        unsafe {
-            TIME += 16666; // ~60 FPS in microseconds
-            TIME
-        }
+        TIME += 16666; // ~60 FPS in microseconds
+        TIME
     }
 
     unsafe extern "C" fn wasm_get_time(time_out: *mut ecs_time_t) {
         if !time_out.is_null() {
-            unsafe {
-                let now_us = wasm_now();
-                let sec = now_us / 1_000_000;
-                let nanosec = (now_us % 1_000_000) * 1000;
+            let now_us = wasm_now();
+            let sec = now_us / 1_000_000;
+            let nanosec = (now_us % 1_000_000) * 1000;
 
-                (*time_out).sec = sec as u32;
-                (*time_out).nanosec = nanosec as u32;
-            }
+            (*time_out).sec = sec as u32;
+            (*time_out).nanosec = nanosec as u32;
         }
     }
 
@@ -194,7 +190,10 @@ mod wasm_os_api {
         0 as ecs_os_thread_t
     }
 
-    unsafe extern "C" fn wasm_thread_join(_thread: ecs_os_thread_t) -> *mut c_void {
+    unsafe extern "C" fn wasm_thread_join(
+        _thread: ecs_os_thread_t,
+        _return_value: *mut *mut c_void,
+    ) -> *mut c_void {
         std::ptr::null_mut()
     }
 
@@ -252,45 +251,46 @@ mod wasm_os_api {
     unsafe extern "C" fn wasm_cond_wait(_cond: ecs_os_cond_t, _mutex: ecs_os_mutex_t) {}
 
     pub fn setup_wasm_os_api() {
-        // Use the proper OS API hook system
-        ecs_os_api::add_init_hook(Box::new(|api| {
-            api.malloc_ = Some(wasm_malloc);
-            api.free_ = Some(wasm_free);
-            api.realloc_ = Some(wasm_realloc);
-            api.calloc_ = Some(wasm_calloc);
+        ecs_os_api::set_api_defaults();
 
-            api.get_time_ = Some(wasm_get_time);
-            api.sleep_ = Some(wasm_sleep);
-            api.now_ = Some(wasm_now);
-            api.log_ = Some(wasm_log);
-            api.abort_ = Some(wasm_abort);
+        let api = ecs_os_api::get_api();
 
-            // Threading API
-            api.thread_new_ = Some(wasm_thread_new);
-            api.thread_join_ = Some(wasm_thread_join);
-            api.thread_self_ = Some(wasm_thread_self);
+        api.malloc_ = Some(wasm_malloc);
+        api.free_ = Some(wasm_free);
+        api.realloc_ = Some(wasm_realloc);
+        api.calloc_ = Some(wasm_calloc);
 
-            api.task_new_ = Some(wasm_task_new);
-            api.task_join_ = Some(wasm_task_join);
+        api.get_time_ = Some(wasm_get_time);
+        api.sleep_ = Some(wasm_sleep);
+        api.now_ = Some(wasm_now);
+        api.log_ = Some(wasm_log);
+        api.abort_ = Some(wasm_abort);
 
-            // Atomic operations
-            api.ainc_ = Some(wasm_ainc);
-            api.adec_ = Some(wasm_adec);
-            api.lainc_ = Some(wasm_lainc);
-            api.ladec_ = Some(wasm_ladec);
+        // Threading API
+        api.thread_new_ = Some(wasm_thread_new);
+        api.thread_join_ = Some(wasm_thread_join);
+        api.thread_self_ = Some(wasm_thread_self);
 
-            // Synchronization primitives
-            api.mutex_new_ = Some(wasm_mutex_new);
-            api.mutex_free_ = Some(wasm_mutex_free);
-            api.mutex_lock_ = Some(wasm_mutex_lock);
-            api.mutex_unlock_ = Some(wasm_mutex_unlock);
+        api.task_new_ = Some(wasm_task_new);
+        api.task_join_ = Some(wasm_task_join);
 
-            api.cond_new_ = Some(wasm_cond_new);
-            api.cond_free_ = Some(wasm_cond_free);
-            api.cond_signal_ = Some(wasm_cond_signal);
-            api.cond_broadcast_ = Some(wasm_cond_broadcast);
-            api.cond_wait_ = Some(wasm_cond_wait);
-        }));
+        // Atomic operations
+        api.ainc_ = Some(wasm_ainc);
+        api.adec_ = Some(wasm_adec);
+        api.lainc_ = Some(wasm_lainc);
+        api.ladec_ = Some(wasm_ladec);
+
+        // Synchronization primitives
+        api.mutex_new_ = Some(wasm_mutex_new);
+        api.mutex_free_ = Some(wasm_mutex_free);
+        api.mutex_lock_ = Some(wasm_mutex_lock);
+        api.mutex_unlock_ = Some(wasm_mutex_unlock);
+
+        api.cond_new_ = Some(wasm_cond_new);
+        api.cond_free_ = Some(wasm_cond_free);
+        api.cond_signal_ = Some(wasm_cond_signal);
+        api.cond_broadcast_ = Some(wasm_cond_broadcast);
+        api.cond_wait_ = Some(wasm_cond_wait);
     }
 }
 

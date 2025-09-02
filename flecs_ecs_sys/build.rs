@@ -242,7 +242,7 @@ fn generate_bindings() {
 /// Attempts to find wasi-libc headers using multiple detection methods
 fn find_wasi_headers() -> Option<String> {
     use std::process::Command;
-    
+
     // Method 1: Check environment variable
     if let Ok(path) = std::env::var("WASI_SYSROOT_INCLUDE") {
         if std::path::Path::new(&path).exists() {
@@ -250,9 +250,12 @@ fn find_wasi_headers() -> Option<String> {
             return Some(path);
         }
     }
-    
+
     // Method 2: Try Homebrew (macOS)
-    if let Ok(output) = Command::new("brew").args(["--prefix", "wasi-libc"]).output() {
+    if let Ok(output) = Command::new("brew")
+        .args(["--prefix", "wasi-libc"])
+        .output()
+    {
         if output.status.success() {
             let prefix_str = String::from_utf8_lossy(&output.stdout);
             let prefix = prefix_str.trim();
@@ -262,9 +265,12 @@ fn find_wasi_headers() -> Option<String> {
             }
         }
     }
-    
+
     // Method 3: Try pkg-config (Linux)
-    if let Ok(output) = Command::new("pkg-config").args(["--variable=includedir", "wasi-libc"]).output() {
+    if let Ok(output) = Command::new("pkg-config")
+        .args(["--variable=includedir", "wasi-libc"])
+        .output()
+    {
         if output.status.success() {
             let include_str = String::from_utf8_lossy(&output.stdout);
             let include_dir = include_str.trim();
@@ -274,7 +280,7 @@ fn find_wasi_headers() -> Option<String> {
             }
         }
     }
-    
+
     // Method 4: Check common installation paths
     let common_paths = [
         // Homebrew paths (both Intel and Apple Silicon)
@@ -292,13 +298,13 @@ fn find_wasi_headers() -> Option<String> {
         "/opt/wasi-libc/include/wasm32-wasi",
         "/usr/local/wasi-libc/include/wasm32-wasi",
     ];
-    
+
     for path in &common_paths {
         if std::path::Path::new(path).exists() {
             return Some(path.to_string());
         }
     }
-    
+
     // Method 5: Try to find wasi-sdk binary and infer path
     if let Ok(output) = Command::new("which").arg("wasi-clang").output() {
         if output.status.success() {
@@ -315,7 +321,7 @@ fn find_wasi_headers() -> Option<String> {
             }
         }
     }
-    
+
     None
 }
 

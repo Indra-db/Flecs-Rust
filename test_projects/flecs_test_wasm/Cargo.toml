@@ -8,8 +8,8 @@ autobins = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-# Use the local flecs_ecs crate from the workspace
-flecs_ecs = { path = "../../flecs_ecs", default-features = false }
+# Use the local flecs_ecs crate from the workspace (only when not bindgen_only)
+flecs_ecs = { path = "../../flecs_ecs", default-features = false, optional = true }
 
 # wasm-bindgen dependencies
 wasm-bindgen = "0.2"
@@ -21,18 +21,18 @@ version = "0.3"
 features = ["console"]
 
 [features]
-# Keep this crate lean; opt-in to features explicitly
-default = [
-    "flecs_base",
-]
-# Forward these features to flecs_ecs
-wasm32 = ["flecs_ecs/wasm32"]
-wasm_bindgen = ["flecs_ecs/wasm32"] # Special feature for wasm-bindgen builds
-flecs_base = ["flecs_ecs/flecs_base"]
-flecs_use_os_alloc = ["flecs_ecs/flecs_use_os_alloc"]
+# Two distinct build modes:
+# 1. bindgen_only: Minimal build for JS binding generation (no Flecs ECS)
+# 2. default: Full build with Flecs ECS functionality
 
-[profile.release]
-opt-level = "s"
-lto = true
-codegen-units = 1
-panic = "abort"
+# bindgen_only mode - excludes all Flecs dependencies
+bindgen_only = []
+
+# Full mode - includes Flecs ECS
+default = ["flecs_ecs", "flecs_base"]
+
+# Forward these features to flecs_ecs (conditional on flecs_ecs dependency)
+flecs_base = ["flecs_ecs?/flecs_base"]
+flecs_use_os_alloc = ["flecs_ecs?/flecs_use_os_alloc"]
+wasm32 = ["flecs_ecs?/wasm32"]
+wasm_bindgen = ["flecs_ecs?/wasm32"] # Special feature for wasm-bindgen builds
