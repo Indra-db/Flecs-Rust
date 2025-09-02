@@ -1,7 +1,6 @@
-//! WASI libc Top Half - Musl Rust FFI Bindings
+//! Musl libc Top Half - Musl Rust FFI Bindings
 //!
-//! This crate provides Rust FFI bindings for the **top half** of musl libc, specifically targeting
-//! the WASI (WebAssembly System Interface) environment. The "top half" refers to the musl libc
+//! This crate provides Rust FFI bindings for the **top half** of musl libc. The "top half" refers to the musl libc
 //! source code and headers that provide the C standard library interface, excluding the bottom
 //! half which contains platform-specific system call implementations.
 //!
@@ -10,32 +9,19 @@
 //! This crate solves the compatibility issue between Rust programs using C libraries and the
 //! wasm32-unknown-unknown target by providing:
 //!
-//! 1. **Rust FFI bindings** - Generated via bindgen from musl headers
-//! 2. **Compiled libc.a** - Top half musl implementation for WASM
-//! 3. **Build system integration** - Automatic header generation and library compilation
+//! 1. **Rust FFI bindings** - Generated via bindgen from musl headers, this can be used as the "wasm-shim headers"
+//! 2. **Compiled libc.a** - Top half musl implementation for WASM. This will link the actual implementation.
 //!
 //! ## Musl Top Half vs Bottom Half
 //!
 //! - **Top Half** (this crate): Standard C library functions (malloc, memcpy, string.h, etc.)
-//! - **Bottom Half**: Platform-specific system calls (provided by WASI runtime)
+//! - **Bottom Half**: Platform-specific system calls.
 //!
 //! ## Features
 //!
-//! - `bindgen`: Regenerate Rust bindings from C headers
-//! - `build-libc`: Compile libc.a from musl source code  
 //! - `link-libc`: Link with pre-compiled libc.a (for end users)
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use wasi_musl_libc_top_half::*;
-//!
-//! unsafe {
-//!     let ptr = malloc(1024);
-//!     memset(ptr, 0, 1024);
-//!     free(ptr);
-//! }
-//! ```
+//! - `bindgen`: Regenerate Rust bindings from C headers (for maintainers)
+//! - `build-libc`: Compile libc.a from musl source code (for maintainers)
 
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]

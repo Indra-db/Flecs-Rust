@@ -1,36 +1,12 @@
-// WASI libc header wrapper for bindgen - simplified approach
-// Using system headers instead of complex musl setup
+// WASI libc header wrapper for bindgen - using musl libc top half only
+// This wrapper includes only the musl headers to generate proper bindings
 
-// Use system C headers for basic functionality
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <limits.h>
-#include <float.h>
-#include <math.h>
-#include <time.h>
-#include <errno.h>
-#include <ctype.h>
-#include <assert.h>
-#include <setjmp.h>
-#include <stdarg.h>
+// Include musl headers that define the types we need through __NEED_* macros
+#include "libc-top-half/musl/include/wchar.h"    // Defines __NEED_wchar_t, __NEED_size_t, etc.
 
-// Define NULL if not already defined
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
-// Define EOF if not already defined  
-#ifndef EOF
-#define EOF (-1)
-#endif
-
-// File seek constants
-#ifndef SEEK_SET
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
-#endif
+// Core musl headers for the functions we want to bind (using musl paths only)
+#include "libc-top-half/musl/include/stdlib.h"
+#include "libc-top-half/musl/include/string.h" 
+#include "libc-top-half/musl/include/stdio.h"
+#include "libc-top-half/musl/include/limits.h"
+#include "libc-top-half/musl/include/float.h"

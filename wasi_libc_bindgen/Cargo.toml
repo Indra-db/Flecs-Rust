@@ -1,15 +1,15 @@
 [package]
-name = "wasi-musl-libc-top-half"
+name = "musl_libc_top_half"
 version = "0.1.0"
 edition = "2024"
 description = "Rust FFI bindings and compiled library for the top half of musl libc targeting WASI (WebAssembly System Interface)"
 license = "MIT"
-include = ["src/**/*", "lib/**/*", "build.rs", "Cargo.toml", "README.md"]
-keywords = ["wasi", "musl", "libc", "webassembly", "ffi"]
+keywords = ["wasm32", "musl", "libc", "webassembly", "ffi"]
 categories = ["external-ffi-bindings", "wasm"]
 repository = "https://github.com/Indra-db/Flecs-Rust"
 
 [dependencies]
+
 
 [build-dependencies]
 bindgen = "0.72.1"
@@ -17,9 +17,9 @@ cc = "1.2.35"
 
 [features]
 default = []
-# Regenerate the C bindings for wasi-libc
+# Regenerate the C bindings for musl libc top half (for maintainers)
 bindgen = []
-# Build libc.a from the libc-top-half sources
+# Build musl_top_half_libc.a from the libc-top-half sources
 build-libc = []
-# Link with the pre-compiled libc.a (for end users)
+# Link with the pre-compiled musl_top_half_libc.a (for end users)
 link-libc = []

@@ -1,5 +1,23 @@
 # Build outputs
 target/
 
-# macOS
+# Generated files that should not be distributed
+src/libc-top-half/
+lib/
+src/custom_headers/
 .DS_Store
+
+# Development files
+*~
+*.bak
+*.tmp
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package management
+Cargo.lock

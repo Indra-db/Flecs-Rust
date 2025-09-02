@@ -4,6 +4,12 @@ fn generate_bindings() {
 
     // This build script generates Rust FFI bindings for wasi-libc headers using bindgen
 
+    // Generate alltypes.h if it doesn't exist (needed for bindgen)
+    let alltypes_path = "src/generated_headers/bits/alltypes.h";
+    if !std::path::Path::new(alltypes_path).exists() {
+        generate_alltypes_h();
+    }
+
     println!("cargo:rerun-if-changed=src/wrapper.h");
     println!("cargo:rerun-if-changed=src/custom_headers");
     println!("cargo:rerun-if-changed=src/libc-top-half");
@@ -15,6 +21,14 @@ fn generate_bindings() {
         .header("src/wrapper.h")
         // Don't target WASM in bindgen to avoid missing headers, but disable layout tests
         .layout_tests(false)
+        // Add include paths so bindgen can find headers - put generated headers first
+        .clang_arg("-Isrc/generated_headers")
+        .clang_arg("-Isrc/custom_headers")
+        .clang_arg("-Isrc/libc-top-half/musl/include")
+        .clang_arg("-Isrc/libc-top-half/musl/arch/wasm32")
+        .clang_arg("-Isrc/libc-top-half/headers")
+        // Define the macro to use upstream musl definitions instead of WASI headers
+        .clang_arg("-D__wasilibc_unmodified_upstream")
         // Keep comments and keep all of them, not just doc comments.
         .generate_comments(true)
         // Prefer core::* over std::*
@@ -45,20 +59,32 @@ fn generate_bindings() {
         .expect("Couldn't write bindings!");
 }
 
-#[cfg(feature = "build-libc")]
+#[allow(dead_code)]
 fn generate_alltypes_h() {
+    use std::path::Path;
+
+    let output_path = "src/generated_headers/bits/alltypes.h";
+    let musl_dir = "src/libc-top-half/musl";
+    
+    println!("cargo:rerun-if-changed={}/arch/wasm32/bits/alltypes.h.in", musl_dir);
+    println!("cargo:rerun-if-changed={}/include/alltypes.h.in", musl_dir);
+
+    // Create the generated_headers directory if it doesn't exist
+    let output_dir = Path::new(output_path).parent().unwrap();
+    std::fs::create_dir_all(output_dir).expect("Failed to create generated_headers directory");
+
+    // Since we need to support __wasilibc_unmodified_upstream, we always use manual generation
+    // The official musl mkalltypes.sed doesn't know about our upstream conditionals
+    generate_alltypes_h_manual();
+}
+
+#[allow(dead_code)]
+fn generate_alltypes_h_manual() {
     use std::fs;
 
     let arch_template = "src/libc-top-half/musl/arch/wasm32/bits/alltypes.h.in";
     let generic_template = "src/libc-top-half/musl/include/alltypes.h.in";
     let output_path = "src/generated_headers/bits/alltypes.h";
-
-    println!("cargo:rerun-if-changed={}", arch_template);
-    println!("cargo:rerun-if-changed={}", generic_template);
-
-    // Create the generated_headers directory if it doesn't exist
-    let output_dir = std::path::Path::new(output_path).parent().unwrap();
-    fs::create_dir_all(output_dir).expect("Failed to create generated_headers directory");
 
     // Read both template files
     let arch_content =
@@ -86,13 +112,87 @@ fn generate_alltypes_h() {
     // Write the generated file
     fs::write(output_path, final_content).expect("Failed to write generated alltypes.h");
 
-    println!("cargo:warning=Generated alltypes.h from templates");
+    println!("cargo:warning=Generated alltypes.h manually from templates");
 }
 
 #[allow(dead_code)]
 fn apply_typedef_transformations(content: &str) -> String {
     let mut result = String::new();
+    
+    // Add conditional block for upstream vs WASI
+    result.push_str("#ifdef __wasilibc_unmodified_upstream\n");
+    result.push_str("/* Use upstream musl definitions */\n\n");
+    
+    // Process content for upstream mode first
+    for line in content.lines() {
+        if line.starts_with("TYPEDEF ") {
+            // Transform: TYPEDEF <type> <name>;
+            // Into: direct typedef for upstream mode
+            if let Some(rest) = line.strip_prefix("TYPEDEF ") {
+                if let Some(semicolon_pos) = rest.rfind(';') {
+                    let typedef_part = &rest[..semicolon_pos].trim();
+                    if let Some(last_space) = typedef_part.rfind(' ') {
+                        let type_part = &typedef_part[..last_space].trim();
+                        let name_part = &typedef_part[last_space + 1..].trim();
 
+                        // For upstream mode, provide direct typedefs with proper C types
+                        let upstream_type = match *name_part {
+                            "wchar_t" => "int",  // wchar_t is int in musl for wasm32
+                            "wint_t" => "unsigned int",
+                            "size_t" => "unsigned long",
+                            "ssize_t" => "long", 
+                            _ => type_part,
+                        };
+
+                        result.push_str(&format!(
+                            "#if defined(__NEED_{}) && !defined(__DEFINED_{})\n\
+                            typedef {} {};\n\
+                            #define __DEFINED_{}\n\
+                            #endif\n",
+                            name_part, name_part, upstream_type, name_part, name_part
+                        ));
+                        continue;
+                    }
+                }
+            }
+        } else if line.starts_with("STRUCT ") {
+            // Transform STRUCT patterns similarly for upstream
+            if let Some(rest) = line.strip_prefix("STRUCT ") {
+                if let Some(semicolon_pos) = rest.rfind(';') {
+                    let struct_part = &rest[..semicolon_pos].trim();
+                    if let Some(first_space) = struct_part.find(' ') {
+                        let name_part = &struct_part[..first_space].trim();
+                        let body_part = &struct_part[first_space + 1..].trim();
+
+                        result.push_str(&format!(
+                            "#if defined(__NEED_struct_{}) && !defined(__DEFINED_struct_{})\n\
+                            struct {} {};\n\
+                            #define __DEFINED_struct_{}\n\
+                            #endif\n",
+                            name_part, name_part, name_part, body_part, name_part
+                        ));
+                        continue;
+                    }
+                }
+            }
+        }
+        
+        // Skip includes and other WASI-specific lines for upstream mode
+        if line.contains("#include") || line.contains("__need_") {
+            continue;
+        }
+        
+        // Pass through other lines
+        if !line.trim().is_empty() && !line.starts_with("/*") && !line.starts_with("*") {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    result.push_str("\n#else\n");
+    result.push_str("/* Use WASI-specific definitions */\n\n");
+
+    // Process content for WASI mode
     for line in content.lines() {
         if line.starts_with("TYPEDEF ") {
             // Transform: TYPEDEF <type> <name>;
@@ -137,11 +237,21 @@ fn apply_typedef_transformations(content: &str) -> String {
             }
         }
 
+        // Skip WASI-specific includes that don't exist in the top half
+        if (line.contains("__typedef_") || line.contains("__struct_")) && line.contains("#include")
+        {
+            // Skip this line entirely - we don't want WASI-specific headers
+            continue;
+        }
+
         // Pass through all other lines unchanged
-        result.push_str(line);
-        result.push('\n');
+        if !line.trim().is_empty() {
+            result.push_str(line);
+            result.push('\n');
+        }
     }
 
+    result.push_str("\n#endif /* __wasilibc_unmodified_upstream */\n");
     result
 }
 
@@ -211,28 +321,28 @@ fn build_libc() {
     }
 
     // Compile the static library
-    build.compile("wasi_libc");
+    build.compile("musl_top_half_libc");
 
     // Copy the compiled library to a distribution directory
     let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
     let dist_dir = PathBuf::from(&crate_root).join("lib");
     std::fs::create_dir_all(&dist_dir).expect("Failed to create lib directory");
 
-    let lib_path = PathBuf::from(&out_dir).join("libwasi_libc.a");
-    let dist_lib_path = dist_dir.join("libwasi_libc.a");
+    let lib_path = PathBuf::from(&out_dir).join("libmusl_top_half_libc.a");
+    let dist_lib_path = dist_dir.join("libmusl_top_half_libc.a");
 
     if lib_path.exists() {
         std::fs::copy(&lib_path, &dist_lib_path)
             .expect("Failed to copy library to distribution directory");
         println!(
-            "cargo:warning=Copied libwasi_libc.a to {}",
+            "cargo:warning=Copied libmusl_top_half_libc.a to {}",
             dist_lib_path.display()
         );
     }
 
     // Output library path for linking
     println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=wasi_libc");
+    println!("cargo:rustc-link-lib=static=musl_top_half_libc");
 }
 
 use std::env;
@@ -252,21 +362,25 @@ fn main() {
             let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
             let lib_path = PathBuf::from(&crate_root)
                 .join("lib")
-                .join("libwasi_libc.a");
+                .join("libmusl_top_half_libc.a");
 
             if lib_path.exists() {
                 let lib_dir = PathBuf::from(&crate_root).join("lib");
                 println!("cargo:rustc-link-search=native={}", lib_dir.display());
-                println!("cargo:rustc-link-lib=static=wasi_libc");
-                println!("cargo:warning=Linking with pre-compiled libwasi_libc.a");
+                println!("cargo:rustc-link-lib=static=musl_top_half_libc");
+                println!("cargo:warning=Linking with pre-compiled libmusl_top_half_libc.a");
             } else {
-                println!("cargo:warning=Pre-compiled libwasi_libc.a not found in lib/ directory");
+                println!(
+                    "cargo:warning=Pre-compiled libmusl_top_half_libc.a not found in lib/ directory"
+                );
                 println!(
                     "cargo:warning=Run with --features build-libc first to generate the library"
                 );
             }
         } else {
-            println!("cargo:warning=link-libc feature is only supported for wasm32-unknown-unknown target");
+            println!(
+                "cargo:warning=link-libc feature is only supported for wasm32-unknown-unknown target"
+            );
         }
     }
 }

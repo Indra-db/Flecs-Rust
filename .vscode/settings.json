@@ -5,7 +5,8 @@
         "__locale": "c",
         "locale": "c",
         "flecs.h": "c",
-        "ratio": "c"
+        "ratio": "c",
+        "*.in": "cpp"
     }
     // "rust-analyzer.linkedProjects": [
     //     "./flecs_ecs/Cargo.toml"

@@ -90,7 +90,7 @@ wasi-musl-libc-top-half/
 ├── Makefile.toml                 # Cargo-make build tasks
 ├── build.rs                      # Build script with header generation
 ├── lib/                          # Pre-compiled libraries
-│   └── libwasi_libc.a           # Distribution library
+│   └── musl_top_half_libc.a           # Distribution library
 └── src/
     ├── lib.rs                    # Main library code
     ├── wrapper.h                 # C headers for bindgen
