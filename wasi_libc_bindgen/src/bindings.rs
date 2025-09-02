@@ -9,13 +9,61 @@
 pub const __LITTLE_ENDIAN: u32 = 1234;
 pub const __BIG_ENDIAN: u32 = 4321;
 pub const __USE_TIME_BITS64: u32 = 1;
+pub const INT8_MIN: i32 = -128;
+pub const INT16_MIN: i32 = -32768;
+pub const INT32_MIN: i32 = -2147483648;
+pub const INT64_MIN: i64 = -9223372036854775808;
+pub const INT8_MAX: u32 = 127;
+pub const INT16_MAX: u32 = 32767;
+pub const INT32_MAX: u32 = 2147483647;
+pub const INT64_MAX: u64 = 9223372036854775807;
+pub const UINT8_MAX: u32 = 255;
+pub const UINT16_MAX: u32 = 65535;
+pub const UINT32_MAX: u32 = 4294967295;
+pub const UINT64_MAX: i32 = -1;
+pub const INT_FAST8_MIN: i32 = -128;
+pub const INT_FAST64_MIN: i64 = -9223372036854775808;
+pub const INT_LEAST8_MIN: i32 = -128;
+pub const INT_LEAST16_MIN: i32 = -32768;
+pub const INT_LEAST32_MIN: i32 = -2147483648;
+pub const INT_LEAST64_MIN: i64 = -9223372036854775808;
+pub const INT_FAST8_MAX: u32 = 127;
+pub const INT_FAST64_MAX: u64 = 9223372036854775807;
+pub const INT_LEAST8_MAX: u32 = 127;
+pub const INT_LEAST16_MAX: u32 = 32767;
+pub const INT_LEAST32_MAX: u32 = 2147483647;
+pub const INT_LEAST64_MAX: u64 = 9223372036854775807;
+pub const UINT_FAST8_MAX: u32 = 255;
+pub const UINT_FAST64_MAX: i32 = -1;
+pub const UINT_LEAST8_MAX: u32 = 255;
+pub const UINT_LEAST16_MAX: u32 = 65535;
+pub const UINT_LEAST32_MAX: u32 = 4294967295;
+pub const UINT_LEAST64_MAX: i32 = -1;
+pub const INTMAX_MIN: i64 = -9223372036854775808;
+pub const INTMAX_MAX: u64 = 9223372036854775807;
+pub const UINTMAX_MAX: i32 = -1;
+pub const WINT_MIN: u32 = 0;
+pub const WINT_MAX: u32 = 4294967295;
+pub const SIG_ATOMIC_MIN: i32 = -2147483648;
+pub const SIG_ATOMIC_MAX: u32 = 2147483647;
+pub const INT_FAST16_MIN: i32 = -32768;
+pub const INT_FAST32_MIN: i32 = -2147483648;
+pub const INT_FAST16_MAX: u32 = 32767;
+pub const INT_FAST32_MAX: u32 = 2147483647;
+pub const UINT_FAST16_MAX: u32 = 65535;
+pub const UINT_FAST32_MAX: u32 = 4294967295;
+pub const INTPTR_MIN: i32 = -2147483648;
+pub const INTPTR_MAX: u32 = 2147483647;
+pub const UINTPTR_MAX: u32 = 4294967295;
+pub const PTRDIFF_MIN: i32 = -2147483648;
+pub const PTRDIFF_MAX: u32 = 2147483647;
+pub const SIZE_MAX: u32 = 4294967295;
+pub const true_: u32 = 1;
+pub const false_: u32 = 0;
+pub const __bool_true_false_are_defined: u32 = 1;
 pub const _BSD_SOURCE: u32 = 1;
 pub const _XOPEN_SOURCE: u32 = 700;
-pub const EXIT_FAILURE: u32 = 1;
-pub const EXIT_SUCCESS: u32 = 0;
-pub const RAND_MAX: u32 = 2147483647;
-pub const WNOHANG: u32 = 1;
-pub const WUNTRACED: u32 = 2;
+pub const WEOF: u32 = 4294967295;
 pub const EOF: i32 = -1;
 pub const SEEK_SET: u32 = 0;
 pub const SEEK_CUR: u32 = 1;
@@ -31,6 +79,34 @@ pub const L_tmpnam: u32 = 20;
 pub const L_ctermid: u32 = 20;
 pub const P_tmpdir: &[u8; 5] = b"/tmp\0";
 pub const L_cuserid: u32 = 20;
+pub const EXIT_FAILURE: u32 = 1;
+pub const EXIT_SUCCESS: u32 = 0;
+pub const RAND_MAX: u32 = 2147483647;
+pub const WNOHANG: u32 = 1;
+pub const WUNTRACED: u32 = 2;
+pub const MATH_ERRNO: u32 = 1;
+pub const MATH_ERREXCEPT: u32 = 2;
+pub const math_errhandling: u32 = 2;
+pub const FP_ILOGBNAN: i32 = -2147483648;
+pub const FP_ILOGB0: i32 = -2147483648;
+pub const FP_NAN: u32 = 0;
+pub const FP_INFINITE: u32 = 1;
+pub const FP_ZERO: u32 = 2;
+pub const FP_SUBNORMAL: u32 = 3;
+pub const FP_NORMAL: u32 = 4;
+pub const M_E: f64 = 2.718281828459045;
+pub const M_LOG2E: f64 = 1.4426950408889634;
+pub const M_LOG10E: f64 = 0.4342944819032518;
+pub const M_LN2: f64 = 0.6931471805599453;
+pub const M_LN10: f64 = 2.302585092994046;
+pub const M_PI: f64 = 3.141592653589793;
+pub const M_PI_2: f64 = 1.5707963267948966;
+pub const M_PI_4: f64 = 0.7853981633974483;
+pub const M_1_PI: f64 = 0.3183098861837907;
+pub const M_2_PI: f64 = 0.6366197723675814;
+pub const M_2_SQRTPI: f64 = 1.1283791670955126;
+pub const M_SQRT2: f64 = 1.4142135623730951;
+pub const M_SQRT1_2: f64 = 0.7071067811865476;
 pub const CHAR_MIN: i32 = -128;
 pub const CHAR_MAX: u32 = 127;
 pub const CHAR_BIT: u32 = 8;
@@ -161,55 +237,27 @@ pub const LDBL_DIG: u32 = 33;
 pub const LDBL_MIN_10_EXP: i32 = -4931;
 pub const LDBL_MAX_10_EXP: u32 = 4932;
 pub const DECIMAL_DIG: u32 = 36;
-pub const MATH_ERRNO: u32 = 1;
-pub const MATH_ERREXCEPT: u32 = 2;
-pub const math_errhandling: u32 = 2;
-pub const FP_ILOGBNAN: i32 = -2147483648;
-pub const FP_ILOGB0: i32 = -2147483648;
-pub const FP_NAN: u32 = 0;
-pub const FP_INFINITE: u32 = 1;
-pub const FP_ZERO: u32 = 2;
-pub const FP_SUBNORMAL: u32 = 3;
-pub const FP_NORMAL: u32 = 4;
-pub const M_E: f64 = 2.718281828459045;
-pub const M_LOG2E: f64 = 1.4426950408889634;
-pub const M_LOG10E: f64 = 0.4342944819032518;
-pub const M_LN2: f64 = 0.6931471805599453;
-pub const M_LN10: f64 = 2.302585092994046;
-pub const M_PI: f64 = 3.141592653589793;
-pub const M_PI_2: f64 = 1.5707963267948966;
-pub const M_PI_4: f64 = 0.7853981633974483;
-pub const M_1_PI: f64 = 0.3183098861837907;
-pub const M_2_PI: f64 = 0.6366197723675814;
-pub const M_2_SQRTPI: f64 = 1.1283791670955126;
-pub const M_SQRT2: f64 = 1.4142135623730951;
-pub const M_SQRT1_2: f64 = 0.7071067811865476;
 pub type wchar_t = ::core::ffi::c_int;
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash)]
-pub struct div_t {
-    pub quot: ::core::ffi::c_int,
-    pub rem: ::core::ffi::c_int,
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash)]
-pub struct ldiv_t {
-    pub quot: ::core::ffi::c_long,
-    pub rem: ::core::ffi::c_long,
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash)]
-pub struct lldiv_t {
-    pub quot: ::core::ffi::c_longlong,
-    pub rem: ::core::ffi::c_longlong,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __locale_struct {
-    _unused: [u8; 0],
-}
-pub type locale_t = *mut __locale_struct;
-pub type off_t = ::core::ffi::c_longlong;
+pub type intmax_t = ::core::ffi::c_longlong;
+pub type uintmax_t = ::core::ffi::c_ulonglong;
+pub type int_fast8_t = i8;
+pub type int_fast64_t = i64;
+pub type int_least8_t = i8;
+pub type int_least16_t = i16;
+pub type int_least32_t = i32;
+pub type int_least64_t = i64;
+pub type uint_fast8_t = u8;
+pub type uint_fast64_t = u64;
+pub type uint_least8_t = u8;
+pub type uint_least16_t = u16;
+pub type uint_least32_t = u32;
+pub type uint_least64_t = u64;
+pub type int_fast16_t = i16;
+pub type int_fast32_t = i32;
+pub type uint_fast16_t = u16;
+pub type uint_fast32_t = u32;
+pub type wint_t = ::core::ffi::c_uint;
+pub type wctype_t = ::core::ffi::c_ulong;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct _IO_FILE {
@@ -218,6 +266,25 @@ pub struct _IO_FILE {
 pub type FILE = _IO_FILE;
 pub type va_list = __builtin_va_list;
 pub type __isoc_va_list = __builtin_va_list;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash)]
+pub struct __mbstate_t {
+    pub __opaque1: ::core::ffi::c_uint,
+    pub __opaque2: ::core::ffi::c_uint,
+}
+pub type mbstate_t = __mbstate_t;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct __locale_struct {
+    _unused: [u8; 0],
+}
+pub type locale_t = *mut __locale_struct;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct tm {
+    _unused: [u8; 0],
+}
+pub type off_t = ::core::ffi::c_longlong;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _G_fpos64_t {
@@ -243,6 +310,24 @@ unsafe extern "C" {
 }
 unsafe extern "C" {
     pub static stderr: *mut FILE;
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash)]
+pub struct div_t {
+    pub quot: ::core::ffi::c_int,
+    pub rem: ::core::ffi::c_int,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash)]
+pub struct ldiv_t {
+    pub quot: ::core::ffi::c_long,
+    pub rem: ::core::ffi::c_long,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash)]
+pub struct lldiv_t {
+    pub quot: ::core::ffi::c_longlong,
+    pub rem: ::core::ffi::c_longlong,
 }
 pub type float_t = f32;
 pub type double_t = f64;

@@ -61,6 +61,7 @@ fn generate_bindings() {
 
 #[allow(dead_code)]
 fn generate_alltypes_h() {
+    use std::process::Command;
     use std::path::Path;
 
     let output_path = "src/generated_headers/bits/alltypes.h";
@@ -73,9 +74,53 @@ fn generate_alltypes_h() {
     let output_dir = Path::new(output_path).parent().unwrap();
     std::fs::create_dir_all(output_dir).expect("Failed to create generated_headers directory");
 
-    // Since we need to support __wasilibc_unmodified_upstream, we always use manual generation
-    // The official musl mkalltypes.sed doesn't know about our upstream conditionals
+    // Try to use the official musl mkalltypes.sed tool first
+    let sed_script = format!("{}/tools/mkalltypes.sed", musl_dir);
+    if Path::new(&sed_script).exists() {
+        // Combine the arch and generic templates
+        let arch_template = format!("{}/arch/wasm32/bits/alltypes.h.in", musl_dir);
+        let generic_template = format!("{}/include/alltypes.h.in", musl_dir);
+        
+        if Path::new(&arch_template).exists() && Path::new(&generic_template).exists() {
+            let status = Command::new("sh")
+                .arg("-c")
+                .arg(format!("cat {} {} | sed -f {} > {}", 
+                    arch_template, generic_template, sed_script, output_path))
+                .status()
+                .expect("Failed to run sed script");
+
+            if status.success() {
+                // Post-process the generated file to handle __wasilibc_unmodified_upstream
+                fix_alltypes_for_upstream(output_path);
+                println!("cargo:warning=Generated alltypes.h using musl tools with upstream fixes");
+                return;
+            }
+        }
+    }
+
+    // Fall back to manual generation if musl tools fail
+    println!("cargo:warning=Musl tools not available, using manual generation");
     generate_alltypes_h_manual();
+}
+
+#[allow(dead_code)]
+fn fix_alltypes_for_upstream(alltypes_path: &str) {
+    use std::fs;
+    
+    let content = fs::read_to_string(alltypes_path)
+        .expect("Failed to read generated alltypes.h");
+    
+    // Replace the problematic wchar_t definition for upstream mode
+    let fixed_content = content.replace(
+        "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\n#define __need_wchar_t\n#include <stddef.h>\n#define __DEFINED_wchar_t\n#endif",
+        "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef int wchar_t;\n#else\n#define __need_wchar_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wchar_t\n#endif"
+    ).replace(
+        "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#define __need_wint_t\n#include <stddef.h>\n#define __DEFINED_wint_t\n#endif",
+        "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef unsigned int wint_t;\n#else\n#define __need_wint_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wint_t\n#endif"
+    );
+    
+    fs::write(alltypes_path, fixed_content)
+        .expect("Failed to write fixed alltypes.h");
 }
 
 #[allow(dead_code)]
@@ -123,11 +168,20 @@ fn apply_typedef_transformations(content: &str) -> String {
     result.push_str("#ifdef __wasilibc_unmodified_upstream\n");
     result.push_str("/* Use upstream musl definitions */\n\n");
     
-    // Process content for upstream mode first
+    // First pass - handle the arch-specific defines and macros
+    for line in content.lines() {
+        // Keep #define lines that set up basic constants
+        if line.starts_with("#define _") || line.starts_with("#define __") {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+    
+    result.push_str("\n");
+    
+    // Second pass - process TYPEDEF and STRUCT for upstream mode
     for line in content.lines() {
         if line.starts_with("TYPEDEF ") {
-            // Transform: TYPEDEF <type> <name>;
-            // Into: direct typedef for upstream mode
             if let Some(rest) = line.strip_prefix("TYPEDEF ") {
                 if let Some(semicolon_pos) = rest.rfind(';') {
                     let typedef_part = &rest[..semicolon_pos].trim();
@@ -148,15 +202,13 @@ fn apply_typedef_transformations(content: &str) -> String {
                             "#if defined(__NEED_{}) && !defined(__DEFINED_{})\n\
                             typedef {} {};\n\
                             #define __DEFINED_{}\n\
-                            #endif\n",
+                            #endif\n\n",
                             name_part, name_part, upstream_type, name_part, name_part
                         ));
-                        continue;
                     }
                 }
             }
         } else if line.starts_with("STRUCT ") {
-            // Transform STRUCT patterns similarly for upstream
             if let Some(rest) = line.strip_prefix("STRUCT ") {
                 if let Some(semicolon_pos) = rest.rfind(';') {
                     let struct_part = &rest[..semicolon_pos].trim();
@@ -168,35 +220,28 @@ fn apply_typedef_transformations(content: &str) -> String {
                             "#if defined(__NEED_struct_{}) && !defined(__DEFINED_struct_{})\n\
                             struct {} {};\n\
                             #define __DEFINED_struct_{}\n\
-                            #endif\n",
+                            #endif\n\n",
                             name_part, name_part, name_part, body_part, name_part
                         ));
-                        continue;
                     }
                 }
             }
         }
-        
-        // Skip includes and other WASI-specific lines for upstream mode
-        if line.contains("#include") || line.contains("__need_") {
+    }
+
+    result.push_str("#else\n");
+    result.push_str("/* Use WASI-specific definitions */\n\n");
+
+    // Third pass - handle WASI mode (original templates)
+    for line in content.lines() {
+        // Keep #define lines that set up basic constants
+        if line.starts_with("#define _") || line.starts_with("#define __") {
+            result.push_str(line);
+            result.push('\n');
             continue;
         }
         
-        // Pass through other lines
-        if !line.trim().is_empty() && !line.starts_with("/*") && !line.starts_with("*") {
-            result.push_str(line);
-            result.push('\n');
-        }
-    }
-
-    result.push_str("\n#else\n");
-    result.push_str("/* Use WASI-specific definitions */\n\n");
-
-    // Process content for WASI mode
-    for line in content.lines() {
         if line.starts_with("TYPEDEF ") {
-            // Transform: TYPEDEF <type> <name>;
-            // Into: #ifdef __NEED_<name> ... conditional typedef
             if let Some(rest) = line.strip_prefix("TYPEDEF ") {
                 if let Some(semicolon_pos) = rest.rfind(';') {
                     let typedef_part = &rest[..semicolon_pos].trim();
@@ -206,17 +251,16 @@ fn apply_typedef_transformations(content: &str) -> String {
 
                         result.push_str(&format!(
                             "#if defined(__NEED_{}) && !defined(__DEFINED_{})\n\
-                            typedef {} {};\n\
+                            #define __need_{}\n\
+                            #include <stddef.h>\n\
                             #define __DEFINED_{}\n\
-                            #endif\n",
-                            name_part, name_part, type_part, name_part, name_part
+                            #endif\n\n",
+                            name_part, name_part, name_part, name_part
                         ));
-                        continue;
                     }
                 }
             }
         } else if line.starts_with("STRUCT ") {
-            // Transform STRUCT patterns similarly
             if let Some(rest) = line.strip_prefix("STRUCT ") {
                 if let Some(semicolon_pos) = rest.rfind(';') {
                     let struct_part = &rest[..semicolon_pos].trim();
@@ -228,26 +272,21 @@ fn apply_typedef_transformations(content: &str) -> String {
                             "#if defined(__NEED_struct_{}) && !defined(__DEFINED_struct_{})\n\
                             struct {} {};\n\
                             #define __DEFINED_struct_{}\n\
-                            #endif\n",
+                            #endif\n\n",
                             name_part, name_part, name_part, body_part, name_part
                         ));
-                        continue;
                     }
                 }
             }
-        }
-
-        // Skip WASI-specific includes that don't exist in the top half
-        if (line.contains("__typedef_") || line.contains("__struct_")) && line.contains("#include")
-        {
-            // Skip this line entirely - we don't want WASI-specific headers
+        } else if line.contains("#include") && (line.contains("__typedef_") || line.contains("__struct_")) {
+            // Skip WASI-specific includes that don't exist in the top half
             continue;
-        }
-
-        // Pass through all other lines unchanged
-        if !line.trim().is_empty() {
-            result.push_str(line);
-            result.push('\n');
+        } else if !line.starts_with("/*") && !line.starts_with("*") && !line.starts_with("TYPEDEF") && !line.starts_with("STRUCT") {
+            // Pass through other lines (comments, etc.) but skip TYPEDEF/STRUCT lines we already processed
+            if !line.trim().is_empty() {
+                result.push_str(line);
+                result.push('\n');
+            }
         }
     }
 

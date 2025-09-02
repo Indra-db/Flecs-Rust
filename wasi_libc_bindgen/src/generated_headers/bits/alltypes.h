@@ -1,11 +1,3 @@
-/* This file is generated automatically by build.rs using musl tools.
-* Do not edit manually - changes will be overwritten.
-* Generated from:
-*   - src/libc-top-half/musl/arch/wasm32/bits/alltypes.h.in
-*   - src/libc-top-half/musl/include/alltypes.h.in
-* Using: src/libc-top-half/musl/tools/mkalltypes.sed
-*/
-
 #define _Addr long
 #define _Int64 long long
 #define _Reg long long
@@ -20,14 +12,22 @@
  */
 
 #if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)
+#ifdef __wasilibc_unmodified_upstream
+typedef int wchar_t;
+#else
 #define __need_wchar_t
 #include <stddef.h>
+#endif
 #define __DEFINED_wchar_t
 #endif
 
 #if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)
+#ifdef __wasilibc_unmodified_upstream
+typedef unsigned int wint_t;
+#else
 #define __need_wint_t
 #include <stddef.h>
+#endif
 #define __DEFINED_wint_t
 #endif
 
