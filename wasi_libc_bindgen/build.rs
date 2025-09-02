@@ -46,7 +46,110 @@ fn generate_bindings() {
 }
 
 #[cfg(feature = "build-libc")]
+fn generate_alltypes_h() {
+    use std::fs;
+
+    let arch_template = "src/libc-top-half/musl/arch/wasm32/bits/alltypes.h.in";
+    let generic_template = "src/libc-top-half/musl/include/alltypes.h.in";
+    let output_path = "src/generated_headers/bits/alltypes.h";
+
+    println!("cargo:rerun-if-changed={}", arch_template);
+    println!("cargo:rerun-if-changed={}", generic_template);
+
+    // Create the generated_headers directory if it doesn't exist
+    let output_dir = std::path::Path::new(output_path).parent().unwrap();
+    fs::create_dir_all(output_dir).expect("Failed to create generated_headers directory");
+
+    // Read both template files
+    let arch_content =
+        fs::read_to_string(arch_template).expect("Failed to read arch-specific alltypes.h.in");
+    let generic_content =
+        fs::read_to_string(generic_template).expect("Failed to read generic alltypes.h.in");
+
+    // Combine the templates (arch-specific first, then generic)
+    let combined = format!("{}\n{}", arch_content, generic_content);
+
+    // Apply sed-like transformations for TYPEDEF macros
+    let processed = apply_typedef_transformations(&combined);
+
+    // Add header comment to indicate this is a generated file
+    let final_content = format!(
+        "/* This file is generated automatically by build.rs from templates.\n\
+         * Do not edit manually - changes will be overwritten.\n\
+         * Generated from:\n\
+         *   - {}\n\
+         *   - {}\n\
+         */\n\n{}",
+        arch_template, generic_template, processed
+    );
+
+    // Write the generated file
+    fs::write(output_path, final_content).expect("Failed to write generated alltypes.h");
+
+    println!("cargo:warning=Generated alltypes.h from templates");
+}
+
+#[allow(dead_code)]
+fn apply_typedef_transformations(content: &str) -> String {
+    let mut result = String::new();
+
+    for line in content.lines() {
+        if line.starts_with("TYPEDEF ") {
+            // Transform: TYPEDEF <type> <name>;
+            // Into: #ifdef __NEED_<name> ... conditional typedef
+            if let Some(rest) = line.strip_prefix("TYPEDEF ") {
+                if let Some(semicolon_pos) = rest.rfind(';') {
+                    let typedef_part = &rest[..semicolon_pos].trim();
+                    if let Some(last_space) = typedef_part.rfind(' ') {
+                        let type_part = &typedef_part[..last_space].trim();
+                        let name_part = &typedef_part[last_space + 1..].trim();
+
+                        result.push_str(&format!(
+                            "#if defined(__NEED_{}) && !defined(__DEFINED_{})\n\
+                            typedef {} {};\n\
+                            #define __DEFINED_{}\n\
+                            #endif\n",
+                            name_part, name_part, type_part, name_part, name_part
+                        ));
+                        continue;
+                    }
+                }
+            }
+        } else if line.starts_with("STRUCT ") {
+            // Transform STRUCT patterns similarly
+            if let Some(rest) = line.strip_prefix("STRUCT ") {
+                if let Some(semicolon_pos) = rest.rfind(';') {
+                    let struct_part = &rest[..semicolon_pos].trim();
+                    if let Some(first_space) = struct_part.find(' ') {
+                        let name_part = &struct_part[..first_space].trim();
+                        let body_part = &struct_part[first_space + 1..].trim();
+
+                        result.push_str(&format!(
+                            "#if defined(__NEED_struct_{}) && !defined(__DEFINED_struct_{})\n\
+                            struct {} {};\n\
+                            #define __DEFINED_struct_{}\n\
+                            #endif\n",
+                            name_part, name_part, name_part, body_part, name_part
+                        ));
+                        continue;
+                    }
+                }
+            }
+        }
+
+        // Pass through all other lines unchanged
+        result.push_str(line);
+        result.push('\n');
+    }
+
+    result
+}
+
+#[cfg(feature = "build-libc")]
 fn build_libc() {
+    // Generate alltypes.h from templates first
+    generate_alltypes_h();
+
     // Only build C library when targeting WASM
     let target = env::var("TARGET").unwrap_or_default();
     if target != "wasm32-unknown-unknown" {
@@ -58,6 +161,7 @@ fn build_libc() {
     }
 
     println!("cargo:rerun-if-changed=src/custom_headers");
+    println!("cargo:rerun-if-changed=src/generated_headers");
     println!("cargo:rerun-if-changed=src/libc-top-half");
 
     let out_dir = env::var("OUT_DIR").unwrap();
@@ -68,6 +172,7 @@ fn build_libc() {
     build
         .target("wasm32-unknown-unknown")
         .include("src/custom_headers")
+        .include("src/generated_headers")
         .include("src/libc-top-half/musl/include")
         .include("src/libc-top-half/musl/arch/wasm32")
         .include("src/libc-top-half/headers")

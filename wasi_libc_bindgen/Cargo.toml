@@ -1,16 +1,19 @@
 [package]
-name = "wasi_libc_bindgen"
+name = "wasi-musl-libc-top-half"
 version = "0.1.0"
-edition = "2021"
-description = "Rust FFI bindings for wasi-libc generated via bindgen"
-license = "MIT OR Apache-2.0"
+edition = "2024"
+description = "Rust FFI bindings and compiled library for the top half of musl libc targeting WASI (WebAssembly System Interface)"
+license = "MIT"
 include = ["src/**/*", "lib/**/*", "build.rs", "Cargo.toml", "README.md"]
+keywords = ["wasi", "musl", "libc", "webassembly", "ffi"]
+categories = ["external-ffi-bindings", "wasm"]
+repository = "https://github.com/Indra-db/Flecs-Rust"
 
 [dependencies]
 
 [build-dependencies]
-bindgen = "0.72"
-cc = "1.0"
+bindgen = "0.72.1"
+cc = "1.2.35"
 
 [features]
 default = []

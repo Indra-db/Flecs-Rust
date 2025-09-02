@@ -1,0 +1,59 @@
+[config]
+default_to_workspace = false
+
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[tasks.build-bindgen]
+description = "Generate Rust bindings from C headers"
+command = "cargo"
+args = ["build", "--target", "wasm32-unknown-unknown", "--features", "bindgen"]
+
+[tasks.build-libc]
+description = "Compile musl libc.a from source"
+command = "cargo"
+args = ["build", "--target", "wasm32-unknown-unknown", "--features", "build-libc"]
+
+[tasks.build-all]
+description = "Build both bindings and libc.a"
+command = "cargo"
+args = ["build", "--target", "wasm32-unknown-unknown", "--features", "bindgen,build-libc"]
+
+[tasks.check-bindgen]
+description = "Check with bindgen feature"
+command = "cargo"
+args = ["check", "--target", "wasm32-unknown-unknown", "--features", "bindgen"]
+
+[tasks.check-libc]
+description = "Check with build-libc feature"
+command = "cargo"
+args = ["check", "--target", "wasm32-unknown-unknown", "--features", "build-libc"]
+
+[tasks.check-link]
+description = "Check with link-libc feature"
+command = "cargo"
+args = ["check", "--target", "wasm32-unknown-unknown", "--features", "link-libc"]
+
+[tasks.check-all]
+description = "Check all feature combinations"
+dependencies = ["check-bindgen", "check-libc", "check-link"]
+
+[tasks.clean-generated]
+description = "Clean generated files and rebuild"
+script = '''
+rm -rf src/generated_headers/
+rm -rf target/
+rm -f lib/*.a
+'''
+
+[tasks.dist]
+description = "Build distribution package with pre-compiled library"
+dependencies = ["clean-generated", "build-libc"]
+
+[tasks.test-wasm]
+description = "Test WASM build with all features"
+command = "cargo"
+args = ["test", "--target", "wasm32-unknown-unknown", "--features", "build-libc,link-libc"]
+
+[tasks.default]
+alias = "check-all"

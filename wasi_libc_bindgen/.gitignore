@@ -1,0 +1,5 @@
+# Build outputs
+target/
+
+# macOS
+.DS_Store
