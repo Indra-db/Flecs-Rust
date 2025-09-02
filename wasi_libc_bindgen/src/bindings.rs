@@ -1221,15 +1221,6 @@ pub union __mbstate_t {
     pub __mbstate8: [::core::ffi::c_char; 128usize],
     pub _mbstateL: ::core::ffi::c_longlong,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __mbstate_t"][::core::mem::size_of::<__mbstate_t>() - 128usize];
-    ["Alignment of __mbstate_t"][::core::mem::align_of::<__mbstate_t>() - 8usize];
-    ["Offset of field: __mbstate_t::__mbstate8"]
-        [::core::mem::offset_of!(__mbstate_t, __mbstate8) - 0usize];
-    ["Offset of field: __mbstate_t::_mbstateL"]
-        [::core::mem::offset_of!(__mbstate_t, _mbstateL) - 0usize];
-};
 impl Default for __mbstate_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1277,19 +1268,6 @@ pub struct __darwin_pthread_handler_rec {
     pub __arg: *mut ::core::ffi::c_void,
     pub __next: *mut __darwin_pthread_handler_rec,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_pthread_handler_rec"]
-        [::core::mem::size_of::<__darwin_pthread_handler_rec>() - 24usize];
-    ["Alignment of __darwin_pthread_handler_rec"]
-        [::core::mem::align_of::<__darwin_pthread_handler_rec>() - 8usize];
-    ["Offset of field: __darwin_pthread_handler_rec::__routine"]
-        [::core::mem::offset_of!(__darwin_pthread_handler_rec, __routine) - 0usize];
-    ["Offset of field: __darwin_pthread_handler_rec::__arg"]
-        [::core::mem::offset_of!(__darwin_pthread_handler_rec, __arg) - 8usize];
-    ["Offset of field: __darwin_pthread_handler_rec::__next"]
-        [::core::mem::offset_of!(__darwin_pthread_handler_rec, __next) - 16usize];
-};
 impl Default for __darwin_pthread_handler_rec {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1305,16 +1283,6 @@ pub struct _opaque_pthread_attr_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 56usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_attr_t"][::core::mem::size_of::<_opaque_pthread_attr_t>() - 64usize];
-    ["Alignment of _opaque_pthread_attr_t"]
-        [::core::mem::align_of::<_opaque_pthread_attr_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_attr_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_attr_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_attr_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_attr_t, __opaque) - 8usize];
-};
 impl Default for _opaque_pthread_attr_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1330,16 +1298,6 @@ pub struct _opaque_pthread_cond_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 40usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_cond_t"][::core::mem::size_of::<_opaque_pthread_cond_t>() - 48usize];
-    ["Alignment of _opaque_pthread_cond_t"]
-        [::core::mem::align_of::<_opaque_pthread_cond_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_cond_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_cond_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_cond_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_cond_t, __opaque) - 8usize];
-};
 impl Default for _opaque_pthread_cond_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1355,34 +1313,12 @@ pub struct _opaque_pthread_condattr_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 8usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_condattr_t"]
-        [::core::mem::size_of::<_opaque_pthread_condattr_t>() - 16usize];
-    ["Alignment of _opaque_pthread_condattr_t"]
-        [::core::mem::align_of::<_opaque_pthread_condattr_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_condattr_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_condattr_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_condattr_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_condattr_t, __opaque) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct _opaque_pthread_mutex_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 56usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_mutex_t"]
-        [::core::mem::size_of::<_opaque_pthread_mutex_t>() - 64usize];
-    ["Alignment of _opaque_pthread_mutex_t"]
-        [::core::mem::align_of::<_opaque_pthread_mutex_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_mutex_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_mutex_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_mutex_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_mutex_t, __opaque) - 8usize];
-};
 impl Default for _opaque_pthread_mutex_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1398,50 +1334,18 @@ pub struct _opaque_pthread_mutexattr_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 8usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_mutexattr_t"]
-        [::core::mem::size_of::<_opaque_pthread_mutexattr_t>() - 16usize];
-    ["Alignment of _opaque_pthread_mutexattr_t"]
-        [::core::mem::align_of::<_opaque_pthread_mutexattr_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_mutexattr_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_mutexattr_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_mutexattr_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_mutexattr_t, __opaque) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct _opaque_pthread_once_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 8usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_once_t"][::core::mem::size_of::<_opaque_pthread_once_t>() - 16usize];
-    ["Alignment of _opaque_pthread_once_t"]
-        [::core::mem::align_of::<_opaque_pthread_once_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_once_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_once_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_once_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_once_t, __opaque) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct _opaque_pthread_rwlock_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 192usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_rwlock_t"]
-        [::core::mem::size_of::<_opaque_pthread_rwlock_t>() - 200usize];
-    ["Alignment of _opaque_pthread_rwlock_t"]
-        [::core::mem::align_of::<_opaque_pthread_rwlock_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_rwlock_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_rwlock_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_rwlock_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_rwlock_t, __opaque) - 8usize];
-};
 impl Default for _opaque_pthread_rwlock_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1457,17 +1361,6 @@ pub struct _opaque_pthread_rwlockattr_t {
     pub __sig: ::core::ffi::c_long,
     pub __opaque: [::core::ffi::c_char; 16usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_rwlockattr_t"]
-        [::core::mem::size_of::<_opaque_pthread_rwlockattr_t>() - 24usize];
-    ["Alignment of _opaque_pthread_rwlockattr_t"]
-        [::core::mem::align_of::<_opaque_pthread_rwlockattr_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_rwlockattr_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_rwlockattr_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_rwlockattr_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_rwlockattr_t, __opaque) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct _opaque_pthread_t {
@@ -1475,17 +1368,6 @@ pub struct _opaque_pthread_t {
     pub __cleanup_stack: *mut __darwin_pthread_handler_rec,
     pub __opaque: [::core::ffi::c_char; 8176usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _opaque_pthread_t"][::core::mem::size_of::<_opaque_pthread_t>() - 8192usize];
-    ["Alignment of _opaque_pthread_t"][::core::mem::align_of::<_opaque_pthread_t>() - 8usize];
-    ["Offset of field: _opaque_pthread_t::__sig"]
-        [::core::mem::offset_of!(_opaque_pthread_t, __sig) - 0usize];
-    ["Offset of field: _opaque_pthread_t::__cleanup_stack"]
-        [::core::mem::offset_of!(_opaque_pthread_t, __cleanup_stack) - 8usize];
-    ["Offset of field: _opaque_pthread_t::__opaque"]
-        [::core::mem::offset_of!(_opaque_pthread_t, __opaque) - 16usize];
-};
 impl Default for _opaque_pthread_t {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1537,19 +1419,6 @@ pub struct __darwin_arm_exception_state {
     pub __fsr: __uint32_t,
     pub __far: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_exception_state"]
-        [::core::mem::size_of::<__darwin_arm_exception_state>() - 12usize];
-    ["Alignment of __darwin_arm_exception_state"]
-        [::core::mem::align_of::<__darwin_arm_exception_state>() - 4usize];
-    ["Offset of field: __darwin_arm_exception_state::__exception"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state, __exception) - 0usize];
-    ["Offset of field: __darwin_arm_exception_state::__fsr"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state, __fsr) - 4usize];
-    ["Offset of field: __darwin_arm_exception_state::__far"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state, __far) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_exception_state64 {
@@ -1557,36 +1426,12 @@ pub struct __darwin_arm_exception_state64 {
     pub __esr: __uint32_t,
     pub __exception: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_exception_state64"]
-        [::core::mem::size_of::<__darwin_arm_exception_state64>() - 16usize];
-    ["Alignment of __darwin_arm_exception_state64"]
-        [::core::mem::align_of::<__darwin_arm_exception_state64>() - 8usize];
-    ["Offset of field: __darwin_arm_exception_state64::__far"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state64, __far) - 0usize];
-    ["Offset of field: __darwin_arm_exception_state64::__esr"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state64, __esr) - 8usize];
-    ["Offset of field: __darwin_arm_exception_state64::__exception"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state64, __exception) - 12usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_exception_state64_v2 {
     pub __far: __uint64_t,
     pub __esr: __uint64_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_exception_state64_v2"]
-        [::core::mem::size_of::<__darwin_arm_exception_state64_v2>() - 16usize];
-    ["Alignment of __darwin_arm_exception_state64_v2"]
-        [::core::mem::align_of::<__darwin_arm_exception_state64_v2>() - 8usize];
-    ["Offset of field: __darwin_arm_exception_state64_v2::__far"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state64_v2, __far) - 0usize];
-    ["Offset of field: __darwin_arm_exception_state64_v2::__esr"]
-        [::core::mem::offset_of!(__darwin_arm_exception_state64_v2, __esr) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_thread_state {
@@ -1596,23 +1441,6 @@ pub struct __darwin_arm_thread_state {
     pub __pc: __uint32_t,
     pub __cpsr: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_thread_state"]
-        [::core::mem::size_of::<__darwin_arm_thread_state>() - 68usize];
-    ["Alignment of __darwin_arm_thread_state"]
-        [::core::mem::align_of::<__darwin_arm_thread_state>() - 4usize];
-    ["Offset of field: __darwin_arm_thread_state::__r"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state, __r) - 0usize];
-    ["Offset of field: __darwin_arm_thread_state::__sp"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state, __sp) - 52usize];
-    ["Offset of field: __darwin_arm_thread_state::__lr"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state, __lr) - 56usize];
-    ["Offset of field: __darwin_arm_thread_state::__pc"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state, __pc) - 60usize];
-    ["Offset of field: __darwin_arm_thread_state::__cpsr"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state, __cpsr) - 64usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_thread_state64 {
@@ -1624,43 +1452,12 @@ pub struct __darwin_arm_thread_state64 {
     pub __cpsr: __uint32_t,
     pub __pad: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_thread_state64"]
-        [::core::mem::size_of::<__darwin_arm_thread_state64>() - 272usize];
-    ["Alignment of __darwin_arm_thread_state64"]
-        [::core::mem::align_of::<__darwin_arm_thread_state64>() - 8usize];
-    ["Offset of field: __darwin_arm_thread_state64::__x"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __x) - 0usize];
-    ["Offset of field: __darwin_arm_thread_state64::__fp"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __fp) - 232usize];
-    ["Offset of field: __darwin_arm_thread_state64::__lr"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __lr) - 240usize];
-    ["Offset of field: __darwin_arm_thread_state64::__sp"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __sp) - 248usize];
-    ["Offset of field: __darwin_arm_thread_state64::__pc"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __pc) - 256usize];
-    ["Offset of field: __darwin_arm_thread_state64::__cpsr"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __cpsr) - 264usize];
-    ["Offset of field: __darwin_arm_thread_state64::__pad"]
-        [::core::mem::offset_of!(__darwin_arm_thread_state64, __pad) - 268usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct __darwin_arm_vfp_state {
     pub __r: [__uint32_t; 64usize],
     pub __fpscr: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_vfp_state"][::core::mem::size_of::<__darwin_arm_vfp_state>() - 260usize];
-    ["Alignment of __darwin_arm_vfp_state"]
-        [::core::mem::align_of::<__darwin_arm_vfp_state>() - 4usize];
-    ["Offset of field: __darwin_arm_vfp_state::__r"]
-        [::core::mem::offset_of!(__darwin_arm_vfp_state, __r) - 0usize];
-    ["Offset of field: __darwin_arm_vfp_state::__fpscr"]
-        [::core::mem::offset_of!(__darwin_arm_vfp_state, __fpscr) - 256usize];
-};
 impl Default for __darwin_arm_vfp_state {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1678,19 +1475,6 @@ pub struct __darwin_arm_neon_state64 {
     pub __fpsr: __uint32_t,
     pub __fpcr: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_neon_state64"]
-        [::core::mem::size_of::<__darwin_arm_neon_state64>() - 528usize];
-    ["Alignment of __darwin_arm_neon_state64"]
-        [::core::mem::align_of::<__darwin_arm_neon_state64>() - 16usize];
-    ["Offset of field: __darwin_arm_neon_state64::__v"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state64, __v) - 0usize];
-    ["Offset of field: __darwin_arm_neon_state64::__fpsr"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state64, __fpsr) - 512usize];
-    ["Offset of field: __darwin_arm_neon_state64::__fpcr"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state64, __fpcr) - 516usize];
-};
 #[repr(C)]
 #[repr(align(16))]
 #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -1699,31 +1483,11 @@ pub struct __darwin_arm_neon_state {
     pub __fpsr: __uint32_t,
     pub __fpcr: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_neon_state"]
-        [::core::mem::size_of::<__darwin_arm_neon_state>() - 272usize];
-    ["Alignment of __darwin_arm_neon_state"]
-        [::core::mem::align_of::<__darwin_arm_neon_state>() - 16usize];
-    ["Offset of field: __darwin_arm_neon_state::__v"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state, __v) - 0usize];
-    ["Offset of field: __darwin_arm_neon_state::__fpsr"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state, __fpsr) - 256usize];
-    ["Offset of field: __darwin_arm_neon_state::__fpcr"]
-        [::core::mem::offset_of!(__darwin_arm_neon_state, __fpcr) - 260usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __arm_pagein_state {
     pub __pagein_error: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __arm_pagein_state"][::core::mem::size_of::<__arm_pagein_state>() - 4usize];
-    ["Alignment of __arm_pagein_state"][::core::mem::align_of::<__arm_pagein_state>() - 4usize];
-    ["Offset of field: __arm_pagein_state::__pagein_error"]
-        [::core::mem::offset_of!(__arm_pagein_state, __pagein_error) - 0usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_sme_state {
@@ -1731,33 +1495,12 @@ pub struct __darwin_arm_sme_state {
     pub __tpidr2_el0: __uint64_t,
     pub __svl_b: __uint16_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_sme_state"][::core::mem::size_of::<__darwin_arm_sme_state>() - 24usize];
-    ["Alignment of __darwin_arm_sme_state"]
-        [::core::mem::align_of::<__darwin_arm_sme_state>() - 8usize];
-    ["Offset of field: __darwin_arm_sme_state::__svcr"]
-        [::core::mem::offset_of!(__darwin_arm_sme_state, __svcr) - 0usize];
-    ["Offset of field: __darwin_arm_sme_state::__tpidr2_el0"]
-        [::core::mem::offset_of!(__darwin_arm_sme_state, __tpidr2_el0) - 8usize];
-    ["Offset of field: __darwin_arm_sme_state::__svl_b"]
-        [::core::mem::offset_of!(__darwin_arm_sme_state, __svl_b) - 16usize];
-};
 #[repr(C)]
 #[repr(align(4))]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct __darwin_arm_sve_z_state {
     pub __z: [[::core::ffi::c_char; 256usize]; 16usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_sve_z_state"]
-        [::core::mem::size_of::<__darwin_arm_sve_z_state>() - 4096usize];
-    ["Alignment of __darwin_arm_sve_z_state"]
-        [::core::mem::align_of::<__darwin_arm_sve_z_state>() - 4usize];
-    ["Offset of field: __darwin_arm_sve_z_state::__z"]
-        [::core::mem::offset_of!(__darwin_arm_sve_z_state, __z) - 0usize];
-};
 impl Default for __darwin_arm_sve_z_state {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1773,30 +1516,12 @@ impl Default for __darwin_arm_sve_z_state {
 pub struct __darwin_arm_sve_p_state {
     pub __p: [[::core::ffi::c_char; 32usize]; 16usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_sve_p_state"]
-        [::core::mem::size_of::<__darwin_arm_sve_p_state>() - 512usize];
-    ["Alignment of __darwin_arm_sve_p_state"]
-        [::core::mem::align_of::<__darwin_arm_sve_p_state>() - 4usize];
-    ["Offset of field: __darwin_arm_sve_p_state::__p"]
-        [::core::mem::offset_of!(__darwin_arm_sve_p_state, __p) - 0usize];
-};
 #[repr(C)]
 #[repr(align(4))]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct __darwin_arm_sme_za_state {
     pub __za: [::core::ffi::c_char; 4096usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_sme_za_state"]
-        [::core::mem::size_of::<__darwin_arm_sme_za_state>() - 4096usize];
-    ["Alignment of __darwin_arm_sme_za_state"]
-        [::core::mem::align_of::<__darwin_arm_sme_za_state>() - 4usize];
-    ["Offset of field: __darwin_arm_sme_za_state::__za"]
-        [::core::mem::offset_of!(__darwin_arm_sme_za_state, __za) - 0usize];
-};
 impl Default for __darwin_arm_sme_za_state {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1812,15 +1537,6 @@ impl Default for __darwin_arm_sme_za_state {
 pub struct __darwin_arm_sme2_state {
     pub __zt0: [::core::ffi::c_char; 64usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_sme2_state"]
-        [::core::mem::size_of::<__darwin_arm_sme2_state>() - 64usize];
-    ["Alignment of __darwin_arm_sme2_state"]
-        [::core::mem::align_of::<__darwin_arm_sme2_state>() - 4usize];
-    ["Offset of field: __darwin_arm_sme2_state::__zt0"]
-        [::core::mem::offset_of!(__darwin_arm_sme2_state, __zt0) - 0usize];
-};
 impl Default for __darwin_arm_sme2_state {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1838,21 +1554,6 @@ pub struct __arm_legacy_debug_state {
     pub __wvr: [__uint32_t; 16usize],
     pub __wcr: [__uint32_t; 16usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __arm_legacy_debug_state"]
-        [::core::mem::size_of::<__arm_legacy_debug_state>() - 256usize];
-    ["Alignment of __arm_legacy_debug_state"]
-        [::core::mem::align_of::<__arm_legacy_debug_state>() - 4usize];
-    ["Offset of field: __arm_legacy_debug_state::__bvr"]
-        [::core::mem::offset_of!(__arm_legacy_debug_state, __bvr) - 0usize];
-    ["Offset of field: __arm_legacy_debug_state::__bcr"]
-        [::core::mem::offset_of!(__arm_legacy_debug_state, __bcr) - 64usize];
-    ["Offset of field: __arm_legacy_debug_state::__wvr"]
-        [::core::mem::offset_of!(__arm_legacy_debug_state, __wvr) - 128usize];
-    ["Offset of field: __arm_legacy_debug_state::__wcr"]
-        [::core::mem::offset_of!(__arm_legacy_debug_state, __wcr) - 192usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_debug_state32 {
@@ -1862,23 +1563,6 @@ pub struct __darwin_arm_debug_state32 {
     pub __wcr: [__uint32_t; 16usize],
     pub __mdscr_el1: __uint64_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_debug_state32"]
-        [::core::mem::size_of::<__darwin_arm_debug_state32>() - 264usize];
-    ["Alignment of __darwin_arm_debug_state32"]
-        [::core::mem::align_of::<__darwin_arm_debug_state32>() - 8usize];
-    ["Offset of field: __darwin_arm_debug_state32::__bvr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state32, __bvr) - 0usize];
-    ["Offset of field: __darwin_arm_debug_state32::__bcr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state32, __bcr) - 64usize];
-    ["Offset of field: __darwin_arm_debug_state32::__wvr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state32, __wvr) - 128usize];
-    ["Offset of field: __darwin_arm_debug_state32::__wcr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state32, __wcr) - 192usize];
-    ["Offset of field: __darwin_arm_debug_state32::__mdscr_el1"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state32, __mdscr_el1) - 256usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_debug_state64 {
@@ -1888,37 +1572,11 @@ pub struct __darwin_arm_debug_state64 {
     pub __wcr: [__uint64_t; 16usize],
     pub __mdscr_el1: __uint64_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_debug_state64"]
-        [::core::mem::size_of::<__darwin_arm_debug_state64>() - 520usize];
-    ["Alignment of __darwin_arm_debug_state64"]
-        [::core::mem::align_of::<__darwin_arm_debug_state64>() - 8usize];
-    ["Offset of field: __darwin_arm_debug_state64::__bvr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state64, __bvr) - 0usize];
-    ["Offset of field: __darwin_arm_debug_state64::__bcr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state64, __bcr) - 128usize];
-    ["Offset of field: __darwin_arm_debug_state64::__wvr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state64, __wvr) - 256usize];
-    ["Offset of field: __darwin_arm_debug_state64::__wcr"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state64, __wcr) - 384usize];
-    ["Offset of field: __darwin_arm_debug_state64::__mdscr_el1"]
-        [::core::mem::offset_of!(__darwin_arm_debug_state64, __mdscr_el1) - 512usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct __darwin_arm_cpmu_state64 {
     pub __ctrs: [__uint64_t; 16usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_arm_cpmu_state64"]
-        [::core::mem::size_of::<__darwin_arm_cpmu_state64>() - 128usize];
-    ["Alignment of __darwin_arm_cpmu_state64"]
-        [::core::mem::align_of::<__darwin_arm_cpmu_state64>() - 8usize];
-    ["Offset of field: __darwin_arm_cpmu_state64::__ctrs"]
-        [::core::mem::offset_of!(__darwin_arm_cpmu_state64, __ctrs) - 0usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct __darwin_mcontext32 {
@@ -1926,17 +1584,6 @@ pub struct __darwin_mcontext32 {
     pub __ss: __darwin_arm_thread_state,
     pub __fs: __darwin_arm_vfp_state,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_mcontext32"][::core::mem::size_of::<__darwin_mcontext32>() - 340usize];
-    ["Alignment of __darwin_mcontext32"][::core::mem::align_of::<__darwin_mcontext32>() - 4usize];
-    ["Offset of field: __darwin_mcontext32::__es"]
-        [::core::mem::offset_of!(__darwin_mcontext32, __es) - 0usize];
-    ["Offset of field: __darwin_mcontext32::__ss"]
-        [::core::mem::offset_of!(__darwin_mcontext32, __ss) - 12usize];
-    ["Offset of field: __darwin_mcontext32::__fs"]
-        [::core::mem::offset_of!(__darwin_mcontext32, __fs) - 80usize];
-};
 impl Default for __darwin_mcontext32 {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -1954,17 +1601,6 @@ pub struct __darwin_mcontext64 {
     pub __ss: __darwin_arm_thread_state64,
     pub __ns: __darwin_arm_neon_state64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_mcontext64"][::core::mem::size_of::<__darwin_mcontext64>() - 816usize];
-    ["Alignment of __darwin_mcontext64"][::core::mem::align_of::<__darwin_mcontext64>() - 16usize];
-    ["Offset of field: __darwin_mcontext64::__es"]
-        [::core::mem::offset_of!(__darwin_mcontext64, __es) - 0usize];
-    ["Offset of field: __darwin_mcontext64::__ss"]
-        [::core::mem::offset_of!(__darwin_mcontext64, __ss) - 16usize];
-    ["Offset of field: __darwin_mcontext64::__ns"]
-        [::core::mem::offset_of!(__darwin_mcontext64, __ns) - 288usize];
-};
 pub type mcontext_t = *mut __darwin_mcontext64;
 pub type pthread_attr_t = __darwin_pthread_attr_t;
 #[repr(C)]
@@ -1974,17 +1610,6 @@ pub struct __darwin_sigaltstack {
     pub ss_size: __darwin_size_t,
     pub ss_flags: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_sigaltstack"][::core::mem::size_of::<__darwin_sigaltstack>() - 24usize];
-    ["Alignment of __darwin_sigaltstack"][::core::mem::align_of::<__darwin_sigaltstack>() - 8usize];
-    ["Offset of field: __darwin_sigaltstack::ss_sp"]
-        [::core::mem::offset_of!(__darwin_sigaltstack, ss_sp) - 0usize];
-    ["Offset of field: __darwin_sigaltstack::ss_size"]
-        [::core::mem::offset_of!(__darwin_sigaltstack, ss_size) - 8usize];
-    ["Offset of field: __darwin_sigaltstack::ss_flags"]
-        [::core::mem::offset_of!(__darwin_sigaltstack, ss_flags) - 16usize];
-};
 impl Default for __darwin_sigaltstack {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2005,23 +1630,6 @@ pub struct __darwin_ucontext {
     pub uc_mcsize: __darwin_size_t,
     pub uc_mcontext: *mut __darwin_mcontext64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __darwin_ucontext"][::core::mem::size_of::<__darwin_ucontext>() - 56usize];
-    ["Alignment of __darwin_ucontext"][::core::mem::align_of::<__darwin_ucontext>() - 8usize];
-    ["Offset of field: __darwin_ucontext::uc_onstack"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_onstack) - 0usize];
-    ["Offset of field: __darwin_ucontext::uc_sigmask"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_sigmask) - 4usize];
-    ["Offset of field: __darwin_ucontext::uc_stack"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_stack) - 8usize];
-    ["Offset of field: __darwin_ucontext::uc_link"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_link) - 32usize];
-    ["Offset of field: __darwin_ucontext::uc_mcsize"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_mcsize) - 40usize];
-    ["Offset of field: __darwin_ucontext::uc_mcontext"]
-        [::core::mem::offset_of!(__darwin_ucontext, uc_mcontext) - 48usize];
-};
 impl Default for __darwin_ucontext {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2040,13 +1648,6 @@ pub union sigval {
     pub sival_int: ::core::ffi::c_int,
     pub sival_ptr: *mut ::core::ffi::c_void,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of sigval"][::core::mem::size_of::<sigval>() - 8usize];
-    ["Alignment of sigval"][::core::mem::align_of::<sigval>() - 8usize];
-    ["Offset of field: sigval::sival_int"][::core::mem::offset_of!(sigval, sival_int) - 0usize];
-    ["Offset of field: sigval::sival_ptr"][::core::mem::offset_of!(sigval, sival_ptr) - 0usize];
-};
 impl Default for sigval {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2065,21 +1666,6 @@ pub struct sigevent {
     pub sigev_notify_function: ::core::option::Option<unsafe extern "C" fn(arg1: sigval)>,
     pub sigev_notify_attributes: *mut pthread_attr_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of sigevent"][::core::mem::size_of::<sigevent>() - 32usize];
-    ["Alignment of sigevent"][::core::mem::align_of::<sigevent>() - 8usize];
-    ["Offset of field: sigevent::sigev_notify"]
-        [::core::mem::offset_of!(sigevent, sigev_notify) - 0usize];
-    ["Offset of field: sigevent::sigev_signo"]
-        [::core::mem::offset_of!(sigevent, sigev_signo) - 4usize];
-    ["Offset of field: sigevent::sigev_value"]
-        [::core::mem::offset_of!(sigevent, sigev_value) - 8usize];
-    ["Offset of field: sigevent::sigev_notify_function"]
-        [::core::mem::offset_of!(sigevent, sigev_notify_function) - 16usize];
-    ["Offset of field: sigevent::sigev_notify_attributes"]
-        [::core::mem::offset_of!(sigevent, sigev_notify_attributes) - 24usize];
-};
 impl Default for sigevent {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2103,23 +1689,6 @@ pub struct __siginfo {
     pub si_band: ::core::ffi::c_long,
     pub __pad: [::core::ffi::c_ulong; 7usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __siginfo"][::core::mem::size_of::<__siginfo>() - 104usize];
-    ["Alignment of __siginfo"][::core::mem::align_of::<__siginfo>() - 8usize];
-    ["Offset of field: __siginfo::si_signo"][::core::mem::offset_of!(__siginfo, si_signo) - 0usize];
-    ["Offset of field: __siginfo::si_errno"][::core::mem::offset_of!(__siginfo, si_errno) - 4usize];
-    ["Offset of field: __siginfo::si_code"][::core::mem::offset_of!(__siginfo, si_code) - 8usize];
-    ["Offset of field: __siginfo::si_pid"][::core::mem::offset_of!(__siginfo, si_pid) - 12usize];
-    ["Offset of field: __siginfo::si_uid"][::core::mem::offset_of!(__siginfo, si_uid) - 16usize];
-    ["Offset of field: __siginfo::si_status"]
-        [::core::mem::offset_of!(__siginfo, si_status) - 20usize];
-    ["Offset of field: __siginfo::si_addr"][::core::mem::offset_of!(__siginfo, si_addr) - 24usize];
-    ["Offset of field: __siginfo::si_value"]
-        [::core::mem::offset_of!(__siginfo, si_value) - 32usize];
-    ["Offset of field: __siginfo::si_band"][::core::mem::offset_of!(__siginfo, si_band) - 40usize];
-    ["Offset of field: __siginfo::__pad"][::core::mem::offset_of!(__siginfo, __pad) - 48usize];
-};
 impl Default for __siginfo {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2142,15 +1711,6 @@ pub union __sigaction_u {
         ),
     >,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __sigaction_u"][::core::mem::size_of::<__sigaction_u>() - 8usize];
-    ["Alignment of __sigaction_u"][::core::mem::align_of::<__sigaction_u>() - 8usize];
-    ["Offset of field: __sigaction_u::__sa_handler"]
-        [::core::mem::offset_of!(__sigaction_u, __sa_handler) - 0usize];
-    ["Offset of field: __sigaction_u::__sa_sigaction"]
-        [::core::mem::offset_of!(__sigaction_u, __sa_sigaction) - 0usize];
-};
 impl Default for __sigaction_u {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2176,19 +1736,6 @@ pub struct __sigaction {
     pub sa_mask: sigset_t,
     pub sa_flags: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __sigaction"][::core::mem::size_of::<__sigaction>() - 24usize];
-    ["Alignment of __sigaction"][::core::mem::align_of::<__sigaction>() - 8usize];
-    ["Offset of field: __sigaction::__sigaction_u"]
-        [::core::mem::offset_of!(__sigaction, __sigaction_u) - 0usize];
-    ["Offset of field: __sigaction::sa_tramp"]
-        [::core::mem::offset_of!(__sigaction, sa_tramp) - 8usize];
-    ["Offset of field: __sigaction::sa_mask"]
-        [::core::mem::offset_of!(__sigaction, sa_mask) - 16usize];
-    ["Offset of field: __sigaction::sa_flags"]
-        [::core::mem::offset_of!(__sigaction, sa_flags) - 20usize];
-};
 impl Default for __sigaction {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2205,16 +1752,6 @@ pub struct sigaction {
     pub sa_mask: sigset_t,
     pub sa_flags: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of sigaction"][::core::mem::size_of::<sigaction>() - 16usize];
-    ["Alignment of sigaction"][::core::mem::align_of::<sigaction>() - 8usize];
-    ["Offset of field: sigaction::__sigaction_u"]
-        [::core::mem::offset_of!(sigaction, __sigaction_u) - 0usize];
-    ["Offset of field: sigaction::sa_mask"][::core::mem::offset_of!(sigaction, sa_mask) - 8usize];
-    ["Offset of field: sigaction::sa_flags"]
-        [::core::mem::offset_of!(sigaction, sa_flags) - 12usize];
-};
 impl Default for sigaction {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2232,28 +1769,12 @@ pub struct sigvec {
     pub sv_mask: ::core::ffi::c_int,
     pub sv_flags: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of sigvec"][::core::mem::size_of::<sigvec>() - 16usize];
-    ["Alignment of sigvec"][::core::mem::align_of::<sigvec>() - 8usize];
-    ["Offset of field: sigvec::sv_handler"][::core::mem::offset_of!(sigvec, sv_handler) - 0usize];
-    ["Offset of field: sigvec::sv_mask"][::core::mem::offset_of!(sigvec, sv_mask) - 8usize];
-    ["Offset of field: sigvec::sv_flags"][::core::mem::offset_of!(sigvec, sv_flags) - 12usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct sigstack {
     pub ss_sp: *mut ::core::ffi::c_char,
     pub ss_onstack: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of sigstack"][::core::mem::size_of::<sigstack>() - 16usize];
-    ["Alignment of sigstack"][::core::mem::align_of::<sigstack>() - 8usize];
-    ["Offset of field: sigstack::ss_sp"][::core::mem::offset_of!(sigstack, ss_sp) - 0usize];
-    ["Offset of field: sigstack::ss_onstack"]
-        [::core::mem::offset_of!(sigstack, ss_onstack) - 8usize];
-};
 impl Default for sigstack {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -2280,13 +1801,6 @@ pub struct timeval {
     pub tv_sec: __darwin_time_t,
     pub tv_usec: __darwin_suseconds_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of timeval"][::core::mem::size_of::<timeval>() - 16usize];
-    ["Alignment of timeval"][::core::mem::align_of::<timeval>() - 8usize];
-    ["Offset of field: timeval::tv_sec"][::core::mem::offset_of!(timeval, tv_sec) - 0usize];
-    ["Offset of field: timeval::tv_usec"][::core::mem::offset_of!(timeval, tv_usec) - 8usize];
-};
 pub type rlim_t = __uint64_t;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -2308,28 +1822,6 @@ pub struct rusage {
     pub ru_nvcsw: ::core::ffi::c_long,
     pub ru_nivcsw: ::core::ffi::c_long,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage"][::core::mem::size_of::<rusage>() - 144usize];
-    ["Alignment of rusage"][::core::mem::align_of::<rusage>() - 8usize];
-    ["Offset of field: rusage::ru_utime"][::core::mem::offset_of!(rusage, ru_utime) - 0usize];
-    ["Offset of field: rusage::ru_stime"][::core::mem::offset_of!(rusage, ru_stime) - 16usize];
-    ["Offset of field: rusage::ru_maxrss"][::core::mem::offset_of!(rusage, ru_maxrss) - 32usize];
-    ["Offset of field: rusage::ru_ixrss"][::core::mem::offset_of!(rusage, ru_ixrss) - 40usize];
-    ["Offset of field: rusage::ru_idrss"][::core::mem::offset_of!(rusage, ru_idrss) - 48usize];
-    ["Offset of field: rusage::ru_isrss"][::core::mem::offset_of!(rusage, ru_isrss) - 56usize];
-    ["Offset of field: rusage::ru_minflt"][::core::mem::offset_of!(rusage, ru_minflt) - 64usize];
-    ["Offset of field: rusage::ru_majflt"][::core::mem::offset_of!(rusage, ru_majflt) - 72usize];
-    ["Offset of field: rusage::ru_nswap"][::core::mem::offset_of!(rusage, ru_nswap) - 80usize];
-    ["Offset of field: rusage::ru_inblock"][::core::mem::offset_of!(rusage, ru_inblock) - 88usize];
-    ["Offset of field: rusage::ru_oublock"][::core::mem::offset_of!(rusage, ru_oublock) - 96usize];
-    ["Offset of field: rusage::ru_msgsnd"][::core::mem::offset_of!(rusage, ru_msgsnd) - 104usize];
-    ["Offset of field: rusage::ru_msgrcv"][::core::mem::offset_of!(rusage, ru_msgrcv) - 112usize];
-    ["Offset of field: rusage::ru_nsignals"]
-        [::core::mem::offset_of!(rusage, ru_nsignals) - 120usize];
-    ["Offset of field: rusage::ru_nvcsw"][::core::mem::offset_of!(rusage, ru_nvcsw) - 128usize];
-    ["Offset of field: rusage::ru_nivcsw"][::core::mem::offset_of!(rusage, ru_nivcsw) - 136usize];
-};
 pub type rusage_info_t = *mut ::core::ffi::c_void;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -2346,33 +1838,6 @@ pub struct rusage_info_v0 {
     pub ri_proc_start_abstime: u64,
     pub ri_proc_exit_abstime: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v0"][::core::mem::size_of::<rusage_info_v0>() - 96usize];
-    ["Alignment of rusage_info_v0"][::core::mem::align_of::<rusage_info_v0>() - 8usize];
-    ["Offset of field: rusage_info_v0::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v0::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v0::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v0::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v0::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v0::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v0::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v0::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v0::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v0::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v0::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v0, ri_proc_exit_abstime) - 88usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v1 {
@@ -2394,45 +1859,6 @@ pub struct rusage_info_v1 {
     pub ri_child_pageins: u64,
     pub ri_child_elapsed_abstime: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v1"][::core::mem::size_of::<rusage_info_v1>() - 144usize];
-    ["Alignment of rusage_info_v1"][::core::mem::align_of::<rusage_info_v1>() - 8usize];
-    ["Offset of field: rusage_info_v1::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v1::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v1::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v1::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v1::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v1::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v1::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v1::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v1::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v1::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v1::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v1::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v1::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v1::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v1::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v1::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v1::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v1, ri_child_elapsed_abstime) - 136usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v2 {
@@ -2456,49 +1882,6 @@ pub struct rusage_info_v2 {
     pub ri_diskio_bytesread: u64,
     pub ri_diskio_byteswritten: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v2"][::core::mem::size_of::<rusage_info_v2>() - 160usize];
-    ["Alignment of rusage_info_v2"][::core::mem::align_of::<rusage_info_v2>() - 8usize];
-    ["Offset of field: rusage_info_v2::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v2::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v2::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v2::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v2::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v2::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v2::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v2::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v2::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v2::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v2::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v2::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v2::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v2::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v2::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v2::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v2::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_child_elapsed_abstime) - 136usize];
-    ["Offset of field: rusage_info_v2::ri_diskio_bytesread"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_diskio_bytesread) - 144usize];
-    ["Offset of field: rusage_info_v2::ri_diskio_byteswritten"]
-        [::core::mem::offset_of!(rusage_info_v2, ri_diskio_byteswritten) - 152usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v3 {
@@ -2531,67 +1914,6 @@ pub struct rusage_info_v3 {
     pub ri_billed_system_time: u64,
     pub ri_serviced_system_time: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v3"][::core::mem::size_of::<rusage_info_v3>() - 232usize];
-    ["Alignment of rusage_info_v3"][::core::mem::align_of::<rusage_info_v3>() - 8usize];
-    ["Offset of field: rusage_info_v3::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v3::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v3::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v3::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v3::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v3::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v3::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v3::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v3::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v3::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v3::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v3::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v3::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v3::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v3::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v3::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v3::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_child_elapsed_abstime) - 136usize];
-    ["Offset of field: rusage_info_v3::ri_diskio_bytesread"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_diskio_bytesread) - 144usize];
-    ["Offset of field: rusage_info_v3::ri_diskio_byteswritten"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_diskio_byteswritten) - 152usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_default"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_default) - 160usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_maintenance"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_maintenance) - 168usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_background"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_background) - 176usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_utility"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_utility) - 184usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_legacy"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_legacy) - 192usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_user_initiated"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_user_initiated) - 200usize];
-    ["Offset of field: rusage_info_v3::ri_cpu_time_qos_user_interactive"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_cpu_time_qos_user_interactive) - 208usize];
-    ["Offset of field: rusage_info_v3::ri_billed_system_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_billed_system_time) - 216usize];
-    ["Offset of field: rusage_info_v3::ri_serviced_system_time"]
-        [::core::mem::offset_of!(rusage_info_v3, ri_serviced_system_time) - 224usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v4 {
@@ -2632,83 +1954,6 @@ pub struct rusage_info_v4 {
     pub ri_interval_max_phys_footprint: u64,
     pub ri_runnable_time: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v4"][::core::mem::size_of::<rusage_info_v4>() - 296usize];
-    ["Alignment of rusage_info_v4"][::core::mem::align_of::<rusage_info_v4>() - 8usize];
-    ["Offset of field: rusage_info_v4::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v4::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v4::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v4::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v4::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v4::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v4::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v4::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v4::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v4::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v4::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v4::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v4::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v4::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v4::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v4::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v4::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_child_elapsed_abstime) - 136usize];
-    ["Offset of field: rusage_info_v4::ri_diskio_bytesread"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_diskio_bytesread) - 144usize];
-    ["Offset of field: rusage_info_v4::ri_diskio_byteswritten"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_diskio_byteswritten) - 152usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_default"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_default) - 160usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_maintenance"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_maintenance) - 168usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_background"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_background) - 176usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_utility"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_utility) - 184usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_legacy"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_legacy) - 192usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_user_initiated"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_user_initiated) - 200usize];
-    ["Offset of field: rusage_info_v4::ri_cpu_time_qos_user_interactive"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cpu_time_qos_user_interactive) - 208usize];
-    ["Offset of field: rusage_info_v4::ri_billed_system_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_billed_system_time) - 216usize];
-    ["Offset of field: rusage_info_v4::ri_serviced_system_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_serviced_system_time) - 224usize];
-    ["Offset of field: rusage_info_v4::ri_logical_writes"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_logical_writes) - 232usize];
-    ["Offset of field: rusage_info_v4::ri_lifetime_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_lifetime_max_phys_footprint) - 240usize];
-    ["Offset of field: rusage_info_v4::ri_instructions"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_instructions) - 248usize];
-    ["Offset of field: rusage_info_v4::ri_cycles"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_cycles) - 256usize];
-    ["Offset of field: rusage_info_v4::ri_billed_energy"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_billed_energy) - 264usize];
-    ["Offset of field: rusage_info_v4::ri_serviced_energy"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_serviced_energy) - 272usize];
-    ["Offset of field: rusage_info_v4::ri_interval_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_interval_max_phys_footprint) - 280usize];
-    ["Offset of field: rusage_info_v4::ri_runnable_time"]
-        [::core::mem::offset_of!(rusage_info_v4, ri_runnable_time) - 288usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v5 {
@@ -2750,85 +1995,6 @@ pub struct rusage_info_v5 {
     pub ri_runnable_time: u64,
     pub ri_flags: u64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v5"][::core::mem::size_of::<rusage_info_v5>() - 304usize];
-    ["Alignment of rusage_info_v5"][::core::mem::align_of::<rusage_info_v5>() - 8usize];
-    ["Offset of field: rusage_info_v5::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v5::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v5::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v5::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v5::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v5::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v5::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v5::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v5::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v5::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v5::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v5::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v5::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v5::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v5::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v5::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v5::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_child_elapsed_abstime) - 136usize];
-    ["Offset of field: rusage_info_v5::ri_diskio_bytesread"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_diskio_bytesread) - 144usize];
-    ["Offset of field: rusage_info_v5::ri_diskio_byteswritten"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_diskio_byteswritten) - 152usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_default"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_default) - 160usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_maintenance"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_maintenance) - 168usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_background"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_background) - 176usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_utility"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_utility) - 184usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_legacy"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_legacy) - 192usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_user_initiated"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_user_initiated) - 200usize];
-    ["Offset of field: rusage_info_v5::ri_cpu_time_qos_user_interactive"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cpu_time_qos_user_interactive) - 208usize];
-    ["Offset of field: rusage_info_v5::ri_billed_system_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_billed_system_time) - 216usize];
-    ["Offset of field: rusage_info_v5::ri_serviced_system_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_serviced_system_time) - 224usize];
-    ["Offset of field: rusage_info_v5::ri_logical_writes"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_logical_writes) - 232usize];
-    ["Offset of field: rusage_info_v5::ri_lifetime_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_lifetime_max_phys_footprint) - 240usize];
-    ["Offset of field: rusage_info_v5::ri_instructions"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_instructions) - 248usize];
-    ["Offset of field: rusage_info_v5::ri_cycles"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_cycles) - 256usize];
-    ["Offset of field: rusage_info_v5::ri_billed_energy"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_billed_energy) - 264usize];
-    ["Offset of field: rusage_info_v5::ri_serviced_energy"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_serviced_energy) - 272usize];
-    ["Offset of field: rusage_info_v5::ri_interval_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_interval_max_phys_footprint) - 280usize];
-    ["Offset of field: rusage_info_v5::ri_runnable_time"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_runnable_time) - 288usize];
-    ["Offset of field: rusage_info_v5::ri_flags"]
-        [::core::mem::offset_of!(rusage_info_v5, ri_flags) - 296usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct rusage_info_v6 {
@@ -2882,109 +2048,6 @@ pub struct rusage_info_v6 {
     pub ri_interval_max_neural_footprint: u64,
     pub ri_reserved: [u64; 9usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rusage_info_v6"][::core::mem::size_of::<rusage_info_v6>() - 464usize];
-    ["Alignment of rusage_info_v6"][::core::mem::align_of::<rusage_info_v6>() - 8usize];
-    ["Offset of field: rusage_info_v6::ri_uuid"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_uuid) - 0usize];
-    ["Offset of field: rusage_info_v6::ri_user_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_user_time) - 16usize];
-    ["Offset of field: rusage_info_v6::ri_system_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_system_time) - 24usize];
-    ["Offset of field: rusage_info_v6::ri_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_pkg_idle_wkups) - 32usize];
-    ["Offset of field: rusage_info_v6::ri_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_interrupt_wkups) - 40usize];
-    ["Offset of field: rusage_info_v6::ri_pageins"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_pageins) - 48usize];
-    ["Offset of field: rusage_info_v6::ri_wired_size"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_wired_size) - 56usize];
-    ["Offset of field: rusage_info_v6::ri_resident_size"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_resident_size) - 64usize];
-    ["Offset of field: rusage_info_v6::ri_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_phys_footprint) - 72usize];
-    ["Offset of field: rusage_info_v6::ri_proc_start_abstime"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_proc_start_abstime) - 80usize];
-    ["Offset of field: rusage_info_v6::ri_proc_exit_abstime"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_proc_exit_abstime) - 88usize];
-    ["Offset of field: rusage_info_v6::ri_child_user_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_user_time) - 96usize];
-    ["Offset of field: rusage_info_v6::ri_child_system_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_system_time) - 104usize];
-    ["Offset of field: rusage_info_v6::ri_child_pkg_idle_wkups"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_pkg_idle_wkups) - 112usize];
-    ["Offset of field: rusage_info_v6::ri_child_interrupt_wkups"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_interrupt_wkups) - 120usize];
-    ["Offset of field: rusage_info_v6::ri_child_pageins"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_pageins) - 128usize];
-    ["Offset of field: rusage_info_v6::ri_child_elapsed_abstime"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_child_elapsed_abstime) - 136usize];
-    ["Offset of field: rusage_info_v6::ri_diskio_bytesread"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_diskio_bytesread) - 144usize];
-    ["Offset of field: rusage_info_v6::ri_diskio_byteswritten"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_diskio_byteswritten) - 152usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_default"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_default) - 160usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_maintenance"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_maintenance) - 168usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_background"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_background) - 176usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_utility"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_utility) - 184usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_legacy"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_legacy) - 192usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_user_initiated"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_user_initiated) - 200usize];
-    ["Offset of field: rusage_info_v6::ri_cpu_time_qos_user_interactive"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cpu_time_qos_user_interactive) - 208usize];
-    ["Offset of field: rusage_info_v6::ri_billed_system_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_billed_system_time) - 216usize];
-    ["Offset of field: rusage_info_v6::ri_serviced_system_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_serviced_system_time) - 224usize];
-    ["Offset of field: rusage_info_v6::ri_logical_writes"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_logical_writes) - 232usize];
-    ["Offset of field: rusage_info_v6::ri_lifetime_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_lifetime_max_phys_footprint) - 240usize];
-    ["Offset of field: rusage_info_v6::ri_instructions"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_instructions) - 248usize];
-    ["Offset of field: rusage_info_v6::ri_cycles"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_cycles) - 256usize];
-    ["Offset of field: rusage_info_v6::ri_billed_energy"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_billed_energy) - 264usize];
-    ["Offset of field: rusage_info_v6::ri_serviced_energy"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_serviced_energy) - 272usize];
-    ["Offset of field: rusage_info_v6::ri_interval_max_phys_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_interval_max_phys_footprint) - 280usize];
-    ["Offset of field: rusage_info_v6::ri_runnable_time"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_runnable_time) - 288usize];
-    ["Offset of field: rusage_info_v6::ri_flags"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_flags) - 296usize];
-    ["Offset of field: rusage_info_v6::ri_user_ptime"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_user_ptime) - 304usize];
-    ["Offset of field: rusage_info_v6::ri_system_ptime"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_system_ptime) - 312usize];
-    ["Offset of field: rusage_info_v6::ri_pinstructions"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_pinstructions) - 320usize];
-    ["Offset of field: rusage_info_v6::ri_pcycles"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_pcycles) - 328usize];
-    ["Offset of field: rusage_info_v6::ri_energy_nj"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_energy_nj) - 336usize];
-    ["Offset of field: rusage_info_v6::ri_penergy_nj"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_penergy_nj) - 344usize];
-    ["Offset of field: rusage_info_v6::ri_secure_time_in_system"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_secure_time_in_system) - 352usize];
-    ["Offset of field: rusage_info_v6::ri_secure_ptime_in_system"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_secure_ptime_in_system) - 360usize];
-    ["Offset of field: rusage_info_v6::ri_neural_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_neural_footprint) - 368usize];
-    ["Offset of field: rusage_info_v6::ri_lifetime_max_neural_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_lifetime_max_neural_footprint) - 376usize];
-    ["Offset of field: rusage_info_v6::ri_interval_max_neural_footprint"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_interval_max_neural_footprint) - 384usize];
-    ["Offset of field: rusage_info_v6::ri_reserved"]
-        [::core::mem::offset_of!(rusage_info_v6, ri_reserved) - 392usize];
-};
 pub type rusage_info_current = rusage_info_v6;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -2992,30 +2055,12 @@ pub struct rlimit {
     pub rlim_cur: rlim_t,
     pub rlim_max: rlim_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of rlimit"][::core::mem::size_of::<rlimit>() - 16usize];
-    ["Alignment of rlimit"][::core::mem::align_of::<rlimit>() - 8usize];
-    ["Offset of field: rlimit::rlim_cur"][::core::mem::offset_of!(rlimit, rlim_cur) - 0usize];
-    ["Offset of field: rlimit::rlim_max"][::core::mem::offset_of!(rlimit, rlim_max) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct proc_rlimit_control_wakeupmon {
     pub wm_flags: u32,
     pub wm_rate: i32,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of proc_rlimit_control_wakeupmon"]
-        [::core::mem::size_of::<proc_rlimit_control_wakeupmon>() - 8usize];
-    ["Alignment of proc_rlimit_control_wakeupmon"]
-        [::core::mem::align_of::<proc_rlimit_control_wakeupmon>() - 4usize];
-    ["Offset of field: proc_rlimit_control_wakeupmon::wm_flags"]
-        [::core::mem::offset_of!(proc_rlimit_control_wakeupmon, wm_flags) - 0usize];
-    ["Offset of field: proc_rlimit_control_wakeupmon::wm_rate"]
-        [::core::mem::offset_of!(proc_rlimit_control_wakeupmon, wm_rate) - 4usize];
-};
 unsafe extern "C" {
     pub fn getpriority(arg1: ::core::ffi::c_int, arg2: id_t) -> ::core::ffi::c_int;
 }
@@ -3060,11 +2105,6 @@ pub struct wait__bindgen_ty_1 {
     pub _bitfield_align_1: [u16; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of wait__bindgen_ty_1"][::core::mem::size_of::<wait__bindgen_ty_1>() - 4usize];
-    ["Alignment of wait__bindgen_ty_1"][::core::mem::align_of::<wait__bindgen_ty_1>() - 4usize];
-};
 impl wait__bindgen_ty_1 {
     #[inline]
     pub fn w_Termsig(&self) -> ::core::ffi::c_uint {
@@ -3232,11 +2272,6 @@ pub struct wait__bindgen_ty_2 {
     pub _bitfield_align_1: [u16; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of wait__bindgen_ty_2"][::core::mem::size_of::<wait__bindgen_ty_2>() - 4usize];
-    ["Alignment of wait__bindgen_ty_2"][::core::mem::align_of::<wait__bindgen_ty_2>() - 4usize];
-};
 impl wait__bindgen_ty_2 {
     #[inline]
     pub fn w_Stopval(&self) -> ::core::ffi::c_uint {
@@ -3359,14 +2394,6 @@ impl wait__bindgen_ty_2 {
         __bindgen_bitfield_unit
     }
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of wait"][::core::mem::size_of::<wait>() - 4usize];
-    ["Alignment of wait"][::core::mem::align_of::<wait>() - 4usize];
-    ["Offset of field: wait::w_status"][::core::mem::offset_of!(wait, w_status) - 0usize];
-    ["Offset of field: wait::w_T"][::core::mem::offset_of!(wait, w_T) - 0usize];
-    ["Offset of field: wait::w_S"][::core::mem::offset_of!(wait, w_S) - 0usize];
-};
 impl Default for wait {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -3416,39 +2443,18 @@ pub struct div_t {
     pub quot: ::core::ffi::c_int,
     pub rem: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of div_t"][::core::mem::size_of::<div_t>() - 8usize];
-    ["Alignment of div_t"][::core::mem::align_of::<div_t>() - 4usize];
-    ["Offset of field: div_t::quot"][::core::mem::offset_of!(div_t, quot) - 0usize];
-    ["Offset of field: div_t::rem"][::core::mem::offset_of!(div_t, rem) - 4usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct ldiv_t {
     pub quot: ::core::ffi::c_long,
     pub rem: ::core::ffi::c_long,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of ldiv_t"][::core::mem::size_of::<ldiv_t>() - 16usize];
-    ["Alignment of ldiv_t"][::core::mem::align_of::<ldiv_t>() - 8usize];
-    ["Offset of field: ldiv_t::quot"][::core::mem::offset_of!(ldiv_t, quot) - 0usize];
-    ["Offset of field: ldiv_t::rem"][::core::mem::offset_of!(ldiv_t, rem) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct lldiv_t {
     pub quot: ::core::ffi::c_longlong,
     pub rem: ::core::ffi::c_longlong,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of lldiv_t"][::core::mem::size_of::<lldiv_t>() - 16usize];
-    ["Alignment of lldiv_t"][::core::mem::align_of::<lldiv_t>() - 8usize];
-    ["Offset of field: lldiv_t::quot"][::core::mem::offset_of!(lldiv_t, quot) - 0usize];
-    ["Offset of field: lldiv_t::rem"][::core::mem::offset_of!(lldiv_t, rem) - 8usize];
-};
 unsafe extern "C" {
     pub static mut __mb_cur_max: ::core::ffi::c_int;
 }
@@ -4499,13 +3505,6 @@ pub struct __sbuf {
     pub _base: *mut ::core::ffi::c_uchar,
     pub _size: ::core::ffi::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __sbuf"][::core::mem::size_of::<__sbuf>() - 16usize];
-    ["Alignment of __sbuf"][::core::mem::align_of::<__sbuf>() - 8usize];
-    ["Offset of field: __sbuf::_base"][::core::mem::offset_of!(__sbuf, _base) - 0usize];
-    ["Offset of field: __sbuf::_size"][::core::mem::offset_of!(__sbuf, _size) - 8usize];
-};
 impl Default for __sbuf {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -4564,31 +3563,6 @@ pub struct __sFILE {
     pub _blksize: ::core::ffi::c_int,
     pub _offset: fpos_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __sFILE"][::core::mem::size_of::<__sFILE>() - 152usize];
-    ["Alignment of __sFILE"][::core::mem::align_of::<__sFILE>() - 8usize];
-    ["Offset of field: __sFILE::_p"][::core::mem::offset_of!(__sFILE, _p) - 0usize];
-    ["Offset of field: __sFILE::_r"][::core::mem::offset_of!(__sFILE, _r) - 8usize];
-    ["Offset of field: __sFILE::_w"][::core::mem::offset_of!(__sFILE, _w) - 12usize];
-    ["Offset of field: __sFILE::_flags"][::core::mem::offset_of!(__sFILE, _flags) - 16usize];
-    ["Offset of field: __sFILE::_file"][::core::mem::offset_of!(__sFILE, _file) - 18usize];
-    ["Offset of field: __sFILE::_bf"][::core::mem::offset_of!(__sFILE, _bf) - 24usize];
-    ["Offset of field: __sFILE::_lbfsize"][::core::mem::offset_of!(__sFILE, _lbfsize) - 40usize];
-    ["Offset of field: __sFILE::_cookie"][::core::mem::offset_of!(__sFILE, _cookie) - 48usize];
-    ["Offset of field: __sFILE::_close"][::core::mem::offset_of!(__sFILE, _close) - 56usize];
-    ["Offset of field: __sFILE::_read"][::core::mem::offset_of!(__sFILE, _read) - 64usize];
-    ["Offset of field: __sFILE::_seek"][::core::mem::offset_of!(__sFILE, _seek) - 72usize];
-    ["Offset of field: __sFILE::_write"][::core::mem::offset_of!(__sFILE, _write) - 80usize];
-    ["Offset of field: __sFILE::_ub"][::core::mem::offset_of!(__sFILE, _ub) - 88usize];
-    ["Offset of field: __sFILE::_extra"][::core::mem::offset_of!(__sFILE, _extra) - 104usize];
-    ["Offset of field: __sFILE::_ur"][::core::mem::offset_of!(__sFILE, _ur) - 112usize];
-    ["Offset of field: __sFILE::_ubuf"][::core::mem::offset_of!(__sFILE, _ubuf) - 116usize];
-    ["Offset of field: __sFILE::_nbuf"][::core::mem::offset_of!(__sFILE, _nbuf) - 119usize];
-    ["Offset of field: __sFILE::_lb"][::core::mem::offset_of!(__sFILE, _lb) - 120usize];
-    ["Offset of field: __sFILE::_blksize"][::core::mem::offset_of!(__sFILE, _blksize) - 136usize];
-    ["Offset of field: __sFILE::_offset"][::core::mem::offset_of!(__sFILE, _offset) - 144usize];
-};
 impl Default for __sFILE {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -5633,26 +4607,12 @@ pub struct __float2 {
     pub __sinval: f32,
     pub __cosval: f32,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __float2"][::core::mem::size_of::<__float2>() - 8usize];
-    ["Alignment of __float2"][::core::mem::align_of::<__float2>() - 4usize];
-    ["Offset of field: __float2::__sinval"][::core::mem::offset_of!(__float2, __sinval) - 0usize];
-    ["Offset of field: __float2::__cosval"][::core::mem::offset_of!(__float2, __cosval) - 4usize];
-};
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct __double2 {
     pub __sinval: f64,
     pub __cosval: f64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of __double2"][::core::mem::size_of::<__double2>() - 16usize];
-    ["Alignment of __double2"][::core::mem::align_of::<__double2>() - 8usize];
-    ["Offset of field: __double2::__sinval"][::core::mem::offset_of!(__double2, __sinval) - 0usize];
-    ["Offset of field: __double2::__cosval"][::core::mem::offset_of!(__double2, __cosval) - 8usize];
-};
 unsafe extern "C" {
     pub fn __sincosf_stret(arg1: f32) -> __float2;
 }
@@ -5698,16 +4658,6 @@ pub struct exception {
     pub arg2: f64,
     pub retval: f64,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of exception"][::core::mem::size_of::<exception>() - 40usize];
-    ["Alignment of exception"][::core::mem::align_of::<exception>() - 8usize];
-    ["Offset of field: exception::type_"][::core::mem::offset_of!(exception, type_) - 0usize];
-    ["Offset of field: exception::name"][::core::mem::offset_of!(exception, name) - 8usize];
-    ["Offset of field: exception::arg1"][::core::mem::offset_of!(exception, arg1) - 16usize];
-    ["Offset of field: exception::arg2"][::core::mem::offset_of!(exception, arg2) - 24usize];
-    ["Offset of field: exception::retval"][::core::mem::offset_of!(exception, retval) - 32usize];
-};
 impl Default for exception {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -5725,13 +4675,6 @@ pub struct timespec {
     pub tv_sec: __darwin_time_t,
     pub tv_nsec: ::core::ffi::c_long,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of timespec"][::core::mem::size_of::<timespec>() - 16usize];
-    ["Alignment of timespec"][::core::mem::align_of::<timespec>() - 8usize];
-    ["Offset of field: timespec::tv_sec"][::core::mem::offset_of!(timespec, tv_sec) - 0usize];
-    ["Offset of field: timespec::tv_nsec"][::core::mem::offset_of!(timespec, tv_nsec) - 8usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct tm {
@@ -5747,22 +4690,6 @@ pub struct tm {
     pub tm_gmtoff: ::core::ffi::c_long,
     pub tm_zone: *mut ::core::ffi::c_char,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of tm"][::core::mem::size_of::<tm>() - 56usize];
-    ["Alignment of tm"][::core::mem::align_of::<tm>() - 8usize];
-    ["Offset of field: tm::tm_sec"][::core::mem::offset_of!(tm, tm_sec) - 0usize];
-    ["Offset of field: tm::tm_min"][::core::mem::offset_of!(tm, tm_min) - 4usize];
-    ["Offset of field: tm::tm_hour"][::core::mem::offset_of!(tm, tm_hour) - 8usize];
-    ["Offset of field: tm::tm_mday"][::core::mem::offset_of!(tm, tm_mday) - 12usize];
-    ["Offset of field: tm::tm_mon"][::core::mem::offset_of!(tm, tm_mon) - 16usize];
-    ["Offset of field: tm::tm_year"][::core::mem::offset_of!(tm, tm_year) - 20usize];
-    ["Offset of field: tm::tm_wday"][::core::mem::offset_of!(tm, tm_wday) - 24usize];
-    ["Offset of field: tm::tm_yday"][::core::mem::offset_of!(tm, tm_yday) - 28usize];
-    ["Offset of field: tm::tm_isdst"][::core::mem::offset_of!(tm, tm_isdst) - 32usize];
-    ["Offset of field: tm::tm_gmtoff"][::core::mem::offset_of!(tm, tm_gmtoff) - 40usize];
-    ["Offset of field: tm::tm_zone"][::core::mem::offset_of!(tm, tm_zone) - 48usize];
-};
 impl Default for tm {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -5896,16 +4823,6 @@ pub struct _RuneEntry {
     pub __map: __darwin_rune_t,
     pub __types: *mut __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _RuneEntry"][::core::mem::size_of::<_RuneEntry>() - 24usize];
-    ["Alignment of _RuneEntry"][::core::mem::align_of::<_RuneEntry>() - 8usize];
-    ["Offset of field: _RuneEntry::__min"][::core::mem::offset_of!(_RuneEntry, __min) - 0usize];
-    ["Offset of field: _RuneEntry::__max"][::core::mem::offset_of!(_RuneEntry, __max) - 4usize];
-    ["Offset of field: _RuneEntry::__map"][::core::mem::offset_of!(_RuneEntry, __map) - 8usize];
-    ["Offset of field: _RuneEntry::__types"]
-        [::core::mem::offset_of!(_RuneEntry, __types) - 16usize];
-};
 impl Default for _RuneEntry {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -5921,15 +4838,6 @@ pub struct _RuneRange {
     pub __nranges: ::core::ffi::c_int,
     pub __ranges: *mut _RuneEntry,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _RuneRange"][::core::mem::size_of::<_RuneRange>() - 16usize];
-    ["Alignment of _RuneRange"][::core::mem::align_of::<_RuneRange>() - 8usize];
-    ["Offset of field: _RuneRange::__nranges"]
-        [::core::mem::offset_of!(_RuneRange, __nranges) - 0usize];
-    ["Offset of field: _RuneRange::__ranges"]
-        [::core::mem::offset_of!(_RuneRange, __ranges) - 8usize];
-};
 impl Default for _RuneRange {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
@@ -5945,15 +4853,6 @@ pub struct _RuneCharClass {
     pub __name: [::core::ffi::c_char; 14usize],
     pub __mask: __uint32_t,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _RuneCharClass"][::core::mem::size_of::<_RuneCharClass>() - 20usize];
-    ["Alignment of _RuneCharClass"][::core::mem::align_of::<_RuneCharClass>() - 4usize];
-    ["Offset of field: _RuneCharClass::__name"]
-        [::core::mem::offset_of!(_RuneCharClass, __name) - 0usize];
-    ["Offset of field: _RuneCharClass::__mask"]
-        [::core::mem::offset_of!(_RuneCharClass, __mask) - 16usize];
-};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash)]
 pub struct _RuneLocale {
@@ -5986,41 +4885,6 @@ pub struct _RuneLocale {
     pub __ncharclasses: ::core::ffi::c_int,
     pub __charclasses: *mut _RuneCharClass,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of _RuneLocale"][::core::mem::size_of::<_RuneLocale>() - 3208usize];
-    ["Alignment of _RuneLocale"][::core::mem::align_of::<_RuneLocale>() - 8usize];
-    ["Offset of field: _RuneLocale::__magic"]
-        [::core::mem::offset_of!(_RuneLocale, __magic) - 0usize];
-    ["Offset of field: _RuneLocale::__encoding"]
-        [::core::mem::offset_of!(_RuneLocale, __encoding) - 8usize];
-    ["Offset of field: _RuneLocale::__sgetrune"]
-        [::core::mem::offset_of!(_RuneLocale, __sgetrune) - 40usize];
-    ["Offset of field: _RuneLocale::__sputrune"]
-        [::core::mem::offset_of!(_RuneLocale, __sputrune) - 48usize];
-    ["Offset of field: _RuneLocale::__invalid_rune"]
-        [::core::mem::offset_of!(_RuneLocale, __invalid_rune) - 56usize];
-    ["Offset of field: _RuneLocale::__runetype"]
-        [::core::mem::offset_of!(_RuneLocale, __runetype) - 60usize];
-    ["Offset of field: _RuneLocale::__maplower"]
-        [::core::mem::offset_of!(_RuneLocale, __maplower) - 1084usize];
-    ["Offset of field: _RuneLocale::__mapupper"]
-        [::core::mem::offset_of!(_RuneLocale, __mapupper) - 2108usize];
-    ["Offset of field: _RuneLocale::__runetype_ext"]
-        [::core::mem::offset_of!(_RuneLocale, __runetype_ext) - 3136usize];
-    ["Offset of field: _RuneLocale::__maplower_ext"]
-        [::core::mem::offset_of!(_RuneLocale, __maplower_ext) - 3152usize];
-    ["Offset of field: _RuneLocale::__mapupper_ext"]
-        [::core::mem::offset_of!(_RuneLocale, __mapupper_ext) - 3168usize];
-    ["Offset of field: _RuneLocale::__variable"]
-        [::core::mem::offset_of!(_RuneLocale, __variable) - 3184usize];
-    ["Offset of field: _RuneLocale::__variable_len"]
-        [::core::mem::offset_of!(_RuneLocale, __variable_len) - 3192usize];
-    ["Offset of field: _RuneLocale::__ncharclasses"]
-        [::core::mem::offset_of!(_RuneLocale, __ncharclasses) - 3196usize];
-    ["Offset of field: _RuneLocale::__charclasses"]
-        [::core::mem::offset_of!(_RuneLocale, __charclasses) - 3200usize];
-};
 impl Default for _RuneLocale {
     fn default() -> Self {
         let mut s = ::core::mem::MaybeUninit::<Self>::uninit();

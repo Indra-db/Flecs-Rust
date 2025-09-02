@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust FFI bindings for wasi-libc generated via bindgen"
 license = "MIT OR Apache-2.0"
+include = ["src/**/*", "lib/**/*", "build.rs", "Cargo.toml", "README.md"]
 
 [dependencies]
 
@@ -17,5 +18,5 @@ default = []
 bindgen = []
 # Build libc.a from the libc-top-half sources
 build-libc = []
-# Optional feature to include the compiled libc.a
+# Link with the pre-compiled libc.a (for end users)
 link-libc = []
