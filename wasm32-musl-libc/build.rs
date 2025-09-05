@@ -433,7 +433,7 @@ fn main() {
             }
         } else {
             println!(
-                "cargo:warning=skipping musl-libc linking: link-libc feature is only supported for wasm32-unknown-unknown target"
+                "cargo:warning=link-libc feature is only supported for wasm32-unknown-unknown target"
             );
         }
     }

@@ -3,7 +3,7 @@ members = [
     "flecs_ecs",
     "flecs_ecs_derive",
     "flecs_ecs_sys",
-    "wasi_libc_bindgen",
+    "wasm32-musl-libc",
     "test_crash_handler",
     "test_projects/flecs_test_wasm", "test_projects/test_wasm",
 ]
