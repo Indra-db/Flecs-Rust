@@ -1,5 +1,3 @@
-use build_print::{info, warn};
-
 #[cfg(feature = "bindgen")]
 fn generate_bindings() {
     use std::{env, path::PathBuf};
@@ -104,14 +102,16 @@ fn generate_alltypes_h() {
             if status.success() {
                 // Post-process the generated file to handle __wasilibc_unmodified_upstream
                 fix_alltypes_for_upstream(output_path);
-                info!("Generated alltypes.h using musl tools with upstream fixes");
+                eprintln!(
+                    "wasm32-musl-libc: Generated alltypes.h using musl tools with upstream fixes"
+                );
                 return;
             }
         }
     }
 
     // Fall back to manual generation if musl tools fail
-    warn!("Musl build tools not available, falling back to manual alltypes.h generation");
+    println!("cargo:warning=Musl build tools not available, falling back to manual alltypes.h generation");
     generate_alltypes_h_manual();
 }
 
@@ -167,7 +167,7 @@ fn generate_alltypes_h_manual() {
     // Write the generated file
     fs::write(output_path, final_content).expect("Failed to write generated alltypes.h");
 
-    info!("Generated alltypes.h manually from templates");
+    eprintln!("wasm32-musl-libc: Generated alltypes.h manually from templates");
 }
 
 #[allow(dead_code)]
@@ -317,8 +317,8 @@ fn build_libc() {
     // Only build C library when targeting WASM
     let target = env::var("TARGET").unwrap_or_default();
     if target != "wasm32-unknown-unknown" {
-        warn!(
-            "Skipping C library build for non-WebAssembly target: {}",
+        println!(
+            "cargo:warning=Skipping C library build for non-WebAssembly target: {}",
             target
         );
         return;
@@ -390,7 +390,10 @@ fn build_libc() {
     if lib_path.exists() {
         std::fs::copy(&lib_path, &dist_lib_path)
             .expect("Failed to copy library to distribution directory");
-        info!("Copied library to {}", dist_lib_path.display());
+        eprintln!(
+            "wasm32-musl-libc: Copied library to {}",
+            dist_lib_path.display()
+        );
     }
 
     // Output library path for linking
@@ -421,13 +424,15 @@ fn main() {
                 let lib_dir = PathBuf::from(&crate_root).join("lib");
                 println!("cargo:rustc-link-search=native={}", lib_dir.display());
                 println!("cargo:rustc-link-lib=static=wasm32_musl_libc");
-                info!("Linking with pre-compiled library");
+                eprintln!("wasm32-musl-libc: Linking with pre-compiled library");
             } else {
-                warn!("Pre-compiled library not found in lib/ directory");
-                warn!("Run 'cargo build --features build-libc' first to generate the library");
+                println!("cargo:warning=Pre-compiled library not found in lib/ directory");
+                println!(
+                    "cargo:warning=Run 'cargo build --features build-libc' first to generate the library"
+                );
             }
         } else {
-            warn!("link-libc feature only supports wasm32-unknown-unknown target");
+            println!("cargo:warning=link-libc feature only supports wasm32-unknown-unknown target");
         }
     }
 }

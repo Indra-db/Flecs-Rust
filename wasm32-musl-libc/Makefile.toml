@@ -7,12 +7,12 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 [tasks.bindgen]
 description = "Generate Rust bindings from C headers"
 command = "cargo"
-args = ["build", "--features", "bindgen"]
+args = ["build", "--no-default-features", "--features", "bindgen"]
 
 [tasks.build]
 description = "Compile musl libc.a from source"
 command = "cargo"
-args = ["build", "--target", "wasm32-unknown-unknown", "--features", "build-libc"]
+args = ["build", "--no-default-features","--target", "wasm32-unknown-unknown", "--features", "build-libc"]
 
 [tasks.build-all]
 description = "Build both bindings and libc.a"
