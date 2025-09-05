@@ -5,6 +5,9 @@
 #[allow(non_snake_case)]
 #[allow(dead_code)]
 #[allow(improper_ctypes)]
+//manually set const, types for correct wasm32 target
+pub const LONG_BIT: u32 = 32;
+pub type __builtin_va_list = *mut ::core::ffi::c_void;
 
 pub const __LITTLE_ENDIAN: u32 = 1234;
 pub const __BIG_ENDIAN: u32 = 4321;
@@ -94,6 +97,8 @@ pub const FP_INFINITE: u32 = 1;
 pub const FP_ZERO: u32 = 2;
 pub const FP_SUBNORMAL: u32 = 3;
 pub const FP_NORMAL: u32 = 4;
+pub const FP_FAST_FMA: u32 = 1;
+pub const FP_FAST_FMAF: u32 = 1;
 pub const M_E: f64 = 2.718281828459045;
 pub const M_LOG2E: f64 = 1.4426950408889634;
 pub const M_LOG10E: f64 = 0.4342944819032518;
@@ -135,7 +140,6 @@ pub const WORD_BIT: u32 = 32;
 pub const TZNAME_MAX: u32 = 6;
 pub const TTY_NAME_MAX: u32 = 32;
 pub const HOST_NAME_MAX: u32 = 255;
-pub const LONG_BIT: u32 = 32;
 pub const PTHREAD_KEYS_MAX: u32 = 128;
 pub const PTHREAD_STACK_MIN: u32 = 2048;
 pub const PTHREAD_DESTRUCTOR_ITERATIONS: u32 = 4;
@@ -279,10 +283,414 @@ pub struct __locale_struct {
     _unused: [u8; 0],
 }
 pub type locale_t = *mut __locale_struct;
+unsafe extern "C" {
+    pub fn wcscpy(arg1: *mut wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcsncpy(arg1: *mut wchar_t, arg2: *const wchar_t, arg3: usize) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcscat(arg1: *mut wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcsncat(arg1: *mut wchar_t, arg2: *const wchar_t, arg3: usize) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcscmp(
+        arg1: *const ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_int,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsncmp(
+        arg1: *const ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcscoll(arg1: *const wchar_t, arg2: *const wchar_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsxfrm(arg1: *mut wchar_t, arg2: *const wchar_t, arg3: usize) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcschr(
+        arg1: *const ::core::ffi::c_int,
+        arg2: ::core::ffi::c_int,
+    ) -> *mut ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsrchr(arg1: *const wchar_t, arg2: wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcscspn(arg1: *const wchar_t, arg2: *const wchar_t) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcsspn(arg1: *const wchar_t, arg2: *const wchar_t) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcspbrk(arg1: *const wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcstok(
+        arg1: *mut wchar_t,
+        arg2: *const wchar_t,
+        arg3: *mut *mut wchar_t,
+    ) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcslen(arg1: *const ::core::ffi::c_int) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn wcsstr(arg1: *const wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcswcs(arg1: *const wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wmemchr(
+        arg1: *const ::core::ffi::c_int,
+        arg2: ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wmemcmp(
+        arg1: *const ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wmemcpy(
+        arg1: *mut ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wmemmove(
+        arg1: *mut ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wmemset(arg1: *mut wchar_t, arg2: wchar_t, arg3: usize) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn btowc(arg1: ::core::ffi::c_int) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn wctob(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mbsinit(arg1: *const mbstate_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mbrtowc(
+        arg1: *mut wchar_t,
+        arg2: *const ::core::ffi::c_char,
+        arg3: usize,
+        arg4: *mut mbstate_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcrtomb(arg1: *mut ::core::ffi::c_char, arg2: wchar_t, arg3: *mut mbstate_t) -> usize;
+}
+unsafe extern "C" {
+    pub fn mbrlen(arg1: *const ::core::ffi::c_char, arg2: usize, arg3: *mut mbstate_t) -> usize;
+}
+unsafe extern "C" {
+    pub fn mbsrtowcs(
+        arg1: *mut wchar_t,
+        arg2: *mut *const ::core::ffi::c_char,
+        arg3: usize,
+        arg4: *mut mbstate_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcsrtombs(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *mut *const wchar_t,
+        arg3: usize,
+        arg4: *mut mbstate_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcstof(arg1: *const wchar_t, arg2: *mut *mut wchar_t) -> f32;
+}
+unsafe extern "C" {
+    pub fn wcstod(arg1: *const wchar_t, arg2: *mut *mut wchar_t) -> f64;
+}
+unsafe extern "C" {
+    pub fn wcstold(arg1: *const wchar_t, arg2: *mut *mut wchar_t) -> f64;
+}
+unsafe extern "C" {
+    pub fn wcstol(
+        arg1: *const wchar_t,
+        arg2: *mut *mut wchar_t,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn wcstoul(
+        arg1: *const wchar_t,
+        arg2: *mut *mut wchar_t,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn wcstoll(
+        arg1: *const wchar_t,
+        arg2: *mut *mut wchar_t,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn wcstoull(
+        arg1: *const wchar_t,
+        arg2: *mut *mut wchar_t,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_ulonglong;
+}
+unsafe extern "C" {
+    pub fn fwide(arg1: *mut FILE, arg2: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wprintf(arg1: *const wchar_t, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fwprintf(arg1: *mut FILE, arg2: *const wchar_t, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn swprintf(
+        arg1: *mut wchar_t,
+        arg2: usize,
+        arg3: *const wchar_t,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vwprintf(arg1: *const wchar_t, arg2: __isoc_va_list) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vfwprintf(
+        arg1: *mut FILE,
+        arg2: *const wchar_t,
+        arg3: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vswprintf(
+        arg1: *mut wchar_t,
+        arg2: usize,
+        arg3: *const wchar_t,
+        arg4: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wscanf(arg1: *const wchar_t, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fwscanf(arg1: *mut FILE, arg2: *const wchar_t, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn swscanf(arg1: *const wchar_t, arg2: *const wchar_t, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vwscanf(arg1: *const wchar_t, arg2: __isoc_va_list) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vfwscanf(
+        arg1: *mut FILE,
+        arg2: *const wchar_t,
+        arg3: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vswscanf(
+        arg1: *const wchar_t,
+        arg2: *const wchar_t,
+        arg3: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fgetwc(arg1: *mut FILE) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn getwc(arg1: *mut FILE) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn getwchar() -> wint_t;
+}
+unsafe extern "C" {
+    pub fn fputwc(arg1: wchar_t, arg2: *mut FILE) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn putwc(arg1: wchar_t, arg2: *mut FILE) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn putwchar(arg1: wchar_t) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn fgetws(arg1: *mut wchar_t, arg2: ::core::ffi::c_int, arg3: *mut FILE) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn fputws(arg1: *const wchar_t, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ungetwc(arg1: wint_t, arg2: *mut FILE) -> wint_t;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct tm {
     _unused: [u8; 0],
+}
+unsafe extern "C" {
+    pub fn wcsftime(
+        arg1: *mut wchar_t,
+        arg2: usize,
+        arg3: *const wchar_t,
+        arg4: *const tm,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcsftime_l(
+        arg1: *mut wchar_t,
+        arg2: usize,
+        arg3: *const wchar_t,
+        arg4: *const tm,
+        arg5: locale_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn open_wmemstream(arg1: *mut *mut wchar_t, arg2: *mut usize) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn mbsnrtowcs(
+        arg1: *mut wchar_t,
+        arg2: *mut *const ::core::ffi::c_char,
+        arg3: usize,
+        arg4: usize,
+        arg5: *mut mbstate_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcsnrtombs(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *mut *const wchar_t,
+        arg3: usize,
+        arg4: usize,
+        arg5: *mut mbstate_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcsdup(arg1: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcsnlen(arg1: *const wchar_t, arg2: usize) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcpcpy(arg1: *mut wchar_t, arg2: *const wchar_t) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcpncpy(arg1: *mut wchar_t, arg2: *const wchar_t, arg3: usize) -> *mut wchar_t;
+}
+unsafe extern "C" {
+    pub fn wcscasecmp(arg1: *const wchar_t, arg2: *const wchar_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcscasecmp_l(
+        arg1: *const wchar_t,
+        arg2: *const wchar_t,
+        arg3: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsncasecmp(
+        arg1: *const wchar_t,
+        arg2: *const wchar_t,
+        arg3: usize,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsncasecmp_l(
+        arg1: *const wchar_t,
+        arg2: *const wchar_t,
+        arg3: usize,
+        arg4: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcscoll_l(
+        arg1: *const wchar_t,
+        arg2: *const wchar_t,
+        arg3: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcsxfrm_l(
+        arg1: *mut wchar_t,
+        arg2: *const wchar_t,
+        arg3: usize,
+        arg4: locale_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcwidth(arg1: wchar_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wcswidth(arg1: *const wchar_t, arg2: usize) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswalnum(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswalpha(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswblank(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswcntrl(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswdigit(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswgraph(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswlower(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswprint(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswpunct(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswspace(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswupper(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswxdigit(arg1: wint_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn iswctype(arg1: wint_t, arg2: wctype_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn towlower(arg1: wint_t) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn towupper(arg1: wint_t) -> wint_t;
+}
+unsafe extern "C" {
+    pub fn wctype(arg1: *const ::core::ffi::c_char) -> wctype_t;
 }
 pub type off_t = ::core::ffi::c_longlong;
 #[repr(C)]
@@ -311,6 +719,508 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub static stderr: *mut FILE;
 }
+unsafe extern "C" {
+    pub fn fopen(arg1: *const ::core::ffi::c_char, arg2: *const ::core::ffi::c_char) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn freopen(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: *mut FILE,
+    ) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn fclose(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn remove(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn rename(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn feof(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ferror(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fflush(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn clearerr(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn fseek(
+        arg1: *mut FILE,
+        arg2: ::core::ffi::c_long,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ftell(arg1: *mut FILE) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn rewind(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn fgetpos(arg1: *mut FILE, arg2: *mut fpos_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fsetpos(arg1: *mut FILE, arg2: *const fpos_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fread(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: ::core::ffi::c_ulong,
+        arg3: ::core::ffi::c_ulong,
+        arg4: *mut FILE,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn fwrite(
+        arg1: *const ::core::ffi::c_void,
+        arg2: ::core::ffi::c_ulong,
+        arg3: ::core::ffi::c_ulong,
+        arg4: *mut FILE,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn fgetc(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn getc(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn getchar() -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ungetc(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fputc(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn putc(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn putchar(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fgets(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+        arg3: *mut FILE,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn fputs(arg1: *const ::core::ffi::c_char, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn puts(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn printf(arg1: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fprintf(arg1: *mut FILE, arg2: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn sprintf(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn snprintf(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: ::core::ffi::c_ulong,
+        arg3: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vprintf(arg1: *const ::core::ffi::c_char, arg2: __builtin_va_list)
+    -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vfprintf(
+        arg1: *mut FILE,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __builtin_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vsprintf(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __builtin_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vsnprintf(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: ::core::ffi::c_ulong,
+        arg3: *const ::core::ffi::c_char,
+        arg4: __builtin_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn scanf(arg1: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fscanf(arg1: *mut FILE, arg2: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn sscanf(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vscanf(arg1: *const ::core::ffi::c_char, arg2: __builtin_va_list) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vfscanf(
+        arg1: *mut FILE,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __builtin_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vsscanf(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __builtin_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn perror(arg1: *const ::core::ffi::c_char);
+}
+unsafe extern "C" {
+    pub fn setvbuf(
+        arg1: *mut FILE,
+        arg2: *mut ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+        arg4: usize,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn setbuf(arg1: *mut FILE, arg2: *mut ::core::ffi::c_char);
+}
+unsafe extern "C" {
+    pub fn tmpnam(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn tmpfile() -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn fmemopen(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: *const ::core::ffi::c_char,
+    ) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn open_memstream(arg1: *mut *mut ::core::ffi::c_char, arg2: *mut usize) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn fdopen(arg1: ::core::ffi::c_int, arg2: *const ::core::ffi::c_char) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn popen(arg1: *const ::core::ffi::c_char, arg2: *const ::core::ffi::c_char) -> *mut FILE;
+}
+unsafe extern "C" {
+    pub fn pclose(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fileno(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fseeko(arg1: *mut FILE, arg2: off_t, arg3: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ftello(arg1: *mut FILE) -> off_t;
+}
+unsafe extern "C" {
+    pub fn dprintf(
+        arg1: ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vdprintf(
+        arg1: ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn flockfile(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn ftrylockfile(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn funlockfile(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn getc_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn getchar_unlocked() -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn putc_unlocked(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn putchar_unlocked(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn getdelim(
+        arg1: *mut *mut ::core::ffi::c_char,
+        arg2: *mut usize,
+        arg3: ::core::ffi::c_int,
+        arg4: *mut FILE,
+    ) -> isize;
+}
+unsafe extern "C" {
+    pub fn getline(arg1: *mut *mut ::core::ffi::c_char, arg2: *mut usize, arg3: *mut FILE)
+    -> isize;
+}
+unsafe extern "C" {
+    pub fn renameat(
+        arg1: ::core::ffi::c_int,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+        arg4: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ctermid(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn tempnam(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn cuserid(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn setlinebuf(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn setbuffer(arg1: *mut FILE, arg2: *mut ::core::ffi::c_char, arg3: usize);
+}
+unsafe extern "C" {
+    pub fn fgetc_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fputc_unlocked(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fflush_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fread_unlocked(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+        arg4: *mut FILE,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn fwrite_unlocked(
+        arg1: *const ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+        arg4: *mut FILE,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn clearerr_unlocked(arg1: *mut FILE);
+}
+unsafe extern "C" {
+    pub fn feof_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ferror_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fileno_unlocked(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn getw(arg1: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn putw(arg1: ::core::ffi::c_int, arg2: *mut FILE) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn fgetln(arg1: *mut FILE, arg2: *mut usize) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn asprintf(
+        arg1: *mut *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn vasprintf(
+        arg1: *mut *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: __isoc_va_list,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn atoi(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn atol(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn atoll(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn atof(arg1: *const ::core::ffi::c_char) -> f64;
+}
+unsafe extern "C" {
+    pub fn strtof(arg1: *const ::core::ffi::c_char, arg2: *mut *mut ::core::ffi::c_char) -> f32;
+}
+unsafe extern "C" {
+    pub fn strtod(arg1: *const ::core::ffi::c_char, arg2: *mut *mut ::core::ffi::c_char) -> f64;
+}
+unsafe extern "C" {
+    pub fn strtold(arg1: *const ::core::ffi::c_char, arg2: *mut *mut ::core::ffi::c_char) -> f64;
+}
+unsafe extern "C" {
+    pub fn strtol(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *mut *mut ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn strtoul(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *mut *mut ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strtoll(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *mut *mut ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn strtoull(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *mut *mut ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_ulonglong;
+}
+unsafe extern "C" {
+    pub fn rand() -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn srand(arg1: ::core::ffi::c_uint);
+}
+unsafe extern "C" {
+    pub fn malloc(arg1: ::core::ffi::c_ulong) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn calloc(
+        arg1: ::core::ffi::c_ulong,
+        arg2: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn realloc(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn free(arg1: *mut ::core::ffi::c_void);
+}
+unsafe extern "C" {
+    pub fn aligned_alloc(
+        arg1: ::core::ffi::c_ulong,
+        arg2: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn abort() -> !;
+}
+unsafe extern "C" {
+    pub fn atexit(arg1: ::core::option::Option<unsafe extern "C" fn()>) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn exit(arg1: ::core::ffi::c_int) -> !;
+}
+unsafe extern "C" {
+    pub fn _Exit(arg1: ::core::ffi::c_int) -> !;
+}
+unsafe extern "C" {
+    pub fn at_quick_exit(
+        arg1: ::core::option::Option<unsafe extern "C" fn()>,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn quick_exit(arg1: ::core::ffi::c_int);
+}
+unsafe extern "C" {
+    pub fn getenv(arg1: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn system(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn bsearch(
+        arg1: *const ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: usize,
+        arg4: usize,
+        arg5: ::core::option::Option<
+            unsafe extern "C" fn(
+                arg1: *const ::core::ffi::c_void,
+                arg2: *const ::core::ffi::c_void,
+            ) -> ::core::ffi::c_int,
+        >,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn qsort(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+        arg4: ::core::option::Option<
+            unsafe extern "C" fn(
+                arg1: *const ::core::ffi::c_void,
+                arg2: *const ::core::ffi::c_void,
+            ) -> ::core::ffi::c_int,
+        >,
+    );
+}
+unsafe extern "C" {
+    pub fn abs(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn labs(arg1: ::core::ffi::c_long) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn llabs(arg1: ::core::ffi::c_longlong) -> ::core::ffi::c_longlong;
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash)]
 pub struct div_t {
@@ -329,9 +1239,1103 @@ pub struct lldiv_t {
     pub quot: ::core::ffi::c_longlong,
     pub rem: ::core::ffi::c_longlong,
 }
+unsafe extern "C" {
+    pub fn div(arg1: ::core::ffi::c_int, arg2: ::core::ffi::c_int) -> div_t;
+}
+unsafe extern "C" {
+    pub fn ldiv(arg1: ::core::ffi::c_long, arg2: ::core::ffi::c_long) -> ldiv_t;
+}
+unsafe extern "C" {
+    pub fn lldiv(arg1: ::core::ffi::c_longlong, arg2: ::core::ffi::c_longlong) -> lldiv_t;
+}
+unsafe extern "C" {
+    pub fn mblen(arg1: *const ::core::ffi::c_char, arg2: usize) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mbtowc(
+        arg1: *mut wchar_t,
+        arg2: *const ::core::ffi::c_char,
+        arg3: usize,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn wctomb(arg1: *mut ::core::ffi::c_char, arg2: wchar_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mbstowcs(arg1: *mut wchar_t, arg2: *const ::core::ffi::c_char, arg3: usize) -> usize;
+}
+unsafe extern "C" {
+    pub fn wcstombs(arg1: *mut ::core::ffi::c_char, arg2: *const wchar_t, arg3: usize) -> usize;
+}
+unsafe extern "C" {
+    pub fn __ctype_get_mb_cur_max() -> usize;
+}
+unsafe extern "C" {
+    pub fn posix_memalign(
+        arg1: *mut *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn setenv(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn unsetenv(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mkstemp(arg1: *mut ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mkostemp(arg1: *mut ::core::ffi::c_char, arg2: ::core::ffi::c_int)
+    -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mkdtemp(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn getsubopt(
+        arg1: *mut *mut ::core::ffi::c_char,
+        arg2: *const *mut ::core::ffi::c_char,
+        arg3: *mut *mut ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn rand_r(arg1: *mut ::core::ffi::c_uint) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn realpath(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *mut ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn random() -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn srandom(arg1: ::core::ffi::c_uint);
+}
+unsafe extern "C" {
+    pub fn initstate(
+        arg1: ::core::ffi::c_uint,
+        arg2: *mut ::core::ffi::c_char,
+        arg3: usize,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn setstate(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn putenv(arg1: *mut ::core::ffi::c_char) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn posix_openpt(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn grantpt(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn unlockpt(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ptsname(arg1: ::core::ffi::c_int) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn l64a(arg1: ::core::ffi::c_long) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn a64l(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn setkey(arg1: *const ::core::ffi::c_char);
+}
+unsafe extern "C" {
+    pub fn drand48() -> f64;
+}
+unsafe extern "C" {
+    pub fn erand48(arg1: *mut ::core::ffi::c_ushort) -> f64;
+}
+unsafe extern "C" {
+    pub fn lrand48() -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn nrand48(arg1: *mut ::core::ffi::c_ushort) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn mrand48() -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn jrand48(arg1: *mut ::core::ffi::c_ushort) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn srand48(arg1: ::core::ffi::c_long);
+}
+unsafe extern "C" {
+    pub fn seed48(arg1: *mut ::core::ffi::c_ushort) -> *mut ::core::ffi::c_ushort;
+}
+unsafe extern "C" {
+    pub fn lcong48(arg1: *mut ::core::ffi::c_ushort);
+}
+unsafe extern "C" {
+    pub fn alloca(arg1: ::core::ffi::c_ulong) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn mktemp(arg1: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn mkstemps(arg1: *mut ::core::ffi::c_char, arg2: ::core::ffi::c_int)
+    -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn mkostemps(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+        arg3: ::core::ffi::c_int,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn valloc(arg1: usize) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn memalign(
+        arg1: ::core::ffi::c_ulong,
+        arg2: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn getloadavg(arg1: *mut f64, arg2: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn clearenv() -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn reallocarray(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn qsort_r(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: usize,
+        arg3: usize,
+        arg4: ::core::option::Option<
+            unsafe extern "C" fn(
+                arg1: *const ::core::ffi::c_void,
+                arg2: *const ::core::ffi::c_void,
+                arg3: *mut ::core::ffi::c_void,
+            ) -> ::core::ffi::c_int,
+        >,
+        arg5: *mut ::core::ffi::c_void,
+    );
+}
+unsafe extern "C" {
+    pub fn memcpy(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn memmove(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn memset(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn memcmp(
+        arg1: *const ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn memchr(
+        arg1: *const ::core::ffi::c_void,
+        arg2: ::core::ffi::c_int,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn strcpy(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strncpy(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strcat(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strncat(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strcmp(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strncmp(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strcoll(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strxfrm(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strchr(
+        arg1: *const ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strrchr(
+        arg1: *const ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strcspn(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strspn(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strpbrk(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strstr(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strtok(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strlen(arg1: *const ::core::ffi::c_char) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strerror(arg1: ::core::ffi::c_int) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn bcmp(
+        arg1: *const ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn bcopy(
+        arg1: *const ::core::ffi::c_void,
+        arg2: *mut ::core::ffi::c_void,
+        arg3: ::core::ffi::c_ulong,
+    );
+}
+unsafe extern "C" {
+    pub fn bzero(arg1: *mut ::core::ffi::c_void, arg2: ::core::ffi::c_ulong);
+}
+unsafe extern "C" {
+    pub fn index(
+        arg1: *const ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn rindex(
+        arg1: *const ::core::ffi::c_char,
+        arg2: ::core::ffi::c_int,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn ffs(arg1: ::core::ffi::c_int) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ffsl(arg1: ::core::ffi::c_long) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ffsll(arg1: ::core::ffi::c_longlong) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strcasecmp(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strncasecmp(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strcasecmp_l(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strncasecmp_l(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: usize,
+        arg4: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strtok_r(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: *mut *mut ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strerror_r(
+        arg1: ::core::ffi::c_int,
+        arg2: *mut ::core::ffi::c_char,
+        arg3: usize,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn stpcpy(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn stpncpy(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strnlen(arg1: *const ::core::ffi::c_char, arg2: usize) -> usize;
+}
+unsafe extern "C" {
+    pub fn strdup(arg1: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strndup(
+        arg1: *const ::core::ffi::c_char,
+        arg2: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strsignal(arg1: ::core::ffi::c_int) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strerror_l(arg1: ::core::ffi::c_int, arg2: locale_t) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strcoll_l(
+        arg1: *const ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: locale_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn strxfrm_l(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: usize,
+        arg4: locale_t,
+    ) -> usize;
+}
+unsafe extern "C" {
+    pub fn memmem(
+        arg1: *const ::core::ffi::c_void,
+        arg2: usize,
+        arg3: *const ::core::ffi::c_void,
+        arg4: usize,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn memccpy(
+        arg1: *mut ::core::ffi::c_void,
+        arg2: *const ::core::ffi::c_void,
+        arg3: ::core::ffi::c_int,
+        arg4: ::core::ffi::c_ulong,
+    ) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    pub fn strsep(
+        arg1: *mut *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    pub fn strlcat(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn strlcpy(
+        arg1: *mut ::core::ffi::c_char,
+        arg2: *const ::core::ffi::c_char,
+        arg3: ::core::ffi::c_ulong,
+    ) -> ::core::ffi::c_ulong;
+}
+unsafe extern "C" {
+    pub fn explicit_bzero(arg1: *mut ::core::ffi::c_void, arg2: usize);
+}
 pub type float_t = f32;
 pub type double_t = f64;
 unsafe extern "C" {
+    pub fn __fpclassify(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn __fpclassifyf(arg1: f32) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn __fpclassifyl(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn __signbit(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn __signbitf(arg1: f32) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn __signbitl(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn acos(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn acosf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn acosl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn acosh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn acoshf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn acoshl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn asin(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn asinf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn asinl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn asinh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn asinhf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn asinhl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atan(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atanf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn atanl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atan2(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atan2f(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn atan2l(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atanh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn atanhf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn atanhl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn cbrt(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn cbrtf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn cbrtl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn ceil(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn ceilf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn ceill(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn copysign(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn copysignf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn copysignl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn cos(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn cosf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn cosl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn cosh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn coshf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn coshl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn erf(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn erff(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn erfl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn erfc(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn erfcf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn erfcl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn exp(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn expf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn expl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn exp2(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn exp2f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn exp2l(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn expm1(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn expm1f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn expm1l(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fabs(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fabsf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fabsl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fdim(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fdimf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fdiml(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn floor(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn floorf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn floorl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fma(arg1: f64, arg2: f64, arg3: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmaf(arg1: f32, arg2: f32, arg3: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fmal(arg1: f64, arg2: f64, arg3: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmax(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmaxf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fmaxl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmin(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fminf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fminl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmod(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn fmodf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn fmodl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn frexp(arg1: f64, arg2: *mut ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn frexpf(arg1: f32, arg2: *mut ::core::ffi::c_int) -> f32;
+}
+unsafe extern "C" {
+    pub fn frexpl(arg1: f64, arg2: *mut ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn hypot(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn hypotf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn hypotl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn ilogb(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ilogbf(arg1: f32) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ilogbl(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn ldexp(arg1: f64, arg2: ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn ldexpf(arg1: f32, arg2: ::core::ffi::c_int) -> f32;
+}
+unsafe extern "C" {
+    pub fn ldexpl(arg1: f64, arg2: ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn lgamma(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn lgammaf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn lgammal(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn llrint(arg1: f64) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn llrintf(arg1: f32) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn llrintl(arg1: f64) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn llround(arg1: f64) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn llroundf(arg1: f32) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn llroundl(arg1: f64) -> ::core::ffi::c_longlong;
+}
+unsafe extern "C" {
+    pub fn log(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn logf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn logl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log10(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log10f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn log10l(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log1p(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log1pf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn log1pl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log2(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn log2f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn log2l(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn logb(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn logbf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn logbl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn lrint(arg1: f64) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn lrintf(arg1: f32) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn lrintl(arg1: f64) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn lround(arg1: f64) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn lroundf(arg1: f32) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn lroundl(arg1: f64) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    pub fn modf(arg1: f64, arg2: *mut f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn modff(arg1: f32, arg2: *mut f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn modfl(arg1: f64, arg2: *mut f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nan(arg1: *const ::core::ffi::c_char) -> f64;
+}
+unsafe extern "C" {
+    pub fn nanf(arg1: *const ::core::ffi::c_char) -> f32;
+}
+unsafe extern "C" {
+    pub fn nanl(arg1: *const ::core::ffi::c_char) -> f64;
+}
+unsafe extern "C" {
+    pub fn nearbyint(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nearbyintf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn nearbyintl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nextafter(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nextafterf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn nextafterl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nexttoward(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn nexttowardf(arg1: f32, arg2: f64) -> f32;
+}
+unsafe extern "C" {
+    pub fn nexttowardl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn pow(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn powf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn powl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn remainder(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn remainderf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn remainderl(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn remquo(arg1: f64, arg2: f64, arg3: *mut ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn remquof(arg1: f32, arg2: f32, arg3: *mut ::core::ffi::c_int) -> f32;
+}
+unsafe extern "C" {
+    pub fn remquol(arg1: f64, arg2: f64, arg3: *mut ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn rint(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn rintf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn rintl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn round(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn roundf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn roundl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn scalbln(arg1: f64, arg2: ::core::ffi::c_long) -> f64;
+}
+unsafe extern "C" {
+    pub fn scalblnf(arg1: f32, arg2: ::core::ffi::c_long) -> f32;
+}
+unsafe extern "C" {
+    pub fn scalblnl(arg1: f64, arg2: ::core::ffi::c_long) -> f64;
+}
+unsafe extern "C" {
+    pub fn scalbn(arg1: f64, arg2: ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn scalbnf(arg1: f32, arg2: ::core::ffi::c_int) -> f32;
+}
+unsafe extern "C" {
+    pub fn scalbnl(arg1: f64, arg2: ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn sin(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn sinf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn sinl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn sinh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn sinhf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn sinhl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn sqrt(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn sqrtf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn sqrtl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tan(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tanf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn tanl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tanh(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tanhf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn tanhl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tgamma(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn tgammaf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn tgammal(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn trunc(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn truncf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn truncl(arg1: f64) -> f64;
+}
+unsafe extern "C" {
     pub static mut signgam: ::core::ffi::c_int;
 }
-pub type __builtin_va_list = *mut ::core::ffi::c_void;
+unsafe extern "C" {
+    pub fn j0(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn j1(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn jn(arg1: ::core::ffi::c_int, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn y0(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn y1(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn yn(arg1: ::core::ffi::c_int, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn drem(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn dremf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn finite(arg1: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn finitef(arg1: f32) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    pub fn scalb(arg1: f64, arg2: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn scalbf(arg1: f32, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn significand(arg1: f64) -> f64;
+}
+unsafe extern "C" {
+    pub fn significandf(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn lgamma_r(arg1: f64, arg2: *mut ::core::ffi::c_int) -> f64;
+}
+unsafe extern "C" {
+    pub fn lgammaf_r(arg1: f32, arg2: *mut ::core::ffi::c_int) -> f32;
+}
+unsafe extern "C" {
+    pub fn j0f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn j1f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn jnf(arg1: ::core::ffi::c_int, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn y0f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn y1f(arg1: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn ynf(arg1: ::core::ffi::c_int, arg2: f32) -> f32;
+}
+unsafe extern "C" {
+    pub fn __flt_rounds() -> ::core::ffi::c_int;
+}

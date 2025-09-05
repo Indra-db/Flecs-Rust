@@ -48,6 +48,11 @@ fn generate_bindings() {
         .raw_line("#[allow(non_snake_case)]")
         .raw_line("#[allow(dead_code)]")
         .raw_line("#[allow(improper_ctypes)]")
+        .blocklist_item("LONG_BIT")
+        .blocklist_item("__builtin_va_list")
+        .raw_line("//manually set const, types for correct wasm32 target")
+        .raw_line("pub const LONG_BIT: u32 = 32;")
+        .raw_line("pub type __builtin_va_list = *mut ::core::ffi::c_void;")
         // Finish the builder and generate the bindings
         .generate()
         .expect("Unable to generate bindings");
@@ -61,13 +66,16 @@ fn generate_bindings() {
 
 #[allow(dead_code)]
 fn generate_alltypes_h() {
-    use std::process::Command;
     use std::path::Path;
+    use std::process::Command;
 
     let output_path = "src/generated_headers/bits/alltypes.h";
     let musl_dir = "src/libc-top-half/musl";
-    
-    println!("cargo:rerun-if-changed={}/arch/wasm32/bits/alltypes.h.in", musl_dir);
+
+    println!(
+        "cargo:rerun-if-changed={}/arch/wasm32/bits/alltypes.h.in",
+        musl_dir
+    );
     println!("cargo:rerun-if-changed={}/include/alltypes.h.in", musl_dir);
 
     // Create the generated_headers directory if it doesn't exist
@@ -80,12 +88,14 @@ fn generate_alltypes_h() {
         // Combine the arch and generic templates
         let arch_template = format!("{}/arch/wasm32/bits/alltypes.h.in", musl_dir);
         let generic_template = format!("{}/include/alltypes.h.in", musl_dir);
-        
+
         if Path::new(&arch_template).exists() && Path::new(&generic_template).exists() {
             let status = Command::new("sh")
                 .arg("-c")
-                .arg(format!("cat {} {} | sed -f {} > {}", 
-                    arch_template, generic_template, sed_script, output_path))
+                .arg(format!(
+                    "cat {} {} | sed -f {} > {}",
+                    arch_template, generic_template, sed_script, output_path
+                ))
                 .status()
                 .expect("Failed to run sed script");
 
@@ -106,10 +116,9 @@ fn generate_alltypes_h() {
 #[allow(dead_code)]
 fn fix_alltypes_for_upstream(alltypes_path: &str) {
     use std::fs;
-    
-    let content = fs::read_to_string(alltypes_path)
-        .expect("Failed to read generated alltypes.h");
-    
+
+    let content = fs::read_to_string(alltypes_path).expect("Failed to read generated alltypes.h");
+
     // Replace the problematic wchar_t definition for upstream mode
     let fixed_content = content.replace(
         "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\n#define __need_wchar_t\n#include <stddef.h>\n#define __DEFINED_wchar_t\n#endif",
@@ -118,9 +127,8 @@ fn fix_alltypes_for_upstream(alltypes_path: &str) {
         "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#define __need_wint_t\n#include <stddef.h>\n#define __DEFINED_wint_t\n#endif",
         "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef unsigned int wint_t;\n#else\n#define __need_wint_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wint_t\n#endif"
     );
-    
-    fs::write(alltypes_path, fixed_content)
-        .expect("Failed to write fixed alltypes.h");
+
+    fs::write(alltypes_path, fixed_content).expect("Failed to write fixed alltypes.h");
 }
 
 #[allow(dead_code)]
@@ -163,11 +171,11 @@ fn generate_alltypes_h_manual() {
 #[allow(dead_code)]
 fn apply_typedef_transformations(content: &str) -> String {
     let mut result = String::new();
-    
+
     // Add conditional block for upstream vs WASI
     result.push_str("#ifdef __wasilibc_unmodified_upstream\n");
     result.push_str("/* Use upstream musl definitions */\n\n");
-    
+
     // First pass - handle the arch-specific defines and macros
     for line in content.lines() {
         // Keep #define lines that set up basic constants
@@ -176,9 +184,9 @@ fn apply_typedef_transformations(content: &str) -> String {
             result.push('\n');
         }
     }
-    
+
     result.push_str("\n");
-    
+
     // Second pass - process TYPEDEF and STRUCT for upstream mode
     for line in content.lines() {
         if line.starts_with("TYPEDEF ") {
@@ -191,10 +199,10 @@ fn apply_typedef_transformations(content: &str) -> String {
 
                         // For upstream mode, provide direct typedefs with proper C types
                         let upstream_type = match *name_part {
-                            "wchar_t" => "int",  // wchar_t is int in musl for wasm32
+                            "wchar_t" => "int", // wchar_t is int in musl for wasm32
                             "wint_t" => "unsigned int",
                             "size_t" => "unsigned long",
-                            "ssize_t" => "long", 
+                            "ssize_t" => "long",
                             _ => type_part,
                         };
 
@@ -240,13 +248,12 @@ fn apply_typedef_transformations(content: &str) -> String {
             result.push('\n');
             continue;
         }
-        
+
         if line.starts_with("TYPEDEF ") {
             if let Some(rest) = line.strip_prefix("TYPEDEF ") {
                 if let Some(semicolon_pos) = rest.rfind(';') {
                     let typedef_part = &rest[..semicolon_pos].trim();
                     if let Some(last_space) = typedef_part.rfind(' ') {
-                        let type_part = &typedef_part[..last_space].trim();
                         let name_part = &typedef_part[last_space + 1..].trim();
 
                         result.push_str(&format!(
@@ -278,10 +285,16 @@ fn apply_typedef_transformations(content: &str) -> String {
                     }
                 }
             }
-        } else if line.contains("#include") && (line.contains("__typedef_") || line.contains("__struct_")) {
+        } else if line.contains("#include")
+            && (line.contains("__typedef_") || line.contains("__struct_"))
+        {
             // Skip WASI-specific includes that don't exist in the top half
             continue;
-        } else if !line.starts_with("/*") && !line.starts_with("*") && !line.starts_with("TYPEDEF") && !line.starts_with("STRUCT") {
+        } else if !line.starts_with("/*")
+            && !line.starts_with("*")
+            && !line.starts_with("TYPEDEF")
+            && !line.starts_with("STRUCT")
+        {
             // Pass through other lines (comments, etc.) but skip TYPEDEF/STRUCT lines we already processed
             if !line.trim().is_empty() {
                 result.push_str(line);
@@ -327,6 +340,8 @@ fn build_libc() {
         .include("src/libc-top-half/headers")
         .flag("-Wall")
         .flag("-Wextra")
+        .flag("-Wno-bitwise-op-parentheses")
+        .flag("-Wno-shift-op-parentheses")
         .flag("-nostdlib")
         .flag("-fno-builtin")
         .flag("-ffreestanding")
@@ -360,28 +375,28 @@ fn build_libc() {
     }
 
     // Compile the static library
-    build.compile("musl_top_half_libc");
+    build.compile("musl_libc_top_half");
 
     // Copy the compiled library to a distribution directory
     let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
     let dist_dir = PathBuf::from(&crate_root).join("lib");
     std::fs::create_dir_all(&dist_dir).expect("Failed to create lib directory");
 
-    let lib_path = PathBuf::from(&out_dir).join("libmusl_top_half_libc.a");
-    let dist_lib_path = dist_dir.join("libmusl_top_half_libc.a");
+    let lib_path = PathBuf::from(&out_dir).join("libmusl_libc_top_half.a");
+    let dist_lib_path = dist_dir.join("libmusl_libc_top_half.a");
 
     if lib_path.exists() {
         std::fs::copy(&lib_path, &dist_lib_path)
             .expect("Failed to copy library to distribution directory");
         println!(
-            "cargo:warning=Copied libmusl_top_half_libc.a to {}",
+            "cargo:warning=Copied musl_libc_top_half.a to {}",
             dist_lib_path.display()
         );
     }
 
     // Output library path for linking
     println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=musl_top_half_libc");
+    println!("cargo:rustc-link-lib=static=musl_libc_top_half");
 }
 
 use std::env;
@@ -401,16 +416,16 @@ fn main() {
             let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
             let lib_path = PathBuf::from(&crate_root)
                 .join("lib")
-                .join("libmusl_top_half_libc.a");
+                .join("libmusl_libc_top_half.a");
 
             if lib_path.exists() {
                 let lib_dir = PathBuf::from(&crate_root).join("lib");
                 println!("cargo:rustc-link-search=native={}", lib_dir.display());
-                println!("cargo:rustc-link-lib=static=musl_top_half_libc");
-                println!("cargo:warning=Linking with pre-compiled libmusl_top_half_libc.a");
+                println!("cargo:rustc-link-lib=static=musl_libc_top_half");
+                println!("cargo:warning=Linking with pre-compiled libmusl_libc_top_half.a");
             } else {
                 println!(
-                    "cargo:warning=Pre-compiled libmusl_top_half_libc.a not found in lib/ directory"
+                    "cargo:warning=Pre-compiled libmusl_libc_top_half.a not found in lib/ directory"
                 );
                 println!(
                     "cargo:warning=Run with --features build-libc first to generate the library"
