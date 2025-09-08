@@ -17,6 +17,10 @@ workspace = true
 [dependencies]
 libc.workspace = true
 
+# WASM-specific libc implementation
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm32-musl-libc = { path = "../wasm32-musl-libc" }
+
 [build-dependencies]
 bindgen = "0.72.0"
 cc = "1.2.2"

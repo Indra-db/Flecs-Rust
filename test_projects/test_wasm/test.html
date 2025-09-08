@@ -1,41 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test WASM String Length</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Flecs Test Suite</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; 
+            margin: 0; 
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 { 
+            color: #34495e; 
+            margin-top: 40px; 
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+            border-left: 5px solid #007bff;
+            border-radius: 5px;
+            font-size: 1.3em;
+        }
+        
+        #output { 
+            margin-top: 20px; 
+            line-height: 1.6;
+        }
+        
+        .test-result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .success { 
+            color: #28a745; 
+            font-weight: bold;
+            background: #d4edda;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .failed { 
+            color: #dc3545; 
+            font-weight: bold;
+            background: #f8d7da;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #6c757d;
+            padding: 40px;
+        }
+        
+        .module-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #bbdefb;
+            margin-top: 20px;
+        }
+        
+        strong {
+            color: #495057;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h1>WASM String Length Test</h1>
-    <div id="output"></div>
+    <div class="container">
+        <h1>[WASM] Flecs Test Suite</h1>
+        <div id="output" class="loading">
+            <div>Loading WASM module...</div>
+        </div>
+    </div>
     
     <script>
         async function loadWasm() {
             try {
-                // Load the WASM module
+                // Provide WASI imports that the libc.a requires
+                const wasiImports = {
+                    wasi_snapshot_preview1: {
+                        environ_get: () => 0,
+                        environ_sizes_get: () => 0,
+                        fd_close: () => 0,
+                        fd_fdstat_get: () => 0,
+                        fd_prestat_get: () => 0,
+                        fd_prestat_dir_name: () => 0,
+                        fd_read: () => 0,
+                        fd_seek: () => 0,
+                        fd_write: () => 0,
+                        proc_exit: () => 0,
+                        random_get: () => 0,
+                    }
+                };
+
+                // Load the WASM module with WASI imports
                 const wasmModule = await WebAssembly.instantiateStreaming(
-                    fetch('./test_wasm.wasm')
+                    fetch('./test_wasm.wasm'),
+                    wasiImports
                 );
                 
-                const { test_string_length, wasm_get_string_length } = wasmModule.instance.exports;
+                const { test_string_length, get_string_length, test_malloc_free, test_malloc_string_copy } = wasmModule.instance.exports;
                 
                 // Test the built-in test function
                 const testResult = test_string_length();
                 
+                // Test malloc/free functionality
+                const mallocResult = test_malloc_free();
+                
+                // Test malloc with string copying
+                const stringCopyResult = test_malloc_string_copy();
+                
                 document.getElementById('output').innerHTML = `
-                    <p>Test string length result: ${testResult}</p>
-                    <p>Expected: 13 (length of "Hello, WASM!")</p>
-                    <p>Status: ${testResult === 13 ? '✅ SUCCESS' : '❌ FAILED'}</p>
+                    <div class="test-result">
+                        <h2>[TEST] WASM String Length Test (using libc.a strlen)</h2>
+                        <p><strong>Test string length result:</strong> ${testResult}</p>
+                        <p><strong>Expected:</strong> 12 (length of "Hello, WASM!")</p>
+                        <p><strong>Status:</strong> <span class="${testResult === 12 ? 'success' : 'failed'}">${testResult === 12 ? '[PASS] SUCCESS' : '[FAIL] FAILED'}</span></p>
+                    </div>
+                    
+                    <div class="test-result">
+                        <h2>[TEST] WASM Malloc/Free Test</h2>
+                        <p><strong>Malloc/Free test result:</strong> ${mallocResult}</p>
+                        <p><strong>Expected:</strong> 1 (success)</p>
+                        <p><strong>Status:</strong> <span class="${mallocResult === 1 ? 'success' : 'failed'}">${mallocResult === 1 ? '[PASS] SUCCESS' : '[FAIL] FAILED'}</span></p>
+                    </div>
+                    
+                    <div class="test-result">
+                        <h2>[TEST] WASM Malloc String Copy Test</h2>
+                        <p><strong>String copy test result:</strong> ${stringCopyResult}</p>
+                        <p><strong>Expected:</strong> 18 (length of "Hello from malloc!")</p>
+                        <p><strong>Status:</strong> <span class="${stringCopyResult === 18 ? 'success' : 'failed'}">${stringCopyResult === 18 ? '[PASS] SUCCESS' : '[FAIL] FAILED'}</span></p>
+                    </div>
+                    
+                    <div class="module-info">
+                        <h2>[INFO] Module Info</h2>
+                        <p><strong>Exported functions:</strong> <code>${Object.keys(wasmModule.instance.exports).join(', ')}</code></p>
+                    </div>
                 `;
                 
-                console.log('WASM module loaded successfully');
-                console.log('Test result:', testResult);
+                console.log('🎉 WASM module loaded successfully');
+                console.log('=== Test Results ===');
+                console.log(`String length test: ${testResult} (expected: 12) - ${testResult === 12 ? 'SUCCESS' : 'FAILED'}`);
+                console.log(`Malloc/Free test: ${mallocResult} (expected: 1) - ${mallocResult === 1 ? 'SUCCESS' : 'FAILED'}`);
+                console.log(`String copy test: ${stringCopyResult} (expected: 18) - ${stringCopyResult === 18 ? 'SUCCESS' : 'FAILED'}`);
+                console.log('Exported functions:', Object.keys(wasmModule.instance.exports));
                 
             } catch (error) {
                 console.error('Error loading WASM:', error);
-                document.getElementById('output').innerHTML = `<p>Error: ${error.message}</p>`;
+                document.getElementById('output').innerHTML = `
+                    <div class="test-result failed">
+                        <h2>[ERROR] Error Loading WASM</h2>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Check the browser console for more details.</p>
+                    </div>
+                `;
             }
         }
         
         loadWasm();
     </script>
+    </div>
 </body>
 </html>

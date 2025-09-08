@@ -1,4 +1,4 @@
-//! Musl libc Top Half - Musl Rust FFI Bindings
+//! Musl libc Top Half FFI Bindings
 //!
 //! This crate provides Rust FFI bindings for the **top half** of musl libc. The "top half" refers to the musl libc
 //! source code and headers that provide the C standard library interface, excluding the bottom
@@ -32,3 +32,5 @@
 //skips whole file from cargo fmt --all --check for CI
 #[rustfmt::skip]
 mod bindings;
+
+pub use bindings::*;
