@@ -155,6 +155,7 @@
         let wasm;
         let triangleRenderer = null;
         let animationId = null;
+        let wasmInitialized = false;
 
         // Console capture for display
         const originalLog = console.log;
@@ -187,16 +188,41 @@
             document.getElementById(id).disabled = !enabled;
         }
 
+        // Initialize WASM module immediately on page load
+        async function initializeWasm() {
+            try {
+                setStatus('Initializing WASM module...', 'warning');
+                await init();
+                wasmInitialized = true;
+                setStatus('✅ WASM module initialized! Test functions are now available.', 'success');
+                console.log('WASM module initialized successfully');
+                
+                // Enable all test buttons now that WASM is ready
+                enableButton('testPersonBtn');
+                enableButton('testGreetBtn');
+                enableButton('testStringLengthBtn');
+                enableButton('testMallocBtn');
+                enableButton('testMallocStringBtn');
+                
+            } catch (error) {
+                setStatus(`❌ WASM initialization failed: ${error.message}`, 'error');
+                console.error('WASM initialization error:', error);
+            }
+        }
+
         async function initializeWebGPU() {
             try {
+                if (!wasmInitialized) {
+                    throw new Error('WASM module not initialized yet');
+                }
+                
                 setStatus('Checking WebGPU support...', 'warning');
                 
                 if (!navigator.gpu) {
                     throw new Error('WebGPU not supported in this browser');
                 }
                 
-                setStatus('Initializing WASM module...', 'warning');
-                await init();
+                setStatus('Creating WebGPU triangle renderer...', 'warning');
                 
                 setStatus('Getting canvas element...', 'warning');
                 const canvas = document.getElementById('wgpu-canvas');
@@ -281,6 +307,10 @@
         }
 
         function testPersonStruct() {
+            if (!wasmInitialized) {
+                setStatus('❌ WASM module not initialized yet', 'error');
+                return;
+            }
             try {
                 setStatus('Testing Person struct...', 'warning');
                 const result = test_person_struct();
@@ -293,6 +323,10 @@
         }
 
         function testGreetFunction() {
+            if (!wasmInitialized) {
+                setStatus('❌ WASM module not initialized yet', 'error');
+                return;
+            }
             try {
                 setStatus('Testing greet function...', 'warning');
                 const name = 'WebGPU User';
@@ -306,6 +340,10 @@
         }
 
         function testStringLength() {
+            if (!wasmInitialized) {
+                setStatus('❌ WASM module not initialized yet', 'error');
+                return;
+            }
             try {
                 setStatus('Testing string length function...', 'warning');
                 const length = test_string_length();
@@ -318,6 +356,10 @@
         }
 
         function testMallocFree() {
+            if (!wasmInitialized) {
+                setStatus('❌ WASM module not initialized yet', 'error');
+                return;
+            }
             try {
                 setStatus('Testing malloc/free functionality...', 'warning');
                 const result = test_malloc_free();
@@ -336,6 +378,10 @@
         }
 
         function testMallocStringCopy() {
+            if (!wasmInitialized) {
+                setStatus('❌ WASM module not initialized yet', 'error');
+                return;
+            }
             try {
                 setStatus('Testing malloc string copy functionality...', 'warning');
                 const length = test_malloc_string_copy();
@@ -358,8 +404,15 @@
         document.getElementById('testMallocBtn').addEventListener('click', testMallocFree);
         document.getElementById('testMallocStringBtn').addEventListener('click', testMallocStringCopy);
 
-        // Initial status
-        setStatus('Ready to initialize WebGPU. Click "Initialize WebGPU" to start.', 'info');
+        // Initial button states - disable test buttons until WASM is ready
+        enableButton('testPersonBtn', false);
+        enableButton('testGreetBtn', false);
+        enableButton('testStringLengthBtn', false);
+        enableButton('testMallocBtn', false);
+        enableButton('testMallocStringBtn', false);
+
+        // Initialize WASM automatically on page load
+        initializeWasm();
         
         // Check WebGPU support on load
         if (!navigator.gpu) {
