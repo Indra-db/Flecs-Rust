@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WASM WebGPU Triangle Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        canvas {
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #2d2d2d;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        
+        .info {
+            background-color: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background-color: #2d4a2d;
+            border: 1px solid #4CAF50;
+        }
+        
+        .error {
+            background-color: #4a2d2d;
+            border: 1px solid #f44336;
+        }
+        
+        .warning {
+            background-color: #4a4a2d;
+            border: 1px solid #ff9800;
+        }
+        
+        pre {
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 WASM WebGPU Triangle Renderer</h1>
+        
+        <div class="info">
+            <h3>WebGPU Triangle Rendering + WASM Tests</h3>
+            <p>This demo shows a red triangle rendered using WebGPU through WASM bindings, plus comprehensive WASM function testing.</p>
+            <p>Features:</p>
+            <ul>
+                <li>✅ wasm-bindgen integration with custom structs</li>
+                <li>✅ WebGPU surface creation and triangle rendering</li>
+                <li>✅ WGSL shader compilation</li>
+                <li>✅ Canvas resize handling</li>
+                <li>✅ wasm32-musl-libc memory allocator testing</li>
+                <li>✅ String manipulation and C function integration</li>
+            </ul>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="wgpu-canvas" width="800" height="600"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="initBtn">Initialize WebGPU</button>
+            <button id="renderBtn" disabled>Render Triangle</button>
+            <button id="resizeBtn" disabled>Resize Canvas</button>
+        </div>
+        
+        <div class="controls">
+            <h3>🧪 WASM Test Functions</h3>
+            <button id="testPersonBtn">Test Person Struct</button>
+            <button id="testGreetBtn">Test Greet Function</button>
+            <button id="testStringLengthBtn">Test String Length</button>
+            <button id="testMallocBtn">Test Malloc/Free</button>
+            <button id="testMallocStringBtn">Test Malloc String Copy</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="info">
+            <h3>Console Output:</h3>
+            <pre id="console-output"></pre>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { 
+            TriangleRenderer,
+            test_person_struct,
+            greet,
+            test_string_length,
+            test_malloc_free,
+            test_malloc_string_copy
+        } from './pkg/test_wasm.js';
+
+        let wasm;
+        let triangleRenderer = null;
+        let animationId = null;
+
+        // Console capture for display
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function addToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            consoleOutput.textContent += logEntry;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addToConsole(args.join(' '), 'error');
+        };
+
+        function setStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function enableButton(id, enabled = true) {
+            document.getElementById(id).disabled = !enabled;
+        }
+
+        async function initializeWebGPU() {
+            try {
+                setStatus('Checking WebGPU support...', 'warning');
+                
+                if (!navigator.gpu) {
+                    throw new Error('WebGPU not supported in this browser');
+                }
+                
+                setStatus('Initializing WASM module...', 'warning');
+                await init();
+                
+                setStatus('Getting canvas element...', 'warning');
+                const canvas = document.getElementById('wgpu-canvas');
+                
+                setStatus('Creating TriangleRenderer...', 'warning');
+                triangleRenderer = await new TriangleRenderer(canvas);
+                
+                setStatus('✅ WebGPU initialized successfully!', 'success');
+                enableButton('renderBtn');
+                enableButton('resizeBtn');
+                
+                console.log('WebGPU TriangleRenderer created successfully');
+                
+                // Start automatic rendering
+                startRenderLoop();
+                
+            } catch (error) {
+                setStatus(`❌ WebGPU initialization failed: ${error.message}`, 'error');
+                console.error('WebGPU initialization error:', error);
+            }
+        }
+
+        function startRenderLoop() {
+            function render() {
+                if (triangleRenderer) {
+                    try {
+                        triangleRenderer.render();
+                        animationId = requestAnimationFrame(render);
+                    } catch (error) {
+                        console.error('Render error:', error);
+                        setStatus(`❌ Render error: ${error.message}`, 'error');
+                    }
+                }
+            }
+            render();
+        }
+
+        function stopRenderLoop() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function renderTriangle() {
+            if (!triangleRenderer) {
+                setStatus('❌ WebGPU not initialized', 'error');
+                return;
+            }
+            
+            try {
+                triangleRenderer.render();
+                setStatus('✅ Triangle rendered!', 'success');
+                console.log('Triangle rendered successfully');
+            } catch (error) {
+                setStatus(`❌ Render failed: ${error.message}`, 'error');
+                console.error('Render error:', error);
+            }
+        }
+
+        function resizeCanvas() {
+            if (!triangleRenderer) {
+                setStatus('❌ WebGPU not initialized', 'error');
+                return;
+            }
+            
+            const canvas = document.getElementById('wgpu-canvas');
+            const newWidth = canvas.width === 800 ? 600 : 800;
+            const newHeight = canvas.height === 600 ? 400 : 600;
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            try {
+                triangleRenderer.resize(newWidth, newHeight);
+                setStatus(`✅ Canvas resized to ${newWidth}x${newHeight}`, 'success');
+                console.log(`Canvas resized to ${newWidth}x${newHeight}`);
+            } catch (error) {
+                setStatus(`❌ Resize failed: ${error.message}`, 'error');
+                console.error('Resize error:', error);
+            }
+        }
+
+        function testPersonStruct() {
+            try {
+                setStatus('Testing Person struct...', 'warning');
+                const result = test_person_struct();
+                setStatus('✅ Person struct test completed!', 'success');
+                console.log('Person struct test result:', result);
+            } catch (error) {
+                setStatus(`❌ Person test failed: ${error.message}`, 'error');
+                console.error('Person test error:', error);
+            }
+        }
+
+        function testGreetFunction() {
+            try {
+                setStatus('Testing greet function...', 'warning');
+                const name = 'WebGPU User';
+                const result = greet(name);
+                setStatus('✅ Greet function test completed!', 'success');
+                console.log(`Greet test with "${name}":`, result);
+            } catch (error) {
+                setStatus(`❌ Greet test failed: ${error.message}`, 'error');
+                console.error('Greet test error:', error);
+            }
+        }
+
+        function testStringLength() {
+            try {
+                setStatus('Testing string length function...', 'warning');
+                const length = test_string_length();
+                setStatus(`✅ String length test completed! Length: ${length}`, 'success');
+                console.log('String length test result:', length);
+            } catch (error) {
+                setStatus(`❌ String length test failed: ${error.message}`, 'error');
+                console.error('String length test error:', error);
+            }
+        }
+
+        function testMallocFree() {
+            try {
+                setStatus('Testing malloc/free functionality...', 'warning');
+                const result = test_malloc_free();
+                const success = result === 1;
+                if (success) {
+                    setStatus('✅ Malloc/free test completed successfully!', 'success');
+                    console.log('Malloc/free test result: SUCCESS (returned 1)');
+                } else {
+                    setStatus(`⚠️ Malloc/free test completed with result: ${result}`, 'warning');
+                    console.log('Malloc/free test result:', result);
+                }
+            } catch (error) {
+                setStatus(`❌ Malloc/free test failed: ${error.message}`, 'error');
+                console.error('Malloc/free test error:', error);
+            }
+        }
+
+        function testMallocStringCopy() {
+            try {
+                setStatus('Testing malloc string copy functionality...', 'warning');
+                const length = test_malloc_string_copy();
+                setStatus(`✅ Malloc string copy test completed! Copied string length: ${length}`, 'success');
+                console.log('Malloc string copy test result - copied length:', length);
+                console.log('Expected length for "Hello from malloc!" is 18 characters');
+            } catch (error) {
+                setStatus(`❌ Malloc string copy test failed: ${error.message}`, 'error');
+                console.error('Malloc string copy test error:', error);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('initBtn').addEventListener('click', initializeWebGPU);
+        document.getElementById('renderBtn').addEventListener('click', renderTriangle);
+        document.getElementById('resizeBtn').addEventListener('click', resizeCanvas);
+        document.getElementById('testPersonBtn').addEventListener('click', testPersonStruct);
+        document.getElementById('testGreetBtn').addEventListener('click', testGreetFunction);
+        document.getElementById('testStringLengthBtn').addEventListener('click', testStringLength);
+        document.getElementById('testMallocBtn').addEventListener('click', testMallocFree);
+        document.getElementById('testMallocStringBtn').addEventListener('click', testMallocStringCopy);
+
+        // Initial status
+        setStatus('Ready to initialize WebGPU. Click "Initialize WebGPU" to start.', 'info');
+        
+        // Check WebGPU support on load
+        if (!navigator.gpu) {
+            setStatus('❌ WebGPU not supported in this browser. Please use Chrome/Edge with WebGPU enabled.', 'error');
+        }
+    </script>
+</body>
+</html>

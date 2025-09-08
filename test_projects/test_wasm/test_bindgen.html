@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM wasm-bindgen Test Suite</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; 
+            margin: 0; 
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 { 
+            color: #34495e; 
+            margin-top: 40px; 
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+            border-left: 5px solid #007bff;
+            border-radius: 5px;
+            font-size: 1.3em;
+        }
+        
+        #output { 
+            margin-top: 20px; 
+            line-height: 1.6;
+        }
+        
+        .test-result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .success { 
+            color: #28a745; 
+            font-weight: bold;
+            background: #d4edda;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .failed { 
+            color: #dc3545; 
+            font-weight: bold;
+            background: #f8d7da;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #6c757d;
+            padding: 40px;
+        }
+        
+        .module-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #bbdefb;
+            margin-top: 20px;
+        }
+        
+        .person-details {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ffeaa7;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .interactive-section {
+            background: #f0f8f0;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            margin: 20px 0;
+        }
+        
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: 1px solid #007bff;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        strong {
+            color: #495057;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        #console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 WASM wasm-bindgen Test Suite</h1>
+        <div id="output" class="loading">
+            <div>Loading WASM module with wasm-bindgen...</div>
+        </div>
+    </div>
+    
+    <script type="module">
+        try {
+            console.log('Starting WASM module import...');
+            
+            const { default: init, Person, test_person_struct, greet, test_string_length, test_malloc_free, test_malloc_string_copy } = await import('./pkg/test_wasm.js');
+            
+            console.log('WASM module imported successfully');
+            console.log('Available functions:', { Person, test_person_struct, greet, test_string_length, test_malloc_free, test_malloc_string_copy });
+
+            // Capture console.log for display
+            let consoleOutput = '';
+            const originalLog = console.log;
+            console.log = function(...args) {
+                consoleOutput += args.join(' ') + '\n';
+                originalLog.apply(console, arguments);
+                const consoleElement = document.getElementById('console-output');
+                if (consoleElement) {
+                    consoleElement.textContent = consoleOutput;
+                    consoleElement.scrollTop = consoleElement.scrollHeight;
+                }
+            };
+
+            async function loadWasm() {
+                try {
+                    console.log('Initializing WASM module...');
+                    // Initialize the wasm module
+                    await init();
+                    
+                    console.log('🎉 WASM module loaded successfully with wasm-bindgen!');
+                
+                // Test the Person struct
+                const personTestResult = test_person_struct();
+                
+                // Test greeting function
+                const greetingResult = greet("WASM Developer");
+                
+                // Test basic C functions
+                const stringLengthResult = test_string_length();
+                const mallocResult = test_malloc_free();
+                const stringCopyResult = test_malloc_string_copy();
+                
+                // Create some Person objects for interactive testing
+                window.person1 = Person.create_sample();
+                window.person2 = new Person("Alice Johnson", 28, "alice@example.com");
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="test-result">
+                        <h2>🧪 wasm-bindgen Function Tests</h2>
+                        <p><strong>Greeting Result:</strong> ${greetingResult}</p>
+                        <p><strong>Person Struct Test Result:</strong> ${personTestResult}</p>
+                        <p><strong>Status:</strong> <span class="success">✅ SUCCESS</span></p>
+                    </div>
+                    
+                    <div class="test-result">
+                        <h2>🔧 C Function Tests (via wasm32-musl-libc)</h2>
+                        <div>
+                            <p><strong>String Length Test:</strong> ${stringLengthResult} (expected: 12)</p>
+                            <p><strong>Status:</strong> <span class="${stringLengthResult === 12 ? 'success' : 'failed'}">${stringLengthResult === 12 ? '✅ SUCCESS' : '❌ FAILED'}</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Malloc/Free Test:</strong> ${mallocResult} (expected: 1)</p>
+                            <p><strong>Status:</strong> <span class="${mallocResult === 1 ? 'success' : 'failed'}">${mallocResult === 1 ? '✅ SUCCESS' : '❌ FAILED'}</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Malloc String Copy Test:</strong> ${stringCopyResult} (expected: 18)</p>
+                            <p><strong>Status:</strong> <span class="${stringCopyResult === 18 ? 'success' : 'failed'}">${stringCopyResult === 18 ? '✅ SUCCESS' : '❌ FAILED'}</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="interactive-section">
+                        <h2>🎮 Interactive Person Struct Demo</h2>
+                        <div>
+                            <h3>Create a New Person:</h3>
+                            <input type="text" id="name-input" placeholder="Name" value="Bob Smith">
+                            <input type="number" id="age-input" placeholder="Age" value="35">
+                            <input type="email" id="email-input" placeholder="Email" value="bob@example.com">
+                            <button onclick="createPerson()">Create Person</button>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <button onclick="showExistingPersons()">Show Existing Persons</button>
+                            <button onclick="modifyPerson()">Modify person2</button>
+                            <button onclick="testGreeting()">Test Custom Greeting</button>
+                        </div>
+                        
+                        <div id="person-output" class="person-details"></div>
+                    </div>
+                    
+                    <div class="module-info">
+                        <h2>📋 Console Output</h2>
+                        <div id="console-output"></div>
+                    </div>
+                    
+                    <div class="module-info">
+                        <h2>ℹ️ Module Information</h2>
+                        <p><strong>Build Type:</strong> wasm-bindgen with Rust structs</p>
+                        <p><strong>Features:</strong> Custom structs, memory management, C function binding</p>
+                        <p><strong>Library:</strong> wasm32-musl-libc for malloc/free/strlen</p>
+                    </div>
+                `;
+                
+                // Update console output
+                const consoleElement = document.getElementById('console-output');
+                if (consoleElement) {
+                    consoleElement.textContent = consoleOutput;
+                }
+                
+            } catch (error) {
+                console.error('Error loading WASM:', error);
+                document.getElementById('output').innerHTML = `
+                    <div class="test-result failed">
+                        <h2>❌ Error Loading WASM</h2>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure you've built the wasm-bindgen version:</p>
+                        <p><code>cargo make wasm-bindgen-build</code></p>
+                        <p>Check the browser console for more details.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Global functions for interactive testing
+        window.createPerson = function() {
+            const name = document.getElementById('name-input').value;
+            const age = parseInt(document.getElementById('age-input').value);
+            const email = document.getElementById('email-input').value;
+            
+            const newPerson = new Person(name, age, email);
+            newPerson.print_details();
+            
+            document.getElementById('person-output').innerHTML = `
+                <strong>Created:</strong> ${newPerson.to_string()}
+            `;
+        };
+        
+        window.showExistingPersons = function() {
+            window.person1.print_details();
+            window.person2.print_details();
+            
+            document.getElementById('person-output').innerHTML = `
+                <strong>Person 1:</strong> ${window.person1.to_string()}<br>
+                <strong>Person 2:</strong> ${window.person2.to_string()}
+            `;
+        };
+        
+        window.modifyPerson = function() {
+            const oldString = window.person2.to_string();
+            window.person2.set_age(window.person2.age + 1);
+            window.person2.set_email("updated_" + window.person2.email);
+            
+            console.log("=== Person Modification ===");
+            console.log("Before:", oldString);
+            console.log("After:", window.person2.to_string());
+            
+            document.getElementById('person-output').innerHTML = `
+                <strong>Modified person2:</strong><br>
+                Before: ${oldString}<br>
+                After: ${window.person2.to_string()}
+            `;
+        };
+        
+        window.testGreeting = function() {
+            const customName = prompt("Enter your name:") || "Anonymous";
+            const greeting = greet(customName);
+            
+            document.getElementById('person-output').innerHTML = `
+                <strong>Custom Greeting:</strong> ${greeting}
+            `;
+        };
+        
+        loadWasm();
+        
+        } catch (error) {
+            console.error('Error importing WASM module:', error);
+            document.getElementById('output').innerHTML = `
+                <div class="test-result failed">
+                    <h2>❌ Error Loading WASM Module</h2>
+                    <p><strong>Import Error:</strong> ${error.message}</p>
+                    <p>Check the browser console for more details.</p>
+                    <p>Make sure you're serving this from an HTTP server, not opening as a file.</p>
+                    <p>Ensure the pkg/ directory contains the wasm-bindgen generated files.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

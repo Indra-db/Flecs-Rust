@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WASM Bindgen Test</title>
+</head>
+<body>
+    <h1>Simple WASM Bindgen Test</h1>
+    <div id="status">Loading...</div>
+    <div id="output"></div>
+    
+    <script type="module">
+        async function test() {
+            try {
+                console.log('1. Importing module...');
+                const module = await import('./pkg/test_wasm.js');
+                console.log('2. Module imported:', module);
+                
+                console.log('3. Initializing WASM...');
+                await module.default();
+                console.log('4. WASM initialized');
+                
+                console.log('5. Testing greet function...');
+                const greeting = module.greet('World');
+                console.log('6. Greeting result:', greeting);
+                
+                document.getElementById('status').textContent = 'SUCCESS!';
+                document.getElementById('output').innerHTML = `
+                    <p>Greeting: ${greeting}</p>
+                    <p>Available functions: ${Object.keys(module).join(', ')}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('status').textContent = 'ERROR: ' + error.message;
+                document.getElementById('output').textContent = error.stack;
+            }
+        }
+        
+        test();
+    </script>
+</body>
+</html>

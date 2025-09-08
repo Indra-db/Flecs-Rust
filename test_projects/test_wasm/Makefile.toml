@@ -20,6 +20,49 @@ cp ${WORKSPACE_ROOT}/target/wasm32-unknown-unknown/debug/${WASM_FILE} ./${WASM_F
 echo "✅ Build complete: ${WASM_FILE}"
 '''
 
+# Build with wasm-bindgen
+[tasks.wasm-bindgen-build]
+description = "Build WASM module with wasm-bindgen (debug mode)"
+script = '''
+echo "🔨 Building WASM module with wasm-bindgen..."
+wasm-pack build --target web --out-dir pkg --dev
+echo "✅ wasm-bindgen build complete in pkg/ directory"
+'''
+
+# Build release version with wasm-bindgen
+[tasks.wasm-bindgen-release]
+description = "Build optimized WASM module with wasm-bindgen (release mode)"
+script = '''
+echo "🔨 Building optimized WASM module with wasm-bindgen..."
+wasm-pack build --target web --out-dir pkg
+echo "✅ wasm-bindgen release build complete in pkg/ directory"
+'''
+
+# Serve WebGPU triangle demo
+[tasks.serve-triangle]
+description = "Serve the WebGPU triangle demo"
+script = '''
+echo "🚀 Starting server for WebGPU triangle demo..."
+echo "📍 Open http://localhost:${PORT}/test_triangle.html"
+echo "🎮 Triangle demo includes:"
+echo "   • WebGPU triangle rendering"
+echo "   • Canvas resize functionality"  
+echo "   • wasm-bindgen Person struct tests"
+echo "   • Real-time console output"
+echo ""
+python3 -m http.server ${PORT}
+'''
+dependencies = ["wasm-bindgen-release"]
+
+# Build with wasm-bindgen in release mode
+[tasks.wasm-bindgen-build-release]
+description = "Build WASM module with wasm-bindgen (release mode)"
+script = '''
+echo "🔨 Building WASM module with wasm-bindgen (release)..."
+wasm-pack build --target web --out-dir pkg --release
+echo "✅ wasm-bindgen release build complete in pkg/ directory"
+'''
+
 # Build in release mode
 [tasks.wasm-build-release]
 description = "Build WASM module (release mode)"
@@ -55,6 +98,28 @@ description = "Stop any running HTTP servers"
 script = '''
 echo "🛑 Stopping HTTP servers..."
 pkill -f "python3 -m http.server" || true
+'''
+
+# Serve the wasm-bindgen module via HTTP server for web testing
+[tasks.serve-bindgen]
+description = "Build with wasm-bindgen and serve via HTTP for web testing (debug)"
+dependencies = ["stop", "wasm-bindgen-build"]
+script = '''
+echo "🌐 Starting HTTP server on port ${PORT} for wasm-bindgen..."
+echo "📖 Open http://localhost:${PORT}/test_bindgen.html in your browser"
+echo "⏹️  Press Ctrl+C to stop the server"
+python3 -m http.server ${PORT}
+'''
+
+# Serve the wasm-bindgen module in release mode
+[tasks.serve-bindgen-release]
+description = "Build with wasm-bindgen and serve via HTTP for web testing (release)"
+dependencies = ["stop", "wasm-bindgen-build-release"]
+script = '''
+echo "🌐 Starting HTTP server on port ${PORT} for wasm-bindgen (release mode)..."
+echo "📖 Open http://localhost:${PORT}/test_bindgen.html in your browser"
+echo "⏹️  Press Ctrl+C to stop the server"
+python3 -m http.server ${PORT}
 '''
 
 # Serve the WASM module via HTTP server for web testing
@@ -133,18 +198,22 @@ script = '''
 echo "🦀 WASM Test Project (cargo-make)"
 echo ""
 echo "Available targets:"
-echo "  wasm-build         - Build WASM module (debug mode)"
-echo "  wasm-build-release - Build WASM module (release mode)"
-echo "  wasm-test          - Build and run Node.js tests (debug)"
-echo "  wasm-test-release  - Build and run Node.js tests (release)"
-echo "  serve              - Build and serve via HTTP for web testing (debug)"
-echo "  serve-release      - Build and serve via HTTP for web testing (release)"
-echo "  serve-only         - Serve existing WASM file (no rebuild)"
-echo "  stop               - Stop any running HTTP servers"
-echo "  wasm-clean         - Clean build artifacts"
-echo "  info               - Show WASM file information and imports"
-echo "  dev                - Full development workflow (clean, build, test, info)"
-echo "  help               - Show this help message"
+echo "  wasm-build              - Build WASM module (debug mode)"
+echo "  wasm-build-release      - Build WASM module (release mode)"
+echo "  wasm-bindgen-build      - Build with wasm-bindgen (debug mode)"
+echo "  wasm-bindgen-build-release - Build with wasm-bindgen (release mode)"
+echo "  wasm-test               - Build and run Node.js tests (debug)"
+echo "  wasm-test-release       - Build and run Node.js tests (release)"
+echo "  serve                   - Build and serve via HTTP for web testing (debug)"
+echo "  serve-bindgen           - Build with wasm-bindgen and serve (debug)"
+echo "  serve-bindgen-release   - Build with wasm-bindgen and serve (release)"
+echo "  serve-release           - Build and serve via HTTP for web testing (release)"
+echo "  serve-only              - Serve existing WASM file (no rebuild)"
+echo "  stop                    - Stop any running HTTP servers"
+echo "  wasm-clean              - Clean build artifacts"
+echo "  info                    - Show WASM file information and imports"
+echo "  dev                     - Full development workflow (clean, build, test, info)"
+echo "  help                    - Show this help message"
 echo ""
 echo "Options:"
 echo "  Set PORT environment variable to change HTTP server port (default: 8000)"
@@ -152,6 +221,7 @@ echo ""
 echo "Examples:"
 echo "  cargo make wasm-test              # Build and test with Node.js"
 echo "  cargo make serve                  # Build and serve on http://localhost:8000"
+echo "  cargo make serve-bindgen          # Build with wasm-bindgen and serve"
 echo "  PORT=3000 cargo make serve        # Build and serve on http://localhost:3000"
 echo "  cargo make wasm-test-release      # Build release version and test"
 echo "  cargo make info                   # Check WASM file size and imports"
