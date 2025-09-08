@@ -10,6 +10,7 @@ rust-version.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
+wasm32-musl-libc = { path = "../../wasm32-musl-libc" }
 
 [lints]
 workspace = true

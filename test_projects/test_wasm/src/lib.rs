@@ -1,18 +1,15 @@
-// External declaration of C's strlen function
-unsafe extern "C" {
-    fn strlen(s: *const i8) -> usize;
-    fn malloc(size: usize) -> *mut u8;
-    fn free(ptr: *mut u8);
-}
+// Import functions from wasm32-musl-libc
+use core::ffi::c_char;
+use wasm32_musl_libc::*;
 
 // Function that calls C's strlen
-extern "C" fn calls_strlen(s: *const i8) -> usize {
-    unsafe { strlen(s) }
+extern "C" fn calls_strlen(s: *const c_char) -> usize {
+    unsafe { strlen(s) as usize }
 }
 
 // Proper Rust function that calls calls_strlen - exported directly for WASM
 #[unsafe(no_mangle)]
-pub extern "C" fn get_string_length(s: *const i8) -> usize {
+pub extern "C" fn get_string_length(s: *const c_char) -> usize {
     calls_strlen(s)
 }
 
@@ -20,7 +17,7 @@ pub extern "C" fn get_string_length(s: *const i8) -> usize {
 #[unsafe(no_mangle)]
 pub extern "C" fn test_string_length() -> usize {
     let test_str = b"Hello, WASM!\0";
-    get_string_length(test_str.as_ptr() as *const i8)
+    get_string_length(test_str.as_ptr() as *const c_char)
 }
 
 // Test malloc/free functionality
@@ -35,13 +32,16 @@ pub extern "C" fn test_malloc_free() -> i32 {
             return -1; // Failed to allocate
         }
 
+        // Cast to u8 pointer for byte operations
+        let byte_ptr = ptr as *mut u8;
+
         // Write some data to the allocated memory
-        *ptr = 42;
-        *(ptr.add(99)) = 84; // Write to the last byte
+        *byte_ptr = 42;
+        *(byte_ptr.add(99)) = 84; // Write to the last byte
 
         // Read back the data to verify it works
-        let first_byte = *ptr;
-        let last_byte = *(ptr.add(99));
+        let first_byte = *byte_ptr;
+        let last_byte = *(byte_ptr.add(99));
 
         // Free the memory
         free(ptr);
@@ -60,25 +60,27 @@ pub extern "C" fn test_malloc_free() -> i32 {
 pub extern "C" fn test_malloc_string_copy() -> usize {
     unsafe {
         let source_str = b"Hello from malloc!\0";
-        let str_len = strlen(source_str.as_ptr() as *const i8);
+        let str_len = strlen(source_str.as_ptr() as *const c_char) as usize;
 
         // Allocate memory for the string + null terminator
-        let allocated_str = malloc(str_len + 1) as *mut i8;
+        let allocated_ptr = malloc(str_len + 1);
 
-        if allocated_str.is_null() {
+        if allocated_ptr.is_null() {
             return 0; // Failed to allocate
         }
 
+        let allocated_str = allocated_ptr as *mut c_char;
+
         // Copy the string byte by byte
         for i in 0..=str_len {
-            *allocated_str.add(i) = *(source_str.as_ptr() as *const i8).add(i);
+            *allocated_str.add(i) = *(source_str.as_ptr() as *const c_char).add(i);
         }
 
         // Get the length of the copied string
-        let copied_len = strlen(allocated_str);
+        let copied_len = strlen(allocated_str) as usize;
 
         // Free the allocated memory
-        free(allocated_str as *mut u8);
+        free(allocated_ptr);
 
         // Return the length of the copied string
         copied_len

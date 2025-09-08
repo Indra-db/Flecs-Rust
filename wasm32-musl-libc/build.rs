@@ -340,6 +340,7 @@ fn build_libc() {
         .include("src/libc-top-half/musl/include")
         .include("src/libc-top-half/musl/arch/wasm32")
         .include("src/libc-top-half/headers")
+        .include("src/libc-top-half/musl/src/internal")
         .flag("-Wall")
         .flag("-Wextra")
         .flag("-Wno-bitwise-op-parentheses")
@@ -356,7 +357,8 @@ fn build_libc() {
         .define("_WASI_EMULATED_MMAN", None)
         .define("_WASI_EMULATED_SIGNAL", None)
         .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
-        .define("BULK_MEMORY_THRESHOLD", "8192");
+        .define("BULK_MEMORY_THRESHOLD", "8192")
+        .define("hidden", "__attribute__((__visibility__(\"hidden\")))");
 
     // Build only core memory functions that compile cleanly
     let core_files = [
@@ -367,6 +369,8 @@ fn build_libc() {
         "src/libc-top-half/musl/src/string/memchr.c",
         "src/libc-top-half/musl/src/string/strlen.c",
         "src/libc-top-half/musl/src/string/strcmp.c",
+        // Note: malloc/free functions require syscalls not available in WASM
+        // Users needing memory allocation should use Rust's allocator or wee_alloc
     ];
 
     for file in &core_files {

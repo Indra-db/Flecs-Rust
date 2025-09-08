@@ -1,0 +1,158 @@
+[config]
+default_to_workspace = false
+
+[env]
+WORKSPACE_ROOT = "../.."
+WASM_FILE = "test_wasm.wasm"
+PORT = { value = "8000", condition = { env_not_set = ["PORT"] } }
+
+[tasks.default]
+alias = "wasm-build"
+
+# Build the WASM module
+[tasks.wasm-build]
+description = "Build WASM module (debug mode)"
+script = '''
+echo "🔨 Building WASM module..."
+cargo build --target wasm32-unknown-unknown
+echo "📦 Copying WASM file..."
+cp ${WORKSPACE_ROOT}/target/wasm32-unknown-unknown/debug/${WASM_FILE} ./${WASM_FILE}
+echo "✅ Build complete: ${WASM_FILE}"
+'''
+
+# Build in release mode
+[tasks.wasm-build-release]
+description = "Build WASM module (release mode)"
+script = '''
+echo "🔨 Building WASM module (release)..."
+cargo build --target wasm32-unknown-unknown --release
+echo "📦 Copying WASM file..."
+cp ${WORKSPACE_ROOT}/target/wasm32-unknown-unknown/release/${WASM_FILE} ./${WASM_FILE}
+echo "✅ Build complete: ${WASM_FILE}"
+'''
+
+# Run tests with Node.js
+[tasks.wasm-test]
+description = "Build and run Node.js tests (debug)"
+dependencies = ["wasm-build"]
+script = '''
+echo "🧪 Running WASM tests with Node.js..."
+node test_final.js
+'''
+
+# Run tests with Node.js in release mode
+[tasks.wasm-test-release]
+description = "Build and run Node.js tests (release)"
+dependencies = ["wasm-build-release"]
+script = '''
+echo "🧪 Running WASM tests with Node.js (release mode)..."
+node test_final.js
+'''
+
+# Stop any running HTTP servers
+[tasks.stop]
+description = "Stop any running HTTP servers"
+script = '''
+echo "🛑 Stopping HTTP servers..."
+pkill -f "python3 -m http.server" || true
+'''
+
+# Serve the WASM module via HTTP server for web testing
+[tasks.serve]
+description = "Build and serve via HTTP for web testing (debug)"
+dependencies = ["stop", "wasm-build"]
+script = '''
+echo "🌐 Starting HTTP server on port ${PORT}..."
+echo "📖 Open http://localhost:${PORT}/test.html in your browser"
+echo "⏹️  Press Ctrl+C to stop the server"
+python3 -m http.server ${PORT}
+'''
+
+# Serve in release mode
+[tasks.serve-release]
+description = "Build and serve via HTTP for web testing (release)"
+dependencies = ["stop", "wasm-build-release"]
+script = '''
+echo "🌐 Starting HTTP server on port ${PORT} (release mode)..."
+echo "📖 Open http://localhost:${PORT}/test.html in your browser"
+echo "⏹️  Press Ctrl+C to stop the server"
+python3 -m http.server ${PORT}
+'''
+
+# Just serve (useful if already built)
+[tasks.serve-only]
+description = "Serve existing WASM file (no rebuild)"
+dependencies = ["stop"]
+script = '''
+echo "🌐 Starting HTTP server on port ${PORT}..."
+echo "📖 Open http://localhost:${PORT}/test.html in your browser"
+echo "⏹️  Press Ctrl+C to stop the server"
+python3 -m http.server ${PORT}
+'''
+
+# Clean build artifacts
+[tasks.wasm-clean]
+description = "Clean build artifacts"
+script = '''
+echo "🧹 Cleaning build artifacts..."
+cargo clean
+rm -f ${WASM_FILE}
+echo "✅ Clean complete"
+'''
+
+# Check WASM file info
+[tasks.info]
+description = "Show WASM file information and imports"
+dependencies = ["wasm-build"]
+script = '''
+echo "📊 WASM file information:"
+echo "Size: $(du -h ${WASM_FILE} | cut -f1)"
+echo ""
+echo "🔍 WASM imports (should be empty for self-contained module):"
+if command -v wasm-objdump >/dev/null 2>&1; then
+    if wasm-objdump -x ${WASM_FILE} | grep -q "Import\\["; then
+        echo "⚠️  Found imports:"
+        wasm-objdump -x ${WASM_FILE} | grep -A 10 "Import\\["
+    else
+        echo "✅ No imports found - module is self-contained!"
+    fi
+else
+    echo "⚠️  wasm-objdump not found, install wabt tools to see import info"
+fi
+'''
+
+# Development workflow - build and test
+[tasks.dev]
+description = "Full development workflow (clean, build, test, info)"
+dependencies = ["wasm-clean", "wasm-build", "wasm-test", "info"]
+
+# Help target
+[tasks.help]
+description = "Show this help message"
+script = '''
+echo "🦀 WASM Test Project (cargo-make)"
+echo ""
+echo "Available targets:"
+echo "  wasm-build         - Build WASM module (debug mode)"
+echo "  wasm-build-release - Build WASM module (release mode)"
+echo "  wasm-test          - Build and run Node.js tests (debug)"
+echo "  wasm-test-release  - Build and run Node.js tests (release)"
+echo "  serve              - Build and serve via HTTP for web testing (debug)"
+echo "  serve-release      - Build and serve via HTTP for web testing (release)"
+echo "  serve-only         - Serve existing WASM file (no rebuild)"
+echo "  stop               - Stop any running HTTP servers"
+echo "  wasm-clean         - Clean build artifacts"
+echo "  info               - Show WASM file information and imports"
+echo "  dev                - Full development workflow (clean, build, test, info)"
+echo "  help               - Show this help message"
+echo ""
+echo "Options:"
+echo "  Set PORT environment variable to change HTTP server port (default: 8000)"
+echo ""
+echo "Examples:"
+echo "  cargo make wasm-test              # Build and test with Node.js"
+echo "  cargo make serve                  # Build and serve on http://localhost:8000"
+echo "  PORT=3000 cargo make serve        # Build and serve on http://localhost:3000"
+echo "  cargo make wasm-test-release      # Build release version and test"
+echo "  cargo make info                   # Check WASM file size and imports"
+'''

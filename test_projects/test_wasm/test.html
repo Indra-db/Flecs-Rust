@@ -145,7 +145,7 @@
                 
                 document.getElementById('output').innerHTML = `
                     <div class="test-result">
-                        <h2>[TEST] WASM String Length Test (using libc.a strlen)</h2>
+                        <h2>[TEST] WASM String Length Test</h2>
                         <p><strong>Test string length result:</strong> ${testResult}</p>
                         <p><strong>Expected:</strong> 12 (length of "Hello, WASM!")</p>
                         <p><strong>Status:</strong> <span class="${testResult === 12 ? 'success' : 'failed'}">${testResult === 12 ? '[PASS] SUCCESS' : '[FAIL] FAILED'}</span></p>
