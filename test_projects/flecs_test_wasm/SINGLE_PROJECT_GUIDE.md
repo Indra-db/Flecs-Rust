@@ -48,10 +48,10 @@ flecs_use_os_alloc = ["flecs_ecs?/flecs_use_os_alloc"]
 
 ```rust
 // Always available functions
-#[wasm_bindgen]
+//#[wasm_bindgen]
 pub fn add(a: i32, b: i32) -> i32 { a + b }
 
-#[wasm_bindgen] 
+//#[wasm_bindgen] 
 pub fn greet(name: &str) -> String { format!("Hello, {}!", name) }
 
 // Flecs functionality only when feature is enabled
@@ -59,7 +59,7 @@ pub fn greet(name: &str) -> String { format!("Hello, {}!", name) }
 mod flecs_impl {
     use flecs_ecs::prelude::*;
     
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn run_flecs_bindgen_test() {
         // Full Flecs ECS functionality here
     }
@@ -183,7 +183,7 @@ If you see WASI-related errors, ensure:
 ### Missing Exports
 
 If functions are missing in JS:
-1. Check `#[wasm_bindgen]` annotations
+1. Check `//#[wasm_bindgen]` annotations
 2. Verify conditional compilation with `#[cfg(feature = "...")]`
 3. Ensure re-exports for conditional modules
 

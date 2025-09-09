@@ -2,9 +2,9 @@ use flecs_ecs::prelude::*;
 use wasm_bindgen::prelude::*;
 
 // Import the `console.log` function from the browser's console API
-#[wasm_bindgen]
+//#[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
+    //#[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
 
@@ -27,7 +27,7 @@ struct Velocity {
 }
 
 // Exported function that can be called from JavaScript
-#[wasm_bindgen]
+//#[wasm_bindgen]
 pub fn run_flecs_bindgen_test() {
     console_log!("Starting Flecs wasm-bindgen test...");
 
@@ -74,13 +74,13 @@ pub fn run_flecs_bindgen_test() {
 }
 
 // Export a simple function to test basic wasm-bindgen functionality
-#[wasm_bindgen]
+//#[wasm_bindgen]
 pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 
 // Export a function that returns a string
-#[wasm_bindgen]
+//#[wasm_bindgen]
 pub fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
 }
