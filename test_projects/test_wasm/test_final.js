@@ -17,14 +17,14 @@ async function testWasm() {
         // Test the built-in test function
         const testResult = test_string_length();
         
-        console.log('=== String Length Test (wasm32-musl-libc strlen) ===');
+        console.log('=== String Length Test (wasm32_musl_libc strlen) ===');
         console.log(`Test string length result: ${testResult}`);
         console.log(`Expected: 12 (length of "Hello, WASM!")`);
         console.log(`Status: ${testResult === 12 ? '✅ SUCCESS' : '❌ FAILED'}`);
         console.log('');
         
         // Test malloc/free functionality
-        console.log('=== Malloc/Free Test (Rust allocator via wasm32-musl-libc) ===');
+        console.log('=== Malloc/Free Test (Rust allocator via wasm32_musl_libc) ===');
         const mallocResult = test_malloc_free();
         console.log(`Malloc/Free test result: ${mallocResult}`);
         console.log(`Expected: 1 (success)`);
@@ -40,13 +40,13 @@ async function testWasm() {
         console.log('');
         
         console.log('=== 🎉 MIGRATION COMPLETE! 🎉 ===');
-        console.log('✅ Successfully replaced libc.a dependency with wasm32-musl-libc');
+        console.log('✅ Successfully replaced libc.a dependency with wasm32_musl_libc');
         console.log('✅ malloc/free/calloc/realloc implemented using Rust\'s core::alloc');
         console.log('✅ strlen and other string functions from musl libc top-half');
         console.log('✅ No external JavaScript imports required');
         console.log('✅ Fully self-contained WASM module');
         console.log('');
-        console.log('The test_wasm project now uses the wasm32-musl-libc library');
+        console.log('The test_wasm project now uses the wasm32_musl_libc library');
         console.log('instead of depending on a local libc.a file!');
         
     } catch (error) {

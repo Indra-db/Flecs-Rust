@@ -1,4 +1,4 @@
-// Import functions from wasm32-musl-libc
+// Import functions from wasm32_musl_libc
 use core::ffi::c_char;
 use wasm_bindgen::prelude::*;
 
@@ -521,7 +521,7 @@ mod tests {
     #[test]
     #[cfg(target_arch = "wasm32")]
     fn test_string_length() {
-        // Test the wasm32-musl-libc strlen functionality directly
+        // Test the wasm32_musl_libc strlen functionality directly
         let test_str = b"Hello, WASM!\0";
         let length = get_string_length(test_str.as_ptr() as *const c_char);
         // "Hello, WASM!" is 12 characters
@@ -531,7 +531,7 @@ mod tests {
     #[test]
     #[cfg(target_arch = "wasm32")]
     fn test_malloc_free_functionality() {
-        // Test the wasm32-musl-libc malloc/free functionality directly
+        // Test the wasm32_musl_libc malloc/free functionality directly
         unsafe {
             // Allocate 100 bytes
             let ptr = malloc(100);
@@ -562,7 +562,7 @@ mod tests {
     #[test]
     #[cfg(target_arch = "wasm32")]
     fn test_malloc_string_copy_functionality() {
-        // Test the wasm32-musl-libc malloc with string copying directly
+        // Test the wasm32_musl_libc malloc with string copying directly
         unsafe {
             let source_str = b"Hello from malloc!\0";
             let str_len = strlen(source_str.as_ptr() as *const c_char) as usize;
@@ -687,7 +687,7 @@ mod tests {
     #[test]
     #[cfg(target_arch = "wasm32")]
     fn test_c_strlen_integration() {
-        // This tests the integration with wasm32-musl-libc
+        // This tests the integration with wasm32_musl_libc
         let test_str = b"Integration test string\0";
         let length = get_string_length(test_str.as_ptr() as *const core::ffi::c_char);
         assert_eq!(length, 23); // "Integration test string" is 23 characters

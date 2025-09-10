@@ -1,9 +1,6 @@
 use flecs_ecs::core::ecs_os_api;
 use flecs_ecs::prelude::*;
-use flecs_ecs::sys::{
-    ecs_os_cond_t, ecs_os_mutex_t, ecs_os_thread_callback_t, ecs_os_thread_id_t, ecs_os_thread_t,
-    ecs_size_t, ecs_time_t,
-};
+use flecs_ecs::sys::*;
 use std::ffi::c_void;
 use std::os::raw::{c_char, c_int};
 
@@ -14,12 +11,12 @@ pub struct Position {
 }
 
 // External declarations for libc functions from libc.a
-extern "C" {
-    fn malloc(size: usize) -> *mut c_void;
-    fn free(ptr: *mut c_void);
-    fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
-    fn calloc(count: usize, size: usize) -> *mut c_void;
-}
+// extern "C" {
+//     fn malloc(size: usize) -> *mut c_void;
+//     fn free(ptr: *mut c_void);
+//     fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
+//     fn calloc(count: usize, size: usize) -> *mut c_void;
+// }
 
 // External declarations for JavaScript console functions (for debugging)
 #[cfg(target_arch = "wasm32")]

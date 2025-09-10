@@ -16,6 +16,7 @@ workspace = true
 
 [dependencies]
 libc.workspace = true
+wasm32_musl_libc = { path = "../wasm32_musl_libc", features = ["link-libc"]}
 
 [build-dependencies]
 bindgen = "0.72.0"
@@ -23,8 +24,8 @@ cc = "1.2.2"
 regex = "1.11.1"
 
 # For WASM targets, we need the build helper to get include paths
-[target.'cfg(target_arch = "wasm32")'.build-dependencies]
-wasm32-musl-libc = { path = "../wasm32-musl-libc" }
+#[target.'cfg(target_arch = "wasm32")'.build-dependencies]
+
 
 [features]
 # Regenerate the C binding for flecs C

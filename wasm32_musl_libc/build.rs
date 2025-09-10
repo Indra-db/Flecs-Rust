@@ -418,7 +418,7 @@ fn main() {
         let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
 
         // Expose header include paths to dependent crates via DEP_* environment variables
-        // The package name gets normalized: wasm32-musl-libc becomes WASM32_MUSL_LIBC
+        // The package name gets normalized: wasm32_musl_libc becomes WASM32_MUSL_LIBC
         println!("cargo:include-custom={}/src/custom_headers", crate_root);
         println!(
             "cargo:include-generated={}/src/generated_headers",

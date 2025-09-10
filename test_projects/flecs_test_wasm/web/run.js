@@ -35,7 +35,13 @@ async function runWasm() {
                 backtrace_symbols: () => 0,
                 ...consoleImports,
             },
-            wasi_snapshot_preview1: {
+            wasi_snapshot_preview1: {                        
+                clock_time_get: (id, precision, time_ptr) => {
+                            const timeNs = BigInt(Math.floor(performance.now() * 1000000));
+                            const memory = new DataView(wasmInstance.exports.memory.buffer);
+                            memory.setBigUint64(time_ptr, timeNs, true);
+                            return 0; 
+                },
                 environ_get: () => 0,
                 environ_sizes_get: () => 0,
                 fd_close: () => 0,

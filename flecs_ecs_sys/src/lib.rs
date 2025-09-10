@@ -17,3 +17,7 @@ mod mbindings;
 
 pub use bindings::*;
 pub use mbindings::*;
+
+//if wasm32 target
+//#[cfg(target_arch = "wasm32")]
+pub use wasm32_musl_libc::*;

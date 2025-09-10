@@ -208,7 +208,7 @@
                     </div>
                     
                     <div class="test-result">
-                        <h2>🔧 C Function Tests (via wasm32-musl-libc)</h2>
+                        <h2>🔧 C Function Tests (via wasm32_musl_libc)</h2>
                         <div>
                             <p><strong>String Length Test:</strong> ${stringLengthResult} (expected: 12)</p>
                             <p><strong>Status:</strong> <span class="${stringLengthResult === 12 ? 'success' : 'failed'}">${stringLengthResult === 12 ? '✅ SUCCESS' : '❌ FAILED'}</span></p>
@@ -251,7 +251,7 @@
                         <h2>ℹ️ Module Information</h2>
                         <p><strong>Build Type:</strong> wasm-bindgen with Rust structs</p>
                         <p><strong>Features:</strong> Custom structs, memory management, C function binding</p>
-                        <p><strong>Library:</strong> wasm32-musl-libc for malloc/free/strlen</p>
+                        <p><strong>Library:</strong> wasm32_musl_libc for malloc/free/strlen</p>
                     </div>
                 `;
                 

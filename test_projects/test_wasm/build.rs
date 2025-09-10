@@ -5,7 +5,7 @@ fn main() {
     //     println!("cargo:rustc-link-arg=--allow-undefined");
     //     println!("cargo:rustc-link-arg=--no-entry");
 
-    //     // The wasm32-musl-libc dependency will handle libc linking automatically
+    //     // The wasm32_musl_libc dependency will handle libc linking automatically
     //     println!("cargo:rerun-if-changed=build.rs");
     // }
 }

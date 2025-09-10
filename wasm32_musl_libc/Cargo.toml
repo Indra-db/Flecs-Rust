@@ -1,5 +1,5 @@
 [package]
-name = "wasm32-musl-libc"
+name = "wasm32_musl_libc"
 version = "0.1.0"
 edition = "2024"
 description = "Provides FFI bindings and compiled musl libc implementations for Rust libraries that need to link with C code when targeting wasm32-unknown-unknown."

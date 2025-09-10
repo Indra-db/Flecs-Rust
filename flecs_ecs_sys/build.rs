@@ -262,7 +262,7 @@ fn main() {
             .define("FLECS_CPP", None);
 
         if target_is_wasm {
-            // Try to get header paths from wasm32-musl-libc dependency via build script metadata
+            // Try to get header paths from wasm32_musl_libc dependency via build script metadata
             let mut found_headers = false;
 
             // Method 1: Try to use dependency metadata (works when published to crates.io)
@@ -289,9 +289,9 @@ fn main() {
             // Method 2: Fallback for local development or workspace builds
             if !found_headers {
                 let potential_paths = [
-                    "../wasm32-musl-libc",    // relative path in workspace
-                    "../../wasm32-musl-libc", // if nested deeper
-                    "./wasm32-musl-libc",     // current directory
+                    "../wasm32_musl_libc",    // relative path in workspace
+                    "../../wasm32_musl_libc", // if nested deeper
+                    "./wasm32_musl_libc",     // current directory
                 ];
 
                 for base_path in &potential_paths {
@@ -321,11 +321,11 @@ fn main() {
 
             if !found_headers {
                 // Provide helpful error message for users
-                eprintln!("Error: Could not locate wasm32-musl-libc headers for WASM build.");
+                eprintln!("Error: Could not locate wasm32_musl_libc headers for WASM build.");
                 eprintln!(
                     "This is required for C header files like stdlib.h when building for wasm32-unknown-unknown."
                 );
-                eprintln!("Make sure the wasm32-musl-libc dependency is properly configured.");
+                eprintln!("Make sure the wasm32_musl_libc dependency is properly configured.");
                 std::process::exit(1);
             }
 
