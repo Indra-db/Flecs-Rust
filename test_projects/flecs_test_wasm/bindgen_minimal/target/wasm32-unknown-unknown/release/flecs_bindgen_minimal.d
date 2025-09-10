@@ -1,1 +1,0 @@
-/Users/indra/Code/git/flecs_rust/test_projects/flecs_test_wasm/bindgen_minimal/target/wasm32-unknown-unknown/release/flecs_bindgen_minimal.wasm: /Users/indra/Code/git/flecs_rust/test_projects/flecs_test_wasm/bindgen_minimal/src/lib.rs

@@ -1,303 +1,365 @@
-// Simplified single-project approach for wasm-bindgen + wasi-libc
-// This file demonstrates conditional compilation for the two-stage build
+use flecs_ecs::core::ecs_os_api;
+use flecs_ecs::prelude::*;
+use flecs_ecs::sys::{
+    ecs_os_cond_t, ecs_os_mutex_t, ecs_os_thread_callback_t, ecs_os_thread_id_t, ecs_os_thread_t,
+    ecs_size_t, ecs_time_t,
+};
+use std::ffi::c_void;
+use std::os::raw::{c_char, c_int};
 
-use wasm_bindgen::prelude::*;
+#[derive(Debug, Component, Clone, Copy)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32,
+}
 
-// Import the `console.log` function from the browser's console API
-#[wasm_bindgen]
+// External declarations for libc functions from libc.a
 extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
+    fn malloc(size: usize) -> *mut c_void;
+    fn free(ptr: *mut c_void);
+    fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
+    fn calloc(count: usize, size: usize) -> *mut c_void;
 }
 
-// Define a macro for easier console logging
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+// External declarations for JavaScript console functions (for debugging)
+#[cfg(target_arch = "wasm32")]
+extern "C" {
+    fn console_log(ptr: *const u8, len: usize);
+    fn console_error(ptr: *const u8, len: usize);
+    fn debug_trace(value: i32);
 }
 
-// Simple functions that work regardless of Flecs availability
-#[wasm_bindgen]
-pub fn add(a: i32, b: i32) -> i32 {
-    a + b
-}
-
-#[wasm_bindgen]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}!", name)
-}
-
-// Conditional Flecs functionality - only when flecs_ecs dependency is available
-#[cfg(feature = "flecs_ecs")]
-mod flecs_impl {
-    use super::*;
-    use flecs_ecs::prelude::*;
-
-    #[derive(Component, Debug)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    #[derive(Component, Debug)]
-    struct Velocity {
-        x: f32,
-        y: f32,
-    }
-
-    #[wasm_bindgen]
-    pub fn run_flecs_bindgen_test() {
-        console_log!("Starting Flecs wasm-bindgen test with full runtime...");
-
-        // Set up the WASM OS API (when not in bindgen_only mode)
-        #[cfg(not(feature = "bindgen_only"))]
-        crate::setup_wasm_os_api();
-
-        // Create a world
-        let world = World::new();
-        console_log!("World created");
-
-        // Create an entity with Position and Velocity components
-        let entity = world
-            .entity()
-            .set(Position { x: 0.0, y: 0.0 })
-            .set(Velocity { x: 1.0, y: 0.5 });
-
-        console_log!("Entity created with Position and Velocity");
-
-        // Get the initial position
-        entity.try_get::<&Position>(|pos| {
-            console_log!("Initial position: ({}, {})", pos.x, pos.y);
-        });
-
-        // Create a simple movement system
-        world
-            .system::<(&mut Position, &Velocity)>()
-            .each(|(pos, vel)| {
-                pos.x += vel.x;
-                pos.y += vel.y;
-            });
-
-        console_log!("Movement system created");
-
-        // Run a few iterations
-        for i in 0..5 {
-            world.progress(); // Run one frame
-
-            entity.try_get::<&Position>(|pos| {
-                console_log!("Frame {}: position: ({:.2}, {:.2})", i + 1, pos.x, pos.y);
-            });
-        }
-
-        console_log!("Flecs wasm-bindgen test completed successfully!");
+// Helper functions for debugging
+#[cfg(target_arch = "wasm32")]
+fn js_log(msg: &str) {
+    unsafe {
+        console_log(msg.as_ptr(), msg.len());
     }
 }
 
-// Stub implementation for bindgen_only builds (no flecs_ecs dependency)
-#[cfg(not(feature = "flecs_ecs"))]
-mod flecs_stub {
-    use super::*;
+#[cfg(not(target_arch = "wasm32"))]
+fn js_log(msg: &str) {
+    println!("[JS_LOG] {}", msg);
+}
 
-    #[wasm_bindgen]
-    pub fn run_flecs_bindgen_test() {
-        console_log!("Flecs test (stub mode - no ECS functionality)");
-        console_log!("This is running in bindgen_only mode for binding generation");
-        console_log!("The actual runtime will use the full Flecs implementation");
+#[cfg(target_arch = "wasm32")]
+fn js_error(msg: &str) {
+    unsafe {
+        console_error(msg.as_ptr(), msg.len());
     }
 }
 
-// Re-export the appropriate implementation
-#[cfg(feature = "flecs_ecs")]
-pub use flecs_impl::*;
+#[cfg(not(target_arch = "wasm32"))]
+fn js_error(msg: &str) {
+    eprintln!("[JS_ERROR] {}", msg);
+}
 
-#[cfg(not(feature = "flecs_ecs"))]
-pub use flecs_stub::*;
-
-// Include the full WASM OS API setup only when Flecs is available AND not bindgen_only
-#[cfg(all(feature = "flecs_ecs", not(feature = "bindgen_only")))]
-mod wasm_os_api {
-    use flecs_ecs::core::ecs_os_api;
-    use flecs_ecs::sys::{
-        ecs_os_cond_t, ecs_os_mutex_t, ecs_os_thread_callback_t, ecs_os_thread_id_t,
-        ecs_os_thread_t, ecs_size_t, ecs_time_t,
-    };
-    use std::ffi::c_void;
-    use std::os::raw::{c_char, c_int};
-
-    // External declarations for libc functions from wasi-libc
-    extern "C" {
-        fn malloc(size: usize) -> *mut c_void;
-        fn free(ptr: *mut c_void);
-        fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
-        fn calloc(count: usize, size: usize) -> *mut c_void;
+#[cfg(target_arch = "wasm32")]
+fn js_trace(value: i32) {
+    unsafe {
+        debug_trace(value);
     }
+}
 
-    // WASM-compatible OS API implementations
-    unsafe extern "C" fn wasm_malloc(size: ecs_size_t) -> *mut c_void {
-        unsafe { malloc(size as usize) }
+#[cfg(not(target_arch = "wasm32"))]
+fn js_trace(value: i32) {
+    println!("[JS_TRACE] {}", value);
+}
+
+// WASM-compatible OS API implementations with correct signatures
+unsafe extern "C" fn wasm_malloc(size: ecs_size_t) -> *mut c_void {
+    malloc(size as usize)
+}
+
+unsafe extern "C" fn wasm_free(ptr: *mut c_void) {
+    free(ptr)
+}
+
+unsafe extern "C" fn wasm_realloc(ptr: *mut c_void, size: ecs_size_t) -> *mut c_void {
+    realloc(ptr, size as usize)
+}
+
+unsafe extern "C" fn wasm_calloc(size: ecs_size_t) -> *mut c_void {
+    // Flecs calloc signature only takes size, not count
+    calloc(1, size as usize)
+}
+
+unsafe extern "C" fn wasm_now() -> u64 {
+    // Return a simple incrementing time for WASM (in microseconds)
+    static mut TIME: u64 = 0;
+    TIME += 16666; // ~60 FPS in microseconds
+    TIME
+}
+
+unsafe extern "C" fn wasm_get_time(time_out: *mut ecs_time_t) {
+    if !time_out.is_null() {
+        let now_us = wasm_now();
+        let sec = now_us / 1_000_000;
+        let nanosec = (now_us % 1_000_000) * 1000;
+
+        (*time_out).sec = sec as u32;
+        (*time_out).nanosec = nanosec as u32;
     }
+}
 
-    unsafe extern "C" fn wasm_free(ptr: *mut c_void) {
-        unsafe { free(ptr) }
-    }
+unsafe extern "C" fn wasm_abort() {
+    // Log detailed abort information to JavaScript console
+    js_error("WASM ABORT TRIGGERED!");
+    js_error("This abort was called from within Flecs C code");
+    js_error("Most likely cause: frame/timing system incompatibility with WASM");
 
-    unsafe extern "C" fn wasm_realloc(ptr: *mut c_void, size: ecs_size_t) -> *mut c_void {
-        unsafe { realloc(ptr, size as usize) }
-    }
+    // Call the panic with a more specific message
+    panic!("Flecs internal abort - check JavaScript console for details");
+}
 
-    unsafe extern "C" fn wasm_calloc(size: ecs_size_t) -> *mut c_void {
-        unsafe { calloc(1, size as usize) }
-    }
+unsafe extern "C" fn wasm_log(
+    _level: c_int,
+    _file: *const c_char,
+    _line: c_int,
+    _msg: *const c_char,
+) {
+    // // Convert the C string to a Rust string and log it
+    // if !_msg.is_null() {
+    //     let c_str = std::ffi::CStr::from_ptr(_msg);
+    //     if let Ok(rust_str) = c_str.to_str() {
+    //         js_log(&format!("[FLECS] {}", rust_str));
+    //     }
+    // }
+}
 
-    unsafe extern "C" fn wasm_now() -> u64 {
-        static mut TIME: u64 = 0;
-        unsafe {
-            TIME += 16666; // ~60 FPS in microseconds
-            TIME
-        }
-    }
+unsafe extern "C" fn wasm_sleep(sec: i32, nanosec: i32) {
+    // No-op for WASM - we can't actually sleep in single-threaded WASM
+    // But we need to provide this function for ecs_os_has_time() to return true
+    let total_ms = (sec as f64) * 1000.0 + (nanosec as f64) / 1_000_000.0;
+    js_log(&format!(
+        "WASM sleep called with {}s, {}ns (total: {:.2}ms, no-op)",
+        sec, nanosec, total_ms
+    ));
+}
 
-    unsafe extern "C" fn wasm_get_time(time_out: *mut ecs_time_t) {
-        if !time_out.is_null() {
-            unsafe {
-                let now_us = wasm_now();
-                let sec = now_us / 1_000_000;
-                let nanosec = (now_us % 1_000_000) * 1000;
+// Threading and synchronization stubs for WASM (single-threaded environment)
+unsafe extern "C" fn wasm_thread_new(
+    _callback: ecs_os_thread_callback_t,
+    _param: *mut c_void,
+) -> ecs_os_thread_t {
+    0 as ecs_os_thread_t // Return null/zero thread handle
+}
 
-                (*time_out).sec = sec as u32;
-                (*time_out).nanosec = nanosec as u32;
-            }
-        }
-    }
+unsafe extern "C" fn wasm_thread_join(_thread: ecs_os_thread_t) -> *mut c_void {
+    std::ptr::null_mut() // Return null result
+}
 
-    unsafe extern "C" fn wasm_abort() {
-        panic!("Flecs internal abort");
-    }
+unsafe extern "C" fn wasm_thread_self() -> ecs_os_thread_id_t {
+    1 // Always return thread ID 1 in single-threaded WASM
+}
 
-    unsafe extern "C" fn wasm_log(
-        _level: c_int,
-        _file: *const c_char,
-        _line: c_int,
-        _msg: *const c_char,
-    ) {
-        // No-op for simplicity
-    }
+unsafe extern "C" fn wasm_mutex_new() -> ecs_os_mutex_t {
+    1 as ecs_os_mutex_t // Return a fake mutex handle
+}
 
-    unsafe extern "C" fn wasm_sleep(_sec: i32, _nanosec: i32) {
-        // No-op for WASM
-    }
+unsafe extern "C" fn wasm_mutex_free(_mutex: ecs_os_mutex_t) {
+    // No-op in single-threaded WASM
+}
 
-    // Threading stubs (WASM is single-threaded)
-    unsafe extern "C" fn wasm_thread_new(
-        _callback: ecs_os_thread_callback_t,
-        _param: *mut c_void,
-    ) -> ecs_os_thread_t {
-        0 as ecs_os_thread_t
-    }
+unsafe extern "C" fn wasm_mutex_lock(_mutex: ecs_os_mutex_t) {
+    // No-op in single-threaded WASM
+}
 
-    unsafe extern "C" fn wasm_thread_join(_thread: ecs_os_thread_t) -> *mut c_void {
-        std::ptr::null_mut()
-    }
+unsafe extern "C" fn wasm_mutex_unlock(_mutex: ecs_os_mutex_t) {
+    // No-op in single-threaded WASM
+}
 
-    unsafe extern "C" fn wasm_thread_self() -> ecs_os_thread_id_t {
+unsafe extern "C" fn wasm_cond_new() -> ecs_os_cond_t {
+    1 as ecs_os_cond_t // Return a fake condition variable handle
+}
+
+unsafe extern "C" fn wasm_cond_free(_cond: ecs_os_cond_t) {
+    // No-op in single-threaded WASM
+}
+
+unsafe extern "C" fn wasm_cond_signal(_cond: ecs_os_cond_t) {
+    // No-op in single-threaded WASM
+}
+
+unsafe extern "C" fn wasm_cond_broadcast(_cond: ecs_os_cond_t) {
+    // No-op in single-threaded WASM
+}
+
+unsafe extern "C" fn wasm_cond_wait(_cond: ecs_os_cond_t, _mutex: ecs_os_mutex_t) {
+    // No-op in single-threaded WASM
+}
+
+unsafe extern "C" fn wasm_ainc(value: *mut i32) -> i32 {
+    // Atomic increment - in single-threaded WASM, just regular increment
+    if !value.is_null() {
+        *value += 1;
+        *value
+    } else {
         0
     }
+}
 
-    unsafe extern "C" fn wasm_task_new(
-        _callback: ecs_os_thread_callback_t,
-        _param: *mut c_void,
-    ) -> ecs_os_thread_t {
-        0 as ecs_os_thread_t
-    }
-
-    unsafe extern "C" fn wasm_task_join(_thread: ecs_os_thread_t) -> *mut c_void {
-        std::ptr::null_mut()
-    }
-
-    unsafe extern "C" fn wasm_ainc(_value: *mut i32) -> i32 {
+unsafe extern "C" fn wasm_adec(value: *mut i32) -> i32 {
+    // Atomic decrement - in single-threaded WASM, just regular decrement
+    if !value.is_null() {
+        *value -= 1;
+        *value
+    } else {
         0
     }
+}
 
-    unsafe extern "C" fn wasm_adec(_value: *mut i32) -> i32 {
+unsafe extern "C" fn wasm_lainc(value: *mut i64) -> i64 {
+    // Atomic increment (64-bit) - in single-threaded WASM, just regular increment
+    if !value.is_null() {
+        *value += 1;
+        *value
+    } else {
         0
     }
+}
 
-    unsafe extern "C" fn wasm_lainc(_value: *mut i64) -> i64 {
+unsafe extern "C" fn wasm_ladec(value: *mut i64) -> i64 {
+    // Atomic decrement (64-bit) - in single-threaded WASM, just regular decrement
+    if !value.is_null() {
+        *value -= 1;
+        *value
+    } else {
         0
     }
+}
 
-    unsafe extern "C" fn wasm_ladec(_value: *mut i64) -> i64 {
-        0
-    }
+// Set up the WASM-compatible OS API using the hook system
+fn setup_wasm_os_api() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static SETUP_DONE: AtomicBool = AtomicBool::new(false);
 
-    unsafe extern "C" fn wasm_mutex_new() -> ecs_os_mutex_t {
-        0 as ecs_os_mutex_t
-    }
-
-    unsafe extern "C" fn wasm_mutex_free(_mutex: ecs_os_mutex_t) {}
-
-    unsafe extern "C" fn wasm_mutex_lock(_mutex: ecs_os_mutex_t) {}
-
-    unsafe extern "C" fn wasm_mutex_unlock(_mutex: ecs_os_mutex_t) {}
-
-    unsafe extern "C" fn wasm_cond_new() -> ecs_os_cond_t {
-        0 as ecs_os_cond_t
-    }
-
-    unsafe extern "C" fn wasm_cond_free(_cond: ecs_os_cond_t) {}
-
-    unsafe extern "C" fn wasm_cond_signal(_cond: ecs_os_cond_t) {}
-
-    unsafe extern "C" fn wasm_cond_broadcast(_cond: ecs_os_cond_t) {}
-
-    unsafe extern "C" fn wasm_cond_wait(_cond: ecs_os_cond_t, _mutex: ecs_os_mutex_t) {}
-
-    pub fn setup_wasm_os_api() {
-        // Use the proper OS API hook system
+    // Only set up once to avoid multiple hook registrations
+    if SETUP_DONE
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::Relaxed)
+        .is_ok()
+    {
         ecs_os_api::add_init_hook(Box::new(|api| {
+            // Set memory management functions
             api.malloc_ = Some(wasm_malloc);
             api.free_ = Some(wasm_free);
             api.realloc_ = Some(wasm_realloc);
             api.calloc_ = Some(wasm_calloc);
 
-            api.get_time_ = Some(wasm_get_time);
-            api.sleep_ = Some(wasm_sleep);
+            // Set time functions
             api.now_ = Some(wasm_now);
-            api.log_ = Some(wasm_log);
-            api.abort_ = Some(wasm_abort);
-
-            // Threading API
+            api.get_time_ = Some(wasm_get_time);
+            api.sleep_ = Some(wasm_sleep); // Set threading functions (no-ops for WASM)
             api.thread_new_ = Some(wasm_thread_new);
             api.thread_join_ = Some(wasm_thread_join);
             api.thread_self_ = Some(wasm_thread_self);
+            api.task_new_ = Some(wasm_thread_new); // Same as thread_new
+            api.task_join_ = Some(wasm_thread_join); // Same as thread_join
 
-            api.task_new_ = Some(wasm_task_new);
-            api.task_join_ = Some(wasm_task_join);
-
-            // Atomic operations
-            api.ainc_ = Some(wasm_ainc);
-            api.adec_ = Some(wasm_adec);
-            api.lainc_ = Some(wasm_lainc);
-            api.ladec_ = Some(wasm_ladec);
-
-            // Synchronization primitives
+            // Set mutex functions (no-ops for WASM)
             api.mutex_new_ = Some(wasm_mutex_new);
             api.mutex_free_ = Some(wasm_mutex_free);
             api.mutex_lock_ = Some(wasm_mutex_lock);
             api.mutex_unlock_ = Some(wasm_mutex_unlock);
 
+            // Set condition variable functions (no-ops for WASM)
             api.cond_new_ = Some(wasm_cond_new);
             api.cond_free_ = Some(wasm_cond_free);
             api.cond_signal_ = Some(wasm_cond_signal);
             api.cond_broadcast_ = Some(wasm_cond_broadcast);
             api.cond_wait_ = Some(wasm_cond_wait);
+
+            // Set atomic functions
+            api.ainc_ = Some(wasm_ainc);
+            api.adec_ = Some(wasm_adec);
+            api.lainc_ = Some(wasm_lainc);
+            api.ladec_ = Some(wasm_ladec);
+
+            // Set abort function
+            api.abort_ = Some(wasm_abort);
+
+            // Set log function to no-op
+            api.log_ = Some(wasm_log);
         }));
     }
 }
 
-#[cfg(all(feature = "flecs_ecs", not(feature = "bindgen_only")))]
-pub use wasm_os_api::setup_wasm_os_api;
+#[no_mangle]
+pub extern "C" fn test_progress() -> i32 {
+    setup_wasm_os_api();
 
-#[cfg(not(all(feature = "flecs_ecs", not(feature = "bindgen_only"))))]
-pub fn setup_wasm_os_api() {
-    // No-op when Flecs is not available
+    let world = World::new();
+
+    let e = world.entity().set(Position { x: 10, y: 10 });
+
+    world.system::<&mut Position>().each(|pos| {
+        pos.x += 1;
+        pos.y += 1;
+    });
+
+    world.progress();
+
+    let pos = e.cloned::<&Position>();
+    pos.x
+}
+
+// Create a new world and return its pointer along with the entity ID
+#[no_mangle]
+pub extern "C" fn create_world() -> *mut WorldState {
+    setup_wasm_os_api();
+
+    let world = World::new();
+    let entity = world.entity().set(Position { x: 10, y: 10 });
+    let entity_id = entity.id();
+
+    // Set up the system
+    world.system::<&mut Position>().each(|pos| {
+        pos.x += 1;
+        pos.y += 1;
+    });
+
+    let world_state = WorldState {
+        world,
+        entity: entity_id,
+    };
+
+    let boxed = Box::new(world_state);
+    Box::into_raw(boxed)
+}
+
+// Progress the world and return the current x position
+#[no_mangle]
+pub extern "C" fn progress_world_ptr(world_ptr: *mut WorldState) {
+    unsafe {
+        let world_state = &mut *world_ptr;
+        world_state.world.progress();
+    }
+}
+
+// Get current position without progressing
+#[no_mangle]
+pub extern "C" fn get_pos_x(world_ptr: *mut WorldState) -> i32 {
+    unsafe {
+        let world_state = &*world_ptr;
+        let entity = world_state.world.entity_from_id(world_state.entity);
+        let pos = entity.cloned::<&Position>();
+        pos.x
+    }
+}
+
+// Destroy the world and free memory
+#[no_mangle]
+pub extern "C" fn destroy_world(world_ptr: *mut WorldState) {
+    if !world_ptr.is_null() {
+        unsafe {
+            let _ = Box::from_raw(world_ptr);
+        }
+    }
+}
+
+// Helper struct to hold world and entity together
+#[repr(C)]
+pub struct WorldState {
+    world: World,
+    entity: Entity,
 }

@@ -1,186 +1,31 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 
-# Legacy WASM build (without wasm-bindgen)
+# Build flecs_ecs with wasm feature set, then this crate for wasm target
 [tasks.build-wasm]
-description = "Build flecs_test_wasm for wasm32-unknown-unknown (legacy approach)"
+description = "Build flecs_test_wasm for wasm32-unknown-unknown"
 script = [
   'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
   'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
 ]
 workspace = false 
 
-[tasks.build-wasm2]
-description = "Build flecs_test_wasm for wasm32-unknown-unknown (legacy approach)"
-script = [
-  #'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
-  'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
-  'wasm-bindgen --target web --no-typescript --out-dir pkg ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm',
-  # 'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm ./pkg/flecs_test_wasm_bg.wasm',
-]
-workspace = false 
-
 [tasks.run-wasm]
-description = "Run the built wasm module via Node script (legacy approach)"
+description = "Run the built wasm module via Node script"
 dependencies = ["build-wasm"]
 command = "node"
 args = ["./web/run.js"]
 workspace = false
 
-# Single-project wasm-bindgen build process (recommended approach)
-[tasks.build-bindgen]
-description = "Build with wasm-bindgen using single-project conditional compilation"
-script = [
-  'echo "🦀 Single-project WASM-bindgen build process"',
-  'echo "This uses conditional compilation to avoid WASI conflicts"',
-  'echo ""',
-  'echo "Stage 1: Generate JS bindings (bindgen_only mode, no WASI linking)..."',
-  'cargo build --target wasm32-unknown-unknown --release --no-default-features --features bindgen_only',
-  'wasm-bindgen --target web --no-typescript --out-dir pkg ../../target/wasm32-unknown-unknown/release/flecs_test_wasm.wasm',
-  'echo "✅ Generated clean JS bindings from WASM without WASI functions"',
-  'echo ""',
-  'echo "Stage 2: Build full runtime WASM (with Flecs + WASI)..."',
-  'cargo build --target wasm32-unknown-unknown --release',
-  'echo "✅ Built full runtime with WASI support"',
-  'echo ""',
-  'echo "Stage 3: Replace WASM file with runtime version..."',
-  'cp ../../target/wasm32-unknown-unknown/release/flecs_test_wasm.wasm ./pkg/flecs_test_wasm_bg.wasm',
-  'echo "✅ Single-project build complete!"',
-  'echo ""',
-  'echo "Result: Clean JS bindings + Full Flecs runtime WASM"',
-  'echo "📖 This approach eliminates the need for separate bindgen_minimal project"',
-]
-workspace = false
-
-[tasks.test-bindgen]
-description = "Verify the single-project wasm-bindgen build"
-dependencies = ["build-bindgen"]
-script = [
-  'echo "🧪 Testing single-project wasm-bindgen build..."',
-  'echo ""',
-  'echo "Checking generated files:"',
-  'ls -la pkg/flecs_test_wasm_bg.wasm pkg/flecs_test_wasm.js 2>/dev/null || echo "❌ Missing generated files"',
-  'echo ""',
-  'echo "Verifying JS bindings file size (should be reasonable):"',
-  'wc -c pkg/flecs_test_wasm.js 2>/dev/null || echo "❌ JS file not found"',
-  'echo ""',
-  'echo "Verifying runtime WASM file size (should be large with Flecs):"',
-  'wc -c pkg/flecs_test_wasm_bg.wasm 2>/dev/null || echo "❌ WASM file not found"',
-  'echo ""',
-  'echo "Checking that JS bindings contain expected exports:"',
-  'if grep -q "run_flecs_bindgen_test" pkg/flecs_test_wasm.js; then echo "✅ Found run_flecs_bindgen_test export"; else echo "❌ Missing run_flecs_bindgen_test export"; fi',
-  'if grep -q "add" pkg/flecs_test_wasm.js; then echo "✅ Found add export"; else echo "❌ Missing add export"; fi',
-  'if grep -q "greet" pkg/flecs_test_wasm.js; then echo "✅ Found greet export"; else echo "❌ Missing greet export"; fi',
-  'echo ""',
-  'echo "✅ Single-project build verification complete"',
-]
-workspace = false
-
-[tasks.serve-bindgen]
-description = "Build and serve the wasm-bindgen demo in browser"
-dependencies = ["build-bindgen"]
-script = [
-  'echo "🦀 Flecs ECS WASM-Bindgen Demo"',
-  'echo ""',
-  'echo "✅ JS bindings generated from clean WASM (no WASI conflicts)"',
-  'echo "✅ Runtime uses full Flecs implementation (with WASI support)"',
-  'echo "✅ Single-project approach eliminates need for separate bindgen_minimal"',
-  'echo ""',
-  'echo "🌐 Opening browser to http://localhost:8000/web/bindgen_test.html"',
-  'echo "   Test the add() and greet() functions"',  
-  'echo "   Test the run_flecs_bindgen_test() function with full Flecs ECS"',
-  'echo ""',
-  'echo "Press Ctrl+C to stop server"',
-  'python3 -m http.server 8000'
-]
-workspace = false
-
-[tasks.demo-bindgen]
-description = "Complete demo of the single-project wasm-bindgen approach"
-script = [
-  'echo "🦀 Flecs WASM-Bindgen Demo - Single-Project Approach"',
-  'echo "==============================================="',
-  'echo ""',
-  'echo "This demonstrates how to use wasm-bindgen with wasi-libc"',
-  'echo "using conditional compilation in a single project."',
-  'echo ""',
-  'echo "Problem: wasm-bindgen cannot interpret WASI functions"',
-  'echo "Solution: Conditional features + build.rs for clean bindgen builds"',
-  'echo ""',
-  'echo "Key insight: build.rs skips libc.a linking for bindgen_only feature"',
-  'echo ""',
-  'echo "Running build process..."',
-  'cargo make build-bindgen',
-  'echo ""',
-  'echo "Running verification..."', 
-  'cargo make test-bindgen',
-  'echo ""',
-  'echo "📖 See SINGLE_PROJECT_GUIDE.md for complete documentation"',
-  'echo "🌐 Run cargo make serve-bindgen to test in browser"',
-]
-workspace = false
-
-[tasks.demo-bindgen-simple]
-description = "🦀 Demo: Deprecated two-project approach (for reference)"
-script = [
-  'echo "⚠️  DEPRECATED: Two-Project Approach"',
-  'echo "===================================="',
-  'echo ""',
-  'echo "This approach has been superseded by the single-project method."',
-  'echo "It is kept for historical reference and comparison."',
-  'echo ""',
-  'echo "Old problem: Separate bindgen_minimal project needed"', 
-  'echo "New solution: Single project with conditional compilation"',
-  'echo ""',
-  'echo "📖 Use cargo make demo-bindgen for the current recommended approach"',
-  'echo ""',
-]
-workspace = false
-
-[tasks.test-bindgen-simple]
-description = "Deprecated - use test-bindgen instead"
-script = [
-  'echo "⚠️  This task is deprecated. Use cargo make test-bindgen instead."',
-  'echo "The single-project approach has replaced the two-project approach."',
-]
-workspace = false
-
 [tasks.serve-web]
-description = "Build WASM and serve the web demo on localhost (legacy approach)"
+description = "Build WASM and serve the web demo on localhost"
 dependencies = ["build-wasm"]
 script = [
-  'echo "🦀 Flecs ECS WASM Demo (Legacy)"',
+  'echo "🦀 Flecs ECS WASM Demo"',
   'echo "Building and serving web demo..."',
   'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm web/',
   'echo "✅ WASM file copied to web/ directory"',
   'echo "🌐 Open http://localhost:8000/web/ in your browser"',
   'python3 -m http.server 8000'
-]
-workspace = false
-
-# Help and information tasks
-[tasks.help]
-description = "Show available build tasks and approaches"
-script = [
-  'echo "🦀 Flecs WASM Test Project - Available Tasks"',
-  'echo "=========================================="',
-  'echo ""',
-  'echo "📋 RECOMMENDED APPROACH (Single-Project wasm-bindgen):"',
-  'echo "  cargo make demo-bindgen      - Complete demo with conditional compilation"',
-  'echo "  cargo make build-bindgen     - Build using single-project approach"',
-  'echo "  cargo make test-bindgen      - Verify the build results"',
-  'echo "  cargo make serve-bindgen     - Test in browser"',
-  'echo ""',
-  'echo "📋 LEGACY APPROACHES:"',
-  'echo "  cargo make build-wasm        - Basic WASM build (no wasm-bindgen)"',
-  'echo "  cargo make run-wasm          - Run via Node.js"',
-  'echo "  cargo make serve-web         - Serve basic WASM demo"',
-  'echo ""',
-  'echo "📖 DOCUMENTATION:"',
-  'echo "  README.md                    - Project overview"',
-  'echo "  SINGLE_PROJECT_GUIDE.md      - Complete implementation guide"',
-  'echo "  WHY_TWO_STAGE.md            - Historical context"',
-  'echo ""',
-  'echo "✨ The single-project approach eliminates the need for separate bindgen_minimal projects!"',
 ]
 workspace = false

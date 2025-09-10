@@ -11,18 +11,15 @@ async function runWasm() {
         // Load the WASM file directly without wasm-bindgen bindings
         const wasmBuffer = fs.readFileSync('../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm');
         
-        // We need to create a reference that will be set after instantiation
-        let wasmInstance = null;
-        
         // Add console logging functions for WASM debugging
         const consoleImports = {
             console_log: (ptr, len) => {
-                const view = new Uint8Array(wasmInstance.exports.memory.buffer, ptr, len);
+                const view = new Uint8Array(wasmModule.instance.exports.memory.buffer, ptr, len);
                 const str = new TextDecoder().decode(view);
                 console.log('[WASM LOG]:', str);
             },
             console_error: (ptr, len) => {
-                const view = new Uint8Array(wasmInstance.exports.memory.buffer, ptr, len);
+                const view = new Uint8Array(wasmModule.instance.exports.memory.buffer, ptr, len);
                 const str = new TextDecoder().decode(view);
                 console.error('[WASM ERROR]:', str);
             },
@@ -48,14 +45,6 @@ async function runWasm() {
                 fd_read: () => 0,
                 fd_seek: () => 0,
                 fd_write: () => 0,
-                clock_time_get: (clock_id, precision, time_ptr) => {
-                    // Return a simple timestamp in nanoseconds
-                    // For WASM, we'll use performance.now() * 1000000 (convert ms to ns)
-                    const timeNs = BigInt(Math.floor(performance.now() * 1000000));
-                    const memory = new DataView(wasmInstance.exports.memory.buffer);
-                    memory.setBigUint64(time_ptr, timeNs, true); // little-endian
-                    return 0;
-                },
                 proc_exit: (code) => {
                     console.log('[WASM] Process exit with code:', code);
                     return 0;
@@ -66,36 +55,35 @@ async function runWasm() {
         
         // Instantiate the WASM module with all required imports
         const wasmModule = await WebAssembly.instantiate(wasmBuffer, imports);
-        wasmInstance = wasmModule.instance; // Set the reference
         
         console.log('\nWASM module loaded successfully!');
-        //console.log('Available exports:', Object.keys(wasmInstance.exports));
+        //console.log('Available exports:', Object.keys(wasmModule.instance.exports));
     
         // Test the new world management functions
         console.log('\n--- Testing world management functions ---');
         try {
             // Create a new world
             console.log('Creating world...');
-            const worldPtr = wasmInstance.exports.create_world();
+            const worldPtr = wasmModule.instance.exports.create_world();
             
             // Get initial position
-            const initialPos = wasmInstance.exports.get_pos_x(worldPtr);
+            const initialPos = wasmModule.instance.exports.get_pos_x(worldPtr);
             console.log(`Initial position x: ${initialPos}`);
             
             // Progress the world twice and print positions
             console.log('Progressing world first time...');
-            wasmInstance.exports.progress_world_ptr(worldPtr);
-            const pos1 = wasmInstance.exports.get_pos_x(worldPtr);
+            wasmModule.instance.exports.progress_world_ptr(worldPtr);
+            const pos1 = wasmModule.instance.exports.get_pos_x(worldPtr);
             console.log(`Position x after 1st progress: ${pos1}`);
             
             console.log('Progressing world second time...');
-            wasmInstance.exports.progress_world_ptr(worldPtr);
-            const pos2 = wasmInstance.exports.get_pos_x(worldPtr);
+            wasmModule.instance.exports.progress_world_ptr(worldPtr);
+            const pos2 = wasmModule.instance.exports.get_pos_x(worldPtr);
             console.log(`Position x after 2nd progress: ${pos2}`);
             
             // Clean up
             console.log('Destroying world...');
-            wasmInstance.exports.destroy_world(worldPtr);
+            wasmModule.instance.exports.destroy_world(worldPtr);
             console.log('World destroyed successfully\n');
             
         } catch (error) {
