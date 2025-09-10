@@ -372,11 +372,10 @@
             }
 
             try {
-                const x = worldState.get_position_x();
-                const y = worldState.get_position_y();
-                log(`📍 Current position: (${x}, ${y})`);
-                updatePositionDisplay(x, y);
-                return { x, y };
+                const position = worldState.get_position();
+                log(`📍 Current position: (${position.x}, ${position.y})`);
+                updatePositionDisplay(position.x, position.y);
+                return position;
             } catch (error) {
                 log(`❌ Error getting position: ${error.message}`, 'error');
             }
@@ -393,14 +392,13 @@
                 worldState.progress();
                 
                 // Get the updated position
-                const x = worldState.get_position_x();
-                const y = worldState.get_position_y();
+                const position = worldState.get_position();
                 
                 progressCount++;
-                log(`⏭️ World progressed! Position: (${x}, ${y}) (progress #${progressCount})`, 'success');
-                updatePositionDisplay(x, y);
+                log(`⏭️ World progressed! Position: (${position.x}, ${position.y}) (progress #${progressCount})`, 'success');
+                updatePositionDisplay(position.x, position.y);
                 updateStatusTable();
-                return { x, y };
+                return position;
             } catch (error) {
                 log(`❌ Error progressing world: ${error.message}`, 'error');
             }

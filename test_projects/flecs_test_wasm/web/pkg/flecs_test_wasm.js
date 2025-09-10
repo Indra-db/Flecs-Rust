@@ -44,40 +44,30 @@ export class Position {
         wasm.__wbg_position_free(ptr, 0);
     }
     /**
-     * @param {number} x
-     * @param {number} y
-     */
-    constructor(x, y) {
-        const ret = wasm.position_new(x, y);
-        this.__wbg_ptr = ret >>> 0;
-        PositionFinalization.register(this, this.__wbg_ptr, this);
-        return this;
-    }
-    /**
      * @returns {number}
      */
     get x() {
-        const ret = wasm.position_x(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_position_x(this.__wbg_ptr);
         return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set x(arg0) {
+        wasm.__wbg_set_position_x(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
      */
     get y() {
-        const ret = wasm.position_y(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_position_y(this.__wbg_ptr);
         return ret;
     }
     /**
-     * @param {number} x
+     * @param {number} arg0
      */
-    set x(x) {
-        wasm.position_set_x(this.__wbg_ptr, x);
-    }
-    /**
-     * @param {number} y
-     */
-    set y(y) {
-        wasm.position_set_y(this.__wbg_ptr, y);
+    set y(arg0) {
+        wasm.__wbg_set_position_y(this.__wbg_ptr, arg0);
     }
 }
 
@@ -112,22 +102,6 @@ export class WorldState {
      */
     progress() {
         wasm.worldstate_progress(this.__wbg_ptr);
-    }
-    /**
-     * Get the current X position of the entity
-     * @returns {number}
-     */
-    get_position_x() {
-        const ret = wasm.worldstate_get_position_x(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * Get the current Y position of the entity
-     * @returns {number}
-     */
-    get_position_y() {
-        const ret = wasm.worldstate_get_position_y(this.__wbg_ptr);
-        return ret;
     }
     /**
      * Get the current position as a Position struct

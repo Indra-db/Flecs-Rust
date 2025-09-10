@@ -7,36 +7,8 @@ use wasm_os_api::setup_wasm_os_api;
 #[wasm_bindgen]
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Position {
-    x: i32,
-    y: i32,
-}
-
-#[wasm_bindgen]
-impl Position {
-    #[wasm_bindgen(constructor)]
-    pub fn new(x: i32, y: i32) -> Position {
-        Position { x, y }
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn x(&self) -> i32 {
-        self.x
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn y(&self) -> i32 {
-        self.y
-    }
-
-    #[wasm_bindgen(setter)]
-    pub fn set_x(&mut self, x: i32) {
-        self.x = x;
-    }
-
-    #[wasm_bindgen(setter)]
-    pub fn set_y(&mut self, y: i32) {
-        self.y = y;
-    }
+    pub x: i32,
+    pub y: i32,
 }
 
 // Helper struct to hold world and entity together
@@ -60,7 +32,7 @@ impl WorldState {
         // Set up a simple system that increments position
         world.system::<&mut Position>().each(|pos| {
             pos.x += 1;
-            pos.y += 1;
+            pos.y += 2;
         });
 
         WorldState { world, entity_id }
@@ -70,22 +42,6 @@ impl WorldState {
     #[wasm_bindgen]
     pub fn progress(&mut self) {
         self.world.progress();
-    }
-
-    /// Get the current X position of the entity
-    #[wasm_bindgen]
-    pub fn get_position_x(&self) -> i32 {
-        let entity = self.world.entity_from_id(self.entity_id);
-        let pos = entity.cloned::<&Position>();
-        pos.x
-    }
-
-    /// Get the current Y position of the entity
-    #[wasm_bindgen]
-    pub fn get_position_y(&self) -> i32 {
-        let entity = self.world.entity_from_id(self.entity_id);
-        let pos = entity.cloned::<&Position>();
-        pos.y
     }
 
     /// Get the current position as a Position struct
