@@ -262,14 +262,74 @@ fn main() {
             .define("FLECS_CPP", None);
 
         if target_is_wasm {
-            // Add WASM-specific stub file
-            build.file("src/wasm_stubs.c");
+            // Try to get header paths from wasm32-musl-libc dependency via build script metadata
+            let mut found_headers = false;
 
-            // For WASM targets, we rely on the wasm32-musl-libc crate to provide
-            // the necessary libc headers and linking. The crate handles header
-            // detection and provides the appropriate include paths automatically.
+            // Method 1: Try to use dependency metadata (works when published to crates.io)
+            let dep_env_vars = [
+                ("DEP_WASM32_MUSL_LIBC_INCLUDE_CUSTOM", "custom headers"),
+                (
+                    "DEP_WASM32_MUSL_LIBC_INCLUDE_GENERATED",
+                    "generated headers",
+                ),
+                ("DEP_WASM32_MUSL_LIBC_INCLUDE_MUSL", "musl headers"),
+                ("DEP_WASM32_MUSL_LIBC_INCLUDE_ARCH", "arch headers"),
+                ("DEP_WASM32_MUSL_LIBC_INCLUDE_HEADERS", "libc headers"),
+            ];
+
+            for (env_var, desc) in &dep_env_vars {
+                if let Ok(path) = std::env::var(env_var) {
+                    if std::path::Path::new(&path).exists() {
+                        build.include(&path);
+                        found_headers = true;
+                    }
+                }
+            }
+
+            // Method 2: Fallback for local development or workspace builds
+            if !found_headers {
+                let potential_paths = [
+                    "../wasm32-musl-libc",    // relative path in workspace
+                    "../../wasm32-musl-libc", // if nested deeper
+                    "./wasm32-musl-libc",     // current directory
+                ];
+
+                for base_path in &potential_paths {
+                    let musl_base = std::path::Path::new(base_path);
+                    if musl_base.exists() {
+                        let include_paths = [
+                            musl_base.join("src/custom_headers"),
+                            musl_base.join("src/generated_headers"),
+                            musl_base.join("src/libc-top-half/musl/include"),
+                            musl_base.join("src/libc-top-half/musl/arch/wasm32"),
+                            musl_base.join("src/libc-top-half/headers"),
+                        ];
+
+                        for path in &include_paths {
+                            if path.exists() {
+                                build.include(path);
+                                found_headers = true;
+                            }
+                        }
+
+                        if found_headers {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if !found_headers {
+                // Provide helpful error message for users
+                eprintln!("Error: Could not locate wasm32-musl-libc headers for WASM build.");
+                eprintln!(
+                    "This is required for C header files like stdlib.h when building for wasm32-unknown-unknown."
+                );
+                eprintln!("Make sure the wasm32-musl-libc dependency is properly configured.");
+                std::process::exit(1);
+            }
+
             build
-                .include("src") // Always include src for our custom headers
                 .flag("-ffreestanding")
                 .flag("-fno-exceptions")
                 .flag("-fno-unwind-tables")
@@ -277,6 +337,7 @@ fn main() {
                 .flag("-fvisibility=hidden")
                 // Define macros to bypass WASI platform checks
                 .define("__wasi__", None)
+                .define("__wasilibc_unmodified_upstream", None)
                 .define("_WASI_EMULATED_MMAN", None)
                 .define("_WASI_EMULATED_SIGNAL", None)
                 .define("_WASI_EMULATED_PROCESS_CLOCKS", None)

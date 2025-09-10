@@ -412,6 +412,35 @@ fn main() {
     #[cfg(feature = "build-libc")]
     build_libc();
 
+    // Expose header paths for dependent crates (regardless of feature flags)
+    let target = env::var("TARGET").unwrap_or_default();
+    if target == "wasm32-unknown-unknown" {
+        let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
+
+        // Expose header include paths to dependent crates via DEP_* environment variables
+        // The package name gets normalized: wasm32-musl-libc becomes WASM32_MUSL_LIBC
+        println!("cargo:include-custom={}/src/custom_headers", crate_root);
+        println!(
+            "cargo:include-generated={}/src/generated_headers",
+            crate_root
+        );
+        println!(
+            "cargo:include-musl={}/src/libc-top-half/musl/include",
+            crate_root
+        );
+        println!(
+            "cargo:include-arch={}/src/libc-top-half/musl/arch/wasm32",
+            crate_root
+        );
+        println!(
+            "cargo:include-headers={}/src/libc-top-half/headers",
+            crate_root
+        );
+
+        // Also provide a way for dependent crates to find our root directory
+        println!("cargo:root={}", crate_root);
+    }
+
     // Handle optional linking with pre-compiled libc.a
     if cfg!(feature = "link-libc") {
         let target = env::var("TARGET").unwrap_or_default();

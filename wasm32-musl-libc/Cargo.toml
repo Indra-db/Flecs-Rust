@@ -8,8 +8,6 @@ keywords = ["wasm32", "musl", "libc", "webassembly", "ffi"]
 categories = ["external-ffi-bindings", "wasm"]
 repository = "https://github.com/Indra-db/Flecs-Rust"
 
-[dependencies]
-
 
 [build-dependencies]
 bindgen = "0.72.1"
