@@ -4,6 +4,26 @@ use flecs_ecs::sys::*;
 use std::ffi::c_void;
 use std::os::raw::{c_char, c_int};
 
+use wasm_bindgen::prelude::*;
+
+// Function that calls C's strlen
+extern "C" fn calls_strlen(s: *const c_char) -> usize {
+    unsafe { strlen(s) as usize }
+}
+
+// Proper Rust function that calls calls_strlen - exported directly for WASM
+#[unsafe(no_mangle)]
+pub extern "C" fn get_string_length(s: *const c_char) -> usize {
+    calls_strlen(s)
+}
+
+// Test function that creates a test string and calls get_string_length
+#[wasm_bindgen]
+pub fn test_string_length() -> usize {
+    let test_str = b"Hello, WASM!\0";
+    get_string_length(test_str.as_ptr() as *const c_char)
+}
+
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Position {
     pub x: i32,

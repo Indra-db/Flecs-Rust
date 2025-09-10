@@ -333,27 +333,6 @@
                 };
                 
                 const imports = {
-                    env: {
-                        backtrace: () => 0,
-                        backtrace_symbols: () => 0,
-                        ...consoleImports,
-                    },
-                    wasi_snapshot_preview1: {
-                        environ_get: () => 0,
-                        environ_sizes_get: () => 0,
-                        fd_close: () => 0,
-                        fd_fdstat_get: () => 0,
-                        fd_prestat_get: () => 0,
-                        fd_prestat_dir_name: () => 0,
-                        fd_read: () => 0,
-                        fd_seek: () => 0,
-                        fd_write: () => 0,
-                        proc_exit: (code) => {
-                            log(`[WASM] Process exit with code: ${code}`, code === 0 ? 'info' : 'error');
-                            return 0;
-                        },
-                        random_get: () => 0,
-                    }
                 };
                 
                 wasmModule = await WebAssembly.instantiate(wasmBuffer, imports);
