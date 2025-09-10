@@ -15,55 +15,59 @@
 
         <main>
             <div class="main-layout">
-                <section class="controls">
-                    <h2>Controls</h2>
-                    <div class="button-column">
-                        <div class="button-row">
-                            <button id="createBtn" onclick="createWorld()" class="half-width">Create World</button>
-                            <button id="destroyBtn" onclick="destroyWorld()" disabled class="half-width">Destroy</button>
+                <section class="controls-panel">
+                    <div class="controls">
+                        <h2>Controls</h2>
+                        <div class="button-column">
+                            <div class="button-row">
+                                <button id="createBtn" onclick="createWorld()" class="half-width">Create World</button>
+                                <button id="destroyBtn" onclick="destroyWorld()" disabled class="half-width">Destroy</button>
+                            </div>
+                            <div class="button-row">
+                                <button id="progressBtn" onclick="progressWorld()" disabled class="half-width">Progress</button>
+                                <button id="autoProgressBtn" onclick="toggleAutoProgress()" disabled class="half-width">Auto Progress</button>
+                            </div>
+                            <button id="positionBtn" onclick="getPosition()" disabled>Get Position</button>
                         </div>
-                        <div class="button-row">
-                            <button id="progressBtn" onclick="progressWorld()" disabled class="half-width">Progress</button>
-                            <button id="autoProgressBtn" onclick="toggleAutoProgress()" disabled class="half-width">Auto Progress</button>
+                    </div>
+
+                    <div class="status">
+                        <h2>Status</h2>
+                        <div class="status-table">
+                            <div class="status-row">
+                                <span class="label">WASM:</span>
+                                <span id="wasmStatus" class="value">Loading...</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="label">World:</span>
+                                <span id="worldStatus" class="value">None</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="label">Position:</span>
+                                <span id="positionDisplay" class="value">--</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="label">Progress:</span>
+                                <span id="progressCount" class="value">0</span>
+                            </div>
                         </div>
-                        <button id="positionBtn" onclick="getPosition()" disabled>Get Position</button>
                     </div>
                 </section>
 
-                <section class="status">
-                    <h2>Status</h2>
-                    <div class="status-table">
-                        <div class="status-row">
-                            <span class="label">WASM:</span>
-                            <span id="wasmStatus" class="value">Loading...</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="label">World:</span>
-                            <span id="worldStatus" class="value">None</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="label">Position:</span>
-                            <span id="positionDisplay" class="value">--</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="label">Progress:</span>
-                            <span id="progressCount" class="value">0</span>
+                <section class="canvas-panel">
+                    <div class="canvas-section">
+                        <h2>Triangle Visualization</h2>
+                        <div class="canvas-container">
+                            <canvas id="triangleCanvas" width="600" height="350"></canvas>
                         </div>
                     </div>
+
+                    <section class="log">
+                        <h2>Activity Log</h2>
+                        <div id="logContainer"></div>
+                    </section>
                 </section>
             </div>
-
-            <section class="canvas-section">
-                <h2>Triangle Visualization</h2>
-                <div class="canvas-container">
-                    <canvas id="triangleCanvas" width="600" height="400"></canvas>
-                </div>
-            </section>
-
-            <section class="log">
-                <h2>Activity Log</h2>
-                <div id="logContainer"></div>
-            </section>
         </main>
     </div>
 

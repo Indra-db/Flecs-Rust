@@ -7,51 +7,106 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 10px;
     background-color: #f5f7fa;
     color: #333;
-    line-height: 1.6;
+    line-height: 1.4;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
 header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 30px;
+    padding: 15px 20px;
     text-align: center;
 }
 
 header h1 {
-    margin: 0 0 10px 0;
-    font-size: 2rem;
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
     font-weight: 600;
 }
 
 header p {
     margin: 0;
     opacity: 0.9;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 main {
-    padding: 20px 30px;
+    padding: 15px 20px;
 }
 
-/* Main layout - side by side */
+/* Main layout */
 .main-layout {
     display: grid;
     grid-template-columns: 200px 1fr;
-    gap: 30px;
-    margin-bottom: 25px;
-    align-items: start;
+    gap: 15px;
+    height: calc(100vh - 140px);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 10px;
+    overflow: hidden;
+}
+
+/* Left panel - Controls and Status */
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+.controls-panel .controls {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.controls-panel .status {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1;
+    min-height: 0;
+}
+
+/* Right panel - Canvas and Log */
+.canvas-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.canvas-section {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.log {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1;
+    min-height: 150px;
+    overflow-y: auto;
 }
 
 section {
@@ -60,22 +115,22 @@ section {
 
 h2 {
     color: #4a5568;
-    font-size: 1.1rem;
-    margin: 0 0 12px 0;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 6px;
+    font-size: 1rem;
+    margin: 0 0 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
 }
 
 /* Controls Section */
 .button-column {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .button-row {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .half-width {
@@ -86,10 +141,10 @@ button {
     background: #4299e1;
     color: white;
     border: none;
-    padding: 10px 16px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 500;
     transition: all 0.2s ease;
     text-align: center;
@@ -139,8 +194,9 @@ button:active:not(:disabled) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #e2e8f0;
+    min-height: 32px;
 }
 
 .status-row:last-child {
@@ -154,57 +210,66 @@ button:active:not(:disabled) {
 .label {
     font-weight: 600;
     color: #4a5568;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    min-width: 70px;
 }
 
 .value {
     font-family: 'Courier New', monospace;
     color: #2d3748;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Canvas Section */
 .canvas-section {
-    margin-top: 25px;
+    margin-top: 0;
 }
 
 .canvas-container {
     text-align: center;
     background: #f7fafc;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 10px;
     border: 1px solid #e2e8f0;
 }
 
 #triangleCanvas {
     border: 2px solid #4299e1;
-    border-radius: 6px;
+    border-radius: 4px;
     background-color: #1a202c;
     display: block;
     margin: 0 auto;
+    width: 100%;
+    max-width: 600px;
+    height: 350px;
 }
 
 /* Log Section */
 .log {
-    margin-top: 25px;
+    margin-top: 0;
 }
 
 #logContainer {
     background: #1a202c;
     color: #e2e8f0;
-    padding: 15px;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 4px;
     font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    max-height: 200px;
+    font-size: 0.75rem;
+    height: 100%;
     overflow-y: auto;
     border: 1px solid #2d3748;
 }
 
 .log-entry {
-    margin-bottom: 6px;
-    padding: 2px 0;
+    margin-bottom: 4px;
+    padding: 1px 0;
 }
 
 .log-timestamp {
@@ -225,40 +290,58 @@ button:active:not(:disabled) {
 }
 
 /* Responsive design */
-@media (max-width: 700px) {
+@media (max-width: 1000px) {
     body {
-        padding: 10px;
+        padding: 5px;
     }
     
     .container {
-        border-radius: 6px;
+        border-radius: 4px;
     }
     
     header {
-        padding: 20px;
+        padding: 15px;
     }
     
     header h1 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
     
     main {
-        padding: 15px 20px;
+        padding: 10px 15px;
     }
     
     .main-layout {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 15px;
+    }
+    
+    .info-panel {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .info-panel .status {
+        flex: 1;
+    }
+    
+    .info-panel .log {
+        flex: 1;
+    }
+    
+    #triangleCanvas {
+        max-width: 100%;
+        height: 250px;
     }
     
     .button-column {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 4px;
     }
     
     button {
         flex: 1;
-        min-width: 120px;
+        min-width: 100px;
     }
 }
