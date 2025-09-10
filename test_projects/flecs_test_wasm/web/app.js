@@ -287,7 +287,6 @@ async function initRenderer() {
         triangleRenderer = await new window.TriangleRenderer(elements.triangleCanvas);
         
         log('✅ Triangle renderer initialized!', 'success');
-        elements.renderBtn.disabled = false;
         
         // Start auto-rendering if we have a world
         if (worldState) {
