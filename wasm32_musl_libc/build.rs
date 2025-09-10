@@ -346,6 +346,8 @@ fn build_libc() {
         .flag("-Wextra")
         .flag("-Wno-bitwise-op-parentheses")
         .flag("-Wno-shift-op-parentheses")
+        .flag("-Wno-sign-compare")
+        .flag("-Wno-unused-parameter")
         .flag("-nostdlib")
         .flag("-fno-builtin")
         .flag("-ffreestanding")
