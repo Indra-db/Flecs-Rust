@@ -16,7 +16,7 @@
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         h1 {
             color: #333;
@@ -190,12 +190,6 @@
                         🔄 Auto Progress
                     </button>
                 </div>
-                
-                <div class="btn-group">
-                    <button id="testStringBtn" onclick="testStringLength()" disabled>
-                        📏 Test String Length
-                    </button>
-                </div>
             </div>
             
             <!-- Status Panel -->
@@ -306,7 +300,6 @@
             document.getElementById('destroyWorldBtn').disabled = !hasWorld;
             document.getElementById('autoProgressBtn').disabled = !hasWorld;
             document.getElementById('progressTwiceBtn').disabled = !hasWorld;
-            document.getElementById('testStringBtn').disabled = !hasWasm;
             
             updateStatusTable();
         }
@@ -468,25 +461,6 @@
                 log('▶️ Auto progress started (every 500ms)', 'success');
             }
             updateStatusTable();
-        }
-
-        function testStringLength() {
-            if (!window.wasmBindgenFunctions) {
-                log('❌ WASM module not loaded yet', 'error');
-                return;
-            }
-
-            try {
-                log('📏 Testing string length...');
-                
-                // Call the wasm-bindgen test_string_length function
-                const length = window.wasmBindgenFunctions.test_string_length();
-                
-                log(`✅ String length test completed! Result: ${length}`, 'success');
-                
-            } catch (error) {
-                log(`❌ Error testing string length: ${error.message}`, 'error');
-            }
         }
 
         // Initialize page

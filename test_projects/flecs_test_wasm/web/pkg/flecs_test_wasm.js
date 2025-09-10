@@ -3,14 +3,6 @@ let wasm;
 /**
  * @returns {number}
  */
-export function test_string_length() {
-    const ret = wasm.test_string_length();
-    return ret >>> 0;
-}
-
-/**
- * @returns {number}
- */
 export function wasm_create_world() {
     const ret = wasm.wasm_create_world();
     return ret >>> 0;
@@ -82,22 +74,6 @@ function __wbg_get_imports() {
         table.set(offset + 2, true);
         table.set(offset + 3, false);
         ;
-    };
-    
-    // Provide our own env functions instead of importing from 'env'
-    imports['env'] = {
-        console_log: function(ptr, len) {
-            // Implementation for console logging
-            console.log('WASM console_log called');
-        },
-        console_error: function(ptr, len) {
-            // Implementation for console error
-            console.error('WASM console_error called');
-        },
-        debug_trace: function(value) {
-            // Implementation for debug trace
-            console.log('WASM debug_trace:', value);
-        }
     };
 
     return imports;

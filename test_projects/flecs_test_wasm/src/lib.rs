@@ -6,22 +6,10 @@ use std::os::raw::{c_char, c_int};
 
 use wasm_bindgen::prelude::*;
 
-// Function that calls C's strlen
-extern "C" fn calls_strlen(s: *const c_char) -> usize {
-    unsafe { strlen(s) as usize }
-}
-
-// Proper Rust function that calls calls_strlen - exported directly for WASM
-#[unsafe(no_mangle)]
-pub extern "C" fn get_string_length(s: *const c_char) -> usize {
-    calls_strlen(s)
-}
-
-// Test function that creates a test string and calls get_string_length
-#[wasm_bindgen]
-pub fn test_string_length() -> usize {
-    let test_str = b"Hello, WASM!\0";
-    get_string_length(test_str.as_ptr() as *const c_char)
+#[derive(Debug, Component, Clone, Copy)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32,
 }
 
 // Wasm-bindgen exports for Flecs functions
@@ -45,66 +33,7 @@ pub fn wasm_destroy_world(world_ptr: u32) {
     destroy_world(world_ptr as *mut WorldState);
 }
 
-#[derive(Debug, Component, Clone, Copy)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32,
-}
-
-// External declarations for libc functions from libc.a
-// extern "C" {
-//     fn malloc(size: usize) -> *mut c_void;
-//     fn free(ptr: *mut c_void);
-//     fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
-//     fn calloc(count: usize, size: usize) -> *mut c_void;
-// }
-
-// External declarations for JavaScript console functions (for debugging)
-#[cfg(target_arch = "wasm32")]
-extern "C" {
-    fn console_log(ptr: *const u8, len: usize);
-    fn console_error(ptr: *const u8, len: usize);
-    fn debug_trace(value: i32);
-}
-
-// Helper functions for debugging
-#[cfg(target_arch = "wasm32")]
-fn js_log(msg: &str) {
-    unsafe {
-        console_log(msg.as_ptr(), msg.len());
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn js_log(msg: &str) {
-    println!("[JS_LOG] {}", msg);
-}
-
-#[cfg(target_arch = "wasm32")]
-fn js_error(msg: &str) {
-    unsafe {
-        console_error(msg.as_ptr(), msg.len());
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn js_error(msg: &str) {
-    eprintln!("[JS_ERROR] {}", msg);
-}
-
-#[cfg(target_arch = "wasm32")]
-fn js_trace(value: i32) {
-    unsafe {
-        debug_trace(value);
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn js_trace(value: i32) {
-    println!("[JS_TRACE] {}", value);
-}
-
-// WASM-compatible OS API implementations with correct signatures
+// WASM-compatible OS API implementations
 unsafe extern "C" fn wasm_malloc(size: ecs_size_t) -> *mut c_void {
     malloc(size as usize)
 }
@@ -141,13 +70,7 @@ unsafe extern "C" fn wasm_get_time(time_out: *mut ecs_time_t) {
 }
 
 unsafe extern "C" fn wasm_abort() {
-    // Log detailed abort information to JavaScript console
-    js_error("WASM ABORT TRIGGERED!");
-    js_error("This abort was called from within Flecs C code");
-    js_error("Most likely cause: frame/timing system incompatibility with WASM");
-
-    // Call the panic with a more specific message
-    panic!("Flecs internal abort - check JavaScript console for details");
+    panic!("Flecs internal abort called");
 }
 
 unsafe extern "C" fn wasm_log(
@@ -156,23 +79,11 @@ unsafe extern "C" fn wasm_log(
     _line: c_int,
     _msg: *const c_char,
 ) {
-    // // Convert the C string to a Rust string and log it
-    // if !_msg.is_null() {
-    //     let c_str = std::ffi::CStr::from_ptr(_msg);
-    //     if let Ok(rust_str) = c_str.to_str() {
-    //         js_log(&format!("[FLECS] {}", rust_str));
-    //     }
-    // }
+    // No-op for minimal implementation
 }
 
-unsafe extern "C" fn wasm_sleep(sec: i32, nanosec: i32) {
+unsafe extern "C" fn wasm_sleep(_sec: i32, _nanosec: i32) {
     // No-op for WASM - we can't actually sleep in single-threaded WASM
-    // But we need to provide this function for ecs_os_has_time() to return true
-    let total_ms = (sec as f64) * 1000.0 + (nanosec as f64) / 1_000_000.0;
-    js_log(&format!(
-        "WASM sleep called with {}s, {}ns (total: {:.2}ms, no-op)",
-        sec, nanosec, total_ms
-    ));
 }
 
 // Threading and synchronization stubs for WASM (single-threaded environment)
@@ -322,26 +233,7 @@ fn setup_wasm_os_api() {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn test_progress() -> i32 {
-    setup_wasm_os_api();
-
-    let world = World::new();
-
-    let e = world.entity().set(Position { x: 10, y: 10 });
-
-    world.system::<&mut Position>().each(|pos| {
-        pos.x += 1;
-        pos.y += 1;
-    });
-
-    world.progress();
-
-    let pos = e.cloned::<&Position>();
-    pos.x
-}
-
-// Create a new world and return its pointer along with the entity ID
+// Create a new world and return its pointer
 #[no_mangle]
 pub extern "C" fn create_world() -> *mut WorldState {
     setup_wasm_os_api();
@@ -350,7 +242,7 @@ pub extern "C" fn create_world() -> *mut WorldState {
     let entity = world.entity().set(Position { x: 10, y: 10 });
     let entity_id = entity.id();
 
-    // Set up the system
+    // Set up a simple system that increments position
     world.system::<&mut Position>().each(|pos| {
         pos.x += 1;
         pos.y += 1;
