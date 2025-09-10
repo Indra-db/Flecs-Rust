@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 # Use the local flecs_ecs crate from the workspace
 flecs_ecs = { path = "../../flecs_ecs", default-features = false }
-wasm-bindgen = "0.2"
+#wasm-bindgen = "0.2"
 
 [features]
 # Keep this crate lean; opt-in to features explicitly
