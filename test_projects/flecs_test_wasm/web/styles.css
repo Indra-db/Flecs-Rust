@@ -1,0 +1,243 @@
+/* styling for the Flecs ECS WASM demo */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+main {
+    padding: 20px 30px;
+}
+
+/* Main layout - side by side */
+.main-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 30px;
+    margin-bottom: 25px;
+    align-items: start;
+}
+
+section {
+    margin-bottom: 0;
+}
+
+h2 {
+    color: #4a5568;
+    font-size: 1.1rem;
+    margin: 0 0 12px 0;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+/* Controls Section */
+.button-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.button-row {
+    display: flex;
+    gap: 6px;
+}
+
+.half-width {
+    flex: 1;
+}
+
+button {
+    background: #4299e1;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+button:hover:not(:disabled) {
+    background: #3182ce;
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Specific button colors */
+#createBtn {
+    background: #48bb78;
+}
+
+#createBtn:hover:not(:disabled) {
+    background: #38a169;
+}
+
+#destroyBtn {
+    background: #f56565;
+}
+
+#destroyBtn:hover:not(:disabled) {
+    background: #e53e3e;
+}
+
+/* Status Section */
+.status-table {
+    background: #f7fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.status-row:last-child {
+    border-bottom: none;
+}
+
+.status-row:nth-child(even) {
+    background: #edf2f7;
+}
+
+.label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.value {
+    font-family: 'Courier New', monospace;
+    color: #2d3748;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Log Section */
+.log {
+    margin-top: 25px;
+}
+
+#logContainer {
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 15px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #2d3748;
+}
+
+.log-entry {
+    margin-bottom: 6px;
+    padding: 2px 0;
+}
+
+.log-timestamp {
+    color: #a0aec0;
+    margin-right: 8px;
+}
+
+.log-success {
+    color: #68d391;
+}
+
+.log-error {
+    color: #fc8181;
+}
+
+.log-warning {
+    color: #f6e05e;
+}
+
+/* Responsive design */
+@media (max-width: 700px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        border-radius: 6px;
+    }
+    
+    header {
+        padding: 20px;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    main {
+        padding: 15px 20px;
+    }
+    
+    .main-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .button-column {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    button {
+        flex: 1;
+        min-width: 120px;
+    }
+}

@@ -28,14 +28,26 @@ args = ["./web/run.js"]
 workspace = false
 
 [tasks.serve-web]
-description = "Build WASM and serve the web demo on localhost"
-dependencies = ["build-wasm"]
+description = "Build with wasm-bindgen and serve the clean demo"
+dependencies = ["build-bindgen"]
 script = [
-  'echo "🦀 Flecs ECS WASM Demo"',
-  'echo "Building and serving web demo..."',
-  'cp ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm web/',
-  'echo "✅ WASM file copied to web/ directory"',
-  'echo "🌐 Open http://localhost:8000/web/ in your browser"',
-  'python3 -m http.server 8000'
+  'echo "🦀 Flecs ECS + WASM Demo"',
+  'echo "✅ Built with wasm-bindgen"',
+  'echo "🌐 Open http://localhost:8002/web/demo.html in your browser"',
+  'echo "📖 Or try http://localhost:8002/web/index.html for the full demo"',
+  'echo "🚀 Starting server..."',
+  'python3 -m http.server 8002'
+]
+workspace = false
+
+[tasks.demo]
+description = "Build and serve the clean learning demo"
+dependencies = ["build-bindgen"]
+script = [
+  'echo "📚 Flecs ECS Learning Demo"',
+  'echo "✅ Built with wasm-bindgen for wasm32-unknown-unknown"',
+  'echo "🎯 Clean demo: http://localhost:8002/web/demo.html"',
+  'echo "🚀 Starting server..."',
+  'python3 -m http.server 8002'
 ]
 workspace = false
