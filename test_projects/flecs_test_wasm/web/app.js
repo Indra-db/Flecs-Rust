@@ -11,6 +11,7 @@ let progressCount = 0;
 let autoProgressInterval = null;
 let isAutoProgressing = false;
 let triangleRenderer = null;
+let progressLogEntry = null; // Track the progress log entry for inline updates
 
 // DOM elements
 const elements = {
@@ -83,6 +84,9 @@ async function createWorld() {
     try {
         log('Creating new Flecs world...', 'info');
         
+        // Clear any existing progress log entry
+        progressLogEntry = null;
+        
         // Create a new world instance
         worldState = new window.WorldState();
         progressCount = 0;
@@ -124,7 +128,8 @@ function progressWorld() {
         // Get updated position
         const position = worldState.get_position();
         
-        log(`⏭️ World progressed! Position: (${position.x}, ${position.y}) [Frame ${progressCount}]`, 'success');
+        // Use inline logging for progress updates
+        logInline(`⏭️ World progressed! Position: (${position.x}, ${position.y}) [Frame ${progressCount}]`, 'success');
         updateUI();
         
     } catch (error) {
@@ -166,6 +171,12 @@ function destroyWorld() {
         // Stop auto progress if running
         if (isAutoProgressing) {
             toggleAutoProgress();
+        }
+        
+        // Clear progress log entry
+        if (progressLogEntry) {
+            progressLogEntry.remove();
+            progressLogEntry = null;
         }
         
         // Clean up renderer
@@ -271,6 +282,33 @@ function log(message, type = 'info') {
     while (elements.logContainer.children.length > 50) {
         elements.logContainer.removeChild(elements.logContainer.firstChild);
     }
+}
+
+/**
+ * Add or update an inline log entry (for frequently updating messages)
+ * @param {string} message - The message to log
+ * @param {string} type - The type of message ('info', 'success', 'error', 'warning')
+ */
+function logInline(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    
+    // If we don't have a progress log entry, create one
+    if (!progressLogEntry) {
+        progressLogEntry = document.createElement('div');
+        progressLogEntry.className = `log-entry log-${type}`;
+        elements.logContainer.appendChild(progressLogEntry);
+    } else {
+        // Update the class in case the type changed
+        progressLogEntry.className = `log-entry log-${type}`;
+    }
+    
+    // Update the content
+    progressLogEntry.innerHTML = `
+        <span class="log-timestamp">[${timestamp}]</span>
+        <span class="log-message">${message}</span>
+    `;
+    
+    elements.logContainer.scrollTop = elements.logContainer.scrollHeight;
 }
 
 /**
