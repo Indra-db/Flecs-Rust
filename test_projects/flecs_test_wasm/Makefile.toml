@@ -12,7 +12,7 @@ workspace = false
 
 [tasks.serve]
 description = "Build with wasm-bindgen and serve the clean demo"
-dependencies = ["build"]
+dependencies = ["build-wasm"]
 script = [
   'echo "🦀 Flecs ECS + WASM Demo"',
   'echo "✅ Built with wasm-bindgen"',

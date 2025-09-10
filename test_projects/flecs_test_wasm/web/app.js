@@ -10,6 +10,7 @@ let worldState = null;
 let progressCount = 0;
 let autoProgressInterval = null;
 let isAutoProgressing = false;
+let triangleRenderer = null;
 
 // DOM elements
 const elements = {
@@ -18,6 +19,7 @@ const elements = {
     positionBtn: null,
     destroyBtn: null,
     autoProgressBtn: null,
+    triangleCanvas: null,
     wasmStatus: null,
     worldStatus: null,
     positionDisplay: null,
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.positionBtn = document.getElementById('positionBtn');
     elements.destroyBtn = document.getElementById('destroyBtn');
     elements.autoProgressBtn = document.getElementById('autoProgressBtn');
+    elements.triangleCanvas = document.getElementById('triangleCanvas');
     elements.wasmStatus = document.getElementById('wasmStatus');
     elements.worldStatus = document.getElementById('worldStatus');
     elements.positionDisplay = document.getElementById('positionDisplay');
@@ -53,7 +56,7 @@ async function loadWasmModule() {
         log('Loading WASM module...', 'info');
         
         // Import the wasm-bindgen generated module
-        const { default: init, WorldState, Position } = await import('./pkg/flecs_test_wasm.js');
+        const { default: init, WorldState, Position, TriangleRenderer } = await import('./pkg/flecs_test_wasm.js');
         
         // Initialize the WASM module
         await init();
@@ -61,6 +64,7 @@ async function loadWasmModule() {
         // Store classes globally for use in other functions
         window.WorldState = WorldState;
         window.Position = Position;
+        window.TriangleRenderer = TriangleRenderer;
         
         log('✅ WASM module loaded successfully!', 'success');
         elements.wasmStatus.textContent = 'Ready';
@@ -75,7 +79,7 @@ async function loadWasmModule() {
 /**
  * Create a new Flecs world with a simple ECS setup
  */
-function createWorld() {
+async function createWorld() {
     try {
         log('Creating new Flecs world...', 'info');
         
@@ -83,12 +87,20 @@ function createWorld() {
         worldState = new window.WorldState();
         progressCount = 0;
         
+        // Initialize renderer automatically
+        await initRenderer();
+        
         // Update UI state
         updateUI();
         
         // Get initial position
         const position = worldState.get_position();
         log(`✅ World created! Initial position: (${position.x}, ${position.y})`, 'success');
+        
+        // Start auto-rendering if renderer is ready
+        if (triangleRenderer) {
+            startAutoRender();
+        }
         
     } catch (error) {
         log(`❌ Error creating world: ${error.message}`, 'error');
@@ -156,6 +168,13 @@ function destroyWorld() {
             toggleAutoProgress();
         }
         
+        // Clean up renderer
+        if (triangleRenderer) {
+            triangleRenderer.free();
+            triangleRenderer = null;
+            log('🎨 Renderer cleaned up', 'info');
+        }
+        
         // Free the world resources
         worldState.free();
         worldState = null;
@@ -190,11 +209,11 @@ function toggleAutoProgress() {
         // Start auto progress
         autoProgressInterval = setInterval(() => {
             progressWorld();
-        }, 600); // Progress every 600ms
+        }, 50); // Progress every 50ms
         isAutoProgressing = true;
         elements.autoProgressBtn.textContent = 'Stop Auto';
         elements.progressBtn.disabled = true;
-        log('▶️ Auto progress started (600ms interval)', 'success');
+        log('▶️ Auto progress started (50ms interval)', 'success');
     }
     
     updateUI();
@@ -251,5 +270,72 @@ function log(message, type = 'info') {
     // Keep only the last 50 log entries
     while (elements.logContainer.children.length > 50) {
         elements.logContainer.removeChild(elements.logContainer.firstChild);
+    }
+}
+
+/**
+ * Initialize the triangle renderer
+ */
+async function initRenderer() {
+    try {
+        log('Initializing triangle renderer...', 'info');
+        
+        if (!window.TriangleRenderer) {
+            log('❌ TriangleRenderer not available', 'error');
+            return;
+        }
+        
+        triangleRenderer = await new window.TriangleRenderer(elements.triangleCanvas);
+        
+        log('✅ Triangle renderer initialized!', 'success');
+        elements.renderBtn.disabled = false;
+        
+        // Start auto-rendering if we have a world
+        if (worldState) {
+            startAutoRender();
+        }
+        
+    } catch (error) {
+        log(`❌ Failed to initialize renderer: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Render a single frame of the triangle
+ */
+function renderTriangle() {
+    if (!triangleRenderer) {
+        log('❌ Renderer not initialized', 'error');
+        return;
+    }
+    
+    try {
+        // Update triangle position from ECS if world exists
+        if (worldState) {
+            const position = worldState.get_position();
+            triangleRenderer.update_position(position.x, position.y);
+        }
+        
+        triangleRenderer.render();
+        
+    } catch (error) {
+        log(`❌ Error rendering triangle: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Start automatic rendering loop
+ */
+function startAutoRender() {
+    if (triangleRenderer && worldState) {
+        // Render every frame
+        const renderLoop = () => {
+            if (triangleRenderer && worldState) {
+                renderTriangle();
+                requestAnimationFrame(renderLoop);
+            }
+        };
+        requestAnimationFrame(renderLoop);
+        log('🎬 Auto-rendering started!', 'info');
     }
 }

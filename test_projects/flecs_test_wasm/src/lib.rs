@@ -1,7 +1,10 @@
 use flecs_ecs::prelude::*;
 use wasm_bindgen::prelude::*;
 
+mod triangle_renderer;
 mod wasm_os_api;
+
+pub use triangle_renderer::TriangleRenderer;
 use wasm_os_api::setup_wasm_os_api;
 
 #[wasm_bindgen]
@@ -26,13 +29,21 @@ impl WorldState {
         setup_wasm_os_api();
 
         let world = World::new();
-        let entity = world.entity().set(Position { x: 10, y: 10 });
+        // Start at bottom left: x = -50 (left side), y = -30 (bottom)
+        let entity = world.entity().set(Position { x: -50, y: -30 });
         let entity_id = entity.id();
 
-        // Set up a simple system that increments position
+        // Set up a system that moves the triangle from left to right
         world.system::<&mut Position>().each(|pos| {
-            pos.x += 1;
-            pos.y += 2;
+            pos.x += 1; // Move right
+            pos.y += 1;
+
+            // Reset to left when reaching right side (x = 50)
+            if pos.x > 50 {
+                pos.x = -50;
+                pos.y = -30;
+            }
+            // Keep y constant at bottom
         });
 
         WorldState { world, entity_id }

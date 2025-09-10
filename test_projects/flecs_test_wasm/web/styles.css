@@ -164,6 +164,27 @@ button:active:not(:disabled) {
     font-weight: 500;
 }
 
+/* Canvas Section */
+.canvas-section {
+    margin-top: 25px;
+}
+
+.canvas-container {
+    text-align: center;
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+#triangleCanvas {
+    border: 2px solid #4299e1;
+    border-radius: 6px;
+    background-color: #1a202c;
+    display: block;
+    margin: 0 auto;
+}
+
 /* Log Section */
 .log {
     margin-top: 25px;
