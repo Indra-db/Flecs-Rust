@@ -417,6 +417,15 @@ fn main() {
         let target = env::var("TARGET").unwrap_or_default();
         if target == "wasm32-unknown-unknown" {
             let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
+            // Expose root & include paths to dependent build scripts (e.g. flecs_ecs_sys)
+            println!("cargo:root={}", crate_root);
+            println!("cargo:include_custom_headers={}/src/custom_headers", crate_root);
+            println!("cargo:include_generated_headers={}/src/generated_headers", crate_root);
+            println!("cargo:include_musl_top={}/src/libc-top-half/musl/include", crate_root);
+            println!("cargo:include_musl_arch={}/src/libc-top-half/musl/arch/wasm32", crate_root);
+            println!("cargo:include_top_half_headers={}/src/libc-top-half/headers", crate_root);
+            // Signal consumers to use upstream musl style (avoids __struct_* split headers)
+            println!("cargo:wasilibc_upstream=1");
             let lib_path = PathBuf::from(&crate_root)
                 .join("lib")
                 .join("libwasm32_musl_libc.a");

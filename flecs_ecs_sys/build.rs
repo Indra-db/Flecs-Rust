@@ -265,11 +265,32 @@ fn main() {
             // Add WASM-specific stub file
             build.file("src/wasm_stubs.c");
 
-            // For WASM targets, we rely on the wasm32-musl-libc crate to provide
-            // the necessary libc headers and linking. The crate handles header
-            // detection and provides the appropriate include paths automatically.
+            // Include paths from dependency metadata (exported by wasm32-musl-libc)
+            build.include("src");
+            if let Ok(root) = std::env::var("DEP_WASM32_MUSL_LIBC_ROOT") {
+        println!("cargo:warning=wasm32-musl-libc root: {}", root);
+                for key in [
+                    "INCLUDE_CUSTOM_HEADERS",
+                    "INCLUDE_GENERATED_HEADERS",
+                    "INCLUDE_MUSL_TOP",
+                    "INCLUDE_MUSL_ARCH",
+                    "INCLUDE_TOP_HALF_HEADERS",
+                ] {
+                    let var = format!("DEP_WASM32_MUSL_LIBC_{}", key);
+                    if let Ok(val) = std::env::var(&var) {
+            println!("cargo:warning=adding include from metadata {} => {}", var, val);
+                        build.include(val);
+                    }
+                }
+        // Always add expected musl include directories as fallback even if metadata missing
+        build.include(format!("{}/src", root));
+        build.include(format!("{}/src/libc-top-half/musl/include", root));
+        build.include(format!("{}/src/libc-top-half/musl/arch/wasm32", root));
+        build.include(format!("{}/src/libc-top-half/headers", root));
+            }
+
+            // Compiler / feature flags
             build
-                .include("src") // Always include src for our custom headers
                 .flag("-ffreestanding")
                 .flag("-fno-exceptions")
                 .flag("-fno-unwind-tables")
@@ -279,8 +300,15 @@ fn main() {
                 .define("__wasi__", None)
                 .define("_WASI_EMULATED_MMAN", None)
                 .define("_WASI_EMULATED_SIGNAL", None)
-                .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
-                // Provide missing safe string functions as macros
+                .define("_WASI_EMULATED_PROCESS_CLOCKS", None);
+
+            // If dependency signaled upstream musl mode, propagate macro here (control lives in wasm32-musl-libc)
+            if std::env::var("DEP_WASM32_MUSL_LIBC_WASILIBC_UPSTREAM").is_ok() {
+                build.define("__wasilibc_unmodified_upstream", None);
+            }
+
+            // Provide missing safe string functions as macros
+            build
                 .define("strcpy_s(dst, dsz, src)", "strcpy(dst, src)")
                 .define("strcat_s(dst, dsz, src)", "strcat(dst, src)")
                 .define("strncpy_s(dst, dsz, src, cnt)", "strncpy(dst, src, cnt)")
@@ -369,10 +397,9 @@ fn main() {
                 .define("flto", None);
         }
 
-        #[cfg(feature = "use_os_alloc")]
-        {
-            build.define("FLECS_USE_OS_ALLOC", None);
-        }
+    // Map `flecs_use_os_alloc` feature
+    #[cfg(feature = "flecs_use_os_alloc")]
+    build.define("FLECS_USE_OS_ALLOC", None);
 
         #[cfg(feature = "flecs_force_enable_ecs_asserts")]
         {
