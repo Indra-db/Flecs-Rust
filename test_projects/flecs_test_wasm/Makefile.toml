@@ -1,17 +1,7 @@
 [env]
-CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = false
 
-# Build flecs_ecs with wasm feature set, then this crate for wasm target
 [tasks.build-wasm]
-description = "Build flecs_test_wasm for wasm32-unknown-unknown"
-script = [
-  'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
-  'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_use_os_alloc"',
-]
-workspace = false 
-
-# Build with wasm-bindgen for enhanced web integration
-[tasks.build-bindgen]
 description = "Build flecs_test_wasm with wasm-bindgen bindings"
 script = [
   'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32"',
@@ -20,34 +10,14 @@ script = [
 ]
 workspace = false
 
-[tasks.run-wasm]
-description = "Run the built wasm module via Node script"
-dependencies = ["build-wasm"]
-command = "node"
-args = ["./web/run.js"]
-workspace = false
-
-[tasks.serve-web]
+[tasks.serve]
 description = "Build with wasm-bindgen and serve the clean demo"
-dependencies = ["build-bindgen"]
+dependencies = ["build"]
 script = [
   'echo "🦀 Flecs ECS + WASM Demo"',
   'echo "✅ Built with wasm-bindgen"',
-  'echo "🌐 Open http://localhost:8002/web/demo.html in your browser"',
-  'echo "📖 Or try http://localhost:8002/web/index.html for the full demo"',
-  'echo "🚀 Starting server..."',
-  'python3 -m http.server 8002'
-]
-workspace = false
-
-[tasks.demo]
-description = "Build and serve the clean learning demo"
-dependencies = ["build-bindgen"]
-script = [
-  'echo "📚 Flecs ECS Learning Demo"',
-  'echo "✅ Built with wasm-bindgen for wasm32-unknown-unknown"',
-  'echo "🎯 Clean demo: http://localhost:8002/web/demo.html"',
-  'echo "🚀 Starting server..."',
-  'python3 -m http.server 8002'
+  'echo "🌐 Open http://localhost:8000/web/demo.html in your browser"',
+  'echo " Starting server..."',
+  'python3 -m http.server 8000'
 ]
 workspace = false
