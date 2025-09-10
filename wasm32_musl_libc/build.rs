@@ -368,6 +368,7 @@ fn build_libc() {
         "src/libc-top-half/musl/src/string/memset.c",
         "src/libc-top-half/musl/src/string/memcmp.c",
         "src/libc-top-half/musl/src/string/memchr.c",
+        "src/libc-top-half/musl/src/string/memrchr.c",
         "src/libc-top-half/musl/src/string/strlen.c",
         "src/libc-top-half/musl/src/string/strcmp.c",
         "src/libc-top-half/musl/src/exit/assert.c",
