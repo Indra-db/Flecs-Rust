@@ -338,6 +338,7 @@ fn build_libc() {
         .include("src/custom_headers")
         .include("src/generated_headers")
         .include("src/libc-top-half/musl/include")
+        .include("src/libc-top-half/musl/src/include")
         .include("src/libc-top-half/musl/arch/wasm32")
         .include("src/libc-top-half/headers")
         .include("src/libc-top-half/musl/src/internal")
@@ -369,8 +370,10 @@ fn build_libc() {
         "src/libc-top-half/musl/src/string/memchr.c",
         "src/libc-top-half/musl/src/string/strlen.c",
         "src/libc-top-half/musl/src/string/strcmp.c",
-        // Note: malloc/free functions require syscalls not available in WASM
-        // Users needing memory allocation should use Rust's allocator or wee_alloc
+        "src/libc-top-half/musl/src/exit/assert.c",
+        "src/libc-top-half/musl/src/string/strncmp.c",
+        "src/libc-top-half/musl/src/ctype/isupper.c",
+        "src/wasm_stubs.c", // WASM-specific stub implementations
     ];
 
     for file in &core_files {
