@@ -419,11 +419,45 @@ fn main() {
             let crate_root = env::var("CARGO_MANIFEST_DIR").unwrap();
             // Expose root & include paths to dependent build scripts (e.g. flecs_ecs_sys)
             println!("cargo:root={}", crate_root);
-            println!("cargo:include_custom_headers={}/src/custom_headers", crate_root);
-            println!("cargo:include_generated_headers={}/src/generated_headers", crate_root);
-            println!("cargo:include_musl_top={}/src/libc-top-half/musl/include", crate_root);
-            println!("cargo:include_musl_arch={}/src/libc-top-half/musl/arch/wasm32", crate_root);
-            println!("cargo:include_top_half_headers={}/src/libc-top-half/headers", crate_root);
+            println!(
+                "cargo:include_custom_headers={}/src/custom_headers",
+                crate_root
+            );
+            println!(
+                "cargo:include_generated_headers={}/src/generated_headers",
+                crate_root
+            );
+            println!(
+                "cargo:include_musl_top={}/src/libc-top-half/musl/include",
+                crate_root
+            );
+            println!(
+                "cargo:include_musl_arch={}/src/libc-top-half/musl/arch/wasm32",
+                crate_root
+            );
+            println!(
+                "cargo:include_top_half_headers={}/src/libc-top-half/headers",
+                crate_root
+            );
+            // Aggregate include search path list (':' separated) for convenience
+            println!(
+                "cargo:include_paths={}:{}:{}:{}:{}",
+                format!("{}/src/custom_headers", crate_root),
+                format!("{}/src/generated_headers", crate_root),
+                format!("{}/src/libc-top-half/musl/include", crate_root),
+                format!("{}/src/libc-top-half/musl/arch/wasm32", crate_root),
+                format!("{}/src/libc-top-half/headers", crate_root),
+            );
+            // Provide canonical DEP style vars (Cargo uppercases key after links name)
+            println!(
+                "cargo:rustc-env=DEP_WASM32_MUSL_LIBC_INCLUDE_PATHS={}:{}:{}:{}:{}",
+                format!("{}/src/custom_headers", crate_root),
+                format!("{}/src/generated_headers", crate_root),
+                format!("{}/src/libc-top-half/musl/include", crate_root),
+                format!("{}/src/libc-top-half/musl/arch/wasm32", crate_root),
+                format!("{}/src/libc-top-half/headers", crate_root),
+            );
+            println!("cargo:rustc-env=DEP_WASM32_MUSL_LIBC_WASILIBC_UPSTREAM=1");
             // Signal consumers to use upstream musl style (avoids __struct_* split headers)
             println!("cargo:wasilibc_upstream=1");
             let lib_path = PathBuf::from(&crate_root)
