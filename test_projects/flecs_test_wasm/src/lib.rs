@@ -4,7 +4,7 @@ use flecs_ecs::sys::*;
 use std::ffi::c_void;
 use std::os::raw::{c_char, c_int};
 
-//use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::*;
 
 // Function that calls C's strlen
 extern "C" fn calls_strlen(s: *const c_char) -> usize {
@@ -18,10 +18,31 @@ pub extern "C" fn get_string_length(s: *const c_char) -> usize {
 }
 
 // Test function that creates a test string and calls get_string_length
-//#[wasm_bindgen]
+#[wasm_bindgen]
 pub fn test_string_length() -> usize {
     let test_str = b"Hello, WASM!\0";
     get_string_length(test_str.as_ptr() as *const c_char)
+}
+
+// Wasm-bindgen exports for Flecs functions
+#[wasm_bindgen]
+pub fn wasm_create_world() -> u32 {
+    create_world() as u32
+}
+
+#[wasm_bindgen]
+pub fn wasm_progress_world(world_ptr: u32) {
+    progress_world_ptr(world_ptr as *mut WorldState);
+}
+
+#[wasm_bindgen]
+pub fn wasm_get_pos_x(world_ptr: u32) -> i32 {
+    get_pos_x(world_ptr as *mut WorldState)
+}
+
+#[wasm_bindgen]
+pub fn wasm_destroy_world(world_ptr: u32) {
+    destroy_world(world_ptr as *mut WorldState);
 }
 
 #[derive(Debug, Component, Clone, Copy)]
