@@ -371,8 +371,21 @@ fn build_libc() {
         "src/libc-top-half/musl/src/string/strlen.c",
         "src/libc-top-half/musl/src/string/strcmp.c",
         "src/libc-top-half/musl/src/exit/assert.c",
+        "src/libc-top-half/musl/src/string/stpcpy.c",
+        "src/libc-top-half/musl/src/string/strcat.c",
         "src/libc-top-half/musl/src/string/strncmp.c",
+        "src/libc-top-half/musl/src/string/strchr.c",
+        "src/libc-top-half/musl/src/string/strcpy.c",
+        "src/libc-top-half/musl/src/string/strncpy.c",
+        "src/libc-top-half/musl/src/string/strrchr.c",
+        "src/libc-top-half/musl/src/string/strstr.c",
+        "src/libc-top-half/musl/src/string/strchrnul.c",
+        "src/libc-top-half/musl/src/string/stpncpy.c",
         "src/libc-top-half/musl/src/ctype/isupper.c",
+        "src/libc-top-half/musl/src/ctype/isdigit.c",
+        "src/libc-top-half/musl/src/ctype/tolower.c",
+        "src/libc-top-half/musl/src/stdlib/atoll.c",
+        "src/libc-top-half/musl/src/time/time.c",
         "src/wasm_stubs.c", // WASM-specific stub implementations
     ];
 
