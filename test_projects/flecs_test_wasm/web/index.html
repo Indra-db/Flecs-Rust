@@ -235,7 +235,7 @@
     </div>
 
     <script>
-        let worldPtr = null;
+        let worldState = null;
         let autoProgressInterval = null;
         let progressCount = 0;
 
@@ -270,12 +270,12 @@
                 '<span class="status-badge loading">Loading</span>';
                 
             // Update world status
-            document.getElementById('worldStatusCell').innerHTML = worldPtr ? 
+            document.getElementById('worldStatusCell').innerHTML = worldState ? 
                 '<span class="status-badge active">Active</span>' : 
                 '<span class="status-badge inactive">Not Created</span>';
                 
             // Update world pointer
-            document.getElementById('worldPointer').textContent = worldPtr || '--';
+            document.getElementById('worldPointer').textContent = worldState ? 'Active' : '--';
             
             // Update progress count
             document.getElementById('progressCounter').textContent = progressCount;
@@ -286,12 +286,16 @@
                 '<span class="status-badge inactive">Stopped</span>';
         }
 
-        function updatePositionDisplay(x) {
-            document.getElementById('currentPosition').textContent = x;
+        function updatePositionDisplay(x, y) {
+            if (typeof x === 'string') {
+                document.getElementById('currentPosition').textContent = x;
+            } else {
+                document.getElementById('currentPosition').textContent = `(${x}, ${y})`;
+            }
         }
 
         function updateButtonStates() {
-            const hasWorld = worldPtr !== null;
+            const hasWorld = worldState !== null;
             const hasWasm = window.wasmBindgenFunctions !== undefined;
             
             document.getElementById('createWorldBtn').disabled = hasWorld || !hasWasm;
@@ -309,29 +313,22 @@
                 log('Loading WASM module...');
                 updateStatusTable();
                 
-                // Load wasm-bindgen module with all functions
+                // Load wasm-bindgen module with classes
                 const { 
                     default: init, 
-                    test_string_length, 
-                    wasm_create_world, 
-                    wasm_progress_world, 
-                    wasm_get_pos_x, 
-                    wasm_destroy_world 
+                    WorldState,
+                    Position
                 } = await import('./pkg/flecs_test_wasm.js');
                 
                 await init();
                 
-                // Store all wasm-bindgen functions
-                window.wasmBindgenFunctions = { 
-                    test_string_length, 
-                    wasm_create_world, 
-                    wasm_progress_world, 
-                    wasm_get_pos_x, 
-                    wasm_destroy_world 
-                };
+                // Store classes globally
+                window.WorldState = WorldState;
+                window.Position = Position;
+                window.wasmBindgenFunctions = { WorldState, Position };
                 
                 log('✅ WASM module loaded successfully!', 'success');
-                log('✅ All wasm-bindgen functions available!', 'success');
+                log('✅ WorldState and Position classes available!', 'success');
                 
                 // Update button states now that WASM is loaded
                 updateButtonStates();
@@ -343,24 +340,22 @@
         }
 
         function createWorld() {
-            if (!window.wasmBindgenFunctions) {
+            if (!window.WorldState) {
                 log('❌ WASM module not loaded yet', 'error');
                 return;
             }
 
             try {
                 log('🌍 Creating new Flecs world...');
-                worldPtr = window.wasmBindgenFunctions.wasm_create_world();
+                
+                // Create a new WorldState instance
+                worldState = new window.WorldState();
                 progressCount = 0;
                 
-                if (worldPtr !== 0) {
-                    log(`✅ World created successfully! Pointer: ${worldPtr}`, 'success');
-                    
-                    // Get initial position
-                    getPosition();
-                } else {
-                    log('❌ Failed to create world (returned null pointer)', 'error');
-                }
+                log('✅ World created successfully!', 'success');
+                
+                // Get initial position
+                getPosition();
                 
                 updateButtonStates();
                 
@@ -371,37 +366,41 @@
         }
 
         function getPosition() {
-            if (!worldPtr) {
+            if (!worldState) {
                 log('❌ No world exists', 'error');
                 return;
             }
 
             try {
-                const x = window.wasmBindgenFunctions.wasm_get_pos_x(worldPtr);
-                log(`📍 Current position X: ${x}`);
-                updatePositionDisplay(x);
-                return x;
+                const x = worldState.get_position_x();
+                const y = worldState.get_position_y();
+                log(`📍 Current position: (${x}, ${y})`);
+                updatePositionDisplay(x, y);
+                return { x, y };
             } catch (error) {
                 log(`❌ Error getting position: ${error.message}`, 'error');
             }
         }
 
         function progressWorld() {
-            if (!worldPtr) {
+            if (!worldState) {
                 log('❌ No world exists', 'error');
                 return;
             }
 
             try {
-                // Call progress function (returns void)
-                window.wasmBindgenFunctions.wasm_progress_world(worldPtr);
-                // Then get the current position
-                const x = window.wasmBindgenFunctions.wasm_get_pos_x(worldPtr);
+                // Progress the world simulation
+                worldState.progress();
+                
+                // Get the updated position
+                const x = worldState.get_position_x();
+                const y = worldState.get_position_y();
+                
                 progressCount++;
-                log(`⏭️ World progressed! Position X: ${x} (progress #${progressCount})`, 'success');
-                updatePositionDisplay(x);
+                log(`⏭️ World progressed! Position: (${x}, ${y}) (progress #${progressCount})`, 'success');
+                updatePositionDisplay(x, y);
                 updateStatusTable();
-                return x;
+                return { x, y };
             } catch (error) {
                 log(`❌ Error progressing world: ${error.message}`, 'error');
             }
@@ -415,19 +414,21 @@
         }
 
         function destroyWorld() {
-            if (!worldPtr) {
+            if (!worldState) {
                 log('❌ No world exists', 'error');
                 return;
             }
 
             try {
                 log('💥 Destroying world...');
-                window.wasmBindgenFunctions.wasm_destroy_world(worldPtr);
-                log('✅ World destroyed successfully!', 'success');
                 
-                worldPtr = null;
+                // Free the WorldState object (wasm-bindgen handles cleanup)
+                worldState.free();
+                worldState = null;
                 progressCount = 0;
-                updatePositionDisplay('--');
+                
+                log('✅ World destroyed successfully!', 'success');
+                updatePositionDisplay('--', '--');
                 updateButtonStates();
                 
                 // Stop auto progress if running
@@ -443,7 +444,7 @@
         }
 
         function toggleAutoProgress() {
-            if (!worldPtr) {
+            if (!worldState) {
                 log('❌ No world exists', 'error');
                 return;
             }

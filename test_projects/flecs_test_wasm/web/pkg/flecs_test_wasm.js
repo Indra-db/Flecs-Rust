@@ -1,34 +1,142 @@
 let wasm;
 
-/**
- * @returns {number}
- */
-export function wasm_create_world() {
-    const ret = wasm.wasm_create_world();
-    return ret >>> 0;
+const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
+
+if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
+
+let cachedUint8ArrayMemory0 = null;
+
+function getUint8ArrayMemory0() {
+    if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0) {
+        cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
+    }
+    return cachedUint8ArrayMemory0;
 }
 
-/**
- * @param {number} world_ptr
- */
-export function wasm_progress_world(world_ptr) {
-    wasm.wasm_progress_world(world_ptr);
+function getStringFromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
 
-/**
- * @param {number} world_ptr
- * @returns {number}
- */
-export function wasm_get_pos_x(world_ptr) {
-    const ret = wasm.wasm_get_pos_x(world_ptr);
-    return ret;
+const PositionFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_position_free(ptr >>> 0, 1));
+
+export class Position {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Position.prototype);
+        obj.__wbg_ptr = ptr;
+        PositionFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        PositionFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_position_free(ptr, 0);
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    constructor(x, y) {
+        const ret = wasm.position_new(x, y);
+        this.__wbg_ptr = ret >>> 0;
+        PositionFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @returns {number}
+     */
+    get x() {
+        const ret = wasm.position_x(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get y() {
+        const ret = wasm.position_y(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} x
+     */
+    set x(x) {
+        wasm.position_set_x(this.__wbg_ptr, x);
+    }
+    /**
+     * @param {number} y
+     */
+    set y(y) {
+        wasm.position_set_y(this.__wbg_ptr, y);
+    }
 }
 
-/**
- * @param {number} world_ptr
- */
-export function wasm_destroy_world(world_ptr) {
-    wasm.wasm_destroy_world(world_ptr);
+const WorldStateFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_worldstate_free(ptr >>> 0, 1));
+
+export class WorldState {
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WorldStateFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_worldstate_free(ptr, 0);
+    }
+    /**
+     * Create a new world with a simple position system
+     */
+    constructor() {
+        const ret = wasm.worldstate_new();
+        this.__wbg_ptr = ret >>> 0;
+        WorldStateFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Progress the world simulation by one frame
+     */
+    progress() {
+        wasm.worldstate_progress(this.__wbg_ptr);
+    }
+    /**
+     * Get the current X position of the entity
+     * @returns {number}
+     */
+    get_position_x() {
+        const ret = wasm.worldstate_get_position_x(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Get the current Y position of the entity
+     * @returns {number}
+     */
+    get_position_y() {
+        const ret = wasm.worldstate_get_position_y(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Get the current position as a Position struct
+     * @returns {Position}
+     */
+    get_position() {
+        const ret = wasm.worldstate_get_position(this.__wbg_ptr);
+        return Position.__wrap(ret);
+    }
 }
 
 async function __wbg_load(module, imports) {
@@ -75,6 +183,9 @@ function __wbg_get_imports() {
         table.set(offset + 3, false);
         ;
     };
+    imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
+    };
 
     return imports;
 }
@@ -86,6 +197,7 @@ function __wbg_init_memory(imports, memory) {
 function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
+    cachedUint8ArrayMemory0 = null;
 
 
     wasm.__wbindgen_start();
