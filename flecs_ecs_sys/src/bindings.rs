@@ -382,6 +382,7 @@ pub const ECS_WHITE: &[u8; 8] = b"\x1B[1;37m\0";
 pub const ECS_GREY: &[u8; 8] = b"\x1B[0;37m\0";
 pub const ECS_NORMAL: &[u8; 8] = b"\x1B[0;49m\0";
 pub const ECS_BOLD: &[u8; 8] = b"\x1B[1;49m\0";
+pub const FLECS_SCRIPT_FUNCTION_ARGS_MAX: u32 = 16;
 pub const ECS_MEMBER_DESC_CACHE_SIZE: u32 = 32;
 pub const ECS_META_MAX_SCOPE_DEPTH: u32 = 32;
 #[doc = "Utility types to indicate usage as bitmask"]
@@ -5162,6 +5163,582 @@ unsafe extern "C" {
 unsafe extern "C" {
     #[doc = "System module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsSystem)\n @endcode\n\n @param world The world."]
     pub fn FlecsSystemImport(world: *mut ecs_world_t);
+}
+unsafe extern "C" {
+    pub static mut FLECS_IDEcsScriptID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    pub static mut EcsScriptTemplate: ecs_entity_t;
+}
+unsafe extern "C" {
+    pub static mut FLECS_IDEcsScriptTemplateID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    pub static mut FLECS_IDEcsScriptConstVarID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    pub static mut FLECS_IDEcsScriptFunctionID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    pub static mut FLECS_IDEcsScriptMethodID_: ecs_entity_t;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_template_t {
+    _unused: [u8; 0],
+}
+#[doc = "Script variable."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_var_t {
+    pub name: *const ::core::ffi::c_char,
+    pub value: ecs_value_t,
+    pub type_info: *const ecs_type_info_t,
+    pub sp: i32,
+    pub is_const: bool,
+}
+#[doc = "Script variable scope."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_vars_t {
+    pub parent: *mut ecs_script_vars_t,
+    pub sp: i32,
+    pub var_index: ecs_hashmap_t,
+    pub vars: ecs_vec_t,
+    pub world: *const ecs_world_t,
+    pub stack: *mut ecs_stack_t,
+    pub cursor: *mut ecs_stack_cursor_t,
+    pub allocator: *mut ecs_allocator_t,
+}
+#[doc = "Script object."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_t {
+    pub world: *mut ecs_world_t,
+    pub name: *const ::core::ffi::c_char,
+    pub code: *const ::core::ffi::c_char,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_runtime_t {
+    _unused: [u8; 0],
+}
+#[doc = "Script component.\n This component is added to the entities of managed scripts and templates."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScript {
+    pub filename: *mut ::core::ffi::c_char,
+    pub code: *mut ::core::ffi::c_char,
+    #[doc = "Set if script evaluation had errors"]
+    pub error: *mut ::core::ffi::c_char,
+    pub script: *mut ecs_script_t,
+    #[doc = "Only set for template scripts"]
+    pub template_: *mut ecs_script_template_t,
+}
+#[doc = "Script function context."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_function_ctx_t {
+    pub world: *mut ecs_world_t,
+    pub function: ecs_entity_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Script function callback."]
+pub type ecs_function_callback_t = ::core::option::Option<
+    unsafe extern "C" fn(
+        ctx: *const ecs_function_ctx_t,
+        argc: i32,
+        argv: *const ecs_value_t,
+        result: *mut ecs_value_t,
+    ),
+>;
+#[doc = "Function argument type."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_parameter_t {
+    pub name: *const ::core::ffi::c_char,
+    pub type_: ecs_entity_t,
+}
+#[doc = "Const component.\n This component describes a const variable that can be used from scripts."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptConstVar {
+    pub value: ecs_value_t,
+    pub type_info: *const ecs_type_info_t,
+}
+#[doc = "Function component.\n This component describes a function that can be called from a script."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptFunction {
+    pub return_type: ecs_entity_t,
+    #[doc = "vec<ecs_script_parameter_t>"]
+    pub params: ecs_vec_t,
+    pub callback: ecs_function_callback_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Method component.\n This component describes a method that can be called from a script. Methods\n are functions that can be called on instances of a type. A method entity is\n stored in the scope of the type it belongs to."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsScriptMethod {
+    pub return_type: ecs_entity_t,
+    #[doc = "vec<ecs_script_parameter_t>"]
+    pub params: ecs_vec_t,
+    pub callback: ecs_function_callback_t,
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Used with ecs_script_parse() and ecs_script_eval()"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_eval_desc_t {
+    #[doc = "< Variables used by script"]
+    pub vars: *mut ecs_script_vars_t,
+    #[doc = "< Reusable runtime (optional)"]
+    pub runtime: *mut ecs_script_runtime_t,
+}
+#[doc = "Used to capture error output from script evaluation."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_eval_result_t {
+    pub error: *mut ::core::ffi::c_char,
+}
+unsafe extern "C" {
+    #[doc = "Parse script.\n This operation parses a script and returns a script object upon success. To\n run the script, call ecs_script_eval().\n\n If the script uses outside variables, an ecs_script_vars_t object must be\n provided in the vars member of the desc object that defines all variables\n with the correct types.\n\n When the result parameter is not NULL, the script will capture errors and\n return them in the output struct. If result.error is set, it must be freed\n by the application.\n\n @param world The world.\n @param name Name of the script (typically a file/module name).\n @param code The script code.\n @param desc Parameters for script runtime.\n @param result Output of script evaluation.\n @return Script object if success, NULL if failed."]
+    pub fn ecs_script_parse(
+        world: *mut ecs_world_t,
+        name: *const ::core::ffi::c_char,
+        code: *const ::core::ffi::c_char,
+        desc: *const ecs_script_eval_desc_t,
+        result: *mut ecs_script_eval_result_t,
+    ) -> *mut ecs_script_t;
+}
+unsafe extern "C" {
+    #[doc = "Evaluate script.\n This operation evaluates (runs) a parsed script.\n\n If variables were provided to ecs_script_parse(), an application may pass\n a different ecs_script_vars_t object to ecs_script_eval(), as long as the\n object has all referenced variables and they are of the same type.\n\n When the result parameter is not NULL, the script will capture errors and\n return them in the output struct. If result.error is set, it must be freed\n by the application.\n\n @param script The script.\n @param desc Parameters for script runtime.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_script_eval(
+        script: *const ecs_script_t,
+        desc: *const ecs_script_eval_desc_t,
+        result: *mut ecs_script_eval_result_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Free script.\n This operation frees a script object.\n\n Templates created by the script rely upon resources in the script object,\n and for that reason keep the script alive until all templates created by the\n script are deleted.\n\n @param script The script."]
+    pub fn ecs_script_free(script: *mut ecs_script_t);
+}
+unsafe extern "C" {
+    #[doc = "Parse script.\n This parses a script and instantiates the entities in the world.\n This operation is the equivalent to doing:\n\n @code\n ecs_script_t *script = ecs_script_parse(world, name, code);\n ecs_script_eval(script);\n ecs_script_free(script);\n @endcode\n\n @param world The world.\n @param name The script name (typically the file).\n @param code The script.\n @return Zero if success, non-zero otherwise."]
+    pub fn ecs_script_run(
+        world: *mut ecs_world_t,
+        name: *const ::core::ffi::c_char,
+        code: *const ::core::ffi::c_char,
+        result: *mut ecs_script_eval_result_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Parse script file.\n This parses a script file and instantiates the entities in the world. This\n operation is equivalent to loading the file contents and passing it to\n ecs_script_run().\n\n @param world The world.\n @param filename The script file name.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_script_run_file(
+        world: *mut ecs_world_t,
+        filename: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Create runtime for script.\n A script runtime is a container for any data created during script\n evaluation. By default calling ecs_script_run() or ecs_script_eval() will\n create a runtime on the spot. A runtime can be created in advance and reused\n across multiple script evaluations to improve performance.\n\n When scripts are evaluated on multiple threads, each thread should have its\n own script runtime.\n\n A script runtime must be deleted with ecs_script_runtime_free().\n\n @return A new script runtime."]
+    pub fn ecs_script_runtime_new() -> *mut ecs_script_runtime_t;
+}
+unsafe extern "C" {
+    #[doc = "Free script runtime.\n This operation frees a script runtime created by ecs_script_runtime_new().\n\n @param runtime The runtime to free."]
+    pub fn ecs_script_runtime_free(runtime: *mut ecs_script_runtime_t);
+}
+unsafe extern "C" {
+    #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @param buf The buffer to write to.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_script_ast_to_buf(
+        script: *mut ecs_script_t,
+        buf: *mut ecs_strbuf_t,
+        colors: bool,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Convert script AST to string.\n This operation converts the script abstract syntax tree to a string, which\n can be used to debug a script.\n\n @param script The script.\n @return The string if success, NULL if failed."]
+    pub fn ecs_script_ast_to_str(
+        script: *mut ecs_script_t,
+        colors: bool,
+    ) -> *mut ::core::ffi::c_char;
+}
+#[doc = "Used with ecs_script_init()"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_script_desc_t {
+    #[doc = "Set to customize entity handle associated with script"]
+    pub entity: ecs_entity_t,
+    #[doc = "Set to load script from file"]
+    pub filename: *const ::core::ffi::c_char,
+    #[doc = "Set to parse script from string"]
+    pub code: *const ::core::ffi::c_char,
+}
+unsafe extern "C" {
+    #[doc = "Load managed script.\n A managed script tracks which entities it creates, and keeps those entities\n synchronized when the contents of the script are updated. When the script is\n updated, entities that are no longer in the new version will be deleted.\n\n This feature is experimental.\n\n @param world The world.\n @param desc Script descriptor."]
+    pub fn ecs_script_init(world: *mut ecs_world_t, desc: *const ecs_script_desc_t)
+    -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Update script with new code.\n\n @param world The world.\n @param script The script entity.\n @param instance An template instance (optional).\n @param code The script code."]
+    pub fn ecs_script_update(
+        world: *mut ecs_world_t,
+        script: ecs_entity_t,
+        instance: ecs_entity_t,
+        code: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Clear all entities associated with script.\n\n @param world The world.\n @param script The script entity.\n @param instance The script instance."]
+    pub fn ecs_script_clear(world: *mut ecs_world_t, script: ecs_entity_t, instance: ecs_entity_t);
+}
+unsafe extern "C" {
+    #[doc = "Create new variable scope.\n Create root variable scope. A variable scope contains one or more variables.\n Scopes can be nested, which allows variables in different scopes to have the\n same name. Variables from parent scopes will be shadowed by variables in\n child scopes with the same name.\n\n Use the `ecs_script_vars_push()` and `ecs_script_vars_pop()` functions to\n push and pop variable scopes.\n\n When a variable contains allocated resources (e.g. a string), its resources\n will be freed when `ecs_script_vars_pop()` is called on the scope, the\n ecs_script_vars_t::type_info field is initialized for the variable, and\n `ecs_type_info_t::hooks::dtor` is set.\n\n @param world The world."]
+    pub fn ecs_script_vars_init(world: *mut ecs_world_t) -> *mut ecs_script_vars_t;
+}
+unsafe extern "C" {
+    #[doc = "Free variable scope.\n Free root variable scope. The provided scope should not have a parent. This\n operation calls `ecs_script_vars_pop()` on the scope.\n\n @param vars The variable scope."]
+    pub fn ecs_script_vars_fini(vars: *mut ecs_script_vars_t);
+}
+unsafe extern "C" {
+    #[doc = "Push new variable scope.\n\n Scopes created with ecs_script_vars_push() must be cleaned up with\n ecs_script_vars_pop().\n\n If the stack and allocator arguments are left to NULL, their values will be\n copied from the parent.\n\n @param parent The parent scope (provide NULL for root scope).\n @return The new variable scope."]
+    pub fn ecs_script_vars_push(parent: *mut ecs_script_vars_t) -> *mut ecs_script_vars_t;
+}
+unsafe extern "C" {
+    #[doc = "Pop variable scope.\n This frees up the resources for a variable scope. The scope must be at the\n top of a vars stack. Calling ecs_script_vars_pop() on a scope that is not the\n last scope causes undefined behavior.\n\n @param vars The scope to free.\n @return The parent scope."]
+    pub fn ecs_script_vars_pop(vars: *mut ecs_script_vars_t) -> *mut ecs_script_vars_t;
+}
+unsafe extern "C" {
+    #[doc = "Declare a variable.\n This operation declares a new variable in the current scope. If a variable\n with the specified name already exists, the operation will fail.\n\n This operation does not allocate storage for the variable. This is done to\n allow for variables that point to existing storage, which prevents having\n to copy existing values to a variable scope.\n\n @param vars The variable scope.\n @param name The variable name.\n @return The new variable, or NULL if the operation failed."]
+    pub fn ecs_script_vars_declare(
+        vars: *mut ecs_script_vars_t,
+        name: *const ::core::ffi::c_char,
+    ) -> *mut ecs_script_var_t;
+}
+unsafe extern "C" {
+    #[doc = "Define a variable.\n This operation calls `ecs_script_vars_declare()` and allocates storage for\n the variable. If the type has a ctor, it will be called on the new storage.\n\n The scope's stack allocator will be used to allocate the storage. After\n `ecs_script_vars_pop()` is called on the scope, the variable storage will no\n longer be valid.\n\n The operation will fail if the type argument is not a type.\n\n @param vars The variable scope.\n @param name The variable name.\n @param type The variable type.\n @return The new variable, or NULL if the operation failed."]
+    pub fn ecs_script_vars_define_id(
+        vars: *mut ecs_script_vars_t,
+        name: *const ::core::ffi::c_char,
+        type_: ecs_entity_t,
+    ) -> *mut ecs_script_var_t;
+}
+unsafe extern "C" {
+    #[doc = "Lookup a variable.\n This operation looks up a variable in the current scope. If the variable\n can't be found in the current scope, the operation will recursively search\n the parent scopes.\n\n @param vars The variable scope.\n @param name The variable name.\n @return The variable, or NULL if one with the provided name does not exist."]
+    pub fn ecs_script_vars_lookup(
+        vars: *const ecs_script_vars_t,
+        name: *const ::core::ffi::c_char,
+    ) -> *mut ecs_script_var_t;
+}
+unsafe extern "C" {
+    #[doc = "Lookup a variable by stack pointer.\n This operation provides a faster way to lookup variables that are always\n declared in the same order in a ecs_script_vars_t scope.\n\n The stack pointer of a variable can be obtained from the ecs_script_var_t\n type. The provided frame offset must be valid for the provided variable\n stack. If the frame offset is not valid, this operation will panic.\n\n @param vars The variable scope.\n @param sp The stack pointer to the variable.\n @return The variable."]
+    pub fn ecs_script_vars_from_sp(
+        vars: *const ecs_script_vars_t,
+        sp: i32,
+    ) -> *mut ecs_script_var_t;
+}
+unsafe extern "C" {
+    #[doc = "Print variables.\n This operation prints all variables in the vars scope and parent scopes.asm\n\n @param vars The variable scope."]
+    pub fn ecs_script_vars_print(vars: *const ecs_script_vars_t);
+}
+unsafe extern "C" {
+    #[doc = "Preallocate space for variables.\n This operation preallocates space for the specified number of variables. This\n is a performance optimization only, and is not necessary before declaring\n variables in a scope.\n\n @param vars The variable scope.\n @param count The number of variables to preallocate space for."]
+    pub fn ecs_script_vars_set_size(vars: *mut ecs_script_vars_t, count: i32);
+}
+unsafe extern "C" {
+    #[doc = "Convert iterator to vars\n This operation converts an iterator to a variable array. This allows for\n using iterator results in expressions. The operation only converts a\n single result at a time, and does not progress the iterator.\n\n Iterator fields with data will be made available as variables with as name\n the field index (e.g. \"$1\"). The operation does not check if reflection data\n is registered for a field type. If no reflection data is registered for the\n type, using the field variable in expressions will fail.\n\n Field variables will only contain single elements, even if the iterator\n returns component arrays. The offset parameter can be used to specify which\n element in the component arrays to return. The offset parameter must be\n smaller than it->count.\n\n The operation will create a variable for query variables that contain a\n single entity.\n\n The operation will attempt to use existing variables. If a variable does not\n yet exist, the operation will create it. If an existing variable exists with\n a mismatching type, the operation will fail.\n\n Accessing variables after progressing the iterator or after the iterator is\n destroyed will result in undefined behavior.\n\n If vars contains a variable that is not present in the iterator, the variable\n will not be modified.\n\n @param it The iterator to convert to variables.\n @param vars The variables to write to.\n @param offset The offset to the current element."]
+    pub fn ecs_script_vars_from_iter(
+        it: *const ecs_iter_t,
+        vars: *mut ecs_script_vars_t,
+        offset: ::core::ffi::c_int,
+    );
+}
+#[doc = "Used with ecs_expr_run()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_expr_eval_desc_t {
+    #[doc = "< Script name"]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "< Full expression string"]
+    pub expr: *const ::core::ffi::c_char,
+    #[doc = "< Variables accessible in expression"]
+    pub vars: *const ecs_script_vars_t,
+    #[doc = "< Type of parsed value (optional)"]
+    pub type_: ecs_entity_t,
+    #[doc = "< Function for resolving entity identifiers"]
+    pub lookup_action: ::core::option::Option<
+        unsafe extern "C" fn(
+            arg1: *const ecs_world_t,
+            value: *const ::core::ffi::c_char,
+            ctx: *mut ::core::ffi::c_void,
+        ) -> ecs_entity_t,
+    >,
+    #[doc = "< Context passed to lookup function"]
+    pub lookup_ctx: *mut ::core::ffi::c_void,
+    #[doc = "Disable constant folding (slower evaluation, faster parsing)"]
+    pub disable_folding: bool,
+    #[doc = "This option instructs the expression runtime to lookup variables by\n stack pointer instead of by name, which improves performance. Only enable\n when provided variables are always declared in the same order."]
+    pub disable_dynamic_variable_binding: bool,
+    #[doc = "Allow for unresolved identifiers when parsing. Useful when entities can\n be created in between parsing & evaluating."]
+    pub allow_unresolved_identifiers: bool,
+    #[doc = "< Reusable runtime (optional)"]
+    pub runtime: *mut ecs_script_runtime_t,
+    #[doc = "< For internal usage"]
+    pub script_visitor: *mut ::core::ffi::c_void,
+}
+unsafe extern "C" {
+    #[doc = "Run expression.\n This operation runs an expression and stores the result in the provided\n value. If the value contains a type that is different from the type of the\n expression, the expression will be cast to the value.\n\n If the provided value for value.ptr is NULL, the value must be freed with\n ecs_value_free() afterwards.\n\n @param world The world.\n @param ptr The pointer to the expression to parse.\n @param value The value containing type & pointer to write to.\n @param desc Configuration parameters for the parser.\n @return Pointer to the character after the last one read, or NULL if failed."]
+    pub fn ecs_expr_run(
+        world: *mut ecs_world_t,
+        ptr: *const ::core::ffi::c_char,
+        value: *mut ecs_value_t,
+        desc: *const ecs_expr_eval_desc_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Parse expression.\n This operation parses an expression and returns an object that can be\n evaluated multiple times with ecs_expr_eval().\n\n @param world The world.\n @param expr The expression string.\n @param desc Configuration parameters for the parser.\n @return A script object if parsing is successful, NULL if parsing failed."]
+    pub fn ecs_expr_parse(
+        world: *mut ecs_world_t,
+        expr: *const ::core::ffi::c_char,
+        desc: *const ecs_expr_eval_desc_t,
+    ) -> *mut ecs_script_t;
+}
+unsafe extern "C" {
+    #[doc = "Evaluate expression.\n This operation evaluates an expression parsed with ecs_expr_parse()\n and stores the result in the provided value. If the value contains a type\n that is different from the type of the expression, the expression will be\n cast to the value.\n\n If the provided value for value.ptr is NULL, the value must be freed with\n ecs_value_free() afterwards.\n\n @param script The script containing the expression.\n @param value The value in which to store the expression result.\n @param desc Configuration parameters for the parser.\n @return Zero if successful, non-zero if failed."]
+    pub fn ecs_expr_eval(
+        script: *const ecs_script_t,
+        value: *mut ecs_value_t,
+        desc: *const ecs_expr_eval_desc_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Evaluate interpolated expressions in string.\n This operation evaluates expressions in a string, and replaces them with\n their evaluated result. Supported expression formats are:\n  - $variable_name\n  - {expression}\n\n The $, { and } characters can be escaped with a backslash (\\).\n\n @param world The world.\n @param str The string to evaluate.\n @param vars The variables to use for evaluation."]
+    pub fn ecs_script_string_interpolate(
+        world: *mut ecs_world_t,
+        str_: *const ::core::ffi::c_char,
+        vars: *const ecs_script_vars_t,
+    ) -> *mut ::core::ffi::c_char;
+}
+#[doc = "Used with ecs_const_var_init"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_const_var_desc_t {
+    #[doc = "Variable name."]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "Variable parent (namespace)."]
+    pub parent: ecs_entity_t,
+    #[doc = "Variable type."]
+    pub type_: ecs_entity_t,
+    #[doc = "Pointer to value of variable. The value will be copied to an internal\n storage and does not need to be kept alive."]
+    pub value: *mut ::core::ffi::c_void,
+}
+unsafe extern "C" {
+    #[doc = "Create a const variable that can be accessed by scripts.\n\n @param world The world.\n @param desc Const var parameters.\n @return The const var, or 0 if failed."]
+    pub fn ecs_const_var_init(
+        world: *mut ecs_world_t,
+        desc: *mut ecs_const_var_desc_t,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Returns value for a const variable.\n This returns the value for a const variable that is created either with\n ecs_const_var_init, or in a script with \"export const v: ...\".\n\n @param world The world.\n @param var The variable associated with the entity."]
+    pub fn ecs_const_var_get(world: *const ecs_world_t, var: ecs_entity_t) -> ecs_value_t;
+}
+#[doc = "Used with ecs_function_init and ecs_method_init"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_function_desc_t {
+    #[doc = "Function name."]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "Parent of function. For methods the parent is the type for which the\n method will be registered."]
+    pub parent: ecs_entity_t,
+    #[doc = "Function parameters."]
+    pub params: [ecs_script_parameter_t; 16usize],
+    #[doc = "Function return type."]
+    pub return_type: ecs_entity_t,
+    #[doc = "Function implementation."]
+    pub callback: ecs_function_callback_t,
+    #[doc = "Context passed to function implementation."]
+    pub ctx: *mut ::core::ffi::c_void,
+}
+unsafe extern "C" {
+    #[doc = "Create new function.\n This operation creates a new function that can be called from a script.\n\n @param world The world.\n @param desc Function init parameters.\n @return The function, or 0 if failed."]
+    pub fn ecs_function_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_function_desc_t,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Create new method.\n This operation creates a new method that can be called from a script. A\n method is like a function, except that it can be called on every instance of\n a type.\n\n Methods automatically receive the instance on which the method is invoked as\n first argument.\n\n @param world Method The world.\n @param desc Method init parameters.\n @return The function, or 0 if failed."]
+    pub fn ecs_method_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_function_desc_t,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Serialize value into expression string.\n This operation serializes a value of the provided type to a string. The\n memory pointed to must be large enough to contain a value of the used type.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with expression, or NULL if failed."]
+    pub fn ecs_ptr_to_expr(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        data: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Serialize value into expression buffer.\n Same as ecs_ptr_to_expr(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param buf The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_ptr_to_expr_buf(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        data: *const ::core::ffi::c_void,
+        buf: *mut ecs_strbuf_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Similar as ecs_ptr_to_expr(), but serializes values to string.\n Whereas the output of ecs_ptr_to_expr() is a valid expression, the output of\n ecs_ptr_to_str() is a string representation of the value. In most cases the\n output of the two operations is the same, but there are some differences:\n - Strings are not quoted\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @return String with result, or NULL if failed."]
+    pub fn ecs_ptr_to_str(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        data: *const ::core::ffi::c_void,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Serialize value into string buffer.\n Same as ecs_ptr_to_str(), but serializes to an ecs_strbuf_t instance.\n\n @param world The world.\n @param type The type of the value to serialize.\n @param data The value to serialize.\n @param buf The strbuf to append the string to.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_ptr_to_str_buf(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        data: *const ::core::ffi::c_void,
+        buf: *mut ecs_strbuf_t,
+    ) -> ::core::ffi::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_expr_node_t {
+    _unused: [u8; 0],
+}
+unsafe extern "C" {
+    #[doc = "Script module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsScript)\n @endcode\n\n @param world The world."]
+    pub fn FlecsScriptImport(world: *mut ecs_world_t);
+}
+unsafe extern "C" {
+    #[doc = "< Component id for EcsDocDescription."]
+    pub static FLECS_IDEcsDocDescriptionID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Tag for adding a UUID to entities.\n Added to an entity as (EcsDocDescription, EcsUuid) by ecs_doc_set_uuid()."]
+    pub static EcsDocUuid: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Tag for adding brief descriptions to entities.\n Added to an entity as (EcsDocDescription, EcsBrief) by ecs_doc_set_brief()."]
+    pub static EcsDocBrief: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Tag for adding detailed descriptions to entities.\n Added to an entity as (EcsDocDescription, EcsDocDetail) by ecs_doc_set_detail()."]
+    pub static EcsDocDetail: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Tag for adding a link to entities.\n Added to an entity as (EcsDocDescription, EcsDocLink) by ecs_doc_set_link()."]
+    pub static EcsDocLink: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Tag for adding a color to entities.\n Added to an entity as (EcsDocDescription, EcsDocColor) by ecs_doc_set_link()."]
+    pub static EcsDocColor: ecs_entity_t;
+}
+#[doc = "Component that stores description.\n Used as pair together with the following tags to store entity documentation:\n - EcsName\n - EcsDocBrief\n - EcsDocDetail\n - EcsDocLink\n - EcsDocColor"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsDocDescription {
+    pub value: *mut ::core::ffi::c_char,
+}
+unsafe extern "C" {
+    #[doc = "Add UUID to entity.\n Associate entity with an (external) UUID.\n\n @param world The world.\n @param entity The entity to which to add the UUID.\n @param uuid The UUID to add.\n\n @see ecs_doc_get_uuid()\n @see flecs::doc::set_uuid()\n @see flecs::entity_builder::set_doc_uuid()"]
+    pub fn ecs_doc_set_uuid(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        uuid: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Add human-readable name to entity.\n Contrary to entity names, human readable names do not have to be unique and\n can contain special characters used in the query language like '*'.\n\n @param world The world.\n @param entity The entity to which to add the name.\n @param name The name to add.\n\n @see ecs_doc_get_name()\n @see flecs::doc::set_name()\n @see flecs::entity_builder::set_doc_name()"]
+    pub fn ecs_doc_set_name(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        name: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Add brief description to entity.\n\n @param world The world.\n @param entity The entity to which to add the description.\n @param description The description to add.\n\n @see ecs_doc_get_brief()\n @see flecs::doc::set_brief()\n @see flecs::entity_builder::set_doc_brief()"]
+    pub fn ecs_doc_set_brief(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        description: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Add detailed description to entity.\n\n @param world The world.\n @param entity The entity to which to add the description.\n @param description The description to add.\n\n @see ecs_doc_get_detail()\n @see flecs::doc::set_detail()\n @see flecs::entity_builder::set_doc_detail()"]
+    pub fn ecs_doc_set_detail(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        description: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Add link to external documentation to entity.\n\n @param world The world.\n @param entity The entity to which to add the link.\n @param link The link to add.\n\n @see ecs_doc_get_link()\n @see flecs::doc::set_link()\n @see flecs::entity_builder::set_doc_link()"]
+    pub fn ecs_doc_set_link(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        link: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Add color to entity.\n UIs can use color as hint to improve visualizing entities.\n\n @param world The world.\n @param entity The entity to which to add the link.\n @param color The color to add.\n\n @see ecs_doc_get_color()\n @see flecs::doc::set_color()\n @see flecs::entity_builder::set_doc_color()"]
+    pub fn ecs_doc_set_color(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        color: *const ::core::ffi::c_char,
+    );
+}
+unsafe extern "C" {
+    #[doc = "Get UUID from entity.\n @param world The world.\n @param entity The entity from which to get the UUID.\n @return The UUID.\n\n @see ecs_doc_set_uuid()\n @see flecs::doc::get_uuid()\n @see flecs::entity_view::get_doc_uuid()"]
+    pub fn ecs_doc_get_uuid(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get human readable name from entity.\n If entity does not have an explicit human readable name, this operation will\n return the entity name.\n\n To test if an entity has a human readable name, use:\n\n @code\n ecs_has_pair(world, e, ecs_id(EcsDocDescription), EcsName);\n @endcode\n\n Or in C++:\n\n @code\n e.has<flecs::doc::Description>(flecs::Name);\n @endcode\n\n @param world The world.\n @param entity The entity from which to get the name.\n @return The name.\n\n @see ecs_doc_set_name()\n @see flecs::doc::get_name()\n @see flecs::entity_view::get_doc_name()"]
+    pub fn ecs_doc_get_name(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get brief description from entity.\n\n @param world The world.\n @param entity The entity from which to get the description.\n @return The description.\n\n @see ecs_doc_set_brief()\n @see flecs::doc::get_brief()\n @see flecs::entity_view::get_doc_brief()"]
+    pub fn ecs_doc_get_brief(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get detailed description from entity.\n\n @param world The world.\n @param entity The entity from which to get the description.\n @return The description.\n\n @see ecs_doc_set_detail()\n @see flecs::doc::get_detail()\n @see flecs::entity_view::get_doc_detail()"]
+    pub fn ecs_doc_get_detail(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get link to external documentation from entity.\n\n @param world The world.\n @param entity The entity from which to get the link.\n @return The link.\n\n @see ecs_doc_set_link()\n @see flecs::doc::get_link()\n @see flecs::entity_view::get_doc_link()"]
+    pub fn ecs_doc_get_link(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get color from entity.\n\n @param world The world.\n @param entity The entity from which to get the color.\n @return The color.\n\n @see ecs_doc_set_color()\n @see flecs::doc::get_color()\n @see flecs::entity_view::get_doc_color()"]
+    pub fn ecs_doc_get_color(
+        world: *const ecs_world_t,
+        entity: ecs_entity_t,
+    ) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Doc module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsDoc)\n @endcode\n\n @param world The world."]
+    pub fn FlecsDocImport(world: *mut ecs_world_t);
 }
 #[doc = "Primitive type definitions.\n These typedefs allow the builtin primitives to be used as regular components:\n\n @code\n ecs_set(world, e, ecs_i32_t, {10});\n @endcode\n\n Or a more useful example (create an enum constant with a manual value):\n\n @code\n ecs_set_pair_second(world, e, EcsConstant, ecs_i32_t, {10});\n @endcode"]
 pub type ecs_bool_t = bool;
