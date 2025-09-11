@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Use the local flecs_ecs crate from the workspace
-flecs_ecs = { path = "../../flecs_ecs", default-features = false }
+flecs_ecs = { path = "../../flecs_ecs" }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 wgpu = "26.0.1"
@@ -30,15 +30,9 @@ features = [
 ]
 
 [features]
-# Keep this crate lean; opt-in to features explicitly
-default = [
-    "flecs_base",
-]
-# Forward these features to flecs_ecs
+default = []
 wasm32 = ["flecs_ecs/wasm32"]
-flecs_base = ["flecs_ecs/flecs_base"]
-flecs_meta = ["flecs_ecs/flecs_meta"]
-flecs_use_os_alloc = ["flecs_ecs/flecs_use_os_alloc"]
+flecs_bindgen = ["flecs_ecs/flecs_bindgen"]
 
 [profile.release]
 opt-level = "s"

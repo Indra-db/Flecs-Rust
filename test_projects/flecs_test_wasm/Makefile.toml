@@ -4,8 +4,8 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = false
 [tasks.build-wasm]
 description = "Build flecs_test_wasm with wasm-bindgen bindings"
 script = [
-  'cargo build -p flecs_test_wasm --no-default-features --features "flecs_base,wasm32,flecs_meta"',
-  'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown --no-default-features --features "flecs_base,flecs_meta"',
+  'cargo build -p flecs_test_wasm --features "flecs_bindgen,wasm32"',
+  'cargo build -p flecs_test_wasm --target wasm32-unknown-unknown',
   'wasm-bindgen ../../target/wasm32-unknown-unknown/debug/flecs_test_wasm.wasm --out-dir web/pkg --target web --no-typescript'
 ]
 workspace = false
