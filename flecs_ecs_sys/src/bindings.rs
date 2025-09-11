@@ -382,6 +382,8 @@ pub const ECS_WHITE: &[u8; 8] = b"\x1B[1;37m\0";
 pub const ECS_GREY: &[u8; 8] = b"\x1B[0;37m\0";
 pub const ECS_NORMAL: &[u8; 8] = b"\x1B[0;49m\0";
 pub const ECS_BOLD: &[u8; 8] = b"\x1B[1;49m\0";
+pub const ECS_MEMBER_DESC_CACHE_SIZE: u32 = 32;
+pub const ECS_META_MAX_SCOPE_DEPTH: u32 = 32;
 #[doc = "Utility types to indicate usage as bitmask"]
 pub type ecs_flags8_t = u8;
 pub type ecs_flags16_t = u16;
@@ -5161,6 +5163,961 @@ unsafe extern "C" {
     #[doc = "System module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsSystem)\n @endcode\n\n @param world The world."]
     pub fn FlecsSystemImport(world: *mut ecs_world_t);
 }
+#[doc = "Primitive type definitions.\n These typedefs allow the builtin primitives to be used as regular components:\n\n @code\n ecs_set(world, e, ecs_i32_t, {10});\n @endcode\n\n Or a more useful example (create an enum constant with a manual value):\n\n @code\n ecs_set_pair_second(world, e, EcsConstant, ecs_i32_t, {10});\n @endcode"]
+pub type ecs_bool_t = bool;
+pub type ecs_char_t = ::core::ffi::c_char;
+pub type ecs_byte_t = ::core::ffi::c_uchar;
+pub type ecs_u8_t = u8;
+pub type ecs_u16_t = u16;
+pub type ecs_u32_t = u32;
+pub type ecs_u64_t = u64;
+pub type ecs_uptr_t = usize;
+pub type ecs_i8_t = i8;
+pub type ecs_i16_t = i16;
+pub type ecs_i32_t = i32;
+pub type ecs_i64_t = i64;
+pub type ecs_iptr_t = isize;
+pub type ecs_f32_t = f32;
+pub type ecs_f64_t = f64;
+pub type ecs_string_t = *mut ::core::ffi::c_char;
+unsafe extern "C" {
+    #[doc = "< Id for component added to all types with reflection data."]
+    pub static FLECS_IDEcsTypeID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores a type specific serializer."]
+    pub static FLECS_IDEcsTypeSerializerID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for a primitive type."]
+    pub static FLECS_IDEcsPrimitiveID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for an enum type."]
+    pub static FLECS_IDEcsEnumID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for a bitmask type."]
+    pub static FLECS_IDEcsBitmaskID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for struct members."]
+    pub static FLECS_IDEcsMemberID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores min/max ranges for member values."]
+    pub static FLECS_IDEcsMemberRangesID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for a struct type."]
+    pub static FLECS_IDEcsStructID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for an array type."]
+    pub static FLECS_IDEcsArrayID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for a vector type."]
+    pub static FLECS_IDEcsVectorID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores reflection data for an opaque type."]
+    pub static FLECS_IDEcsOpaqueID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores unit data."]
+    pub static FLECS_IDEcsUnitID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Id for component that stores unit prefix data."]
+    pub static FLECS_IDEcsUnitPrefixID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Tag added to unit quantities."]
+    pub static EcsQuantity: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin boolean type."]
+    pub static FLECS_IDecs_bool_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin char type."]
+    pub static FLECS_IDecs_char_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin byte type."]
+    pub static FLECS_IDecs_byte_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 8 bit unsigned int type."]
+    pub static FLECS_IDecs_u8_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 16 bit unsigned int type."]
+    pub static FLECS_IDecs_u16_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 32 bit unsigned int type."]
+    pub static FLECS_IDecs_u32_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 64 bit unsigned int type."]
+    pub static FLECS_IDecs_u64_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin pointer sized unsigned int type."]
+    pub static FLECS_IDecs_uptr_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 8 bit signed int type."]
+    pub static FLECS_IDecs_i8_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 16 bit signed int type."]
+    pub static FLECS_IDecs_i16_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 32 bit signed int type."]
+    pub static FLECS_IDecs_i32_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 64 bit signed int type."]
+    pub static FLECS_IDecs_i64_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin pointer sized signed int type."]
+    pub static FLECS_IDecs_iptr_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 32 bit floating point type."]
+    pub static FLECS_IDecs_f32_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin 64 bit floating point type."]
+    pub static FLECS_IDecs_f64_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin string type."]
+    pub static FLECS_IDecs_string_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin entity type."]
+    pub static FLECS_IDecs_entity_tID_: ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "< Builtin (component) id type."]
+    pub static FLECS_IDecs_id_tID_: ecs_entity_t;
+}
+pub const ecs_type_kind_t_EcsPrimitiveType: ecs_type_kind_t = 0;
+pub const ecs_type_kind_t_EcsBitmaskType: ecs_type_kind_t = 1;
+pub const ecs_type_kind_t_EcsEnumType: ecs_type_kind_t = 2;
+pub const ecs_type_kind_t_EcsStructType: ecs_type_kind_t = 3;
+pub const ecs_type_kind_t_EcsArrayType: ecs_type_kind_t = 4;
+pub const ecs_type_kind_t_EcsVectorType: ecs_type_kind_t = 5;
+pub const ecs_type_kind_t_EcsOpaqueType: ecs_type_kind_t = 6;
+pub const ecs_type_kind_t_EcsTypeKindLast: ecs_type_kind_t = 6;
+#[doc = "Type kinds supported by meta addon"]
+pub type ecs_type_kind_t = ::core::ffi::c_uint;
+#[doc = "Component that is automatically added to every type with the right kind."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsType {
+    #[doc = "< Type kind."]
+    pub kind: ecs_type_kind_t,
+    #[doc = "< Did the type exist or is it populated from reflection"]
+    pub existing: bool,
+    #[doc = "< Is the reflection data a partial type description"]
+    pub partial: bool,
+}
+pub const ecs_primitive_kind_t_EcsBool: ecs_primitive_kind_t = 1;
+pub const ecs_primitive_kind_t_EcsChar: ecs_primitive_kind_t = 2;
+pub const ecs_primitive_kind_t_EcsByte: ecs_primitive_kind_t = 3;
+pub const ecs_primitive_kind_t_EcsU8: ecs_primitive_kind_t = 4;
+pub const ecs_primitive_kind_t_EcsU16: ecs_primitive_kind_t = 5;
+pub const ecs_primitive_kind_t_EcsU32: ecs_primitive_kind_t = 6;
+pub const ecs_primitive_kind_t_EcsU64: ecs_primitive_kind_t = 7;
+pub const ecs_primitive_kind_t_EcsI8: ecs_primitive_kind_t = 8;
+pub const ecs_primitive_kind_t_EcsI16: ecs_primitive_kind_t = 9;
+pub const ecs_primitive_kind_t_EcsI32: ecs_primitive_kind_t = 10;
+pub const ecs_primitive_kind_t_EcsI64: ecs_primitive_kind_t = 11;
+pub const ecs_primitive_kind_t_EcsF32: ecs_primitive_kind_t = 12;
+pub const ecs_primitive_kind_t_EcsF64: ecs_primitive_kind_t = 13;
+pub const ecs_primitive_kind_t_EcsUPtr: ecs_primitive_kind_t = 14;
+pub const ecs_primitive_kind_t_EcsIPtr: ecs_primitive_kind_t = 15;
+pub const ecs_primitive_kind_t_EcsString: ecs_primitive_kind_t = 16;
+pub const ecs_primitive_kind_t_EcsEntity: ecs_primitive_kind_t = 17;
+pub const ecs_primitive_kind_t_EcsId: ecs_primitive_kind_t = 18;
+pub const ecs_primitive_kind_t_EcsPrimitiveKindLast: ecs_primitive_kind_t = 18;
+#[doc = "Primitive type kinds supported by meta addon"]
+pub type ecs_primitive_kind_t = ::core::ffi::c_uint;
+#[doc = "Component added to primitive types"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsPrimitive {
+    #[doc = "< Primitive type kind."]
+    pub kind: ecs_primitive_kind_t,
+}
+#[doc = "Component added to member entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsMember {
+    #[doc = "< Member type."]
+    pub type_: ecs_entity_t,
+    #[doc = "< Number of elements for inline arrays. Leave to 0 for non-array members."]
+    pub count: i32,
+    #[doc = "< Member unit."]
+    pub unit: ecs_entity_t,
+    #[doc = "< Member offset."]
+    pub offset: i32,
+    #[doc = "< If offset should be explicitly used."]
+    pub use_offset: bool,
+}
+#[doc = "Type expressing a range for a member value"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_member_value_range_t {
+    #[doc = "< Min member value."]
+    pub min: f64,
+    #[doc = "< Max member value."]
+    pub max: f64,
+}
+#[doc = "Component added to member entities to express valid value ranges"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsMemberRanges {
+    #[doc = "< Member value range."]
+    pub value: ecs_member_value_range_t,
+    #[doc = "< Member value warning range."]
+    pub warning: ecs_member_value_range_t,
+    #[doc = "< Member value error range."]
+    pub error: ecs_member_value_range_t,
+}
+#[doc = "Element type of members vector in EcsStruct"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_member_t {
+    #[doc = "Must be set when used with ecs_struct_desc_t"]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "Member type."]
+    pub type_: ecs_entity_t,
+    #[doc = "Element count (for inline arrays). May be set when used with\n ecs_struct_desc_t. Leave to 0 for non-array members."]
+    pub count: i32,
+    #[doc = "May be set when used with ecs_struct_desc_t. Member offset."]
+    pub offset: i32,
+    #[doc = "May be set when used with ecs_struct_desc_t, will be auto-populated if\n type entity is also a unit"]
+    pub unit: ecs_entity_t,
+    #[doc = "Set to true to prevent automatic offset computation. This option should\n be used when members are registered out of order or where calculation of\n member offsets doesn't match C type offsets."]
+    pub use_offset: bool,
+    #[doc = "Numerical range that specifies which values member can assume. This\n range may be used by UI elements such as a progress bar or slider. The\n value of a member should not exceed this range."]
+    pub range: ecs_member_value_range_t,
+    #[doc = "Numerical range outside of which the value represents an error. This\n range may be used by UI elements to style a value."]
+    pub error_range: ecs_member_value_range_t,
+    #[doc = "Numerical range outside of which the value represents an warning. This\n range may be used by UI elements to style a value."]
+    pub warning_range: ecs_member_value_range_t,
+    #[doc = "Should not be set by ecs_struct_desc_t"]
+    pub size: ecs_size_t,
+    #[doc = "Should not be set by ecs_struct_desc_t"]
+    pub member: ecs_entity_t,
+}
+#[doc = "Component added to struct type entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsStruct {
+    #[doc = "vector<ecs_member_t>"]
+    pub members: ecs_vec_t,
+}
+#[doc = "Type that describes an enum constant"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_enum_constant_t {
+    #[doc = "Must be set when used with ecs_enum_desc_t"]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "May be set when used with ecs_enum_desc_t"]
+    pub value: i64,
+    #[doc = "For when the underlying type is unsigned"]
+    pub value_unsigned: u64,
+    #[doc = "Should not be set by ecs_enum_desc_t"]
+    pub constant: ecs_entity_t,
+}
+#[doc = "Component added to enum type entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsEnum {
+    pub underlying_type: ecs_entity_t,
+    #[doc = "< map<i32_t, ecs_enum_constant_t>"]
+    pub constants: *mut ecs_map_t,
+    #[doc = "< vector<ecs_enum_constants_t>"]
+    pub ordered_constants: ecs_vec_t,
+}
+#[doc = "Type that describes an bitmask constant"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_bitmask_constant_t {
+    #[doc = "Must be set when used with ecs_bitmask_desc_t"]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "May be set when used with ecs_bitmask_desc_t"]
+    pub value: ecs_flags64_t,
+    #[doc = "Keep layout the same with ecs_enum_constant_t"]
+    pub _unused: i64,
+    #[doc = "Should not be set by ecs_bitmask_desc_t"]
+    pub constant: ecs_entity_t,
+}
+#[doc = "Component added to bitmask type entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsBitmask {
+    #[doc = "< map<u32_t, ecs_bitmask_constant_t>"]
+    pub constants: *mut ecs_map_t,
+    #[doc = "< vector<ecs_bitmask_constants_t>"]
+    pub ordered_constants: ecs_vec_t,
+}
+#[doc = "Component added to array type entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsArray {
+    #[doc = "< Element type"]
+    pub type_: ecs_entity_t,
+    #[doc = "< Number of elements"]
+    pub count: i32,
+}
+#[doc = "Component added to vector type entities"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsVector {
+    #[doc = "< Element type"]
+    pub type_: ecs_entity_t,
+}
+#[doc = "Serializer interface"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_serializer_t {
+    #[doc = "Serialize value"]
+    pub value: ::core::option::Option<
+        unsafe extern "C" fn(
+            ser: *const ecs_serializer_t,
+            type_: ecs_entity_t,
+            value: *const ::core::ffi::c_void,
+        ) -> ::core::ffi::c_int,
+    >,
+    #[doc = "Serialize member"]
+    pub member: ::core::option::Option<
+        unsafe extern "C" fn(
+            ser: *const ecs_serializer_t,
+            member: *const ::core::ffi::c_char,
+        ) -> ::core::ffi::c_int,
+    >,
+    #[doc = "< The world."]
+    pub world: *const ecs_world_t,
+    #[doc = "< Serializer context."]
+    pub ctx: *mut ::core::ffi::c_void,
+}
+#[doc = "Callback invoked serializing an opaque type."]
+pub type ecs_meta_serialize_t = ::core::option::Option<
+    unsafe extern "C" fn(
+        ser: *const ecs_serializer_t,
+        src: *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int,
+>;
+#[doc = "Callback invoked to serialize an opaque struct member"]
+pub type ecs_meta_serialize_member_t = ::core::option::Option<
+    unsafe extern "C" fn(
+        ser: *const ecs_serializer_t,
+        src: *const ::core::ffi::c_void,
+        name: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int,
+>;
+#[doc = "Callback invoked to serialize an opaque vector/array element"]
+pub type ecs_meta_serialize_element_t = ::core::option::Option<
+    unsafe extern "C" fn(
+        ser: *const ecs_serializer_t,
+        src: *const ::core::ffi::c_void,
+        elem: usize,
+    ) -> ::core::ffi::c_int,
+>;
+#[doc = "Opaque type reflection data.\n An opaque type is a type with an unknown layout that can be mapped to a type\n known to the reflection framework. See the opaque type reflection examples."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsOpaque {
+    #[doc = "< Type that describes the serialized output"]
+    pub as_type: ecs_entity_t,
+    #[doc = "< Serialize action"]
+    pub serialize: ecs_meta_serialize_t,
+    #[doc = "< Serialize member action"]
+    pub serialize_member: ecs_meta_serialize_member_t,
+    #[doc = "< Serialize element action"]
+    pub serialize_element: ecs_meta_serialize_element_t,
+    #[doc = "Assign bool value"]
+    pub assign_bool:
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: bool)>,
+    #[doc = "Assign char value"]
+    pub assign_char: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: ::core::ffi::c_char),
+    >,
+    #[doc = "Assign int value"]
+    pub assign_int:
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: i64)>,
+    #[doc = "Assign unsigned int value"]
+    pub assign_uint:
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: u64)>,
+    #[doc = "Assign float value"]
+    pub assign_float:
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: f64)>,
+    #[doc = "Assign string value"]
+    pub assign_string: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, value: *const ::core::ffi::c_char),
+    >,
+    #[doc = "Assign entity value"]
+    pub assign_entity: ::core::option::Option<
+        unsafe extern "C" fn(
+            dst: *mut ::core::ffi::c_void,
+            world: *mut ecs_world_t,
+            entity: ecs_entity_t,
+        ),
+    >,
+    #[doc = "Assign (component) id value"]
+    pub assign_id: ::core::option::Option<
+        unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, world: *mut ecs_world_t, id: ecs_id_t),
+    >,
+    #[doc = "Assign null value"]
+    pub assign_null: ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void)>,
+    #[doc = "Clear collection elements"]
+    pub clear: ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void)>,
+    #[doc = "Ensure & get collection element"]
+    pub ensure_element: ::core::option::Option<
+        unsafe extern "C" fn(
+            dst: *mut ::core::ffi::c_void,
+            elem: usize,
+        ) -> *mut ::core::ffi::c_void,
+    >,
+    #[doc = "Ensure & get element"]
+    pub ensure_member: ::core::option::Option<
+        unsafe extern "C" fn(
+            dst: *mut ::core::ffi::c_void,
+            member: *const ::core::ffi::c_char,
+        ) -> *mut ::core::ffi::c_void,
+    >,
+    #[doc = "Return number of elements"]
+    pub count:
+        ::core::option::Option<unsafe extern "C" fn(dst: *const ::core::ffi::c_void) -> usize>,
+    #[doc = "Resize to number of elements"]
+    pub resize:
+        ::core::option::Option<unsafe extern "C" fn(dst: *mut ::core::ffi::c_void, count: usize)>,
+}
+#[doc = "Helper type to describe translation between two units. Note that this\n is not intended as a generic approach to unit conversions (e.g. from celsius\n to fahrenheit) but to translate between units that derive from the same base\n (e.g. meters to kilometers).\n\n Note that power is applied to the factor. When describing a translation of\n 1000, either use {factor = 1000, power = 1} or {factor = 1, power = 3}."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_unit_translation_t {
+    #[doc = "< Factor to apply (e.g. \"1000\", \"1000000\", \"1024\")"]
+    pub factor: i32,
+    #[doc = "< Power to apply to factor (e.g. \"1\", \"3\", \"-9\")"]
+    pub power: i32,
+}
+#[doc = "Component that stores unit data."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsUnit {
+    #[doc = "< Unit symbol."]
+    pub symbol: *mut ::core::ffi::c_char,
+    #[doc = "< Order of magnitude prefix relative to derived"]
+    pub prefix: ecs_entity_t,
+    #[doc = "< Base unit (e.g. \"meters\")"]
+    pub base: ecs_entity_t,
+    #[doc = "< Over unit (e.g. \"per second\")"]
+    pub over: ecs_entity_t,
+    #[doc = "< Translation for derived unit"]
+    pub translation: ecs_unit_translation_t,
+}
+#[doc = "Component that stores unit prefix data."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsUnitPrefix {
+    #[doc = "< Symbol of prefix (e.g. \"K\", \"M\", \"Ki\")"]
+    pub symbol: *mut ::core::ffi::c_char,
+    #[doc = "< Translation of prefix"]
+    pub translation: ecs_unit_translation_t,
+}
+#[doc = "< Push struct."]
+pub const ecs_meta_op_kind_t_EcsOpPushStruct: ecs_meta_op_kind_t = 0;
+#[doc = "< Push array."]
+pub const ecs_meta_op_kind_t_EcsOpPushArray: ecs_meta_op_kind_t = 1;
+#[doc = "< Push vector."]
+pub const ecs_meta_op_kind_t_EcsOpPushVector: ecs_meta_op_kind_t = 2;
+#[doc = "< Pop scope."]
+pub const ecs_meta_op_kind_t_EcsOpPop: ecs_meta_op_kind_t = 3;
+#[doc = "< Opaque struct."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueStruct: ecs_meta_op_kind_t = 4;
+#[doc = "< Opaque array."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueArray: ecs_meta_op_kind_t = 5;
+#[doc = "< Opaque vector."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueVector: ecs_meta_op_kind_t = 6;
+#[doc = "< Forward to type. Allows for recursive types."]
+pub const ecs_meta_op_kind_t_EcsOpForward: ecs_meta_op_kind_t = 7;
+#[doc = "< Marks last constant that can open/close a scope"]
+pub const ecs_meta_op_kind_t_EcsOpScope: ecs_meta_op_kind_t = 8;
+#[doc = "< Opaque value."]
+pub const ecs_meta_op_kind_t_EcsOpOpaqueValue: ecs_meta_op_kind_t = 9;
+pub const ecs_meta_op_kind_t_EcsOpEnum: ecs_meta_op_kind_t = 10;
+pub const ecs_meta_op_kind_t_EcsOpBitmask: ecs_meta_op_kind_t = 11;
+#[doc = "< Marks first constant that's a primitive"]
+pub const ecs_meta_op_kind_t_EcsOpPrimitive: ecs_meta_op_kind_t = 12;
+pub const ecs_meta_op_kind_t_EcsOpBool: ecs_meta_op_kind_t = 13;
+pub const ecs_meta_op_kind_t_EcsOpChar: ecs_meta_op_kind_t = 14;
+pub const ecs_meta_op_kind_t_EcsOpByte: ecs_meta_op_kind_t = 15;
+pub const ecs_meta_op_kind_t_EcsOpU8: ecs_meta_op_kind_t = 16;
+pub const ecs_meta_op_kind_t_EcsOpU16: ecs_meta_op_kind_t = 17;
+pub const ecs_meta_op_kind_t_EcsOpU32: ecs_meta_op_kind_t = 18;
+pub const ecs_meta_op_kind_t_EcsOpU64: ecs_meta_op_kind_t = 19;
+pub const ecs_meta_op_kind_t_EcsOpI8: ecs_meta_op_kind_t = 20;
+pub const ecs_meta_op_kind_t_EcsOpI16: ecs_meta_op_kind_t = 21;
+pub const ecs_meta_op_kind_t_EcsOpI32: ecs_meta_op_kind_t = 22;
+pub const ecs_meta_op_kind_t_EcsOpI64: ecs_meta_op_kind_t = 23;
+pub const ecs_meta_op_kind_t_EcsOpF32: ecs_meta_op_kind_t = 24;
+pub const ecs_meta_op_kind_t_EcsOpF64: ecs_meta_op_kind_t = 25;
+pub const ecs_meta_op_kind_t_EcsOpUPtr: ecs_meta_op_kind_t = 26;
+pub const ecs_meta_op_kind_t_EcsOpIPtr: ecs_meta_op_kind_t = 27;
+pub const ecs_meta_op_kind_t_EcsOpString: ecs_meta_op_kind_t = 28;
+pub const ecs_meta_op_kind_t_EcsOpEntity: ecs_meta_op_kind_t = 29;
+pub const ecs_meta_op_kind_t_EcsOpId: ecs_meta_op_kind_t = 30;
+pub const ecs_meta_op_kind_t_EcsMetaTypeOpKindLast: ecs_meta_op_kind_t = 30;
+#[doc = "Serializer instruction opcodes.\n The meta type serializer works by generating a flattened array with\n instructions that tells a serializer what kind of fields can be found in a\n type at which offsets."]
+pub type ecs_meta_op_kind_t = ::core::ffi::c_uint;
+#[doc = "Meta type serializer instruction data."]
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct ecs_meta_op_t {
+    #[doc = "< Instruction opcode."]
+    pub kind: ecs_meta_op_kind_t,
+    #[doc = "< Underlying type kind (for enums)."]
+    pub underlying_kind: ecs_meta_op_kind_t,
+    #[doc = "< Offset of current field."]
+    pub offset: ecs_size_t,
+    #[doc = "< Name of value (only used for struct members)"]
+    pub name: *const ::core::ffi::c_char,
+    #[doc = "< Element size (for PushArray/PushVector) and element count (for PopArray)"]
+    pub elem_size: ecs_size_t,
+    #[doc = "< Number of operations until next field or end"]
+    pub op_count: i16,
+    #[doc = "< Index of member in struct"]
+    pub member_index: i16,
+    #[doc = "< Type entity"]
+    pub type_: ecs_entity_t,
+    #[doc = "< Type info"]
+    pub type_info: *const ecs_type_info_t,
+    pub is: ecs_meta_op_t__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union ecs_meta_op_t__bindgen_ty_1 {
+    #[doc = "< string -> member index (structs)"]
+    pub members: *mut ecs_hashmap_t,
+    #[doc = "< (u)int -> constant entity (enums/bitmasks)"]
+    pub constants: *mut ecs_map_t,
+    #[doc = "< Serialize callback for opaque types"]
+    pub opaque: ecs_meta_serialize_t,
+}
+#[doc = "Component that stores the type serializer.\n Added to all types with reflection data."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct EcsTypeSerializer {
+    #[doc = "< Quick access to type kind (same as EcsType)"]
+    pub kind: ecs_type_kind_t,
+    #[doc = "< vector<ecs_meta_op_t>"]
+    pub ops: ecs_vec_t,
+}
+#[doc = "Type with information about currently serialized scope."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_meta_scope_t {
+    #[doc = "< The type being iterated"]
+    pub type_: ecs_entity_t,
+    #[doc = "< The type operations (see ecs_meta_op_t)"]
+    pub ops: *mut ecs_meta_op_t,
+    #[doc = "< Number of elements in ops"]
+    pub ops_count: i16,
+    #[doc = "< Current element in ops"]
+    pub ops_cur: i16,
+    #[doc = "< Depth to restore, in case dotmember was used"]
+    pub prev_depth: i16,
+    #[doc = "< Pointer to ops\\[0\\]"]
+    pub ptr: *mut ::core::ffi::c_void,
+    #[doc = "< Opaque type interface"]
+    pub opaque: *const EcsOpaque,
+    #[doc = "< string -> member index"]
+    pub members: *mut ecs_hashmap_t,
+    #[doc = "< Is the scope iterating elements?"]
+    pub is_collection: bool,
+    #[doc = "< Was scope populated (for vectors)"]
+    pub is_empty_scope: bool,
+    #[doc = "< Was scope moved in (with ecs_meta_elem, for vectors)"]
+    pub is_moved_scope: bool,
+    #[doc = "< Set for collections"]
+    pub elem: i32,
+    #[doc = "< Set for collections"]
+    pub elem_count: i32,
+}
+#[doc = "Type that enables iterating/populating a value using reflection data."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_meta_cursor_t {
+    #[doc = "< The world."]
+    pub world: *const ecs_world_t,
+    #[doc = "< Cursor scope stack."]
+    pub scope: [ecs_meta_scope_t; 32usize],
+    #[doc = "< Current scope depth."]
+    pub depth: i16,
+    #[doc = "< Does the cursor point to a valid field."]
+    pub valid: bool,
+    #[doc = "< If in root scope, this allows for a push for primitive types"]
+    pub is_primitive_scope: bool,
+    #[doc = "Custom entity lookup action for overriding default ecs_lookup"]
+    pub lookup_action: ::core::option::Option<
+        unsafe extern "C" fn(
+            arg1: *mut ecs_world_t,
+            arg2: *const ::core::ffi::c_char,
+            arg3: *mut ::core::ffi::c_void,
+        ) -> ecs_entity_t,
+    >,
+    #[doc = "< Context for lookup_action"]
+    pub lookup_ctx: *mut ::core::ffi::c_void,
+}
+unsafe extern "C" {
+    #[doc = "Convert serializer to string."]
+    pub fn ecs_meta_serializer_to_str(
+        world: *mut ecs_world_t,
+        type_: ecs_entity_t,
+    ) -> *mut ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Create meta cursor.\n A meta cursor allows for walking over, reading and writing a value without\n having to know its type at compile time.\n\n When a value is assigned through the cursor API, it will get converted to\n the actual value of the underlying type. This allows the underlying type to\n change without having to update the serialized data. For example, an integer\n field can be set by a string, a floating point can be set as integer etc.\n\n @param world The world.\n @param type The type of the value.\n @param ptr Pointer to the value.\n @return A meta cursor for the value."]
+    pub fn ecs_meta_cursor(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+        ptr: *mut ::core::ffi::c_void,
+    ) -> ecs_meta_cursor_t;
+}
+unsafe extern "C" {
+    #[doc = "Get pointer to current field.\n\n @param cursor The cursor.\n @return A pointer to the current field."]
+    pub fn ecs_meta_get_ptr(cursor: *mut ecs_meta_cursor_t) -> *mut ::core::ffi::c_void;
+}
+unsafe extern "C" {
+    #[doc = "Move cursor to next field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_next(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Move cursor to a field.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_elem(cursor: *mut ecs_meta_cursor_t, elem: i32) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Move cursor to member.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_member(
+        cursor: *mut ecs_meta_cursor_t,
+        name: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Move cursor to member.\n Same as ecs_meta_member(), but with support for \"foo.bar\" syntax.\n\n @param cursor The cursor.\n @param name The name of the member.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_dotmember(
+        cursor: *mut ecs_meta_cursor_t,
+        name: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Push a scope (required/only valid for structs & collections).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_push(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Pop a struct or collection scope (must follow a push).\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_pop(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Is the current scope a collection?.\n\n @param cursor The cursor.\n @return True if current scope is a collection, false if not."]
+    pub fn ecs_meta_is_collection(cursor: *const ecs_meta_cursor_t) -> bool;
+}
+unsafe extern "C" {
+    #[doc = "Get type of current field.\n\n @param cursor The cursor.\n @return The type of the current field."]
+    pub fn ecs_meta_get_type(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Get unit of current field.\n\n @param cursor The cursor.\n @return The unit of the current field."]
+    pub fn ecs_meta_get_unit(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Get member name of current field.\n\n @param cursor The cursor.\n @return The member name of the current field."]
+    pub fn ecs_meta_get_member(cursor: *const ecs_meta_cursor_t) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get member entity of current field.\n\n @param cursor The cursor.\n @return The member entity of the current field."]
+    pub fn ecs_meta_get_member_id(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Set field with boolean value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_bool(cursor: *mut ecs_meta_cursor_t, value: bool) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with char value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_char(
+        cursor: *mut ecs_meta_cursor_t,
+        value: ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with int value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_int(cursor: *mut ecs_meta_cursor_t, value: i64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with uint value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_uint(cursor: *mut ecs_meta_cursor_t, value: u64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with float value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_float(cursor: *mut ecs_meta_cursor_t, value: f64) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with string value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_string(
+        cursor: *mut ecs_meta_cursor_t,
+        value: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with string literal value (has enclosing \"\").\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_string_literal(
+        cursor: *mut ecs_meta_cursor_t,
+        value: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with entity value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_entity(
+        cursor: *mut ecs_meta_cursor_t,
+        value: ecs_entity_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with (component) id value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_id(cursor: *mut ecs_meta_cursor_t, value: ecs_id_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with null value.\n\n @param cursor The cursor.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_null(cursor: *mut ecs_meta_cursor_t) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Set field with dynamic value.\n\n @param cursor The cursor.\n @param value The value to set.\n @return Zero if success, non-zero if failed."]
+    pub fn ecs_meta_set_value(
+        cursor: *mut ecs_meta_cursor_t,
+        value: *const ecs_value_t,
+    ) -> ::core::ffi::c_int;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as boolean.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_bool(cursor: *const ecs_meta_cursor_t) -> bool;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as char.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_char(cursor: *const ecs_meta_cursor_t) -> ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as signed integer.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_int(cursor: *const ecs_meta_cursor_t) -> i64;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as unsigned integer.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_uint(cursor: *const ecs_meta_cursor_t) -> u64;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as float.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_float(cursor: *const ecs_meta_cursor_t) -> f64;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as string.\n This operation does not perform conversions. If the field is not a string,\n this operation will fail.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_string(cursor: *const ecs_meta_cursor_t) -> *const ::core::ffi::c_char;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as entity.\n This operation does not perform conversions.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_entity(cursor: *const ecs_meta_cursor_t) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Get field value as (component) id.\n This operation can convert from an entity.\n\n @param cursor The cursor.\n @return The value of the current field."]
+    pub fn ecs_meta_get_id(cursor: *const ecs_meta_cursor_t) -> ecs_id_t;
+}
+unsafe extern "C" {
+    #[doc = "Convert pointer of primitive kind to float.\n\n @param type_kind The primitive type kind of the value.\n @param ptr Pointer to a value of a primitive type.\n @return The value in floating point format."]
+    pub fn ecs_meta_ptr_to_float(
+        type_kind: ecs_primitive_kind_t,
+        ptr: *const ::core::ffi::c_void,
+    ) -> f64;
+}
+unsafe extern "C" {
+    #[doc = "Get element count for array/vector operations.\n The operation must either be EcsOpPushArray or EcsOpPushVector. If the\n operation is EcsOpPushArray, the provided pointer may be NULL.\n\n @param op The serializer operation.\n @param ptr Pointer to the array/vector value.\n @return The number of elements."]
+    pub fn ecs_meta_op_get_elem_count(
+        op: *const ecs_meta_op_t,
+        ptr: *const ::core::ffi::c_void,
+    ) -> ecs_size_t;
+}
+#[doc = "Used with ecs_primitive_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_primitive_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Primitive type kind."]
+    pub kind: ecs_primitive_kind_t,
+}
+unsafe extern "C" {
+    #[doc = "Create a new primitive type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_primitive_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_primitive_desc_t,
+    ) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_enum_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_enum_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Enum constants."]
+    pub constants: [ecs_enum_constant_t; 32usize],
+    pub underlying_type: ecs_entity_t,
+}
+unsafe extern "C" {
+    #[doc = "Create a new enum type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_enum_init(world: *mut ecs_world_t, desc: *const ecs_enum_desc_t) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_bitmask_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_bitmask_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Bitmask constants."]
+    pub constants: [ecs_bitmask_constant_t; 32usize],
+}
+unsafe extern "C" {
+    #[doc = "Create a new bitmask type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_bitmask_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_bitmask_desc_t,
+    ) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_array_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_array_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Element type."]
+    pub type_: ecs_entity_t,
+    #[doc = "< Number of elements."]
+    pub count: i32,
+}
+unsafe extern "C" {
+    #[doc = "Create a new array type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_array_init(world: *mut ecs_world_t, desc: *const ecs_array_desc_t) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_vector_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_vector_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Element type."]
+    pub type_: ecs_entity_t,
+}
+unsafe extern "C" {
+    #[doc = "Create a new vector type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_vector_init(world: *mut ecs_world_t, desc: *const ecs_vector_desc_t)
+    -> ecs_entity_t;
+}
+#[doc = "Used with ecs_struct_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_struct_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Struct members."]
+    pub members: [ecs_member_t; 32usize],
+}
+unsafe extern "C" {
+    #[doc = "Create a new struct type.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_struct_init(world: *mut ecs_world_t, desc: *const ecs_struct_desc_t)
+    -> ecs_entity_t;
+}
+#[doc = "Used with ecs_opaque_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_opaque_desc_t {
+    #[doc = "< Existing entity to use for type (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "< Type that the opaque type maps to."]
+    pub type_: EcsOpaque,
+}
+unsafe extern "C" {
+    #[doc = "Create a new opaque type.\n Opaque types are types of which the layout doesn't match what can be modelled\n with the primitives of the meta framework, but which have a structure\n that can be described with meta primitives. Typical examples are STL types\n such as std::string or std::vector, types with a nontrivial layout, and types\n that only expose getter/setter methods.\n\n An opaque type is a combination of a serialization function, and a handle to\n a meta type which describes the structure of the serialized output. For\n example, an opaque type for std::string would have a serializer function that\n accesses .c_str(), and with type ecs_string_t.\n\n The serializer callback accepts a serializer object and a pointer to the\n value of the opaque type to be serialized. The serializer has two methods:\n\n - value, which serializes a value (such as .c_str())\n - member, which specifies a member to be serialized (in the case of a struct)\n\n @param world The world.\n @param desc The type descriptor.\n @return The new type, 0 if failed."]
+    pub fn ecs_opaque_init(world: *mut ecs_world_t, desc: *const ecs_opaque_desc_t)
+    -> ecs_entity_t;
+}
+#[doc = "Used with ecs_unit_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_unit_desc_t {
+    #[doc = "Existing entity to associate with unit (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
+    pub symbol: *const ::core::ffi::c_char,
+    #[doc = "Unit quantity, e.g. distance, percentage, weight. (optional)."]
+    pub quantity: ecs_entity_t,
+    #[doc = "Base unit, e.g. \"meters\" (optional)."]
+    pub base: ecs_entity_t,
+    #[doc = "Over unit, e.g. \"per second\" (optional)."]
+    pub over: ecs_entity_t,
+    #[doc = "Translation to apply to derived unit (optional)."]
+    pub translation: ecs_unit_translation_t,
+    #[doc = "Prefix indicating order of magnitude relative to the derived unit. If set\n together with \"translation\", the values must match. If translation is not\n set, setting prefix will auto-populate it.\n Additionally, setting the prefix will enforce that the symbol (if set)\n is consistent with the prefix symbol + symbol of the derived unit. If the\n symbol is not set, it will be auto populated."]
+    pub prefix: ecs_entity_t,
+}
+unsafe extern "C" {
+    #[doc = "Create a new unit.\n\n @param world The world.\n @param desc The unit descriptor.\n @return The new unit, 0 if failed."]
+    pub fn ecs_unit_init(world: *mut ecs_world_t, desc: *const ecs_unit_desc_t) -> ecs_entity_t;
+}
+#[doc = "Used with ecs_unit_prefix_init()."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_unit_prefix_desc_t {
+    #[doc = "Existing entity to associate with unit prefix (optional)."]
+    pub entity: ecs_entity_t,
+    #[doc = "Unit symbol, e.g. \"m\", \"%\", \"g\". (optional)."]
+    pub symbol: *const ::core::ffi::c_char,
+    #[doc = "Translation to apply to derived unit (optional)."]
+    pub translation: ecs_unit_translation_t,
+}
+unsafe extern "C" {
+    #[doc = "Create a new unit prefix.\n\n @param world The world.\n @param desc The type descriptor.\n @return The new unit prefix, 0 if failed."]
+    pub fn ecs_unit_prefix_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_unit_prefix_desc_t,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Create a new quantity.\n\n @param world The world.\n @param desc The quantity descriptor.\n @return The new quantity, 0 if failed."]
+    pub fn ecs_quantity_init(
+        world: *mut ecs_world_t,
+        desc: *const ecs_entity_desc_t,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C" {
+    #[doc = "Meta module import function.\n Usage:\n @code\n ECS_IMPORT(world, FlecsMeta)\n @endcode\n\n @param world The world."]
+    pub fn FlecsMetaImport(world: *mut ecs_world_t);
+}
+unsafe extern "C" {
+    #[doc = "Populate meta information from type descriptor."]
+    pub fn ecs_meta_from_desc(
+        world: *mut ecs_world_t,
+        component: ecs_entity_t,
+        kind: ecs_type_kind_t,
+        desc: *const ::core::ffi::c_char,
+    ) -> ::core::ffi::c_int;
+}
 unsafe extern "C" {
     #[doc = "Import a module.\n This operation will load a modules and store the public module handles in the\n handles_out out parameter. The module name will be used to verify if the\n module was already loaded, in which case it won't be reimported. The name\n will be translated from PascalCase to an entity path (pascal.case) before the\n lookup occurs.\n\n Module contents will be stored as children of the module entity. This\n prevents modules from accidentally defining conflicting identifiers. This is\n enforced by setting the scope before and after loading the module to the\n module entity id.\n\n A more convenient way to import a module is by using the ECS_IMPORT macro.\n\n @param world The world.\n @param module The module import function.\n @param module_name The name of the module.\n @return The module entity."]
     pub fn ecs_import(
@@ -5279,6 +6236,12 @@ unsafe extern "C" {
         new_ptr: *const ::core::ffi::c_void,
         size: usize,
     ) -> ecs_cpp_get_mut_t;
+}
+unsafe extern "C" {
+    pub fn ecs_cpp_last_member(
+        world: *const ecs_world_t,
+        type_: ecs_entity_t,
+    ) -> *const ecs_member_t;
 }
 unsafe extern "C" {
     pub fn ecs_rust_rel_count(

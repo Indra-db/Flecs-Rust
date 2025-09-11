@@ -387,6 +387,10 @@ fn build_libc() {
         "src/libc-top-half/musl/src/ctype/isupper.c",
         "src/libc-top-half/musl/src/ctype/isdigit.c",
         "src/libc-top-half/musl/src/ctype/tolower.c",
+        "src/libc-top-half/musl/src/stdlib/abs.c",
+        "src/libc-top-half/musl/src/stdlib/atof.c",
+        "src/libc-top-half/musl/src/stdlib/atoi.c",
+        "src/libc-top-half/musl/src/stdlib/atol.c",
         "src/libc-top-half/musl/src/stdlib/atoll.c",
         "src/libc-top-half/musl/src/time/time.c",
         "src/wasm_stubs.c", // WASM-specific stub implementations

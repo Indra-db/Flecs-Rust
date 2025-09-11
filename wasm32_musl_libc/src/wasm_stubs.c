@@ -26,3 +26,4 @@ int fseek(FILE *stream, long offset, int whence) { (void)stream;(void)offset;(vo
 long ftell(FILE *stream) { (void)stream; return 0; }
 int fopen_s(FILE **result, const char *filename, const char *mode) { (void)filename;(void)mode; if(result) *result=NULL; errno=EINVAL; return errno; }
 int __clock_gettime(clockid_t clk, struct timespec *ts) { return -1; }
+double strtod(const char *restrict s, char **restrict p) { (void)s; (void)p; return 0.0; }

@@ -37,6 +37,7 @@ default = [
 # Forward these features to flecs_ecs
 wasm32 = ["flecs_ecs/wasm32"]
 flecs_base = ["flecs_ecs/flecs_base"]
+flecs_meta = ["flecs_ecs/flecs_meta"]
 flecs_use_os_alloc = ["flecs_ecs/flecs_use_os_alloc"]
 
 [profile.release]
