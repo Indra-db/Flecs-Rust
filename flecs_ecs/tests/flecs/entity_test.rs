@@ -3906,3 +3906,866 @@ fn entity_iter_empty_type() {
 
     assert_eq!(count, 0);
 }
+
+#[test]
+#[should_panic]
+#[ignore = "Panic test: panics in C, which isn't captured by rust"]
+fn entity_on_replace_w_get_mut() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world.component::<Position>().on_replace(|e, _, _| {
+        e.world().get::<&mut Flags>(|flags| {
+            flags.invoked += 1;
+        });
+    });
+
+    world
+        .entity()
+        .add(Position::id())
+        .get::<&mut Position>(|p| {
+            p.x = 10;
+            p.y = 20;
+        });
+}
+#[test]
+fn entity_on_replace_w_set() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
+#[test]
+fn entity_on_replace_w_set_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.set(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+}
+
+#[test]
+fn entity_on_replace_w_assign() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
+#[test]
+fn entity_on_replace_w_assign_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.assign(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_set() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity();
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    e.set(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_existing_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    e.set(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_batched() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity();
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    e.add(Velocity::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+    assert!(e.has(Velocity::id()));
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_batched_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity();
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    e.set(Position { x: 11, y: 21 });
+    e.add(Velocity::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    assert!(e.has(Velocity::id()));
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_batched_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    e.add(Velocity::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+    assert!(e.has(Velocity::id()));
+}
+
+#[test]
+fn entity_defer_on_replace_w_set_batched_existing_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.set(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    e.set(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+    e.add(Velocity::id());
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    assert!(e.has(Velocity::id()));
+}
+
+#[test]
+#[should_panic]
+#[ignore = "Panic test: panics in C, which isn't captured by rust"]
+fn entity_defer_on_replace_w_assign() {
+    // assign on a missing component should panic/abort
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, _prev, _next| {
+            e.world().get::<&mut Flags>(|flags| flags.invoked += 1);
+        });
+
+    let e = world.entity();
+    world.defer_begin();
+    // This should panic because Position is not yet present
+    e.assign(Position { x: 10, y: 20 });
+}
+
+#[test]
+fn entity_defer_on_replace_w_assign_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_assign_existing_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    e.assign(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+}
+
+#[test]
+fn entity_defer_on_replace_w_assign_batched_existing() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.assign(Position { x: 10, y: 20 });
+    e.add(Velocity::id());
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+    assert!(e.has(Velocity::id()));
+}
+
+#[test]
+fn entity_defer_on_replace_w_assign_batched_existing_twice() {
+    #[derive(Component, Default)]
+    struct Flags {
+        invoked: u32,
+    }
+
+    let world = create_world_with_flags::<Flags>();
+
+    world
+        .component::<Position>()
+        .on_add(|_, p| {
+            p.x = 0;
+            p.y = 0;
+        })
+        .on_replace(|e, prev, next| {
+            e.world().get::<&mut Flags>(|flags| {
+                match flags.invoked {
+                    0 => {
+                        assert_eq!(prev.x, 0);
+                        assert_eq!(prev.y, 0);
+                        assert_eq!(next.x, 10);
+                        assert_eq!(next.y, 20);
+                    }
+                    1 => {
+                        assert_eq!(prev.x, 10);
+                        assert_eq!(prev.y, 20);
+                        assert_eq!(next.x, 11);
+                        assert_eq!(next.y, 21);
+                    }
+                    _ => unreachable!(),
+                }
+                flags.invoked += 1;
+            });
+        });
+
+    let e = world.entity().add(Position::id());
+    world.defer_begin();
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    e.assign(Position { x: 11, y: 21 });
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+    e.add(Velocity::id());
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    assert!(e.has(Velocity::id()));
+}

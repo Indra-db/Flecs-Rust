@@ -414,7 +414,7 @@ impl World {
     ///
     /// let entities_created = world.entity_bulk(10).set(&positions).build();
     /// ```
-    pub fn entity_bulk(&self, count: u32) -> BulkEntityBuilder {
+    pub fn entity_bulk(&self, count: u32) -> BulkEntityBuilder<'_> {
         BulkEntityBuilder::new(self, count)
     }
 
@@ -449,7 +449,10 @@ impl World {
     ///     .set(&positions)
     ///     .build();
     /// ```
-    pub fn entity_bulk_w_entity_ids(&self, entities: &[impl Into<Entity>]) -> BulkEntityBuilder {
+    pub fn entity_bulk_w_entity_ids(
+        &self,
+        entities: &[impl Into<Entity>],
+    ) -> BulkEntityBuilder<'_> {
         BulkEntityBuilder::new_w_entity_ids(self, entities)
     }
 }

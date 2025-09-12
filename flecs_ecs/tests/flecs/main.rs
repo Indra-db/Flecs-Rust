@@ -26,5 +26,7 @@ mod observer_test;
 mod query_builder_test;
 mod query_rust_test;
 mod query_test;
+#[cfg(feature = "flecs_safety_locks")]
+mod safety;
 mod system_test;
 mod world_test;

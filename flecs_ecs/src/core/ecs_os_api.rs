@@ -47,9 +47,11 @@ pub fn ensure_initialized() {
         flecs_ecs::sys::ecs_os_set_api_defaults();
         flecs_ecs::sys::ecs_os_get_api()
     };
+
     for h in hooks {
         (h.0)(&mut api);
     }
+
     unsafe {
         flecs_ecs::sys::ecs_os_set_api(&mut api as *mut _);
     };
@@ -75,7 +77,8 @@ pub fn ensure_initialized() {
 /// use flecs_ecs::prelude::*;
 ///
 /// ecs_os_api::add_init_hook(Box::new(|api| {
-///     unsafe extern "C" fn abort_() {
+///     #[extern_abi]
+///     unsafe fn abort_() {
 ///         panic!("fatal error in flecs");
 ///     }
 ///

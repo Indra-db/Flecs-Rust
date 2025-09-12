@@ -330,7 +330,7 @@ mod component_hooks_attributes {
     struct OnReplaceHookFn(i32);
 
     #[derive(Default, Component)]
-    #[flecs(hooks(on_replace(|e, _c| {
+    #[flecs(hooks(on_replace(|e, _p,_n| {
         e.world().get::<&mut OnReplaceHookCounter>(|counter| {
             counter.count += 1;
         });
@@ -355,7 +355,7 @@ mod component_hooks_attributes {
         });
     }
 
-    fn on_replace_hook(e: EntityView<'_>, _c: &mut OnReplaceHookFn) {
+    fn on_replace_hook(e: EntityView<'_>, _p: &mut OnReplaceHookFn, _n: &mut OnReplaceHookFn) {
         e.world().get::<&mut OnReplaceHookCounter>(|counter| {
             counter.count += 1;
         });
@@ -390,7 +390,7 @@ mod component_hooks_attributes {
         world.add(OnRemoveHookCounter::id());
         world.add(OnReplaceHookCounter::id());
 
-        world
+        let e = world
             .entity()
             .add(OnAddHookFn::id())
             .add(OnAddHookInline::id())
@@ -409,8 +409,11 @@ mod component_hooks_attributes {
         assert_eq!(c_set.count, 2, "Expected 2 OnSetHook calls");
         let c_remove = world.cloned::<&OnRemoveHookCounter>();
         assert_eq!(c_remove.count, 2, "Expected 2 OnRemoveHook calls");
-        let _c_replace = world.cloned::<&OnReplaceHookCounter>();
-        //TODO feature flecs version
-        //assert_eq!(c_replace.count, 2, "Expected 2 OnReplaceHook calls");
+
+        e.set(OnReplaceHookFn::default())
+            .set(OnReplaceHookInline::default());
+
+        let c_replace = world.cloned::<&OnReplaceHookCounter>();
+        assert_eq!(c_replace.count, 2, "Expected 2 OnReplaceHook calls");
     }
 }

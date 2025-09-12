@@ -163,7 +163,7 @@ impl World {
     ///
     /// * [`addons::app`](crate::addons::app)
     #[inline(always)]
-    pub fn app(&self) -> App {
+    pub fn app(&self) -> App<'_> {
         App::new(self)
     }
 }

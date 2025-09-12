@@ -20,7 +20,7 @@ impl World {
     /// This will create a new entity that is associated with a script.
     ///
     /// The entity will receive an [`EcsScript`][crate::sys::EcsScript] component.
-    pub fn script(&self) -> ScriptBuilder {
+    pub fn script(&self) -> ScriptBuilder<'_> {
         ScriptBuilder::new(self)
     }
 
@@ -28,7 +28,7 @@ impl World {
     /// This will create a new named entity that is associated with a script.
     ///
     /// The entity will receive an [`EcsScript`][crate::sys::EcsScript] component.
-    pub fn script_named(&self, name: &str) -> ScriptBuilder {
+    pub fn script_named(&self, name: &str) -> ScriptBuilder<'_> {
         ScriptBuilder::new_named(self, name)
     }
 
@@ -37,7 +37,7 @@ impl World {
     /// This is useful if you want to tie the lifetime of the script to an existing entity.
     ///
     /// The entity will set a (new) [`EcsScript`][crate::sys::EcsScript] component.
-    pub fn script_from(&self, entity: impl Into<Entity>) -> ScriptBuilder {
+    pub fn script_from(&self, entity: impl Into<Entity>) -> ScriptBuilder<'_> {
         ScriptBuilder::new_from(self, entity)
     }
 
@@ -105,7 +105,7 @@ impl World {
     /// # Panics
     ///
     /// The entity must have a [`flecs::Script`] component.
-    pub fn script_entity_from(&self, id: impl IntoEntity) -> ScriptEntityView {
+    pub fn script_entity_from(&self, id: impl IntoEntity) -> ScriptEntityView<'_> {
         ScriptEntityView::new_from(self, id)
     }
 }

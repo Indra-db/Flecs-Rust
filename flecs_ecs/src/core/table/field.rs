@@ -1,10 +1,15 @@
 //! Table column API.
 
+#[cfg(feature = "flecs_safety_locks")]
+use super::iter::FieldError;
 use crate::core::*;
 use crate::sys;
 use core::ffi::c_void;
 use core::ops::Index;
 use core::ops::IndexMut;
+use core::ops::{Deref, DerefMut};
+#[cfg(feature = "flecs_safety_locks")]
+use core::ptr::NonNull;
 
 // TODO I can probably return two different field types, one for shared and one for non-shared
 // then I can customize the index behavior
@@ -45,22 +50,198 @@ impl From<FieldIndex> for usize {
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-#[derive(Debug)]
-pub struct Field<'a, T> {
+pub struct Field<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
-    pub(crate) _marker: core::marker::PhantomData<&'a T>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) table: NonNull<sys::ecs_table_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) stage_id: Option<i32>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) column_index: i16,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) field_index: i8,
 }
 
-impl<'a, T> Field<'a, T> {
+impl<T, const LOCK: bool> core::fmt::Debug for Field<'_, T, LOCK>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.slice_components)
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
+    fn drop(&mut self) {
+        if LOCK {
+            unsafe {
+                if let Some(stage_id) = self.stage_id {
+                    table_column_lock_read_end::<true>(
+                        self.table.as_mut(),
+                        self.column_index,
+                        stage_id,
+                    );
+                } else {
+                    table_column_lock_read_end::<false>(self.table.as_mut(), self.column_index, 0);
+                }
+            }
+        }
+    }
+}
+
+impl<'a, T> Field<'a, T, false> {
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_lockless(
+        slice_components: &'a [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Self {
+        let stage_id = if world.is_currently_multithreaded() {
+            Some(stage_id)
+        } else {
+            None
+        };
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        }
+    }
+
+    #[inline(always)]
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    pub(crate) fn new_lockless(slice_components: &'a [T], is_shared: bool) -> Self {
+        Self {
+            slice_components,
+            is_shared,
+        }
+    }
+}
+
+impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
+    #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
-            _marker: core::marker::PhantomData,
         }
     }
+
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new<const MULTITHREADED: bool>(
+        slice_components: &'a [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Self {
+        if LOCK {
+            get_table_column_lock_read_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            );
+        }
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        }
+    }
+
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new_result<const MULTITHREADED: bool>(
+        slice_components: &'a [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Result<Self, FieldError> {
+        if LOCK
+            && table_column_lock_read_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            )
+        {
+            return Err(FieldError::Locked);
+        }
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
+        Ok(Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        })
+    }
+
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn lock_table(&self, world: &WorldRef) {
+    //     get_table_column_lock_read_begin(
+    //         world,
+    //         self.table.as_ptr(),
+    //         self.column_index,
+    //         self.stage_id,
+    //     );
+    // }
+
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn unlock_table(&self) {
+    //     table_column_lock_read_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    // }
+
+    //// Get the table id of the column.
+    #[cfg(feature = "flecs_safety_locks")]
+    pub fn table_id(&self) -> u64 {
+        unsafe { sys::flecs_table_id(self.table.as_ptr()) }
+    }
+
+    pub fn drop(self) {}
 
     /// whether the column / component is shared.
     ///
@@ -99,7 +280,7 @@ impl<'a, T> Field<'a, T> {
     }
 }
 
-impl<'a, T> Index<FieldIndex> for Field<'a, T> {
+impl<'a, T, const LOCK: bool> Index<FieldIndex> for Field<'a, T, LOCK> {
     type Output = T;
 
     #[inline(always)]
@@ -114,7 +295,7 @@ impl<'a, T> Index<FieldIndex> for Field<'a, T> {
     }
 }
 
-impl<'a, T> Index<usize> for Field<'a, T> {
+impl<'a, T, const LOCK: bool> Index<usize> for Field<'a, T, LOCK> {
     type Output = T;
 
     #[inline(always)]
@@ -133,13 +314,87 @@ impl<'a, T> Index<usize> for Field<'a, T> {
 /// # Type parameters
 ///
 /// * `T`: The type of the column.
-pub struct FieldMut<'a, T> {
+pub struct FieldMut<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
-    pub(crate) _marker: core::marker::PhantomData<&'a mut T>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) table: NonNull<sys::ecs_table_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) stage_id: Option<i32>,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) column_index: i16,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) field_index: i8,
 }
 
-impl<'a, T> FieldMut<'a, T> {
+impl<T, const LOCK: bool> core::fmt::Debug for FieldMut<'_, T, LOCK>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.slice_components)
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
+    fn drop(&mut self) {
+        if LOCK {
+            if let Some(stage_id) = self.stage_id {
+                unsafe {
+                    table_column_lock_write_end::<true>(
+                        self.table.as_mut(),
+                        self.column_index,
+                        stage_id,
+                    );
+                }
+            } else {
+                unsafe {
+                    table_column_lock_write_end::<false>(self.table.as_mut(), self.column_index, 0);
+                }
+            }
+        }
+    }
+}
+
+impl<'a, T> FieldMut<'a, T, false> {
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_lockless(
+        slice_components: &'a mut [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Self {
+        let stage_id = if world.is_currently_multithreaded() {
+            Some(stage_id)
+        } else {
+            None
+        };
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        }
+    }
+
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    #[inline(always)]
+    pub(crate) fn new_lockless(slice_components: &'a mut [T], is_shared: bool) -> Self {
+        Self {
+            slice_components,
+            is_shared,
+        }
+    }
+}
+
+impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     /// Create a new column from component array.
     ///
     /// # Arguments
@@ -147,13 +402,121 @@ impl<'a, T> FieldMut<'a, T> {
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
     #[inline(always)]
+    #[cfg(not(feature = "flecs_safety_locks"))]
     pub fn new(slice_components: &'a mut [T], is_shared: bool) -> Self {
         Self {
             slice_components,
             is_shared,
-            _marker: core::marker::PhantomData,
         }
     }
+
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new<const MULTITHREADED: bool>(
+        slice_components: &'a mut [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Self {
+        if LOCK {
+            get_table_column_lock_write_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            );
+        }
+
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
+
+        Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        }
+    }
+    /// Create a new column from component array.
+    ///
+    /// # Arguments
+    ///
+    /// * `slice_components`: pointer to the component array.
+    /// * `is_shared`: whether the component is shared.
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `field::field`
+    #[doc(alias = "field::field")]
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new_result<const MULTITHREADED: bool>(
+        slice_components: &'a mut [T],
+        is_shared: bool,
+        stage_id: i32,
+        column_index: i16,
+        field_index: i8,
+        table: NonNull<sys::ecs_table_t>,
+        world: &WorldRef,
+    ) -> Result<Self, FieldError> {
+        if LOCK
+            && table_column_lock_write_begin::<MULTITHREADED>(
+                world,
+                table.as_ptr(),
+                column_index,
+                stage_id,
+            )
+        {
+            return Err(FieldError::Locked);
+        }
+
+        let stage_id = if MULTITHREADED { Some(stage_id) } else { None };
+
+        Ok(Self {
+            slice_components,
+            is_shared,
+            table,
+            field_index,
+            stage_id,
+            column_index,
+        })
+    }
+
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn lock_table(&self, world: &WorldRef) {
+    //     get_table_column_lock_write_begin(
+    //         world,
+    //         self.table.as_ptr(),
+    //         self.column_index,
+    //         self.stage_id,
+    //     );
+    // }
+
+    // #[cfg(feature = "flecs_safety_locks")]
+    // pub(crate) fn unlock_table(&self) {
+    //     table_column_lock_write_end(self.table.as_ptr(), self.column_index, self.stage_id);
+    // }
+
+    //// Get the table id of the column.
+    #[cfg(feature = "flecs_safety_locks")]
+    pub fn table_id(&self) -> u64 {
+        unsafe { flecs_ecs_sys::flecs_table_id(self.table.as_ptr()) }
+    }
+
+    pub fn drop(self) {}
 
     /// whether the column / component is shared.
     #[inline(always)]
@@ -201,12 +564,12 @@ impl<'a, T> FieldMut<'a, T> {
     }
 
     /// Get mutable table field as a slice
-    pub fn as_slice_mut(&mut self) -> &mut [T] {
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
         self.slice_components
     }
 }
 
-impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
+impl<'a, T, const LOCK: bool> Index<FieldIndex> for FieldMut<'a, T, LOCK> {
     type Output = T;
 
     #[inline(always)]
@@ -221,7 +584,7 @@ impl<'a, T> Index<FieldIndex> for FieldMut<'a, T> {
     }
 }
 
-impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
+impl<'a, T, const LOCK: bool> IndexMut<FieldIndex> for FieldMut<'a, T, LOCK> {
     #[inline(always)]
     fn index_mut(&mut self, idx: FieldIndex) -> &mut T {
         // Safety: This index can only be obtained from `it.iter`
@@ -234,7 +597,7 @@ impl<'a, T> IndexMut<FieldIndex> for FieldMut<'a, T> {
     }
 }
 
-impl<'a, T> Index<usize> for FieldMut<'a, T> {
+impl<'a, T, const LOCK: bool> Index<usize> for FieldMut<'a, T, LOCK> {
     type Output = T;
 
     #[inline(always)]
@@ -249,7 +612,7 @@ impl<'a, T> Index<usize> for FieldMut<'a, T> {
     }
 }
 
-impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
+impl<'a, T, const LOCK: bool> IndexMut<usize> for FieldMut<'a, T, LOCK> {
     #[inline(always)]
     fn index_mut(&mut self, idx: usize) -> &mut T {
         // Safety: This index can only be obtained from `it.iter`
@@ -259,6 +622,151 @@ impl<'a, T> IndexMut<usize> for FieldMut<'a, T> {
             "Field is shared, cannot index above index 0"
         );
         &mut self.slice_components[idx]
+    }
+}
+
+pub struct FieldAt<'a, T> {
+    pub(crate) component: &'a T,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    is_multithreaded: bool,
+}
+
+impl<T> core::fmt::Debug for FieldAt<'_, T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.component)
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl<T> Drop for FieldAt<'_, T> {
+    fn drop(&mut self) {
+        if self.is_multithreaded {
+            unsafe {
+                sparse_id_record_lock_read_end::<true>(self.idr.as_mut());
+            }
+        } else {
+            unsafe {
+                sparse_id_record_lock_read_end::<false>(self.idr.as_mut());
+            }
+        }
+    }
+}
+
+impl<T: ComponentId> Deref for FieldAt<'_, T> {
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.component
+    }
+}
+
+impl<'a, T> FieldAt<'a, T> {
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    pub(crate) fn new(component: &'a T) -> Self {
+        Self { component }
+    }
+
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new(
+        component: &'a T,
+        world: &WorldRef,
+        mut idr: NonNull<sys::ecs_component_record_t>,
+    ) -> Self {
+        let is_multithreaded = world.is_currently_multithreaded();
+        if is_multithreaded {
+            sparse_id_record_lock_read_begin::<true>(world, unsafe { idr.as_mut() });
+        } else {
+            sparse_id_record_lock_read_begin::<false>(world, unsafe { idr.as_mut() });
+        }
+
+        Self {
+            component,
+            idr,
+            is_multithreaded,
+        }
+    }
+}
+
+pub struct FieldAtMut<'a, T> {
+    pub(crate) component: &'a mut T,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    is_multithreaded: bool,
+}
+
+impl<T> core::fmt::Debug for FieldAtMut<'_, T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self.component)
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl<T> Drop for FieldAtMut<'_, T> {
+    fn drop(&mut self) {
+        if self.is_multithreaded {
+            unsafe {
+                sparse_id_record_lock_write_end::<true>(self.idr.as_mut());
+            }
+        } else {
+            unsafe {
+                sparse_id_record_lock_write_end::<false>(self.idr.as_mut());
+            }
+        }
+    }
+}
+
+impl<T: ComponentId> Deref for FieldAtMut<'_, T> {
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.component
+    }
+}
+
+impl<T: ComponentId> DerefMut for FieldAtMut<'_, T> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.component
+    }
+}
+
+impl<'a, T> FieldAtMut<'a, T> {
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    #[inline(always)]
+    pub(crate) fn new(component: &'a mut T) -> Self {
+        Self { component }
+    }
+
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new(
+        component: &'a mut T,
+        world: &WorldRef,
+        mut idr: NonNull<sys::ecs_component_record_t>,
+    ) -> Self {
+        let is_multithreaded = world.is_currently_multithreaded();
+        if is_multithreaded {
+            sparse_id_record_lock_write_begin::<true>(world, unsafe { idr.as_mut() });
+        } else {
+            sparse_id_record_lock_write_begin::<false>(world, unsafe { idr.as_mut() });
+        }
+
+        Self {
+            component,
+            idr,
+            is_multithreaded,
+        }
     }
 }
 
@@ -282,6 +790,7 @@ pub struct FieldUntyped {
 /// * `count`: number of elements in the array.
 /// * `is_shared`: whether the component is shared.
 impl FieldUntyped {
+    #[inline(always)]
     pub(crate) fn new(array: *const c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {
             array,
@@ -291,6 +800,7 @@ impl FieldUntyped {
         }
     }
 
+    #[inline(always)]
     pub fn at(&self, index: usize) -> *const c_void {
         ecs_assert!(
             index < self.count,
@@ -330,6 +840,7 @@ pub struct FieldUntypedMut {
 /// * `count`: number of elements in the array.
 /// * `is_shared`: whether the component is shared.
 impl FieldUntypedMut {
+    #[inline(always)]
     pub(crate) fn new(array: *mut c_void, size: usize, count: usize, is_shared: bool) -> Self {
         Self {
             array,
@@ -339,6 +850,7 @@ impl FieldUntypedMut {
         }
     }
 
+    #[inline(always)]
     pub fn at(&self, index: usize) -> *const c_void {
         ecs_assert!(
             index < self.count,
@@ -357,6 +869,7 @@ impl FieldUntypedMut {
         unsafe { self.array.add(index * self.size) }
     }
 
+    #[inline(always)]
     pub fn at_mut(&self, index: usize) -> *mut c_void {
         ecs_assert!(
             index < self.count,
@@ -448,7 +961,7 @@ pub(crate) fn flecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
 
     ecs_assert!(
         unsafe { sys::ecs_field_size(it, index) } == _size
-            || unsafe { sys::ecs_field_size(it, index) } != 0,
+            || unsafe { sys::ecs_field_size(it, index) } == 0,
         FlecsErrorCode::InvalidParameter,
         "mismatching size for field {}",
         index
@@ -492,11 +1005,9 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let index_usize = index as usize;
     let tr = unsafe { *it.trs.add(index_usize) };
     if tr.is_null() {
-        ecs_assert!(
-            !unsafe { sys::ecs_field_is_set(it, index) },
-            FlecsErrorCode::InternalError,
-            "field is set but no table record found"
-        );
+        /* We're just passing in a pointer to a value that may not be
+         * a component on the entity (such as a pointer to a new value
+         * in an on_replace hook). */
         return core::ptr::null_mut();
     }
 
@@ -593,7 +1104,7 @@ pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) 
 
     ecs_assert!(
         unsafe { sys::ecs_field_size(it, index) } == _size
-            || unsafe { sys::ecs_field_size(it, index) } != 0,
+            || unsafe { sys::ecs_field_size(it, index) } == 0,
         FlecsErrorCode::InvalidParameter,
         "mismatching size for field {}",
         index

@@ -14,9 +14,11 @@ use alloc::vec::Vec;
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Data, DeriveInput, Fields, Ident, ItemFn, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, ItemFn, parse_macro_input};
 
 use crate::tuples::Tuples;
+#[cfg(feature = "flecs_query_rust_traits")]
+use syn::Ident;
 
 mod component;
 mod dsl;
@@ -464,11 +466,6 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 #[cfg(not(feature = "flecs_query_rust_traits"))]
 pub fn ecs_rust_trait(_: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    const {
-        panic!(
-            "The `flecs_query_rust_traits` feature must be enabled to use this procedural macro."
-        )
-    };
     ProcMacroTokenStream::new()
 }
 

@@ -197,7 +197,7 @@ pub fn create_w_add_in_observer(criterion: &mut Criterion) {
                     .run(move |mut it| {
                         while it.next() {
                             for i in it.iter() {
-                                it.entity(i).unwrap().add(add_id);
+                                it.get_entity(i).unwrap().add(add_id);
                             }
                         }
                     });

@@ -195,8 +195,12 @@ where
 {
     type BuiltType = System<'a>;
 
+    #[doc(hidden)]
     /// Build the `system_builder` into an system
     fn build(&mut self) -> Self::BuiltType {
+        if self.desc.callback.is_none() && self.desc.run.is_none() {
+            panic!("you should not call this fn manually. Use `.each` , `.run` instead")
+        }
         let system = System::new(self.world(), self.desc);
         for s in self.term_builder.str_ptrs_to_free.iter_mut() {
             unsafe { core::mem::ManuallyDrop::drop(s) };

@@ -265,7 +265,7 @@ create_component_trait!(SlotOf, ECS_SLOT_OF);
 create_component_trait!(
     OrderedChildren,
     ECS_ORDERED_CHILDREN,
-    "Tag that when added to a parent ensures stable order of ecs_children result."
+    "Tag that when added to a parent ensures stable order of `ecs_children` result."
 );
 create_pre_registered_component!(Flag, ECS_FLAG);
 create_pre_registered_component!(Monitor, ECS_MONITOR);
@@ -277,8 +277,7 @@ create_pre_registered_component!(Wildcard, ECS_WILDCARD, "Match all entities");
 create_pre_registered_component!(Any, ECS_ANY, "Match at most one entity");
 create_pre_registered_component!(This_, ECS_THIS);
 create_pre_registered_component!(Variable, ECS_VARIABLE);
-// Shortcut as EcsVariable is typically used as source for singleton terms
-create_pre_registered_component!(Singleton, ECS_VARIABLE);
+
 create_component_trait!(
     Transitive,
     ECS_TRANSITIVE,
@@ -304,14 +303,14 @@ create_component_trait!(
     ECS_INHERITABLE,
     "Component trait. Mark component as inheritable.
     This is the opposite of Final. This trait can be used to enforce that queries
-    take into account component inheritance before inheritance (IsA) 
+    take into account component inheritance before inheritance (`IsA`) 
     relationships are added with the component as target."
 );
 
 create_component_trait!(
     PairIsTag,
     ECS_PAIR_IS_TAG,
-    "Component trait. A relationship can be marked with PairIsTag in which case
+    "Component trait. A relationship can be marked with `PairIsTag` in which case
      a pair with the relationship will never contain data."
 );
 create_component_trait!(
@@ -358,6 +357,12 @@ create_component_trait!(
     Target,
     ECS_TARGET,
     "Component trait. Enforces that an entity can only be used as the target of a relationship."
+);
+
+create_component_trait!(
+    Singleton,
+    ECS_SINGLETON,
+    "Component trait. Configures the components to be used as a singleton only. This automatically tells queries that it's a singleton"
 );
 
 // OnInstantiate traits
@@ -844,7 +849,7 @@ mod tests {
             assert_eq!(flecs::Any, sys::EcsAny);
             assert_eq!(flecs::This_, sys::EcsThis);
             assert_eq!(flecs::Variable, sys::EcsVariable);
-            assert_eq!(flecs::Singleton, sys::EcsVariable);
+            assert_eq!(flecs::Singleton, sys::EcsSingleton);
             assert_eq!(flecs::Transitive, sys::EcsTransitive);
             assert_eq!(flecs::Reflexive, sys::EcsReflexive);
             assert_eq!(flecs::Symmetric, sys::EcsSymmetric);

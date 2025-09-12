@@ -17,6 +17,12 @@ command = "cargo"
 args = ["build"]
 workspace = false
 
+[tasks.build-workspace]
+description = "Build all workspace members (equivalent to `cargo build --workspace`)"
+command = "cargo"
+args = ["build", "--workspace"]
+workspace = true
+
 [tasks.test]
 command = "cargo"
 args = ["test", "-p", "flecs_ecs"]
@@ -107,3 +113,27 @@ dependencies = ["install-book-deps"]
 cwd = "./flecs_ecs/doc/flecs"
 command = "mdbook"
 args = ["serve", "--open"]
+
+[tasks.build-tests-with-regeneration]
+description = "Build all build test projects with binding regeneration enabled"
+script = { file = "${CARGO_MAKE_WORKING_DIRECTORY}/scripts/build_tests_with_regeneration.sh", absolute_path = true }
+dependencies = ["chmod"]
+workspace = false
+
+[tasks.hack-each-feature]
+description = "Run `cargo hack check` for `flecs_ecs` across each feature with specified excludes and features"
+command = "cargo"
+args = [
+    "hack",
+    "check",
+    "-p",
+    "flecs_ecs",
+    "--each-feature",
+    "--exclude-features",
+    "flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c",
+    "--no-dev-deps",
+    "-v",
+    "--features",
+    "std,flecs_regenerate_binding"
+]
+workspace = false

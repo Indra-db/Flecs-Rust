@@ -9,7 +9,7 @@ where
     T: QueryTuple,
 {
     iter: sys::ecs_iter_t,
-    iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
+    iter_next: ExternIterNextFn,
     _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -17,10 +17,7 @@ impl<P, T> QueryIter<'_, P, T>
 where
     T: QueryTuple,
 {
-    pub fn new(
-        iter: sys::ecs_iter_t,
-        iter_next: unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool,
-    ) -> Self {
+    pub fn new(iter: sys::ecs_iter_t, iter_next: ExternIterNextFn) -> Self {
         Self {
             iter,
             iter_next,
@@ -121,15 +118,18 @@ where
         );
     }
 
+    #[inline(always)]
     fn iter_next(&self, iter: &mut sys::ecs_iter_t) -> bool {
         unsafe { (self.iter_next)(iter) }
     }
 
+    #[inline(always)]
     fn query_ptr(&self) -> *const sys::ecs_query_t {
         self.iter.query
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
+    #[inline(always)]
+    fn iter_next_func(&self) -> ExternIterNextFn {
         self.iter_next
     }
 }
@@ -139,7 +139,7 @@ where
     T: QueryTuple,
     Self: WorldProvider<'a>,
 {
-    fn entity(&self) -> EntityView {
+    fn entity(&self) -> EntityView<'_> {
         let world = unsafe { WorldRef::from_ptr(self.iter.real_world) };
         EntityView::new_from(world, unsafe {
             sys::ecs_get_entity(self.iter.query as *const c_void)

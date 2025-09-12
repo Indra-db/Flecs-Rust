@@ -12,6 +12,7 @@ extern crate std;
 
 extern crate alloc;
 use alloc::boxed::Box;
+use flecs_ecs_derive::extern_abi;
 
 /// Component class.
 /// Class used to register components and component metadata.
@@ -169,7 +170,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the binding context.
-    unsafe extern "C" fn binding_ctx_drop(ptr: *mut c_void) {
+    #[extern_abi]
+    unsafe fn binding_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ComponentBindingCtx = ptr as *mut ComponentBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);
@@ -248,8 +250,33 @@ impl<'a, T> Component<'a, T> {
         self
     }
 
+    /// Register on replace hook.
+    pub fn on_replace<Func>(self, func: Func) -> Self
+    where
+        Func: FnMut(EntityView, &mut T, &mut T) + 'static,
+    {
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
+
+        ecs_assert!(
+            type_hooks.on_replace.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_replace hook already set for component {}",
+            core::any::type_name::<T>()
+        );
+
+        let binding_ctx = Self::get_binding_context(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_replace = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_replace = Some(Self::on_replace_drop::<Func>);
+        type_hooks.on_replace = Some(Self::run_replace::<Func>);
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
+        self
+    }
+
     /// Function to free the on add hook.
-    unsafe extern "C" fn on_add_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_add_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -260,7 +287,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on remove hook.
-    unsafe extern "C" fn on_remove_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_remove_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -271,7 +299,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to free the on set hook.
-    unsafe extern "C" fn on_set_drop<Func>(func: *mut c_void)
+    #[extern_abi]
+    unsafe fn on_set_drop<Func>(func: *mut c_void)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -281,8 +310,21 @@ impl<'a, T> Component<'a, T> {
         }
     }
 
+    /// Function to free the on replace hook.
+    #[extern_abi]
+    unsafe fn on_replace_drop<Func>(func: *mut c_void)
+    where
+        Func: FnMut(EntityView, &mut T, &mut T) + 'static,
+    {
+        let ptr_func: *mut Func = func as *mut Func;
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
     /// Function to run the on add hook.
-    unsafe extern "C" fn run_add<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_add<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -300,7 +342,8 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Function to run the on set hook.
-    unsafe extern "C" fn run_set<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_set<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {
@@ -315,8 +358,27 @@ impl<'a, T> Component<'a, T> {
         on_set(entity, unsafe { &mut *component });
     }
 
+    /// Function to run the on replace hook.
+    #[extern_abi]
+    unsafe fn run_replace<Func>(iter: *mut sys::ecs_iter_t)
+    where
+        Func: FnMut(EntityView, &mut T, &mut T) + 'static,
+    {
+        let iter = unsafe { &*iter };
+        let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
+        let on_replace = unsafe { (*ctx).on_replace.unwrap() };
+        let on_replace = on_replace as *mut Func;
+        let on_replace = unsafe { &mut *on_replace };
+        let world = unsafe { WorldRef::from_ptr(iter.world) };
+        let entity = EntityView::new_from(world, unsafe { *iter.entities });
+        let prev: *mut T = flecs_field::<T>(iter, 0);
+        let next: *mut T = flecs_field::<T>(iter, 1);
+        on_replace(entity, unsafe { &mut *prev }, unsafe { &mut *next });
+    }
+
     /// Function to run the on remove hook.
-    unsafe extern "C" fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    unsafe fn run_remove<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(EntityView, &mut T) + 'static,
     {

@@ -2,92 +2,6 @@
 /* This uses internals from flecs which aren't in the header. */
 #include "flecs.c"
 
-void* ecs_rust_mut_get_id(
-    const ecs_world_t *world,
-    ecs_entity_t _entity,
-    const ecs_record_t* r,
-    ecs_id_t id)
-{
-    (void)_entity;
-    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(ecs_is_alive(world, _entity), ECS_INVALID_PARAMETER, NULL);
-    ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
-
-    world = ecs_get_world(world);
-
-    ecs_table_t *table = r->table;
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    flecs_check_exclusive_world_access_write(world);
-
-    ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
-
-    if (id < FLECS_HI_COMPONENT_ID) {
-        if (!world->non_trivial[id]) {
-            ecs_get_low_id(table, r, id);
-            return NULL;
-        }
-    }
-    ecs_component_record_t *cr = flecs_components_get(world, id);
-    int32_t row = ECS_RECORD_TO_ROW(r->row);
-    return flecs_get_component_ptr(table, row, cr).ptr;
-error:
-    return NULL;
-}
-
-void* ecs_rust_get_id(
-    const ecs_world_t *world,
-    ecs_entity_t entity,
-    const ecs_record_t* r,
-    ecs_id_t id)
-{
-    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(ecs_is_alive(world, entity), ECS_INVALID_PARAMETER, NULL);
-    ecs_assert(r != NULL, ECS_INVALID_PARAMETER, NULL);
-
-    world = ecs_get_world(world);
-
-    ecs_table_t *table = r->table;
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    if (id < FLECS_HI_COMPONENT_ID) {
-        ecs_get_low_id(table, r, id);
-        if (!world->non_trivial[id]) {
-            if (!(table->flags & EcsTableHasIsA)) {
-                return NULL;
-            }
-        }
-    }
-
-    ecs_component_record_t *cr = flecs_components_get(world, id);
-    if (!cr) {
-        return NULL;
-    }
-
-    if (cr->flags & EcsIdDontFragment) {
-        void *ptr = flecs_component_sparse_get(cr, entity);
-        if (ptr) {
-            return ptr;
-        }
-    }
-
-    const ecs_table_record_t *tr = flecs_component_get_table(cr, table);
-    if (!tr) {
-        return flecs_get_base_component(world, table, id, cr, 0);
-    } else {
-        if (cr->flags & EcsIdIsSparse) {
-            return flecs_component_sparse_get(cr, entity);
-        }
-        ecs_check(tr->column != -1, ECS_NOT_A_COMPONENT, NULL);
-    }
-
-    int32_t row = ECS_RECORD_TO_ROW(r->row);
-    return flecs_table_get_component(table, tr->column, row).ptr;
-
-error:
-    return NULL;
-}
-
 int32_t ecs_rust_rel_count(
     const ecs_world_t *world,
     ecs_id_t id,
@@ -113,3 +27,55 @@ error:
     return -1;
 }
 
+
+ecs_entity_t ecs_rust_get_typeid(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    const ecs_component_record_t* idr)     
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    const ecs_type_info_t *ti = ecs_rust_get_type_info_from_record(world, id, idr);
+    if (ti) {
+        ecs_assert(ti->component != 0, ECS_INTERNAL_ERROR, NULL);
+        return ti->component;
+    }
+error:
+    return 0;
+} 
+
+const ecs_type_info_t* ecs_rust_get_type_info_from_record(
+    const ecs_world_t *world,
+    ecs_id_t id,
+    const ecs_component_record_t* idr)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(id != 0, ECS_INVALID_PARAMETER, NULL);
+
+    if (!idr && ECS_IS_PAIR(id)) {
+        world = ecs_get_world(world);
+        idr = flecs_components_get(world, 
+            ecs_pair(ECS_PAIR_FIRST(id), EcsWildcard));
+        if (!idr || !idr->type_info) {
+            idr = NULL;
+        }
+        if (!idr) {
+            ecs_entity_t first = ecs_pair_first(world, id);
+            if (!first || !ecs_has_id(world, first, EcsPairIsTag)) {
+                idr = flecs_components_get(world, 
+                    ecs_pair(EcsWildcard, ECS_PAIR_SECOND(id)));
+                if (!idr || !idr->type_info) {
+                    idr = NULL;
+                }
+            }
+        }
+    }
+
+    if (idr) {
+        return idr->type_info;
+    } else if (!(id & ECS_ID_FLAGS_MASK)) {
+        world = ecs_get_world(world);
+        return flecs_type_info_get(world, id);
+    }
+error:
+    return NULL;
+}

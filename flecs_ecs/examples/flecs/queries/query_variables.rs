@@ -56,14 +56,12 @@ fn main() {
     let food_var = rule.find_var("food");
 
     // Iterate the rule
-    rule.run(|mut it| {
-        while it.next() {
-            for i in it.iter() {
-                let food = it.get_var(food_var.unwrap());
-                let entity = it.entity(i).unwrap();
-                println!("{entity} eats {food}");
-            }
-        }
+    rule.each_iter(|it, index, ()| {
+        println!(
+            "{} eats {}",
+            it.entity(index).name(),
+            it.get_var(food_var.unwrap()).name()
+        );
     });
 
     // Output:

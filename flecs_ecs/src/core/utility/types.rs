@@ -3,7 +3,11 @@ use core::ffi::c_void;
 
 pub type FTime = f32;
 
+/// Type alias for extern function pointers that adapts to target platform
+#[cfg(target_family = "wasm")]
 pub(crate) type EcsCtxFreeT = extern "C" fn(*mut c_void);
+#[cfg(not(target_family = "wasm"))]
+pub(crate) type EcsCtxFreeT = extern "C-unwind" fn(*mut c_void);
 
 // #[doc(hidden)]
 // pub struct ReactorBindingType {
@@ -65,25 +69,25 @@ impl Drop for ObserverEntityBindingCtx {
             return;
         }
 
-        if let Some(empty) = self.empty {
-            if let Some(free_empty) = self.free_empty {
-                free_empty(empty);
-            }
+        if let Some(empty) = self.empty
+            && let Some(free_empty) = self.free_empty
+        {
+            free_empty(empty);
         }
-        if let Some(entity) = self.empty_entity {
-            if let Some(free_entity) = self.free_empty_entity {
-                free_entity(entity);
-            }
+        if let Some(entity) = self.empty_entity
+            && let Some(free_entity) = self.free_empty_entity
+        {
+            free_entity(entity);
         }
-        if let Some(payload) = self.payload {
-            if let Some(free_payload) = self.free_payload {
-                free_payload(payload);
-            }
+        if let Some(payload) = self.payload
+            && let Some(free_payload) = self.free_payload
+        {
+            free_payload(payload);
         }
-        if let Some(payload_entity) = self.payload_entity {
-            if let Some(free_payload_entity) = self.free_payload_entity {
-                free_payload_entity(payload_entity);
-            }
+        if let Some(payload_entity) = self.payload_entity
+            && let Some(free_payload_entity) = self.free_payload_entity
+        {
+            free_payload_entity(payload_entity);
         }
     }
 }

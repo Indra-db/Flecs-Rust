@@ -66,11 +66,7 @@ fn main() {
             for i in it.iter() {
                 position[i].x += velocity[i].x;
                 position[i].y += velocity[i].y;
-                println!(
-                    " - entity {}: has {:?}",
-                    it.entity(i).unwrap().name(),
-                    position[i]
-                );
+                println!(" - entity {}: has {:?}", it.entity(i).name(), position[i]);
             }
 
             println!();

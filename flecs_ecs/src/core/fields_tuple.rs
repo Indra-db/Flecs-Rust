@@ -495,7 +495,11 @@ macro_rules! impl_iterable {
                 let mut any_ref = false;
                 let mut any_row = false;
                 $(
-                    if it.row_fields & (1u32 << index) != 0 {
+                    #[cfg(not(feature = "flecs_term_count_64"))]
+                    let val = 1u32 << (index);
+                    #[cfg(feature = "flecs_term_count_64")]
+                    let val = 1u64 << (index);
+                    if it.row_fields & val != 0 {
                         // Need to fetch the value with ecs_field_at()
                         is_ref[index as usize] =  true;
                         is_row[index as usize] = true;

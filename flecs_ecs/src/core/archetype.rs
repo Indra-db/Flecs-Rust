@@ -129,7 +129,7 @@ impl<'a> Archetype<'a> {
     ///
     ///
     /// [`Some(IdView)`]: IdView
-    pub fn get(&self, index: usize) -> Option<IdView> {
+    pub fn get(&self, index: usize) -> Option<IdView<'_>> {
         if index < self.count() {
             Some(IdView::new_from_id(self.world, self.type_vec[index]))
         } else {

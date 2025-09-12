@@ -132,7 +132,8 @@ where
         self.query.as_ptr()
     }
 
-    fn iter_next_func(&self) -> unsafe extern "C" fn(*mut sys::ecs_iter_t) -> bool {
+    #[inline(always)]
+    fn iter_next_func(&self) -> ExternIterNextFn {
         sys::ecs_query_next
     }
 }
@@ -142,7 +143,7 @@ where
     T: QueryTuple,
 {
     #[inline(always)]
-    fn entity(&self) -> EntityView {
+    fn entity(&self) -> EntityView<'_> {
         EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
     }
 }

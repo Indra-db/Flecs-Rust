@@ -12,6 +12,7 @@ extern crate std;
 
 extern crate alloc;
 use alloc::{format, vec::Vec};
+use flecs_ecs_derive::extern_abi;
 
 /// Builder for [`Query`].
 ///
@@ -237,8 +238,50 @@ where
 }
 
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
+#[cfg(not(target_family = "wasm"))]
+type GroupByFn = extern "C-unwind" fn(
+    *mut sys::ecs_world_t,
+    *mut sys::ecs_table_t,
+    sys::ecs_id_t,
+    *mut c_void,
+) -> u64;
+
+#[cfg(target_family = "wasm")]
 type GroupByFn =
     extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
+
+// Type definitions for OrderBy function pointers
+#[cfg(not(target_family = "wasm"))]
+type OrderByFnPtr<T> = extern "C-unwind" fn(Entity, &T, Entity, &T) -> i32;
+#[cfg(target_family = "wasm")]
+type OrderByFnPtr<T> = extern "C" fn(Entity, &T, Entity, &T) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+type OrderByFnPtrUnsafe = unsafe extern "C-unwind" fn(
+    u64,
+    *const core::ffi::c_void,
+    u64,
+    *const core::ffi::c_void,
+) -> i32;
+#[cfg(target_family = "wasm")]
+type OrderByFnPtrUnsafe =
+    unsafe extern "C" fn(u64, *const core::ffi::c_void, u64, *const core::ffi::c_void) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+type OrderByFnVoidPtr = extern "C-unwind" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
+#[cfg(target_family = "wasm")]
+type OrderByFnVoidPtr = extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+type OrderByFnVoidPtrUnsafe = unsafe extern "C-unwind" fn(
+    u64,
+    *const core::ffi::c_void,
+    u64,
+    *const core::ffi::c_void,
+) -> i32;
+#[cfg(target_family = "wasm")]
+type OrderByFnVoidPtrUnsafe =
+    unsafe extern "C" fn(u64, *const core::ffi::c_void, u64, *const core::ffi::c_void) -> i32;
 
 /// Functions to build a query using terms.
 pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
@@ -603,15 +646,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         Self: QueryBuilderImpl<'a>,
     {
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
-            core::mem::transmute::<
-                extern "C" fn(Entity, &T, Entity, &T) -> i32,
-                unsafe extern "C" fn(
-                    u64,
-                    *const core::ffi::c_void,
-                    u64,
-                    *const core::ffi::c_void,
-                ) -> i32,
-            >(compare.to_extern_fn())
+            core::mem::transmute::<OrderByFnPtr<T>, OrderByFnPtrUnsafe>(compare.to_extern_fn())
         });
 
         self.__internal_order_by_id(T::entity_id(self.world()), cmp);
@@ -644,15 +679,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ) -> &mut Self {
         let desc = self.query_desc_mut();
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
-            core::mem::transmute::<
-                extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32,
-                unsafe extern "C" fn(
-                    u64,
-                    *const core::ffi::c_void,
-                    u64,
-                    *const core::ffi::c_void,
-                ) -> i32,
-            >(compare.to_extern_fn())
+            core::mem::transmute::<OrderByFnVoidPtr, OrderByFnVoidPtrUnsafe>(compare.to_extern_fn())
         });
         desc.order_by_callback = cmp;
         desc.order_by = *component.into();
@@ -741,20 +768,21 @@ pub trait OrderByFn<T>
 where
     T: ComponentId,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32;
+    fn to_extern_fn(self) -> OrderByFnPtr<T>;
 }
 
 impl<F, T: ComponentId> OrderByFn<T> for F
 where
     F: Fn(Entity, &T, Entity, &T) -> i32,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, &T, Entity, &T) -> i32 {
+    fn to_extern_fn(self) -> OrderByFnPtr<T> {
         const {
             assert!(core::mem::size_of::<Self>() == 0);
         }
         core::mem::forget(self);
 
-        extern "C" fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
+        #[extern_abi]
+        fn output<F, T>(e1: Entity, e1_data: &T, e2: Entity, e2_data: &T) -> i32
         where
             F: Fn(Entity, &T, Entity, &T) -> i32,
         {
@@ -766,25 +794,21 @@ where
 }
 
 pub trait OrderByFnVoid {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32;
+    fn to_extern_fn(self) -> OrderByFnVoidPtr;
 }
 
 impl<F> OrderByFnVoid for F
 where
     F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
 {
-    fn to_extern_fn(self) -> extern "C" fn(Entity, *const c_void, Entity, *const c_void) -> i32 {
+    fn to_extern_fn(self) -> OrderByFnVoidPtr {
         const {
             assert!(core::mem::size_of::<Self>() == 0);
         }
         core::mem::forget(self);
 
-        extern "C" fn output<F>(
-            e1: Entity,
-            e1_data: *const c_void,
-            e2: Entity,
-            e2_data: *const c_void,
-        ) -> i32
+        #[extern_abi]
+        fn output<F>(e1: Entity, e1_data: *const c_void, e2: Entity, e2_data: *const c_void) -> i32
         where
             F: Fn(Entity, *const c_void, Entity, *const c_void) -> i32,
         {

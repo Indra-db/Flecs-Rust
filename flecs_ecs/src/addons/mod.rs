@@ -249,7 +249,7 @@ impl_component_traits_primitive_type!(usize, ECS_UPTR_T);
 impl_component_traits_primitive_type!(i8, ECS_I8_T);
 #[cfg(any(feature = "flecs_meta", not(feature = "flecs_rust_no_enum_reflection")))]
 impl_component_traits_primitive_type!(i16, ECS_I16_T);
-#[cfg(any(feature = "flecs_meta", not(feature = "flecs_rust_no_enum_reflection")))]
+//underlying enum type should impl it for `fn to_constant`
 impl_component_traits_primitive_type!(i32, ECS_I32_T);
 #[cfg(any(feature = "flecs_meta", not(feature = "flecs_rust_no_enum_reflection")))]
 impl_component_traits_primitive_type!(i64, ECS_I64_T);

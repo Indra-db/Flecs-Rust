@@ -25,8 +25,8 @@ pub struct Third;
 #[derive(Component)]
 pub struct Group;
 
-// TODO: Callbacks should be `extern "C-unwind"` to be callable from C and allow safe unwinding across FFI boundaries.
-extern "C" fn callback_group_by_relationship(
+#[extern_abi]
+fn callback_group_by_relationship(
     world: *mut sys::ecs_world_t,
     table: *mut sys::ecs_table_t,
     id: u64,
@@ -106,7 +106,7 @@ fn main() {
     query.run(|mut it| {
         while it.next() {
             let group = world.entity_from_id(it.group_id());
-            let pos = it.field_mut::<Position>(0);
+            let pos = it.field::<Position>(0);
 
             println!(
                 "Group: {:?} - Table: [{:?}]",

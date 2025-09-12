@@ -364,52 +364,24 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
-    let mut is_new = false;
     unsafe {
-        if sys::ecs_is_deferred(world) {
-            if T::NEEDS_DROP {
-                if T::IMPLS_DEFAULT {
-                    //use set batching //faster performance, no panic possible
-                    let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                    //SAFETY: ecs_ensure_modified_id will default initialize the component
-                    core::ptr::drop_in_place(comp);
-                    core::ptr::write(comp, value);
-                } else {
-                    //when it has the component, we know it won't panic using set and impl drop.
-                    if sys::ecs_has_id(world, entity, id) {
-                        //use set batching //faster performance, no panic possible since it's already present
-                        let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                        //SAFETY: ecs_ensure_modified_id will default initialize the component
-                        core::ptr::drop_in_place(comp);
-                        core::ptr::write(comp, value);
-                        return;
-                    }
+        if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
+            assign_helper(world, entity, value, id);
+            return;
+        }
 
-                    // if does not impl default or not have the id
-                    // use insert //slower performance
-                    let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+        let res = sys::ecs_cpp_set(
+            world,
+            entity,
+            id,
+            &value as *const _ as *const _,
+            const { core::mem::size_of::<T>() },
+        );
 
-                    if !is_new {
-                        core::ptr::drop_in_place(ptr);
-                    }
-                    core::ptr::write(ptr, value);
-                    sys::ecs_modified_id(world, entity, id);
-                }
-            } else {
-                //if not needs drop, use set batching, faster performance
-                let comp = sys::ecs_ensure_modified_id(world, entity, id) as *mut T;
-                core::ptr::drop_in_place(comp);
-                core::ptr::write(comp, value);
-            }
-        } else
-        /* not deferred */
-        {
-            let ptr = sys::ecs_emplace_id(world, entity, id, &mut is_new) as *mut T;
+        let comp = res.ptr as *mut T;
+        core::ptr::write(comp, value);
 
-            if !is_new {
-                core::ptr::drop_in_place(ptr);
-            }
-            core::ptr::write(ptr, value);
+        if res.call_modified {
             sys::ecs_modified_id(world, entity, id);
         }
     }
@@ -427,28 +399,24 @@ pub(crate) fn assign_helper<T: ComponentId>(
         "operation invalid for empty type"
     );
 
-    if !unsafe { sys::ecs_is_deferred(world) } {
-        let dst_ptr = unsafe { sys::ecs_get_mut_id(world, entity, id) };
-        ecs_assert!(
-            !dst_ptr.is_null(),
-            FlecsErrorCode::InvalidOperation,
-            "entity does not have component, use set() instead"
-        );
+    let res = unsafe {
+        sys::ecs_cpp_assign(
+            world,
+            entity,
+            id,
+            &value as *const _ as *const _,
+            core::mem::size_of::<T>(),
+        )
+    };
 
-        let dst = unsafe { &mut *(dst_ptr as *mut T) };
-        *dst = value;
+    let dst = unsafe { &mut *(res.ptr as *mut T) };
+    unsafe {
+        core::ptr::drop_in_place(dst);
+        core::ptr::write(dst, value);
+    }
 
+    if res.call_modified {
         unsafe { sys::ecs_modified_id(world, entity, id) };
-    } else {
-        let dst_ptr = unsafe { sys::ecs_get_mut_modified_id(world, entity, id) };
-        ecs_assert!(
-            !dst_ptr.is_null(),
-            FlecsErrorCode::InvalidOperation,
-            "entity does not have component, use set() instead"
-        );
-
-        let dst = unsafe { &mut *(dst_ptr as *mut T) };
-        *dst = value;
     }
 }
 
@@ -613,11 +581,15 @@ pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool 
     let ctor_hooks =
         unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
 
-    !core::ptr::fn_addr_eq(
-        ctor_hooks,
-        sys::flecs_default_ctor
-            as unsafe extern "C" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t),
-    )
+    /// Type alias for extern function pointers that adapts to target platform
+    #[cfg(target_family = "wasm")]
+    type ExternDefaultCtorFn =
+        unsafe extern "C" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
+    #[cfg(not(target_family = "wasm"))]
+    type ExternDefaultCtorFn =
+        unsafe extern "C-unwind" fn(*mut core::ffi::c_void, i32, *const sys::ecs_type_info_t);
+
+    !core::ptr::fn_addr_eq(ctor_hooks, sys::flecs_default_ctor as ExternDefaultCtorFn)
 }
 
 /// Separate the types of an `Archetype` into a `Vec<String>`.

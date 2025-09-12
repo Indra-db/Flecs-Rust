@@ -18,6 +18,8 @@ mod query;
 pub mod query_builder;
 mod query_iter;
 pub(crate) mod query_tuple;
+#[cfg(feature = "flecs_safety_locks")]
+mod safety_map;
 pub mod table;
 pub mod term;
 pub mod utility;
@@ -49,6 +51,8 @@ pub use query_builder::*;
 pub use query_iter::QueryIter;
 #[doc(hidden)]
 pub use query_tuple::*;
+#[cfg(feature = "flecs_safety_locks")]
+pub(crate) use safety_map::*;
 #[doc(hidden)]
 pub use table::*;
 #[doc(hidden)]

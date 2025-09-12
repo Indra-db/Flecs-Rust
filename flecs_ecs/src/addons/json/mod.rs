@@ -29,14 +29,15 @@ impl EntityView<'_> {
         let world = self.world_ptr_mut();
         let id = *self.id;
         unsafe {
-            let type_ = sys::ecs_get_typeid(world, comp);
-            if type_ == 0 {
+            let ti = sys::ecs_get_type_info(world, comp);
+            if ti.is_null() {
                 //sys::ecs_err(b"id is not a type\0".as_ptr() as *const _);
                 //TODO implement ecs_err
                 return self;
             }
 
-            let ptr = sys::ecs_ensure_id(world, id, comp);
+            let type_ = (*ti).component;
+            let ptr = sys::ecs_ensure_id(world, id, comp, (*ti).size as usize);
             ecs_assert!(
                 !ptr.is_null(),
                 FlecsErrorCode::InternalError,

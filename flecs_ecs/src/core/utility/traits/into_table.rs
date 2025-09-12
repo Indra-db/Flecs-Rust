@@ -34,13 +34,13 @@ impl IntoTable for TableRange<'_> {
 }
 
 pub trait IntoTableRange {
-    fn range(&self) -> TableRange;
+    fn range(&self) -> TableRange<'_>;
     fn range_raw(&self) -> sys::ecs_table_range_t;
 }
 
 impl IntoTableRange for TableRange<'_> {
     #[inline]
-    fn range(&self) -> TableRange {
+    fn range(&self) -> TableRange<'_> {
         *self
     }
 
@@ -56,7 +56,7 @@ impl IntoTableRange for TableRange<'_> {
 
 impl IntoTableRange for Table<'_> {
     #[inline]
-    fn range(&self) -> TableRange {
+    fn range(&self) -> TableRange<'_> {
         TableRange::new(*self, 0, self.count())
     }
 

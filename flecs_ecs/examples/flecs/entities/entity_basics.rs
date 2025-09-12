@@ -17,7 +17,6 @@ pub struct Velocity {
 #[derive(Component)]
 pub struct Walking;
 
-#[test]
 fn main() {
     let world = World::new();
 

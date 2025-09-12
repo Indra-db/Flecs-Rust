@@ -8,9 +8,40 @@ use crate::sys;
 use flecs_ecs_derive::tuples;
 use sys::ecs_record_t;
 
+#[cfg(feature = "flecs_safety_locks")]
+#[derive(Debug, Copy, Clone)]
+#[doc(hidden)]
+pub enum SafetyInfo {
+    Read(sys::ecs_safety_info_t),
+    Write(sys::ecs_safety_info_t),
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl Default for SafetyInfo {
+    #[inline]
+    fn default() -> Self {
+        SafetyInfo::Read(sys::ecs_safety_info_t::default())
+    }
+}
+
+// #[cfg(feature = "flecs_safety_locks")]
+// impl core::ops::Deref for SafetyInfo {
+//     type Target = sys::ecs_safety_info_t;
+
+//     #[inline(always)]
+//     fn deref(&self) -> &Self::Target {
+//         match self {
+//             SafetyInfo::Read(si) => si,
+//             SafetyInfo::Write(si) => si,
+//         }
+//     }
+// }
+
 pub struct ComponentsData<T: GetTuple, const LEN: usize> {
     pub array_components: [*mut c_void; LEN],
     pub has_all_components: bool,
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) safety_info: [SafetyInfo; LEN],
     _marker: PhantomData<T>,
 }
 
@@ -24,6 +55,11 @@ pub trait GetComponentPointers<T: GetTuple> {
     fn get_tuple<'a>(&self) -> T::TupleType<'a>;
 
     fn has_all_components(&self) -> bool;
+
+    fn component_ptrs(&self) -> &[*mut c_void];
+
+    #[cfg(feature = "flecs_safety_locks")]
+    fn safety_info(&self) -> &[SafetyInfo];
 }
 
 impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T, LEN> {
@@ -34,16 +70,23 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
     ) -> Self {
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
+        #[cfg(feature = "flecs_safety_locks")]
+        let mut safety_info = [SafetyInfo::Read(sys::ecs_safety_info_t::default()); LEN];
+
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
             entity,
             record,
             &mut array_components[..],
+            #[cfg(feature = "flecs_safety_locks")]
+            &mut safety_info[..],
         );
 
         Self {
             array_components,
             has_all_components,
+            #[cfg(feature = "flecs_safety_locks")]
+            safety_info,
             _marker: PhantomData::<T>,
         }
     }
@@ -54,6 +97,15 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
 
     fn has_all_components(&self) -> bool {
         self.has_all_components
+    }
+
+    fn component_ptrs(&self) -> &[*mut c_void] {
+        &self.array_components
+    }
+
+    #[cfg(feature = "flecs_safety_locks")]
+    fn safety_info(&self) -> &[SafetyInfo] {
+        &self.safety_info
     }
 }
 
@@ -162,6 +214,7 @@ pub trait GetTuple: Sized {
         entity: Entity,
         record: *const ecs_record_t,
         components: &mut [*mut c_void],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [SafetyInfo],
     ) -> bool;
 
     fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a>;
@@ -181,43 +234,77 @@ where
     const ALL_IMMUTABLE: bool = A::IS_IMMUTABLE;
 
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-        world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+        world: impl WorldProvider<'a>,
+        entity: Entity,
+        record: *const ecs_record_t,
+        components: &mut [*mut c_void],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [SafetyInfo],
     ) -> bool {
         let world = world.world();
-        let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
-        let table = unsafe { (*record).table };
+        let world_ptr = unsafe {
+            sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t
+        };
         let entity = *entity;
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world);
-        
+
         if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
-            ecs_assert!(
-                unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
-                FlecsErrorCode::InvalidOperation,
-                "Pair is not a (data) component. Possible cause: PairIsTag trait"
+            assert!(
+                {
+                    let first = ecs_first(id, world);
+                    first != flecs::Wildcard::ID && first != flecs::Any::ID
+                },
+                "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+            );
+
+            assert!(
+                {
+                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                    let cast_id =
+                        world.component_id::<<A::OnlyType as ComponentOrPairId>::CastType>();
+                    id != 0 && id == cast_id
+                },
+                "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
             );
         }
 
         let mut has_all_components = true;
-        
-        let component_ptr = if A::OnlyType::IS_ENUM {
 
-            let target: sys::ecs_id_t = unsafe {
-                sys::ecs_get_target(world_ptr, entity, id, 0)
-            };
+        let get_ptr = if A::OnlyType::IS_ENUM {
+            let target: sys::ecs_id_t = unsafe { sys::ecs_get_target(world_ptr, entity, id, 0) };
 
             if target != 0 {
                 if !A::IS_IMMUTABLE {
-                    ecs_assert!(false, "Enums registered with `add_enum` should be `get` immutable, changing it won't actually change the value.");
+                    ecs_assert!(
+                        false,
+                        "Enums registered with `add_enum` should be `get` immutable, changing it won't actually change the value."
+                    );
                 }
 
                 #[cfg(feature = "flecs_meta")]
                 {
                     let id_underlying_type = world.component_id::<i32>();
                     let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
-                    let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
+                    let record = unsafe { sys::ecs_record_find(world_ptr, target) };
+                    let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, target, record, pair_id) };
+                    ecs_assert!(
+                        !constant_value.component_ptr.is_null(),
+                        FlecsErrorCode::InternalError,
+                        "missing enum constant value {}",
+                        core::any::type_name::<A>()
+                    );
+
+                    constant_value
+                }
+
+                // Fallback if we don't have the reflection addon
+                #[cfg(not(feature = "flecs_meta"))]
+                {
+                    // get constant value from constant entity
+                    let constant_value =
+                       unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
 
                     ecs_assert!(
-                        !constant_value.is_null(),
+                        !constant_value.component_ptr.is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<A>()
@@ -225,33 +312,18 @@ where
 
                     unsafe { constant_value }
                 }
-
-               // Fallback if we don't have the reflection addon
-               #[cfg(not(feature = "flecs_meta"))]
-               {
-                 // get constant value from constant entity
-                 let constant_value = unsafe { sys::ecs_get_id(world_ptr, entity, id) } as *mut c_void;
-
-                 ecs_assert!(
-                     !constant_value.is_null(),
-                     FlecsErrorCode::InternalError,
-                     "missing enum constant value {}",
-                     core::any::type_name::<A>()
-                 );
-
-                 unsafe { constant_value }
-               }
             } else {
                 // if there is no matching pair for (r,*), try just r
-                unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
+                unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
             }
-        } else if A::IS_IMMUTABLE { 
-            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
-         } else {
-           unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
-         };
-         
-        
+        } else if A::IS_IMMUTABLE {
+            unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
+        } else {
+            unsafe { sys::flecs_get_mut_id_from_record(world_ptr, record, id) }
+        };
+
+        let component_ptr = get_ptr.component_ptr;
+
         if component_ptr.is_null() {
             components[0] = core::ptr::null_mut();
             has_all_components = false;
@@ -271,13 +343,20 @@ core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any
                 }
             } else { 
                 components[0] = component_ptr;
+                #[cfg(feature = "flecs_safety_locks")]
+                {
+                    if A::IS_IMMUTABLE {
+                        safety_info[0] = SafetyInfo::Read(get_ptr.si);
+                    } else {
+                        safety_info[0] = SafetyInfo::Write(get_ptr.si);
+                    }
+                }
             } 
-            
-            
-            has_all_components
-        }
-        
-        fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a> {
+
+        has_all_components
+    }
+
+    fn create_tuple<'a>(array_components: &[*mut c_void]) -> Self::TupleType<'a> {
         A::create_tuple_data(array_components[0])
     }
 }
@@ -337,12 +416,11 @@ macro_rules! impl_get_tuple {
 
             #[allow(unused)]
             fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
-                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void]
+                world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void], #[cfg(feature = "flecs_safety_locks")] safety_info : &mut [SafetyInfo]
             ) -> bool {
 
                 let world_ptr = unsafe { sys::ecs_get_world(world.world_ptr() as *const c_void) as *mut sys::ecs_world_t };
                 let world_ref = world.world();
-                let table = unsafe { (*record).table };
                 let entity = *entity;
                 let mut index : usize = 0;
                 let mut has_all_components = true;
@@ -351,14 +429,26 @@ macro_rules! impl_get_tuple {
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
                     if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
-                        ecs_assert!(
-                            unsafe { sys::ecs_get_typeid(world_ptr, id) } != 0,
-                            FlecsErrorCode::InvalidOperation,
-                            "Pair is not a (data) component. Possible cause: PairIsTag trait"
+                        assert!(
+                            {
+                                let first = ecs_first(id, world_ref);
+                                first != flecs::Wildcard::ID && first != flecs::Any::ID
+                            },
+                            "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+                        );
+
+                        assert!(
+                            {
+                                let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                                let cast_id =
+                                    world_ref.component_id::<<$t::OnlyType as ComponentOrPairId>::CastType>();
+                                id != 0 && id == cast_id
+                            },
+                            "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
                         );
                     }
 
-                    let component_ptr = if $t::OnlyType::IS_ENUM {
+                    let get_ptr = if $t::OnlyType::IS_ENUM {
 
                         let target: sys::ecs_id_t = unsafe {
                             sys::ecs_get_target(world_ptr, entity, id, 0)
@@ -373,10 +463,11 @@ macro_rules! impl_get_tuple {
                             {
                                 let id_underlying_type = world_ref.component_id::<i32>();
                                 let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
-                                let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, pair_id) } as *mut c_void;
+                                let record = unsafe { sys::ecs_record_find(world_ptr, target) };
+                                let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, target, record, pair_id) };
 
                                 ecs_assert!(
-                                    !constant_value.is_null(),
+                                    !constant_value.component_ptr.is_null(),
                                     FlecsErrorCode::InternalError,
                                     "missing enum constant value {}",
                                     core::any::type_name::<$t>()
@@ -389,10 +480,10 @@ macro_rules! impl_get_tuple {
                            #[cfg(not(feature = "flecs_meta"))]
                            {
                              // get constant value from constant entity
-                             let constant_value = unsafe { sys::ecs_get_id(world_ptr, target, id) } as *mut c_void;
+                             let constant_value = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
 
                              ecs_assert!(
-                                 !constant_value.is_null(),
+                                 !constant_value.component_ptr.is_null(),
                                  FlecsErrorCode::InternalError,
                                  "missing enum constant value {}",
                                  core::any::type_name::<$t>()
@@ -402,17 +493,26 @@ macro_rules! impl_get_tuple {
                            }
                         } else {
                             // if there is no matching pair for (r,*), try just r
-                            unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
+                            unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record,id) }
                         }
                     } else if $t::IS_IMMUTABLE {
-                        unsafe { sys::ecs_rust_get_id(world_ptr, entity, record,id) }
+                        unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record,id) }
                      } else {
-                       unsafe { sys::ecs_rust_mut_get_id(world_ptr, entity, record,id)}
+                       unsafe { sys::flecs_get_mut_id_from_record(world_ptr, record,id) }
                      };
 
+                    let component_ptr = get_ptr.component_ptr;
 
                     if !component_ptr.is_null() {
                         components[index] = component_ptr;
+                        #[cfg(feature = "flecs_safety_locks")]
+                        {
+                            if $t::IS_IMMUTABLE {
+                                safety_info[index] = SafetyInfo::Read(get_ptr.si);
+                            } else {
+                                safety_info[index] = SafetyInfo::Write(get_ptr.si);
+                            }
+                        }
                     } else {
                         components[index] = core::ptr::null_mut();
                         if !$t::IS_OPTION {

@@ -105,7 +105,7 @@ impl<'a> PartialOrd<EntityView<'a>> for IdView<'a> {
 
 impl PartialOrd for IdView<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(self.id.cmp(&other.id))
+        Some(self.cmp(other))
     }
 }
 
@@ -178,7 +178,7 @@ impl<'a> IdView<'a> {
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
     #[inline(always)]
-    pub fn first_id(&self) -> EntityView {
+    pub fn first_id(&self) -> EntityView<'_> {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_first(self.id, self.world);
@@ -190,7 +190,7 @@ impl<'a> IdView<'a> {
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
     #[inline(always)]
-    pub fn get_first_id(&self) -> Option<EntityView> {
+    pub fn get_first_id(&self) -> Option<EntityView<'_>> {
         if !self.is_pair() {
             None
         } else {
@@ -203,7 +203,7 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    pub fn second_id(&self) -> EntityView {
+    pub fn second_id(&self) -> EntityView<'_> {
         ecs_assert!(self.is_pair(), FlecsErrorCode::InvalidOperation);
 
         let entity = ecs_second(self.id, self.world);
@@ -214,7 +214,7 @@ impl<'a> IdView<'a> {
     ///
     /// If the id is not a pair, this operation will fail. When the id has a
     /// world, the operation will ensure that the returned id has the correct generation count.
-    pub fn get_second_id(&self) -> Option<EntityView> {
+    pub fn get_second_id(&self) -> Option<EntityView<'_>> {
         if !self.is_pair() {
             None
         } else {

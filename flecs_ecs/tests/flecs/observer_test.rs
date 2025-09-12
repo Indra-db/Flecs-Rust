@@ -255,10 +255,10 @@ fn observer_2_entities_iter() {
                     world.get::<&mut Count>(|count| {
                         count.0 += 1;
                     });
-                    if it.entity(i).unwrap() == e1_id {
+                    if it.get_entity(i).unwrap() == e1_id {
                         assert_eq!(p[i].x, 10);
                         assert_eq!(p[i].y, 20);
-                    } else if it.entity(i).unwrap() == e2_id {
+                    } else if it.get_entity(i).unwrap() == e2_id {
                         assert_eq!(p[i].x, 30);
                         assert_eq!(p[i].y, 40);
                     } else {
@@ -266,7 +266,7 @@ fn observer_2_entities_iter() {
                     }
 
                     world.get::<&mut LastEntity>(|last| {
-                        last.0 = it.entity(i).unwrap().id();
+                        last.0 = it.get_entity(i).unwrap().id();
                     });
                 }
             }
@@ -315,10 +315,10 @@ fn observer_2_entities_table_column() {
                     world.get::<&mut Count>(|count| {
                         count.0 += 1;
                     });
-                    if it.entity(i).unwrap() == e1_id {
+                    if it.get_entity(i).unwrap() == e1_id {
                         assert_eq!(p[i].x, 10);
                         assert_eq!(p[i].y, 20);
-                    } else if it.entity(i).unwrap() == e2_id {
+                    } else if it.get_entity(i).unwrap() == e2_id {
                         assert_eq!(p[i].x, 30);
                         assert_eq!(p[i].y, 40);
                     } else {
@@ -326,7 +326,7 @@ fn observer_2_entities_table_column() {
                     }
 
                     world.get::<&mut LastEntity>(|last| {
-                        last.0 = it.entity(i).unwrap().id();
+                        last.0 = it.get_entity(i).unwrap().id();
                     });
                 }
             }
@@ -447,7 +447,7 @@ fn observer_yield_existing() {
         .run(move |mut it| {
             while it.next() {
                 for i in it.iter() {
-                    let e = it.entity(i).unwrap();
+                    let e = it.get_entity(i).unwrap();
                     let world = e.world();
                     world.get::<&mut Count>(|count| {
                         if e == e1_id {
@@ -855,11 +855,14 @@ fn observer_on_set_w_set_sparse() {
 fn observer_on_add_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     world
         .observer::<flecs::OnSet, &Position>()
         .term_at(0)
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -883,12 +886,15 @@ fn observer_on_add_singleton() {
 fn observer_on_add_pair_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
         .with((Position::id(), tgt))
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -910,13 +916,16 @@ fn observer_on_add_pair_singleton() {
 fn observer_on_add_pair_wildcard_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt_1 = world.entity();
     let tgt_2 = world.entity();
     world
         .observer::<flecs::OnSet, &(Position, flecs::Wildcard)>()
         .term_at(0)
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {
@@ -946,12 +955,15 @@ fn observer_on_add_pair_wildcard_singleton() {
 fn observer_on_add_with_pair_singleton() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Count(0));
     let tgt = world.entity();
     world
         .observer::<flecs::OnSet, ()>()
         .with((Position::id(), tgt))
-        .singleton()
         .run(|mut it| {
             let world = it.world();
             while it.next() {

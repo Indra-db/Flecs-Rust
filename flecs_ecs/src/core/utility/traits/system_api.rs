@@ -33,9 +33,7 @@ where
 
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_run(Some(
-            Self::execute_run_each::<Func> as unsafe extern "C" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run_each::<Func> as ExternIterFn));
 
         self.build()
     }
@@ -57,9 +55,68 @@ where
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(
-            Self::execute_run_each_entity::<Func> as unsafe extern "C" fn(_),
-        ));
+        self.set_desc_run(Some(Self::execute_run_each_entity::<Func> as ExternIterFn));
+
+        self.build()
+    }
+
+    /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
+    /// which contains more information about the object being iterated.
+    /// The `usize` argument contains the index of the entity being iterated,
+    /// which can be used to obtain entity-specific data from the `TableIter` object.
+    ///
+    /// # Example
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Likes;
+    ///
+    /// let world = World::new();
+    ///
+    /// let eva = world.entity_named("eva");
+    ///
+    /// world
+    ///     .entity_named("adam")
+    ///     .set(Position { x: 10, y: 20 })
+    ///     .add((Likes::id(), eva));
+    ///
+    /// world
+    ///     .system::<&Position>()
+    ///     .with((Likes::id(), id::<flecs::Wildcard>()))
+    ///     .each_iter(|it, index, p| {
+    ///         let e = it.entity(index);
+    ///         println!("{:?}: {:?} - {:?}", e.name(), p, it.id(1).to_str());
+    ///     })
+    ///     .run();
+    ///
+    /// // Output:
+    /// //  "adam": Position2 { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
+    /// ```
+    fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
+    {
+        const {
+            assert!(
+                !T::CONTAINS_ANY_TAG_TERM,
+                "a type provided in the query signature is a Tag and cannot be used with `.each`. use `.run` instead or provide the tag with `.with()`"
+            );
+        }
+
+        let each_iter_func = Box::new(func);
+        let each_iter_static_ref = Box::leak(each_iter_func);
+
+        self.set_run_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
+        self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
+
+        self.set_desc_run(Some(Self::execute_run_each_iter::<Func> as ExternIterFn));
 
         self.build()
     }
@@ -118,7 +175,7 @@ where
     ///         let pos = it.field::<Position>(1); //at index 1 in (&Tag, &Position)
     ///         for i in it.iter() {
     ///             *count_entities_ref.borrow_mut() += 1;
-    ///             let entity = it.entity(i).unwrap();
+    ///             let entity = it.get_entity(i).unwrap();
     ///             println!("{:?}: {:?}", entity, pos[i]);
     ///         }
     ///     }
@@ -147,7 +204,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
+        self.set_desc_run(Some(Self::execute_run::<Func> as ExternIterFn));
         self.build()
     }
 
@@ -244,7 +301,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
+        self.set_desc_run(Some(Self::execute_run::<Func> as ExternIterFn));
 
         let each_func = Box::new(func_each);
         let each_static_ref = Box::leak(each_func);
@@ -252,9 +309,7 @@ where
         self.set_callback_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEach>));
 
-        self.set_desc_callback(Some(
-            Self::execute_each::<true, FuncEach> as unsafe extern "C" fn(_),
-        ));
+        self.set_desc_callback(Some(Self::execute_each::<true, FuncEach> as ExternIterFn));
 
         self.build()
     }
@@ -352,7 +407,7 @@ where
         self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(Self::execute_run::<Func> as unsafe extern "C" fn(_)));
+        self.set_desc_run(Some(Self::execute_run::<Func> as ExternIterFn));
 
         let each_entity_func = Box::new(func_each_entity);
         let each_entity_static_ref = Box::leak(each_entity_func);
@@ -361,7 +416,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachEntity>));
 
         self.set_desc_callback(Some(
-            Self::execute_each_entity::<true, FuncEachEntity> as unsafe extern "C" fn(_),
+            Self::execute_each_entity::<true, FuncEachEntity> as ExternIterFn,
         ));
 
         self.build()
@@ -390,6 +445,15 @@ where
     {
         self.set_multi_threaded(true);
         self.each_entity(func)
+    }
+
+    /// Variant of [`SystemAPI::each_iter`] which allows the system to run in multiple threads
+    fn par_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        self.each_iter(func)
     }
 
     /// Variant of [`SystemAPI::run`] which allows the system to run in multiple threads
@@ -466,17 +530,11 @@ macro_rules! implement_reactor_api {
                 self.desc.callback_ctx
             }
 
-            fn set_desc_callback(
-                &mut self,
-                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
-            ) {
+            fn set_desc_callback(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.callback = callback;
             }
 
-            fn set_desc_run(
-                &mut self,
-                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
-            ) {
+            fn set_desc_run(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.run = callback;
             }
         }
@@ -527,17 +585,11 @@ macro_rules! implement_reactor_api {
                 self.desc.callback_ctx
             }
 
-            fn set_desc_callback(
-                &mut self,
-                callback: Option<unsafe extern "C" fn(*mut flecs_ecs_sys::ecs_iter_t)>,
-            ) {
+            fn set_desc_callback(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.callback = callback;
             }
 
-            fn set_desc_run(
-                &mut self,
-                callback: Option<unsafe extern "C" fn(*mut sys::ecs_iter_t)>,
-            ) {
+            fn set_desc_run(&mut self, callback: Option<crate::core::utility::ExternIterFn>) {
                 self.desc.run = callback;
             }
         }
@@ -555,6 +607,7 @@ macro_rules! implement_reactor_api {
     };
 }
 
+#[cfg(feature = "flecs_system")]
 macro_rules! implement_reactor_par_api {
     ($param:ty, $type:ty) => {
         impl<'a, T> internal_ParSystemAPI<'a, $param, T> for $type
@@ -589,4 +642,5 @@ macro_rules! implement_reactor_par_api {
 }
 
 pub(crate) use implement_reactor_api;
+#[cfg(feature = "flecs_system")]
 pub(crate) use implement_reactor_par_api;

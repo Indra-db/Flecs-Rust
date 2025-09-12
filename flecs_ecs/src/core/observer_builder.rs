@@ -140,7 +140,7 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `event` - The event to add
-    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<(), T> {
+    pub fn add_event(&mut self, event: impl IntoEntity) -> &mut ObserverBuilder<'_, (), T> {
         let event = *event.into_entity(self.world);
         self.desc.events[self.event_count] = event;
         self.event_count += 1;
@@ -196,8 +196,12 @@ where
 {
     type BuiltType = Observer<'a>;
 
+    #[doc(hidden)]
     /// Build the `observer_builder` into an `observer`
     fn build(&mut self) -> Self::BuiltType {
+        if self.desc.callback.is_none() && self.desc.run.is_none() {
+            panic!("you should not call this fn manually. Use `.each` , `.run` instead")
+        }
         // ensure that the observer doesn't fetch components for OnAdd events, where data is not initialized
         if self.desc.events[0] == flecs::OnAdd::ID {
             for term in self.desc.query.terms.iter_mut() {

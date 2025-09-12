@@ -23,23 +23,23 @@ cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 [dependencies]
 flecs_ecs_derive = { workspace = true }
 flecs_ecs_sys = { workspace = true }
-bitflags = "2.9.1"
+bitflags = "2.9.4"
 compact_str = { version = "0.9.0", default-features = false }
-hashbrown = "0.15.4"
-seq-macro = "0.3.6"
-rand = "0.9.1"
-libc = "0.2.174"
-seq = "0.5.0"
+hashbrown = "0.16.0"
+libc = "0.2.175"
+smallvec = "1.15.1"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
 test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
 
 [dev-dependencies]
-criterion = "0.6.0"
+criterion = "0.7.0"
 seq-macro = "0.3.6"
 rand = "0.9.1"
-ctor = "0.4.2"
+ctor = "0.5.0"
+rstest = "0.26.1"
+rstest_reuse = "0.7.0"
 insta = { version = "1.42.1", features = ["yaml","filters"] }
 libc.workspace = true
 # used for capturing stdout in the examples test cases. Works only on Nightly, meant
@@ -56,8 +56,11 @@ getrandom = { version = "0.3.3", features = ["wasm_js"] }
 # sys feature flags
 ######################
 
+# Read write locks for components
+flecs_safety_locks = ["flecs_ecs_sys/flecs_safety_locks"]
+
 # Regenerate the C binding for flecs C
-flecs_regenerate_binding_c = ["flecs_ecs_sys/regenerate_binding"]
+flecs_regenerate_binding = ["flecs_ecs_sys/regenerate_binding"]
 
 # force build debug for flecs C, even in release mode
 flecs_force_build_debug_c = ["flecs_ecs_sys/force_build_debug"]
@@ -120,9 +123,6 @@ flecs_module = ["flecs_ecs_sys/flecs_module"]
 # ECS data definition format
 flecs_script = ["flecs_ecs_sys/flecs_script", "flecs_meta", "flecs_doc", "flecs_module"]
 
-# Snapshot & restore ECS data
-flecs_snapshot = ["flecs_ecs_sys/flecs_snapshot"]
-
 # Access runtime statistics
 flecs_stats = ["flecs_ecs_sys/flecs_stats", "flecs_pipeline", "flecs_timer", "flecs_module"]
 
@@ -130,7 +130,7 @@ flecs_stats = ["flecs_ecs_sys/flecs_stats", "flecs_pipeline", "flecs_timer", "fl
 flecs_metrics = ["flecs_ecs_sys/flecs_metrics", "flecs_meta", "flecs_units", "flecs_pipeline"]
 
 # Monitor conditions for errors
-flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_pipeline", "flecs_metrics"]
+flecs_alerts = ["flecs_ecs_sys/flecs_alerts", "flecs_pipeline", "flecs_metrics", "flecs_timer"]
 
 # System support
 flecs_system = ["flecs_ecs_sys/flecs_system", "flecs_module"]
@@ -178,7 +178,9 @@ flecs_nightly_tests = []
 test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
 # most common base features
+# must be kept in sync with base features on flecs_ecs_sys cargo.toml
 flecs_base = [
+    "flecs_ecs_sys/flecs_base",
    # this is commented since `no_std` is not ready yet
     "std",
     "flecs_module",
@@ -186,14 +188,14 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
+    #"flecs_safety_locks",
 ]
 
 default = [
-    #"flecs_regenerate_binding_c",
+    #"flecs_regenerate_binding",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
-    "flecs_snapshot",
     "flecs_stats",
     "flecs_metrics",
     "flecs_alerts",
@@ -230,3 +232,7 @@ bench = false
 name = "main"
 path = "benches/flecs/_main.rs"
 harness = false
+
+
+#  build test command for testing build each feature
+#  cargo hack check -p flecs_ecs --each-feature --exclude-features flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c --no-dev-deps -v --features std,flecs_regenerate_binding  

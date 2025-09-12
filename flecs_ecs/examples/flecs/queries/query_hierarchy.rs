@@ -60,8 +60,7 @@ fn main() {
     query.each(|(local, parent_world, world)| {
         world.x = local.x;
         world.y = local.y;
-        if parent_world.is_some() {
-            let parent_world = parent_world.unwrap();
+        if let Some(parent_world) = parent_world {
             world.x += parent_world.x;
             world.y += parent_world.y;
         }

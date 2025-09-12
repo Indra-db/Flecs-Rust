@@ -516,9 +516,10 @@ impl<'a> EntityView<'a> {
     where
         First: ComponentId + DataComponent,
     {
-        let world_ptr = self.world.world_ptr_mut();
+        let world = self.world;
+        let world_ptr = world.world_ptr_mut();
         let first_id = First::entity_id(self.world);
-        let second_id = *second.into_entity(self.world);
+        let second_id = *second.into_entity(world);
         let pair_id = ecs_pair(first_id, second_id);
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
@@ -541,8 +542,9 @@ impl<'a> EntityView<'a> {
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let world = self.world.world_ptr_mut();
-        let first_id = *first.into_entity(self.world);
+        let world = self.world;
+        let world = world.world_ptr_mut();
+        let first_id = *first.into_entity(world);
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional
@@ -1093,7 +1095,7 @@ impl<'a> EntityView<'a> {
     pub fn get_ref_second<Second: ComponentId + DataComponent>(
         &self,
         first: impl Into<Entity>,
-    ) -> CachedRef<Second> {
+    ) -> CachedRef<'_, Second> {
         let first = *first.into();
         let second = Second::entity_id(self.world);
         let pair = ecs_pair(first, second);
@@ -1139,8 +1141,8 @@ impl<'a> EntityView<'a> {
     ///
     /// #[derive(Component, Default)]
     /// struct Position {
-    ///    x: f32,
-    ///    y: f32,
+    ///     x: f32,
+    ///     y: f32,
     /// }
     ///
     /// let world = World::new();
@@ -1149,9 +1151,9 @@ impl<'a> EntityView<'a> {
     /// let child_b = world.entity().child_of(parent).add(Position::id());
     /// let child_c = world.entity().child_of(parent).add(Position::id());
     ///
-    /// let mut vec : Vec<Entity> = vec![];
+    /// let mut vec: Vec<Entity> = vec![];
     /// parent.each_child(|e| {
-    ///    vec.push(*e);
+    ///     vec.push(*e);
     /// });
     ///
     /// assert!(vec[0] == child_a);
@@ -1164,13 +1166,12 @@ impl<'a> EntityView<'a> {
     /// vec.clear();
     ///
     /// parent.each_child(|e| {
-    ///    vec.push(*e);
+    ///     vec.push(*e);
     /// });
     ///
     /// assert!(vec[0] == child_c);
     /// assert!(vec[1] == child_a);
     /// assert!(vec[2] == child_b);
-    ///
     /// ```
     pub fn set_child_order(self, children: &[Entity]) -> Self {
         let world_ptr = self.world.world_ptr_mut();

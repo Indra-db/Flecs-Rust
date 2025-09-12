@@ -65,8 +65,8 @@ impl<'a> WorldProvider<'a> for &'a World {
 #[repr(C)]
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct WorldRef<'a> {
-    raw_world: NonNull<sys::ecs_world_t>,
-    components: NonNull<FlecsIdMap>,
+    pub(crate) raw_world: NonNull<sys::ecs_world_t>,
+    pub(crate) components: NonNull<FlecsIdMap>,
     pub(crate) components_array: NonNull<FlecsArray>,
     _marker: PhantomData<&'a ()>,
 }

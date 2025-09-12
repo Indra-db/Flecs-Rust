@@ -176,7 +176,7 @@ mod ord_operations {
     impl<'a> PartialOrd<EntityView<'a>> for EntityView<'a> {
         #[inline]
         fn partial_cmp(&self, other: &EntityView<'a>) -> Option<core::cmp::Ordering> {
-            Some(self.id.cmp(&other.id))
+            Some(self.cmp(other))
         }
     }
 

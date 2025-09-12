@@ -25,6 +25,182 @@ use crate::core::*;
 use crate::core::ecs_assert;
 use crate::sys;
 
+// Shared type definitions for function pointers that need different ABIs for WASM vs non-WASM
+use core::ffi::c_char;
+
+// Serializer functions
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeFnPtr<T> = extern "C-unwind" fn(&sys::ecs_serializer_t, &T) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeFnPtr<T> = extern "C" fn(&sys::ecs_serializer_t, &T) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeFnPtrUnsafe =
+    unsafe extern "C-unwind" fn(*const sys::ecs_serializer_t, *const c_void) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeFnPtrUnsafe =
+    unsafe extern "C" fn(*const sys::ecs_serializer_t, *const c_void) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeMemberFnPtr<T> =
+    extern "C-unwind" fn(&sys::ecs_serializer_t, &T, *const c_char) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeMemberFnPtr<T> = extern "C" fn(&sys::ecs_serializer_t, &T, *const c_char) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeMemberFnPtrUnsafe =
+    unsafe extern "C-unwind" fn(*const sys::ecs_serializer_t, *const c_void, *const c_char) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeMemberFnPtrUnsafe =
+    unsafe extern "C" fn(*const sys::ecs_serializer_t, *const c_void, *const c_char) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeElementFnPtr<T> = extern "C-unwind" fn(&sys::ecs_serializer_t, &T, usize) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeElementFnPtr<T> = extern "C" fn(&sys::ecs_serializer_t, &T, usize) -> i32;
+
+#[cfg(not(target_family = "wasm"))]
+pub type SerializeElementFnPtrUnsafe =
+    unsafe extern "C-unwind" fn(*const sys::ecs_serializer_t, *const c_void, usize) -> i32;
+#[cfg(target_family = "wasm")]
+pub type SerializeElementFnPtrUnsafe =
+    unsafe extern "C" fn(*const sys::ecs_serializer_t, *const c_void, usize) -> i32;
+
+// Assignment functions
+#[cfg(not(target_family = "wasm"))]
+pub type AssignBoolFnPtr<T> = extern "C-unwind" fn(&mut T, bool);
+#[cfg(target_family = "wasm")]
+pub type AssignBoolFnPtr<T> = extern "C" fn(&mut T, bool);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignBoolFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, bool);
+#[cfg(target_family = "wasm")]
+pub type AssignBoolFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, bool);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignCharFnPtr<T> = extern "C-unwind" fn(&mut T, c_char);
+#[cfg(target_family = "wasm")]
+pub type AssignCharFnPtr<T> = extern "C" fn(&mut T, c_char);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignCharFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, c_char);
+#[cfg(target_family = "wasm")]
+pub type AssignCharFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, c_char);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignIntFnPtr<T> = extern "C-unwind" fn(&mut T, i64);
+#[cfg(target_family = "wasm")]
+pub type AssignIntFnPtr<T> = extern "C" fn(&mut T, i64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignIntFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, i64);
+#[cfg(target_family = "wasm")]
+pub type AssignIntFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, i64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignUIntFnPtr<T> = extern "C-unwind" fn(&mut T, u64);
+#[cfg(target_family = "wasm")]
+pub type AssignUIntFnPtr<T> = extern "C" fn(&mut T, u64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignUIntFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, u64);
+#[cfg(target_family = "wasm")]
+pub type AssignUIntFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, u64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignFloatFnPtr<T> = extern "C-unwind" fn(&mut T, f32);
+#[cfg(target_family = "wasm")]
+pub type AssignFloatFnPtr<T> = extern "C" fn(&mut T, f32);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignFloatFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, f64);
+#[cfg(target_family = "wasm")]
+pub type AssignFloatFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, f64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignStringFnPtr<T> = extern "C-unwind" fn(&mut T, *const c_char);
+#[cfg(target_family = "wasm")]
+pub type AssignStringFnPtr<T> = extern "C" fn(&mut T, *const c_char);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignStringFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, *const c_char);
+#[cfg(target_family = "wasm")]
+pub type AssignStringFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, *const c_char);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignEntityFnPtr<'a, T> = extern "C-unwind" fn(&'a mut T, WorldRef<'a>, Entity);
+#[cfg(target_family = "wasm")]
+pub type AssignEntityFnPtr<'a, T> = extern "C" fn(&'a mut T, WorldRef<'a>, Entity);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignEntityFnPtrUnsafe =
+    unsafe extern "C-unwind" fn(*mut c_void, *mut sys::ecs_world_t, u64);
+#[cfg(target_family = "wasm")]
+pub type AssignEntityFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, *mut sys::ecs_world_t, u64);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignNullFnPtr<T> = extern "C-unwind" fn(&mut T);
+#[cfg(target_family = "wasm")]
+pub type AssignNullFnPtr<T> = extern "C" fn(&mut T);
+
+#[cfg(not(target_family = "wasm"))]
+pub type AssignNullFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void);
+#[cfg(target_family = "wasm")]
+pub type AssignNullFnPtrUnsafe = unsafe extern "C" fn(*mut c_void);
+
+#[cfg(not(target_family = "wasm"))]
+pub type ClearFnPtr<T> = extern "C-unwind" fn(&mut T);
+#[cfg(target_family = "wasm")]
+pub type ClearFnPtr<T> = extern "C" fn(&mut T);
+
+#[cfg(not(target_family = "wasm"))]
+pub type ClearFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void);
+#[cfg(target_family = "wasm")]
+pub type ClearFnPtrUnsafe = unsafe extern "C" fn(*mut c_void);
+
+// Element and member functions
+#[cfg(not(target_family = "wasm"))]
+pub type EnsureElementFnPtr<T, ElemType> = extern "C-unwind" fn(&mut T, usize) -> &mut ElemType;
+#[cfg(target_family = "wasm")]
+pub type EnsureElementFnPtr<T, ElemType> = extern "C" fn(&mut T, usize) -> &mut ElemType;
+
+#[cfg(not(target_family = "wasm"))]
+pub type EnsureElementFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, usize) -> *mut c_void;
+#[cfg(target_family = "wasm")]
+pub type EnsureElementFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, usize) -> *mut c_void;
+
+#[cfg(not(target_family = "wasm"))]
+pub type EnsureMemberFnPtr<T> = extern "C-unwind" fn(&mut T, *const c_char) -> *mut c_void;
+#[cfg(target_family = "wasm")]
+pub type EnsureMemberFnPtr<T> = extern "C" fn(&mut T, *const c_char) -> *mut c_void;
+
+#[cfg(not(target_family = "wasm"))]
+pub type EnsureMemberFnPtrUnsafe =
+    unsafe extern "C-unwind" fn(*mut c_void, *const c_char) -> *mut c_void;
+#[cfg(target_family = "wasm")]
+pub type EnsureMemberFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, *const c_char) -> *mut c_void;
+
+// Utility functions
+#[cfg(not(target_family = "wasm"))]
+pub type CountFnPtr<T> = extern "C-unwind" fn(&mut T) -> usize;
+#[cfg(target_family = "wasm")]
+pub type CountFnPtr<T> = extern "C" fn(&mut T) -> usize;
+
+#[cfg(not(target_family = "wasm"))]
+pub type CountFnPtrUnsafe = unsafe extern "C-unwind" fn(*const c_void) -> usize;
+#[cfg(target_family = "wasm")]
+pub type CountFnPtrUnsafe = unsafe extern "C" fn(*const c_void) -> usize;
+
+#[cfg(not(target_family = "wasm"))]
+pub type ResizeFnPtr<T> = extern "C-unwind" fn(&mut T, usize);
+#[cfg(target_family = "wasm")]
+pub type ResizeFnPtr<T> = extern "C" fn(&mut T, usize);
+
+#[cfg(not(target_family = "wasm"))]
+pub type ResizeFnPtrUnsafe = unsafe extern "C-unwind" fn(*mut c_void, usize);
+#[cfg(target_family = "wasm")]
+pub type ResizeFnPtrUnsafe = unsafe extern "C" fn(*mut c_void, usize);
+
 //used for `.member` functions
 pub struct Count(pub i32);
 
@@ -38,7 +214,7 @@ impl World {
     /// # Returns
     ///
     /// The found or registered component.
-    pub fn component_ext<T>(&self, id: FetchedId<T>) -> Component<T> {
+    pub fn component_ext<T>(&self, id: FetchedId<T>) -> Component<'_, T> {
         Component::<T>::new_id(self, id)
     }
 
@@ -60,13 +236,13 @@ impl World {
     }
 
     /// Return meta cursor to value
-    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor {
+    pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor<'_> {
         let type_id = T::get_id(self.world());
         Cursor::new(self, type_id, data as *mut T as *mut c_void)
     }
 
     /// Return meta cursor to value
-    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor {
+    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor<'_> {
         if ptr.is_null() {
             panic!("ptr is null");
         }
@@ -75,7 +251,7 @@ impl World {
     }
 
     /// Create primitive type
-    pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView {
+    pub fn primitive(&self, kind: EcsPrimitiveKind) -> EntityView<'_> {
         let desc = sys::ecs_primitive_desc_t {
             kind: kind as sys::ecs_primitive_kind_t,
             entity: 0u64,
@@ -91,7 +267,7 @@ impl World {
     }
 
     /// Create array type
-    pub fn array(&self, elem_id: impl IntoEntity, array_count: i32) -> EntityView {
+    pub fn array(&self, elem_id: impl IntoEntity, array_count: i32) -> EntityView<'_> {
         let desc = sys::ecs_array_desc_t {
             type_: *elem_id.into_entity(self),
             count: array_count,
@@ -108,7 +284,7 @@ impl World {
     }
 
     /// Create vector type
-    pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView {
+    pub fn vector_id(&self, elem_id: impl Into<Entity>) -> EntityView<'_> {
         let elem_id: u64 = *elem_id.into();
         let name_elem = unsafe { sys::ecs_get_name(self.world_ptr(), elem_id) };
         let cstr_name = unsafe { CStr::from_ptr(name_elem) };
@@ -146,7 +322,7 @@ impl World {
     }
 
     /// Create vector type
-    pub fn vector<T: 'static>(&self) -> EntityView {
+    pub fn vector<T: 'static>(&self) -> EntityView<'_> {
         let id = self.component_id_map::<T>();
         self.vector_id(id)
     }
@@ -312,8 +488,9 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
         let pair = ecs_pair(flecs::Constant::ID, *id);
 
         unsafe {
-            let ptr =
-                sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair) as *mut T::UnderlyingTypeOfEnum;
+            let size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
+            let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair, size)
+                as *mut T::UnderlyingTypeOfEnum;
             *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }
@@ -503,8 +680,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 
@@ -525,8 +703,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 
@@ -547,8 +726,9 @@ impl UntypedComponent<'_> {
         let w = unsafe { WorldRef::from_ptr(world_ptr) };
         let me = w.entity_from_id(unsafe { (*m).member });
 
+        let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
         let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID)
+            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
                 as *mut flecs::meta::MemberRanges)
         };
 
@@ -655,8 +835,6 @@ impl EntityView<'_> {
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
-
-    // pub type SerializeFn<T> = extern "C" fn(*const Serializer, *const T) -> i32;
 
     #[derive(Debug, Clone, Component)]
     struct Int {

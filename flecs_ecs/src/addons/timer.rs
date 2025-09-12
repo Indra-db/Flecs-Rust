@@ -203,12 +203,12 @@ impl TimerAPI for Timer<'_> {
 
 impl World {
     /// Find or register a singleton Timer
-    pub fn timer(&self) -> Timer {
+    pub fn timer(&self) -> Timer<'_> {
         Timer::new(self)
     }
 
     /// Find or register a Timer
-    pub fn timer_from<T: ComponentId>(&self) -> Timer {
+    pub fn timer_from<T: ComponentId>(&self) -> Timer<'_> {
         Timer::new_from::<T>(self)
     }
 

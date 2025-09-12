@@ -182,18 +182,21 @@ Some of the features that make Flecs stand out are:
     ```
 * Singletons (Resources) are modelled as a component added to it's own entity.
     ```rust
+    world.component::<GameTime>().add_trait(flecs::Singleton);
     world.set(GameTime { delta_time: 0.0 });
     ```
+
+    in the API's it gets automatically detected as a Singleton
+    and no extra annotation is needed.
+    
     * [Builder API]
     ```rust
     world.system::<&GameTime>()
-    .term_at(0)
-    .singleton()
     .each(|| { });
     ```
     * [DSL API]
     ```rust
-    system!(world, &R($))
+    system!(world, &GameTime)
     .each(|| { });
     ```
 * Systems/observers are based on queries, and will only run if that query matches.

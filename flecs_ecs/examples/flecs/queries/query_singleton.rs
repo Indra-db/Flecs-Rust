@@ -15,6 +15,9 @@ pub struct Velocity {
 fn main() {
     let world = World::new();
 
+    // Mark Gravity as singleton
+    world.component::<Gravity>().add_trait::<flecs::Singleton>();
+
     // Set singleton
     world.set(Gravity { value: 9.81 });
 
@@ -24,14 +27,7 @@ fn main() {
     world.entity_named("e3").set(Velocity { x: 0.0, y: 2.0 });
 
     // Create query that matches Gravity as singleton
-    let query = world
-        .query::<(&mut Velocity, &Gravity)>()
-        .term_at(1)
-        .singleton()
-        .build();
-
-    // In a query string expression you can use the $ shortcut for singletons:
-    //   Velocity, Gravity($)
+    let query = world.query::<(&mut Velocity, &Gravity)>().build();
 
     query.each_entity(|entity, (velocity, gravity)| {
         velocity.y += gravity.value;

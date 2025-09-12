@@ -17,7 +17,7 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     name: cargo fmt (1.88)
-    steps:
+    steps: 
       - uses: actions/checkout@v4
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
@@ -55,6 +55,22 @@ jobs:
         run: cargo test --workspace --features test-with-crash-handler
       - name: cargo test release
         run: cargo test --workspace --release --features test-with-crash-handler
+
+  hack-each-feature:
+    runs-on: ubuntu-latest
+    name: cargo make hack-each-feature
+    steps:
+      - uses: actions/checkout@v4
+      - name: install MSRV toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_MIN_VER }}
+      - name: rustc/cargo versions
+        run: rustc -V && cargo -V
+      - name: install cargo-make and cargo-hack
+        run: cargo install --locked cargo-make cargo-hack
+      - name: run cargo-make hack-each-feature
+        run: cargo make hack-each-feature
 
   build-ios:
     runs-on: macos-latest

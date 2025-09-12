@@ -112,8 +112,8 @@ fn main() {
     println!("Tables for cell 1_0:");
 
     query.set_group(Cell_1_0).run(|mut iter| {
-        let world = iter.world();
         while iter.next() {
+            let world = iter.world();
             let group = world.entity_from_id(iter.group_id());
             println!(
                 "group: {:?} - Table [{}]",

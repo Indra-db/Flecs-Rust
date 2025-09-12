@@ -7,14 +7,13 @@ use crate::common_test::*;
 fn query_rust_pass_query_to_system() {
     let world = World::new();
 
+    world
+        .component::<Position>()
+        .add_trait::<flecs::Singleton>();
+
     world.set(Position { x: 1, y: 2 });
 
-    let query = world
-        .query::<(&Position, &Velocity)>()
-        .term_at(0)
-        .singleton()
-        .set_cached()
-        .build();
+    let query = world.query::<(&Position, &Velocity)>().set_cached().build();
 
     world.entity().set(Velocity { x: 590, y: 20 });
 
@@ -105,7 +104,7 @@ fn test_trait_query() {
     query.run(|mut it| {
         while it.next() {
             for i in it.iter() {
-                let e = it.entity(i).unwrap();
+                let e = it.get_entity(i).unwrap();
                 let id = it.id(0);
                 // cast the component to the Shapes trait
                 let _test_compile: &mut dyn Shapes = ShapesTrait::cast_mut(e, id);

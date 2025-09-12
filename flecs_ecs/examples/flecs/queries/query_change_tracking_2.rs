@@ -124,6 +124,8 @@ fn main() {
 
                 // If the dirty flag is false, skip the table. This way the table's
                 // dirty state is not updated by the query.
+                dirty.drop();
+                pos.drop();
                 it.skip();
 
                 continue;

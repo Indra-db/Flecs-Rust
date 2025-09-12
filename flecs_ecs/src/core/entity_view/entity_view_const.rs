@@ -6,6 +6,7 @@ use core::{
 
 use crate::sys;
 use flecs_ecs::core::*;
+use flecs_ecs_derive::extern_abi;
 use sys::ecs_get_with;
 
 #[cfg(feature = "std")]
@@ -14,6 +15,12 @@ extern crate std;
 extern crate alloc;
 #[allow(unused_imports)] //meant for no_std, not ready yet
 use alloc::{borrow::ToOwned, boxed::Box, format, string::String, string::ToString, vec, vec::Vec};
+
+// Type definitions for function pointers that need different ABIs for WASM vs non-WASM
+#[cfg(not(target_family = "wasm"))]
+type ObserverIterFnPtr = extern "C-unwind" fn(*mut sys::ecs_iter_t);
+#[cfg(target_family = "wasm")]
+type ObserverIterFnPtr = extern "C" fn(*mut sys::ecs_iter_t);
 
 /// A view into an entity in the world that provides both read and write access to components and relationships.
 ///
@@ -216,6 +223,7 @@ impl<'a> EntityView<'a> {
         Self { world, id }
     }
 
+    #[inline(always)]
     pub(crate) fn new_from_raw(world: &'a WorldRef<'a>, id: u64) -> Self {
         Self {
             world: *world,
@@ -393,13 +401,16 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`Entity::id_view()`] - Convert Entity to [`IdView`]
-    pub fn id_view(&self) -> IdView {
+    pub fn id_view(&self) -> IdView<'_> {
         IdView::new_from_id(self.world, *self.id)
     }
 
     /// Check if entity is valid.
     ///
-    /// Entities are valid if they are not 0 and if they are alive. This function
+    /// Entities are valid if :
+    /// - they are not 0
+    /// - if they are alive
+    /// - the id contains a valid bit pattern for an entity
     ///
     ///
     /// # Examples
@@ -917,10 +928,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// let entity = world
-    ///     .entity()
-    ///     .add((Likes, apple))
-    ///     .add((Likes, banana));
+    /// let entity = world.entity().add((Likes, apple)).add((Likes, banana));
     ///
     /// // Iterate over all "Likes" relationships
     /// entity.each_pair(world.component_id::<Likes>(), flecs::Wildcard::ID, |id| {
@@ -1067,9 +1075,7 @@ impl<'a> EntityView<'a> {
     /// let apple = world.entity_named("Apple");
     /// let banana = world.entity_named("Banana");
     ///
-    /// entity
-    ///     .add((Likes, apple))
-    ///     .add((Likes, banana));
+    /// entity.add((Likes, apple)).add((Likes, banana));
     ///
     /// assert_eq!(entity.target_count::<Likes>(), Some(2));
     /// ```
@@ -1239,7 +1245,127 @@ impl<'a> EntityView<'a> {
     }
 }
 
-pub trait EntityViewGet<Return> {
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+fn __cloned_locks<const MULTITHREADED: bool>(
+    world: WorldRef<'_>,
+    components: &[*mut c_void],
+    safety_info: &[sys::ecs_safety_info_t],
+) {
+    let stage_id = if MULTITHREADED {
+        world.stage_id()
+    } else {
+        0 // stage_id is not used in single-threaded mode
+    };
+
+    for (index, si) in safety_info.iter().enumerate() {
+        // skip missing components
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+
+        if !si.cr.is_null() {
+            sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+            sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+            continue;
+        }
+
+        //check if no writes are present so we can clone
+        get_table_column_lock_read_begin::<MULTITHREADED>(
+            &world,
+            si.table,
+            si.column_index,
+            stage_id,
+        );
+        table_column_lock_read_end::<MULTITHREADED>(si.table, si.column_index, stage_id);
+    }
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
+    world: &WorldRef,
+    callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
+    tuple_data: <T as GetTuple>::Pointers,
+    tuple: <T as GetTuple>::TupleType<'_>,
+) -> Return {
+    let components = tuple_data.component_ptrs();
+    let safety_info = tuple_data.safety_info();
+    let world = world.real_world();
+    let stage_id = if MULTITHREADED {
+        world.stage_id()
+    } else {
+        0 // stage_id is not used in single-threaded mode
+    };
+
+    for (index, si) in safety_info.iter().enumerate() {
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+        match si {
+            SafetyInfo::Read(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+                } else {
+                    get_table_column_lock_read_begin::<MULTITHREADED>(
+                        &world,
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
+            }
+            SafetyInfo::Write(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_write_begin::<MULTITHREADED>(&world, si.cr);
+                } else {
+                    get_table_column_lock_write_begin::<MULTITHREADED>(
+                        &world,
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
+            }
+        }
+    }
+
+    world.defer_begin();
+    let ret = callback(tuple);
+    world.defer_end();
+
+    for (index, si) in safety_info.iter().enumerate() {
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+        match si {
+            SafetyInfo::Read(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+                } else {
+                    table_column_lock_read_end::<MULTITHREADED>(
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
+            }
+            SafetyInfo::Write(si) => {
+                if !si.cr.is_null() {
+                    sparse_id_record_lock_write_end::<MULTITHREADED>(si.cr);
+                } else {
+                    table_column_lock_write_end::<MULTITHREADED>(
+                        si.table,
+                        si.column_index,
+                        stage_id,
+                    );
+                }
+            }
+        }
+    }
+    ret
+}
+
+pub trait EntityViewGet<'a, Return>: WorldProvider<'a> + Sized {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
     /// use `Option` wrapper to indicate if the component is optional.
@@ -1390,45 +1516,83 @@ pub trait EntityViewGet<Return> {
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return;
 }
 
-impl<Return> EntityViewGet<Return> for EntityView<'_> {
+impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
     fn try_get<T: GetTuple>(
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
     ) -> Option<Return> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     return None;
+        // }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
         let has_all_components = tuple_data.has_all_components();
 
         if has_all_components {
             let tuple = tuple_data.get_tuple();
-            self.world.defer_begin();
-            let ret = callback(tuple);
-            self.world.defer_end();
-            Some(ret)
-        } else {
-            None
+
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let multithreaded = self.world.is_currently_multithreaded();
+
+                if multithreaded {
+                    return Some(get_rw_lock::<T, Return, true>(
+                        &self.world,
+                        callback,
+                        tuple_data,
+                        tuple,
+                    ));
+                }
+                return Some(get_rw_lock::<T, Return, false>(
+                    &self.world,
+                    callback,
+                    tuple_data,
+                    tuple,
+                ));
+            }
+
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                self.world.defer_begin();
+                let ret = callback(tuple);
+                self.world.defer_end();
+                return Some(ret);
+            }
         }
+        None
     }
 
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            panic!("Entity does not have any components");
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     panic!("Entity does not have any components");
+        // }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
         let tuple = tuple_data.get_tuple();
 
-        self.world.defer_begin();
-        let ret = callback(tuple);
-        self.world.defer_end();
-        ret
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            let multithreaded = self.world.is_currently_multithreaded();
+            if multithreaded {
+                get_rw_lock::<T, Return, true>(&self.world, callback, tuple_data, tuple)
+            } else {
+                get_rw_lock::<T, Return, false>(&self.world, callback, tuple_data, tuple)
+            }
+        }
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            self.world.defer_begin();
+            let ret = callback(tuple);
+            self.world.defer_end();
+            ret
+        }
     }
 }
 
@@ -1491,11 +1655,28 @@ impl<'a> EntityView<'a> {
     pub fn cloned<T: ClonedTuple>(self) -> T::TupleType<'a> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            panic!("Entity does not have any components");
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     panic!("Entity does not have any components");
+        // }
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            let world = self.world.real_world();
+            let safety_info = tuple_data.safety_info();
+
+            let multithreaded = self.world.is_currently_multithreaded();
+
+            if multithreaded {
+                __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+            } else {
+                // single-threaded mode
+                __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+            }
+        }
+
         tuple_data.get_tuple()
     }
 
@@ -1560,22 +1741,37 @@ impl<'a> EntityView<'a> {
     pub fn try_cloned<T: ClonedTuple>(self) -> Option<T::TupleType<'a>> {
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        if unsafe { (*record).table.is_null() } {
-            return None;
-        }
+        //entity now belongs to a table, even if it has no components
+        // if unsafe { (*record).table.is_null() } {
+        //     return None;
+        // }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
+
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
         let has_all_components = tuple_data.has_all_components();
 
         if has_all_components {
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let world = self.world.real_world();
+                let safety_info = tuple_data.safety_info();
+
+                let multithreaded = self.world.is_currently_multithreaded();
+
+                if multithreaded {
+                    __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                } else {
+                    __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                }
+            }
             Some(tuple_data.get_tuple())
         } else {
             None
         }
     }
 
-    /// Get component value or pair as untyped pointer
+    /// Get component value or pair as untyped pointer. This is not borrow checked as it's a ptr return.
     ///
     /// # Arguments
     ///
@@ -1938,7 +2134,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity if found, otherwise `None`.
     #[inline(always)]
-    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup_recursive(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, true)
     }
 
@@ -1955,7 +2151,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity if found, otherwise `None`.
     #[inline(always)]
-    pub fn try_lookup(&self, name: &str) -> Option<EntityView> {
+    pub fn try_lookup(&self, name: &str) -> Option<EntityView<'_>> {
         self.try_lookup_impl(name, false)
     }
 
@@ -1979,7 +2175,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity, entity id will be 0 if not found.
     #[inline(always)]
-    pub fn lookup_recursive(&self, name: &str) -> EntityView {
+    pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
             panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
@@ -2003,7 +2199,7 @@ impl<'a> EntityView<'a> {
     ///
     /// The entity, entity id will be 0 if not found.
     #[inline(always)]
-    pub fn lookup(&self, name: &str) -> EntityView {
+    pub fn lookup(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
@@ -2108,32 +2304,19 @@ impl<'a> EntityView<'a> {
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        #[cfg(feature = "flecs_meta")]
-        {
-            let id_underlying_type = self.world.component_id::<i32>();
-            let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
-            let constant_value =
-                unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
+        let id_underlying_type = self.world.component_id::<i32>();
+        let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
+        let constant_value =
+            unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
 
-            ecs_assert!(
-                !constant_value.is_null(),
-                FlecsErrorCode::InternalError,
-                "missing enum constant value {}",
-                core::any::type_name::<T>()
-            );
+        ecs_assert!(
+            !constant_value.is_null(),
+            FlecsErrorCode::InternalError,
+            "missing enum constant value {}",
+            core::any::type_name::<T>()
+        );
 
-            unsafe { (constant_value.add(0) as *mut T).read() }
-        }
-
-        #[cfg(not(feature = "flecs_meta"))]
-        {
-            ecs_assert!(
-                false,
-                FlecsErrorCode::Unsupported,
-                "operation not supported without FLECS_META addon"
-            );
-            unsafe { std::mem::zeroed() }
-        }
+        unsafe { (constant_value.add(0) as *mut T).read() }
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).
@@ -2460,7 +2643,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty::<Func> as extern "C" fn(_)),
+            Some(Self::run_empty::<Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2510,7 +2693,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_empty_entity::<Func> as extern "C" fn(_)),
+            Some(Self::run_empty_entity::<Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2560,7 +2743,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload::<C, Func> as extern "C" fn(_)),
+            Some(Self::run_payload::<C, Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2610,7 +2793,7 @@ impl EntityView<'_> {
             C::entity_id(self.world),
             *self.id,
             binding_ctx,
-            Some(Self::run_payload_entity::<C, Func> as extern "C" fn(_)),
+            Some(Self::run_payload_entity::<C, Func> as ObserverIterFnPtr),
         );
         self
     }
@@ -2642,7 +2825,8 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) extern "C" fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    pub(crate) fn run_empty<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(),
     {
@@ -2667,7 +2851,8 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) extern "C" fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    pub(crate) fn run_empty_entity<Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView),
     {
@@ -2696,7 +2881,8 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) extern "C" fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    pub(crate) fn run_payload<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&C),
     {
@@ -2723,7 +2909,8 @@ impl EntityView<'_> {
     /// # Arguments
     ///
     /// * `iter` - The iterator which gets passed in from `C`
-    pub(crate) extern "C" fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
+    #[extern_abi]
+    pub(crate) fn run_payload_entity<C, Func>(iter: *mut sys::ecs_iter_t)
     where
         Func: FnMut(&mut EntityView, &C),
     {
@@ -2750,7 +2937,8 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `empty` callback
-    pub(crate) extern "C" fn on_free_empty(ptr: *mut c_void) {
+    #[extern_abi]
+    pub(crate) fn on_free_empty(ptr: *mut c_void) {
         let ptr_func: *mut fn() = ptr as *mut fn();
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2758,7 +2946,8 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `empty_entity` callback
-    pub(crate) extern "C" fn on_free_empty_entity(ptr: *mut c_void) {
+    #[extern_abi]
+    pub(crate) fn on_free_empty_entity(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView) = ptr as *mut fn(&mut EntityView);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2766,7 +2955,8 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `payload` callback
-    pub(crate) extern "C" fn on_free_payload<C>(ptr: *mut c_void) {
+    #[extern_abi]
+    pub(crate) fn on_free_payload<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut C) = ptr as *mut fn(&mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2774,7 +2964,8 @@ impl EntityView<'_> {
     }
 
     /// Callback to free the memory of the `payload_entity` callback
-    pub(crate) extern "C" fn on_free_payload_entity<C>(ptr: *mut c_void) {
+    #[extern_abi]
+    pub(crate) fn on_free_payload_entity<C>(ptr: *mut c_void) {
         let ptr_func: *mut fn(&mut EntityView, &mut C) = ptr as *mut fn(&mut EntityView, &mut C);
         unsafe {
             ptr::drop_in_place(ptr_func);
@@ -2782,7 +2973,8 @@ impl EntityView<'_> {
     }
 
     /// Executes the drop for the system binding context, meant to be used as a callback
-    pub(crate) extern "C" fn binding_entity_ctx_drop(ptr: *mut c_void) {
+    #[extern_abi]
+    pub(crate) fn binding_entity_ctx_drop(ptr: *mut c_void) {
         let ptr_struct: *mut ObserverEntityBindingCtx = ptr as *mut ObserverEntityBindingCtx;
         unsafe {
             ptr::drop_in_place(ptr_struct);

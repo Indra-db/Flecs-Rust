@@ -67,11 +67,25 @@ pub struct SelfRef2 {
     pub value: Entity,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Debug)]
 pub struct Value {
     pub value: i32,
 }
 
+#[derive(Component, Clone, Debug)]
+pub struct Value2 {
+    pub value: i32,
+}
+
+#[derive(Component, Clone)]
+pub struct Value3 {
+    pub value: i32,
+}
+
+#[derive(Component, Clone)]
+pub struct Value4 {
+    pub value: i32,
+}
 #[derive(Debug, Component, Default, Clone, Copy)]
 pub struct Position {
     pub x: i32,
