@@ -508,10 +508,9 @@ grav_e.get::&lt;&amp;Gravity&gt;(|g| {
 </span><span class="boring">
 </span><span class="boring">fn main() {
 </span><span class="boring">let world = World::new();
-</span>world
+</span>world.component::&lt;Gravity&gt;().add_trait(flecs::Singleton);
+world
     .query::&lt;(&amp;Velocity, &amp;Gravity)&gt;()
-    .term_at(1)
-    .singleton()
     .build();
 <span class="boring">}</span></code></pre>
 <h3 id="query"><a class="header" href="#query">Query</a></h3>
@@ -555,7 +554,7 @@ q.run(|mut it| {
         let p = it.field::&lt;Position&gt;(0);
 
         for i in it.iter() {
-            println!("{}: ({}, {})", it.entity(i).unwrap().name(), p[i].x, p[i].y);
+            println!("{}: ({}, {})", it.get_entity(i).unwrap().name(), p[i].x, p[i].y);
         }
     }
 });
