@@ -12,22 +12,15 @@
  */
 
 #if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)
-#ifdef __wasilibc_unmodified_upstream
 typedef int wchar_t;
-#else
 #define __need_wchar_t
 #include <stddef.h>
-#endif
 #define __DEFINED_wchar_t
 #endif
 
 #if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)
-#ifdef __wasilibc_unmodified_upstream
-typedef unsigned int wint_t;
-#else
 #define __need_wint_t
 #include <stddef.h>
-#endif
 #define __DEFINED_wint_t
 #endif
 

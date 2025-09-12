@@ -124,11 +124,12 @@ fn fix_alltypes_for_upstream(alltypes_path: &str) {
     // Replace the problematic wchar_t definition for upstream mode
     let fixed_content = content.replace(
         "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\n#define __need_wchar_t\n#include <stddef.h>\n#define __DEFINED_wchar_t\n#endif",
-        "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef int wchar_t;\n#else\n#define __need_wchar_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wchar_t\n#endif"
-    ).replace(
-        "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#define __need_wint_t\n#include <stddef.h>\n#define __DEFINED_wint_t\n#endif",
-        "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef unsigned int wint_t;\n#else\n#define __need_wint_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wint_t\n#endif"
+        "#if defined(__NEED_wchar_t) && !defined(__DEFINED_wchar_t)\ntypedef int wchar_t;\n#define __need_wchar_t\n#include <stddef.h>\n#define __DEFINED_wchar_t\n#endif",
     );
+    // .replace(
+    //     "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#define __need_wint_t\n#include <stddef.h>\n#define __DEFINED_wint_t\n#endif",
+    //     "#if defined(__NEED_wint_t) && !defined(__DEFINED_wint_t)\n#ifdef __wasilibc_unmodified_upstream\ntypedef unsigned int wint_t;\n#else\n#define __need_wint_t\n#include <stddef.h>\n#endif\n#define __DEFINED_wint_t\n#endif"
+    // );
 
     fs::write(alltypes_path, fixed_content).expect("Failed to write fixed alltypes.h");
 }
@@ -354,9 +355,10 @@ fn build_libc() {
         .flag("-fvisibility=hidden")
         .flag("-ffunction-sections")
         .flag("-fdata-sections")
+        .define("__NEED_wchar_t", None)
         .define("__wasm32__", None)
         .define("__wasm__", None)
-        .define("__wasilibc_unmodified_upstream", None)
+        //.define("__wasilibc_unmodified_upstream", None)
         .define("_WASI_EMULATED_MMAN", None)
         .define("_WASI_EMULATED_SIGNAL", None)
         .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
@@ -394,9 +396,20 @@ fn build_libc() {
         "src/libc-top-half/musl/src/stdlib/atoi.c",
         "src/libc-top-half/musl/src/stdlib/atol.c",
         "src/libc-top-half/musl/src/stdlib/atoll.c",
-        "src/libc-top-half/musl/src/time/time.c",
         "src/libc-top-half/musl/src/stdlib/strtod.c",
+        "src/libc-top-half/musl/src/stdlib/strtol.c",
+        "src/libc-top-half/musl/src/internal/shgetc.c",
+        "src/libc-top-half/musl/src/internal/floatscan.c",
+        "src/libc-top-half/musl/src/internal/intscan.c",
+        "src/libc-top-half/musl/src/stdio/__uflow.c",
+        "src/libc-top-half/musl/src/stdio/__toread.c",
         "src/libc-top-half/musl/src/math/__fpclassifyl.c",
+        "src/libc-top-half/musl/src/math/scalbn.c",
+        "src/libc-top-half/musl/src/math/copysignl.c",
+        "src/libc-top-half/musl/src/math/scalbnl.c",
+        "src/libc-top-half/musl/src/math/fmodl.c",
+        "src/libc-top-half/musl/src/math/fabsl.c",
+        "src/libc-top-half/musl/src/time/time.c",
         "src/wasm_stubs.c", // WASM-specific stub implementations
     ];
 

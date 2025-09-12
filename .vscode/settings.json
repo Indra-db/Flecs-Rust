@@ -9,7 +9,9 @@
         "*.in": "cpp",
         "string.h": "c",
         "stddef.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "endian.h": "c",
+        "api.h": "c"
     }
     // "rust-analyzer.linkedProjects": [
     //     "./flecs_ecs/Cargo.toml"

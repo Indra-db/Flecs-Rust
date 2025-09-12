@@ -1,5 +1,3 @@
-const __wbg_star0 = {}; // Empty stub for env imports
-
 let wasm;
 
 function addToExternrefTable0(obj) {
@@ -1697,11 +1695,11 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper2474 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper2462 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 266, __wbg_adapter_30);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper3855 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper3843 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 275, __wbg_adapter_33);
         return ret;
     };
@@ -1762,7 +1760,6 @@ function __wbg_get_imports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports['env'] = __wbg_star0;
 
     return imports;
 }

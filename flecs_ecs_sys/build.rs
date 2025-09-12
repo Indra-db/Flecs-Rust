@@ -337,7 +337,7 @@ fn main() {
                 .flag("-fvisibility=hidden")
                 // Define macros to bypass WASI platform checks
                 .define("__wasi__", None)
-                .define("__wasilibc_unmodified_upstream", None)
+                //.define("__wasilibc_unmodified_upstream", None)
                 .define("_WASI_EMULATED_MMAN", None)
                 .define("_WASI_EMULATED_SIGNAL", None)
                 .define("_WASI_EMULATED_PROCESS_CLOCKS", None)
