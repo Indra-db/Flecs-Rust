@@ -398,7 +398,7 @@ where
             if sys::ecs_id_is_pair(id) {
                 IdView::new_from_id(self.world(), id)
             } else {
-                panic!("Field at index {} is not a pair", index);
+                panic!("Field at index {index} is not a pair");
             }
         }
     }
