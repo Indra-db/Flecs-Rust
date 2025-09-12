@@ -40,6 +40,8 @@ pub mod prelude;
 
 /// Use the crash handler for unit tests
 #[cfg(all(test, feature = "test-with-crash-handler"))]
+use std::default::Default;
+#[cfg(all(test, feature = "test-with-crash-handler"))]
 #[ctor::ctor]
 fn register_test_crash_handler() {
     test_crash_handler::register();
