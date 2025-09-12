@@ -171,6 +171,7 @@ pub mod private {
             };
         }
 
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         fn execute_run_each<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -202,6 +203,7 @@ pub mod private {
             }
         }
 
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         fn execute_run_each_entity<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -245,6 +247,7 @@ pub mod private {
             }
         }
 
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
         fn execute_run_each_iter<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -253,7 +256,7 @@ pub mod private {
             unsafe {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
-                let mut world = WorldRef::from_ptr(iter.world);
+                let world = WorldRef::from_ptr(iter.world);
                 let each_iter = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
                 #[cfg(feature = "flecs_safety_locks")]
@@ -261,7 +264,7 @@ pub mod private {
                     while table_iter.internal_next() {
                         internal_each_iter::<T, P, false, false>(
                             table_iter.iter,
-                            &mut world,
+                            &world,
                             each_iter,
                         );
                     }

@@ -23,7 +23,7 @@ pub(crate) type FlecsArray = Vec<u64>;
 
 #[extern_abi]
 unsafe fn c_run_post_frame(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
-    let action: fn(WorldRef) = unsafe { std::mem::transmute(ctx as *const ()) };
+    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
     let world = unsafe { WorldRef::from_ptr(world) };
     (action)(world);
 }
