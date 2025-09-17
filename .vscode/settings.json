@@ -1,4 +1,9 @@
 {
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "file": ".vscode/commit-message-instructions.md"
+        }
+    ],
     "files.associations": {
         "*.rs": "rust",
         "string": "c",
