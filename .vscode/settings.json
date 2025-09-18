@@ -4,6 +4,19 @@
             "file": ".vscode/commit-message-instructions.md"
         }
     ],
+    "github.copilot.chat.reviewSelection.instructions": [
+        {
+            "file": ".vscode/code-review-instructions.md"
+        },
+        {
+            "file": ".github/copilot-coding-instructions.md"
+        }
+    ],
+    "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+        {
+            "file": ".vscode/pull-request-instructions.md"
+        }
+    ],
     "files.associations": {
         "*.rs": "rust",
         "string": "c",
