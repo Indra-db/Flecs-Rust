@@ -1,0 +1,19 @@
+[package]
+name = "rust_doctest"
+version = "0.1.0"
+edition = "2024"
+description = "Rust documentation snippet test generator using poly_doctest"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Indra-db/Flecs-Rust"
+keywords = ["rust", "documentation", "testing", "code-generation", "snippets"]
+
+[[bin]]
+name = "rust-doctest"
+path = "src/main.rs"
+
+[dependencies]
+poly_doctest = "0.1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+tempfile = "3.22.0"

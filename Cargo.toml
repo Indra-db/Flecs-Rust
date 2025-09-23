@@ -4,6 +4,7 @@ members = [
     "flecs_ecs_derive",
     "flecs_ecs_sys",
     "test_crash_handler",
+    "tools/rust_doctest",
 ]
 resolver = "2"
 default-members = ["flecs_ecs", "flecs_ecs_derive", "flecs_ecs_sys"]

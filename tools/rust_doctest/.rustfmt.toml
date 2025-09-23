@@ -1,0 +1,4 @@
+# Don't format test data files
+ignore = [
+    "tests/data/quickstart_expected.rs",
+]
