@@ -4,11 +4,14 @@ use core::ops::{Deref, DerefMut};
 
 use flecs_ecs_sys::{self as sys};
 
-use crate::core::{ComponentId, Entity, EntityView, IntoEntity, QueryTuple, World, WorldProvider};
+use crate::core::{
+    ComponentId, Entity, EntityView, IntoEntity, QueryTuple, World, WorldProvider, WorldRef,
+};
 
 use super::system::{System, SystemBuilder};
 
 pub trait TimerAPI: Sized {
+    fn world(&self) -> WorldRef<'_>;
     fn world_ptr(&self) -> *const sys::ecs_world_t;
     fn world_ptr_mut(&self) -> *mut sys::ecs_world_t;
     fn id(&self) -> Entity;
@@ -188,14 +191,22 @@ impl<'a> Timer<'a> {
 }
 
 impl TimerAPI for Timer<'_> {
+    #[inline(always)]
+    fn world(&self) -> WorldRef<'_> {
+        self.entity.world
+    }
+
+    #[inline(always)]
     fn world_ptr(&self) -> *const flecs_ecs_sys::ecs_world_t {
         self.entity.world_ptr()
     }
 
+    #[inline(always)]
     fn world_ptr_mut(&self) -> *mut flecs_ecs_sys::ecs_world_t {
         self.entity.world_ptr_mut()
     }
 
+    #[inline(always)]
     fn id(&self) -> Entity {
         self.id
     }
@@ -221,14 +232,22 @@ impl World {
 }
 
 impl TimerAPI for System<'_> {
+    #[inline(always)]
+    fn world(&self) -> WorldRef<'_> {
+        self.entity.world
+    }
+
+    #[inline(always)]
     fn world_ptr(&self) -> *const flecs_ecs_sys::ecs_world_t {
         self.entity.world_ptr()
     }
 
+    #[inline(always)]
     fn world_ptr_mut(&self) -> *mut flecs_ecs_sys::ecs_world_t {
         self.entity.world_ptr_mut()
     }
 
+    #[inline(always)]
     fn id(&self) -> Entity {
         self.id
     }
