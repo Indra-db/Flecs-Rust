@@ -3715,7 +3715,7 @@ impl World {
     /// # See also
     ///
     /// * C API: `ecs_delete_empty_tables`
-    #[inline(always)] //min_id_count: i32, time_budget_seconds: f64) -> i32
+    #[inline(always)]
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }
     }

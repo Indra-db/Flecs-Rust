@@ -143,6 +143,30 @@ pub mod private {
             }
         }
 
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[extern_abi]
+        fn execute_each_iter<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
+        where
+            Func: FnMut(TableIter<CALLED_FROM_RUN, P>, FieldIndex, T::TupleType<'_>),
+        {
+            unsafe {
+                let iter = &mut *iter;
+                let world = WorldRef::from_ptr(iter.world);
+                let each_iter = &mut *(iter.callback_ctx as *mut Func);
+                #[cfg(feature = "flecs_safety_locks")]
+                if iter.row_fields == 0 {
+                    internal_each_iter::<T, P, CALLED_FROM_RUN, false>(iter, &world, each_iter);
+                } else {
+                    internal_each_iter::<T, P, CALLED_FROM_RUN, true>(iter, &world, each_iter);
+                }
+
+                #[cfg(not(feature = "flecs_safety_locks"))]
+                {
+                    internal_each_iter::<T, P, CALLED_FROM_RUN, false>(iter, &world, each_iter);
+                }
+            }
+        }
+
         /// Callback of the `iter_only` functionality
         ///
         /// # Arguments

@@ -421,6 +421,36 @@ where
 
         self.build()
     }
+
+    fn run_each_iter<Func, FuncEachIter>(
+        &mut self,
+        func: Func,
+        func_each_iter: FuncEachIter,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<true, P>) + 'static,
+        FuncEachIter: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>) + 'static,
+    {
+        let run_func = Box::new(func);
+        let run_static_ref = Box::leak(run_func);
+
+        self.set_run_binding_context(run_static_ref as *mut _ as *mut c_void);
+        self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
+
+        self.set_desc_run(Some(Self::execute_run::<Func> as ExternIterFn));
+
+        let each_iter_func = Box::new(func_each_iter);
+        let each_iter_static_ref = Box::leak(each_iter_func);
+
+        self.set_callback_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
+        self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachIter>));
+
+        self.set_desc_callback(Some(
+            Self::execute_each_iter::<true, FuncEachIter> as ExternIterFn,
+        ));
+
+        self.build()
+    }
 }
 
 pub trait ParSystemAPI<'a, P, T>:
@@ -491,6 +521,20 @@ where
     {
         self.set_multi_threaded(true);
         self.run_each_entity(func, func_each_entity)
+    }
+
+    /// Variant of [`SystemAPI::run_each_iter`] which allows the system to run in multiple threads
+    fn par_run_each_iter<Func, FuncEachIter>(
+        &mut self,
+        func: Func,
+        func_each_iter: FuncEachIter,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        FuncEachIter: Fn(TableIter<true, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        self.run_each_iter(func, func_each_iter)
     }
 }
 
