@@ -112,7 +112,7 @@ pub mod common_test;
         for (module_name, test_functions) in modules {
             let content = format!(
                 r#"//! Tests from {module_name}.md
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code, unused_mut,clippy::print_stdout)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
 

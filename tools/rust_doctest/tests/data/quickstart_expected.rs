@@ -1,6 +1,6 @@
 //! Tests from quickstart.md
-
-#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements)]
+#![cfg_attr(rustfmt, rustfmt_skip)]
+#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code, unused_mut,clippy::print_stdout)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
 use crate::common_test::*;
