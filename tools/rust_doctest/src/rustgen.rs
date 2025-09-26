@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use poly_doctest::{
-    extract_file_stem, indent_code, CodeSnippet, LangGenerator, Result, SourceFileSnippets,
+    CodeSnippet, LangGenerator, Result, SourceFileSnippets, extract_file_stem, indent_code,
 };
 
 /// Rust-specific code generator that creates test modules from documentation snippets.
