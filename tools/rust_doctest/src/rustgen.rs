@@ -113,7 +113,7 @@ pub mod common_test;
             let content = format!(
                 r#"//! Tests from {module_name}.md
 
-#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code, unused_mut)]
+#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code, unused_mut,clippy::print_stdout)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
 use crate::common_test::*;

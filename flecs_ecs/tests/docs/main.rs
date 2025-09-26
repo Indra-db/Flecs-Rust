@@ -5,12 +5,3 @@
 
 pub mod common_test;
 
-mod componenttraits;
-mod entitiescomponents;
-mod flecsremoteapi;
-mod observersmanual;
-mod prefabsmanual;
-mod queries;
-mod quickstart;
-mod relationships;
-mod systems;
