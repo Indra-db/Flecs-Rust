@@ -81,7 +81,7 @@ fn {snippet_name}() {{
         let mut content = String::from(
             r#"//! Generated tests from Flecs documentation
 
-#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements)]
+#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
 pub mod common_test;
@@ -113,7 +113,7 @@ pub mod common_test;
             let content = format!(
                 r#"//! Tests from {module_name}.md
 
-#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements)]
+#![allow(unused_imports, unused_variables, dead_code, non_snake_case, path_statements, unreachable_code, unused_mut)]
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
 use crate::common_test::*;
