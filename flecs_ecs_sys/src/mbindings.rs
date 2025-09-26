@@ -272,6 +272,17 @@ impl Default for ecs_get_ptr_t {
     }
 }
 
+impl Default for ecs_delete_empty_tables_desc_t {
+    #[inline]
+    fn default() -> Self {
+        ecs_delete_empty_tables_desc_t {
+            clear_generation: 0,
+            delete_generation: 0,
+            time_budget_seconds: 0.0,
+        }
+    }
+}
+
 #[cfg(feature = "flecs_stats")]
 unsafe impl Send for EcsWorldStats {}
 
