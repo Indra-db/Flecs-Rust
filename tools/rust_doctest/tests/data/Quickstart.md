@@ -14,7 +14,7 @@ assert_eq!(b, 20);
 ```
 
 ```rust test
-HIDE: let _secret_vec_sum = vec![1, 2, 3].iter().sum::<i32>();
+HIDE: let _secret_vec_sum = [1, 2, 3].iter().sum::<i32>();
 let c = 7 * 8;
 assert_eq!(c, 56);
 ```
