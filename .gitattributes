@@ -1,2 +1,6 @@
 *.c linguist-detectable=false
 *.h linguist-detectable=false
+# enforce LF for source and generated test fixtures
+*.rs    text eol=lf
+*.md    text eol=lf
+tools/rust_doctest/tests/output/* text eol=lf
