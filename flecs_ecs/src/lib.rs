@@ -7,7 +7,7 @@
 //this is commented since `no_std` is not ready yet
 //#![cfg_attr(not(feature = "std"), no_std)] // Enable `no_std` if `std` feature is disabled
 #![allow(dead_code)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(all(
     feature = "flecs_force_build_release_c",
