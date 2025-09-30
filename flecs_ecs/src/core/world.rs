@@ -99,8 +99,8 @@ impl Default for World {
                         let pair_id = it.pair(0);
                         let second_id = pair_id.second_id();
                         let raw_second_id = **second_id;
-                         let is_not_tag = unsafe { sys::ecs_get_typeid(world, raw_second_id) != 0 };
-                     
+                        let is_not_tag = unsafe { sys::ecs_get_typeid(world, raw_second_id) != 0 };
+
                          if is_not_tag {
                              assert!(
                                  has_default_hook(world, raw_second_id),
@@ -110,9 +110,9 @@ impl Default for World {
                     }
                 }
             });
-        
+
         o.child_of(world.lookup("flecs::core::internals"));
-        
+
         world
     }
 }
