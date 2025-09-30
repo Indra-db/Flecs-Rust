@@ -88,6 +88,31 @@ impl Default for World {
         }
 
         world.init_builtin_components();
+
+        let o = world
+            .observer::<flecs::OnAdd, ()>()
+            .with((flecs::With, flecs::Wildcard))
+            .run(|mut it| {
+                let world = it.world().ptr_mut();
+                while it.next() {
+                    for _ in it.iter() {
+                        let pair_id = it.pair(0);
+                        let second_id = pair_id.second_id();
+                        let raw_second_id = **second_id;
+                         let is_not_tag = unsafe { sys::ecs_get_typeid(world, raw_second_id) != 0 };
+                     
+                         if is_not_tag {
+                             assert!(
+                                 has_default_hook(world, raw_second_id),
+                                 "flecs::with requires a default-constructible target or be a ZST. Implement Default for {second_id}."
+                             );
+                         }
+                    }
+                }
+            });
+        
+        o.child_of(world.lookup("flecs::core::internals"));
+        
         world
     }
 }

@@ -579,7 +579,7 @@ pub(crate) fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
 pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool {
     let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
     let ctor_hooks =
-        unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust of C");
+        unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust or C");
 
     /// Type alias for extern function pointers that adapts to target platform
     #[cfg(target_family = "wasm")]
