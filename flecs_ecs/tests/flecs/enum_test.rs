@@ -127,10 +127,23 @@ fn enum_standard_enum_reflection() {
 
     let red = redd.id_variant(&world);
     let green = StandardEnum::Green.id_variant(&world);
-    let _blue = StandardEnum::Blue.id_variant(&world);
+    let blue = StandardEnum::Blue.id_variant(&world);
 
     assert_ne!(red, 0);
     assert_ne!(green, 0);
+    assert_ne!(blue, 0);
+    assert_ne!(green, red);
+    assert_ne!(blue, red);
     assert!(StandardEnum::Red.is_field_registered_as_entity());
+    assert!(StandardEnum::Blue.is_field_registered_as_entity());
+    assert!(StandardEnum::Green.is_field_registered_as_entity());
     assert_eq!(red.path().unwrap(), "::flecs::enum_test::StandardEnum::Red");
+    assert_eq!(
+        green.path().unwrap(),
+        "::flecs::enum_test::StandardEnum::Green"
+    );
+    assert_eq!(
+        blue.path().unwrap(),
+        "::flecs::enum_test::StandardEnum::Blue"
+    );
 }

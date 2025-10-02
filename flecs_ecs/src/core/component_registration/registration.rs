@@ -138,22 +138,33 @@ pub(crate) fn register_enum_data<T>(
     unsafe { sys::ecs_cpp_enum_init(world, id, underlying_type_id) };
     let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
 
-    for (mut index, enum_item) in T::UnderlyingEnumType::iter().enumerate() {
+    for enum_item in T::UnderlyingEnumType::iter() {
         let name = enum_item.name_cstr();
+        let enum_index = enum_item.enum_index();
+        let mut array_index = enum_index as usize;
         let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
                 world,
                 id,
-                T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_item.enum_index()),
+                T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_index),
                 name.as_ptr(),
-                &mut index as *mut usize as *mut c_void,
+                &mut array_index as *mut usize as *mut c_void,
                 underlying_type_id,
                 core::mem::size_of::<T::UnderlyingTypeOfEnum>(),
             )
         };
-        if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
-            unsafe { *enum_array_ptr.add(index) = entity_id };
-        }
+        store_enum_entity_if_needed::<T>(enum_array_ptr, array_index, entity_id);
+    }
+}
+
+#[inline(always)]
+fn store_enum_entity_if_needed<T: ComponentId>(
+    enum_array_ptr: *mut sys::ecs_entity_t,
+    index: usize,
+    entity_id: sys::ecs_entity_t,
+) {
+    if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
+        unsafe { *enum_array_ptr.add(index) = entity_id };
     }
 }
 

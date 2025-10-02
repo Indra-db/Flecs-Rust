@@ -258,7 +258,7 @@ pub fn get_type_name_without_scope<T: ComponentId>() -> OnlyTypeName {
 /// # Example
 ///
 /// ```
-/// use flecs_ecs::core::get_only_type_name_generic;
+/// use flecs_ecs::core::get_type_name_without_scope_generic;
 ///
 /// pub mod Bar {
 ///     pub struct Foo;
@@ -638,7 +638,7 @@ pub fn debug_separate_archetype_types_into_strings(archetype: &Archetype) -> Vec
 #[cfg(test)]
 mod tests {
 
-    use super::get_only_type_name_generic;
+    use super::get_type_name_without_scope_generic;
 
     struct MyStruct;
     enum MyEnum {
