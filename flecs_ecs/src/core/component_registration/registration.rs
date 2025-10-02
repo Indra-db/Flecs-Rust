@@ -145,7 +145,7 @@ pub(crate) fn register_enum_data<T>(
     for enum_item in T::UnderlyingEnumType::iter() {
         let name = enum_item.name_cstr();
         let enum_index = enum_item.enum_index();
-        let mut array_index = enum_index as usize;
+        let mut array_index = enum_index;
         let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
                 world,
@@ -180,13 +180,9 @@ pub(crate) fn register_component_data_named<const COMPONENT_REGISTRATION: bool, 
 where
     T: ComponentId,
 {
-    let worldref = world;
-    let world = worldref.world_ptr_mut();
-
-    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
-
-    let id = register_component_data_explicit::<T, false>(worldref, name);
-    id
+    let world_ptr = world.world_ptr_mut();
+    let _scope = ScopeWithGuard::new(world_ptr, !COMPONENT_REGISTRATION);
+    register_component_data_explicit::<T, false>(world, name)
 }
 
 /// registers the component with the world.
@@ -196,14 +192,9 @@ pub(crate) fn register_component_data<const COMPONENT_REGISTRATION: bool, T>(
 where
     T: ComponentId,
 {
-    let worldref = world;
-    let world = worldref.world_ptr_mut();
-
-    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
-
-    let id = register_component_data_explicit::<T, false>(worldref, core::ptr::null());
-
-    id
+    let world_ptr = world.world_ptr_mut();
+    let _scope = ScopeWithGuard::new(world_ptr, !COMPONENT_REGISTRATION);
+    register_component_data_explicit::<T, false>(world, core::ptr::null())
 }
 
 pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: bool, T>(
