@@ -94,8 +94,12 @@ where
 pub(crate) fn external_register_component<'a, const COMPONENT_REGISTRATION: bool, T>(
     world: impl WorldProvider<'a>,
     name: *const c_char,
-) -> u64 {
-    external_register_component_data::<COMPONENT_REGISTRATION, T>(world.world_ptr_mut(), name)
+) -> u64
+where
+    T: 'static,
+{
+    let world = world.world();
+    external_register_component_data::<COMPONENT_REGISTRATION, T>(world, name) as u64
 }
 
 #[inline(always)]
@@ -137,7 +141,7 @@ pub(crate) fn register_enum_data<T>(
     //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
     unsafe { sys::ecs_cpp_enum_init(world, id, underlying_type_id) };
     let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
-
+    let enum_size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
     for enum_item in T::UnderlyingEnumType::iter() {
         let name = enum_item.name_cstr();
         let enum_index = enum_item.enum_index();
@@ -150,7 +154,7 @@ pub(crate) fn register_enum_data<T>(
                 name.as_ptr(),
                 &mut array_index as *mut usize as *mut c_void,
                 underlying_type_id,
-                core::mem::size_of::<T::UnderlyingTypeOfEnum>(),
+                enum_size,
             )
         };
         store_enum_entity_if_needed::<T>(enum_array_ptr, array_index, entity_id);
@@ -203,14 +207,16 @@ where
 }
 
 pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: bool, T>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
     name: *const c_char,
-) -> sys::ecs_entity_t {
-    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
+) -> sys::ecs_entity_t
+where
+    T: 'static,
+{
+    let world_ptr = world.world_ptr_mut();
+    let _scope = ScopeWithGuard::new(world_ptr, !COMPONENT_REGISTRATION);
 
-    let id = external_register_component_data_explicit::<T>(world, name);
-
-    id
+    external_register_component_data_explicit::<T>(world, name)
 }
 
 /// registers the component with the world.
@@ -315,28 +321,30 @@ where
     finalize_component_registration(world, name, entity_desc_name, type_info)
 }
 
-/// registers the component with the world.
 pub(crate) fn external_register_component_data_explicit<T>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
     name: *const c_char,
-) -> sys::ecs_entity_t {
+) -> sys::ecs_entity_t
+where
+    T: 'static,
+{
+    let world_ptr = world.world_ptr_mut();
+
     let type_name_without_scope = crate::core::get_type_name_without_scope_generic::<T>();
     let type_name_without_scope =
         compact_str::format_compact!("{}\0", type_name_without_scope.as_str());
 
-    // If no name was provided first check if a type with the provided
-    // symbol was already registered.
     let id = if name.is_null() {
-        let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+        let prev_scope = unsafe { sys::ecs_set_scope(world_ptr, 0) };
         let id = unsafe {
             sys::ecs_lookup_symbol(
-                world,
+                world_ptr,
                 type_name_without_scope.as_ptr() as *const _,
                 false,
                 false,
             )
         };
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
+        unsafe { sys::ecs_set_scope(world_ptr, prev_scope) };
         id
     } else {
         0
@@ -352,7 +360,7 @@ pub(crate) fn external_register_component_data_explicit<T>(
 
     let type_info = external_create_type_info::<T>();
 
-    finalize_component_registration(world, name, type_name_ptr, type_info)
+    finalize_component_registration(world_ptr, name, type_name_ptr, type_info)
 }
 
 fn finalize_component_registration(
