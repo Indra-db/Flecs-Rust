@@ -5,6 +5,62 @@ use core::ffi::c_void;
 use crate::core::*;
 use crate::sys;
 
+struct ScopeWithGuard {
+    world: *mut sys::ecs_world_t,
+    prev_scope: Option<sys::ecs_entity_t>,
+    prev_with: Option<sys::ecs_id_t>,
+}
+
+impl ScopeWithGuard {
+    #[inline(always)]
+    fn new(world: *mut sys::ecs_world_t, disable_component_scoping: bool) -> Self {
+        if !disable_component_scoping {
+            return Self {
+                world,
+                prev_scope: None,
+                prev_with: None,
+            };
+        }
+
+        let prev_scope = unsafe {
+            let current_scope = sys::ecs_get_scope(world);
+            if current_scope != 0 {
+                sys::ecs_set_scope(world, 0);
+                Some(current_scope)
+            } else {
+                None
+            }
+        };
+
+        let prev_with = unsafe {
+            let previous_with = sys::ecs_set_with(world, 0);
+            if previous_with != 0 {
+                Some(previous_with)
+            } else {
+                None
+            }
+        };
+
+        Self {
+            world,
+            prev_scope,
+            prev_with,
+        }
+    }
+}
+
+impl Drop for ScopeWithGuard {
+    fn drop(&mut self) {
+        if let Some(prev_with) = self.prev_with {
+            unsafe { sys::ecs_set_with(self.world, prev_with) };
+        }
+
+        if let Some(prev_scope) = self.prev_scope {
+            unsafe { sys::ecs_set_scope(self.world, prev_scope) };
+        }
+    }
+}
+
 #[doc(hidden)]
 pub fn internal_register_component<
     'a,
@@ -112,27 +168,9 @@ where
     let worldref = world;
     let world = worldref.world_ptr_mut();
 
-    let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
-        unsafe { sys::ecs_set_scope(world, 0) }
-    } else {
-        0
-    };
-    let prev_with = if !COMPONENT_REGISTRATION {
-        unsafe { sys::ecs_set_with(world, 0) }
-    } else {
-        0
-    };
+    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
 
-    let id = register_componment_data_explicit::<T, false>(worldref, name);
-
-    if !COMPONENT_REGISTRATION {
-        if prev_with != 0 {
-            unsafe { sys::ecs_set_with(world, prev_with) };
-        }
-        if prev_scope != 0 {
-            unsafe { sys::ecs_set_scope(world, prev_scope) };
-        }
-    }
+    let id = register_component_data_explicit::<T, false>(worldref, name);
     id
 }
 
@@ -145,28 +183,10 @@ where
 {
     let worldref = world;
     let world = worldref.world_ptr_mut();
-    let prev_scope = if !COMPONENT_REGISTRATION && unsafe { sys::ecs_get_scope(world) != 0 } {
-        unsafe { sys::ecs_set_scope(world, 0) }
-    } else {
-        0
-    };
 
-    let prev_with = if !COMPONENT_REGISTRATION {
-        unsafe { sys::ecs_set_with(world, 0) }
-    } else {
-        0
-    };
+    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
 
-    let id = register_componment_data_explicit::<T, false>(worldref, core::ptr::null());
-
-    if !COMPONENT_REGISTRATION {
-        if prev_with != 0 {
-            unsafe { sys::ecs_set_with(world, prev_with) };
-        }
-        if prev_scope != 0 {
-            unsafe { sys::ecs_set_scope(world, prev_scope) };
-        }
-    }
+    let id = register_component_data_explicit::<T, false>(worldref, core::ptr::null());
 
     id
 }
@@ -175,35 +195,15 @@ pub(crate) fn external_register_component_data<const COMPONENT_REGISTRATION: boo
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t {
-    let prev_scope = if !COMPONENT_REGISTRATION {
-        unsafe { sys::ecs_set_scope(world, 0) }
-    } else {
-        0
-    };
+    let _scope = ScopeWithGuard::new(world, !COMPONENT_REGISTRATION);
 
-    let prev_with = if !COMPONENT_REGISTRATION {
-        unsafe { sys::ecs_set_with(world, 0) }
-    } else {
-        0
-    };
-
-    let id = external_register_componment_data_explicit::<T>(world, name);
-
-    if !COMPONENT_REGISTRATION {
-        if prev_with != 0 {
-            unsafe { sys::ecs_set_with(world, prev_with) };
-        }
-
-        if prev_scope != 0 {
-            unsafe { sys::ecs_set_scope(world, prev_scope) };
-        }
-    }
+    let id = external_register_component_data_explicit::<T>(world, name);
 
     id
 }
 
 /// registers the component with the world.
-pub(crate) fn register_componment_data_explicit<T, const ALLOCATE_TAG: bool>(
+pub(crate) fn register_component_data_explicit<T, const ALLOCATE_TAG: bool>(
     world: WorldRef<'_>,
     name: *const c_char,
 ) -> sys::ecs_entity_t
@@ -222,13 +222,14 @@ where
         return c;
     }
 
-    let only_type_name = if T::IS_GENERIC {
-        crate::core::get_only_type_name_generic::<T>()
+    let type_name_without_scope = if T::IS_GENERIC {
+        crate::core::get_type_name_without_scope_generic::<T>()
     } else {
-        crate::core::get_only_type_name::<T>()
+        crate::core::get_type_name_without_scope::<T>()
     };
 
-    let only_type_name = compact_str::format_compact!("{}\0", only_type_name.as_str());
+    let type_name_without_scope =
+        compact_str::format_compact!("{}\0", type_name_without_scope.as_str());
 
     let type_name = crate::core::type_name_cstring::<T>();
     let type_name_ptr = type_name.as_ptr();
@@ -253,7 +254,7 @@ where
     let module = unsafe { sys::ecs_get_scope(world) };
 
     if module != 0 && implicit_name {
-        user_name = only_type_name.as_ptr() as *const c_char;
+        user_name = type_name_without_scope.as_ptr() as *const c_char;
     }
 
     //TODO should I do this?
@@ -293,49 +294,36 @@ where
     let name = user_name;
 
     //TODO hack, otherwise importing will have mismatch symbol with the c components
-    let entity_desc_name = if only_type_name.starts_with("Ecs") {
-        only_type_name.as_ptr() as *const c_char
+    let entity_desc_name = if type_name_without_scope.starts_with("Ecs") {
+        type_name_without_scope.as_ptr() as *const c_char
     } else {
         type_name_ptr
     };
-    let entity_desc = create_entity_desc(name, entity_desc_name);
-
-    let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
-
     let type_info = create_type_info::<T, ALLOCATE_TAG>();
 
-    let component_desc = create_component_desc(entity, type_info);
-
-    #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-    {
-        let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
-        ecs_assert!(
-            entity != 0 && unsafe { sys::ecs_exists(world, entity) },
-            FlecsErrorCode::InternalError
-        );
-
-        entity
-    }
-    #[cfg(not(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts")))]
-    {
-        unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) }
-    }
+    finalize_component_registration(world, name, entity_desc_name, type_info)
 }
 
 /// registers the component with the world.
-pub(crate) fn external_register_componment_data_explicit<T>(
+pub(crate) fn external_register_component_data_explicit<T>(
     world: *mut sys::ecs_world_t,
     name: *const c_char,
 ) -> sys::ecs_entity_t {
-    let only_type_name = crate::core::get_only_type_name_generic::<T>();
-    let only_type_name = compact_str::format_compact!("{}\0", only_type_name.as_str());
+    let type_name_without_scope = crate::core::get_type_name_without_scope_generic::<T>();
+    let type_name_without_scope =
+        compact_str::format_compact!("{}\0", type_name_without_scope.as_str());
 
     // If no name was provided first check if a type with the provided
     // symbol was already registered.
     let id = if name.is_null() {
         let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
         let id = unsafe {
-            sys::ecs_lookup_symbol(world, only_type_name.as_ptr() as *const _, false, false)
+            sys::ecs_lookup_symbol(
+                world,
+                type_name_without_scope.as_ptr() as *const _,
+                false,
+                false,
+            )
         };
         unsafe { sys::ecs_set_scope(world, prev_scope) };
         id
@@ -351,11 +339,20 @@ pub(crate) fn external_register_componment_data_explicit<T>(
 
     let name = if name.is_null() { type_name_ptr } else { name };
 
-    let entity_desc = create_entity_desc(name, type_name_ptr);
+    let type_info = external_create_type_info::<T>();
+
+    finalize_component_registration(world, name, type_name_ptr, type_info)
+}
+
+fn finalize_component_registration(
+    world: *mut sys::ecs_world_t,
+    name: *const c_char,
+    entity_desc_name: *const c_char,
+    type_info: sys::ecs_type_info_t,
+) -> sys::ecs_entity_t {
+    let entity_desc = create_entity_desc(name, entity_desc_name);
 
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
-
-    let type_info = external_create_type_info::<T>();
 
     let component_desc = create_component_desc(entity, type_info);
 

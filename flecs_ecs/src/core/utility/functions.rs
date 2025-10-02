@@ -231,11 +231,11 @@ impl PartialEq<String> for OnlyTypeName {
 ///     pub struct Foo;
 /// }
 ///
-/// let name = get_only_type_name::<Bar::Foo>();
+/// let name = get_type_name_without_scope::<Bar::Foo>();
 /// assert_eq!(name, "Foo");
 /// ```
 #[inline(always)]
-pub fn get_only_type_name<T: ComponentId>() -> OnlyTypeName {
+pub fn get_type_name_without_scope<T: ComponentId>() -> OnlyTypeName {
     ecs_assert!(
         !T::IS_GENERIC,
         FlecsErrorCode::InvalidParameter,
@@ -264,11 +264,11 @@ pub fn get_only_type_name<T: ComponentId>() -> OnlyTypeName {
 ///     pub struct Foo;
 /// }
 ///
-/// let name = get_only_type_name_generic::<Bar::Foo>();
+/// let name = get_type_name_without_scope_generic::<Bar::Foo>();
 /// assert_eq!(name, "Foo");
 /// ```
 #[inline(always)]
-pub fn get_only_type_name_generic<T>() -> OnlyTypeName {
+pub fn get_type_name_without_scope_generic<T>() -> OnlyTypeName {
     fn split_top_level(s: &str) -> Vec<&str> {
         let mut parts = Vec::new();
         let mut depth = 0;
@@ -648,20 +648,26 @@ mod tests {
 
     #[test]
     fn simple_type() {
-        assert_eq!(get_only_type_name_generic::<i32>(), "i32");
-        assert_eq!(get_only_type_name_generic::<bool>(), "bool");
+        assert_eq!(get_type_name_without_scope_generic::<i32>(), "i32");
+        assert_eq!(get_type_name_without_scope_generic::<bool>(), "bool");
     }
 
     #[test]
     fn single_generic() {
-        assert_eq!(get_only_type_name_generic::<Vec<String>>(), "Vec<String>");
-        assert_eq!(get_only_type_name_generic::<Option<u8>>(), "Option<u8>");
+        assert_eq!(
+            get_type_name_without_scope_generic::<Vec<String>>(),
+            "Vec<String>"
+        );
+        assert_eq!(
+            get_type_name_without_scope_generic::<Option<u8>>(),
+            "Option<u8>"
+        );
     }
 
     #[test]
     fn multi_generic() {
         assert_eq!(
-            get_only_type_name_generic::<Result<i32, f64>>(),
+            get_type_name_without_scope_generic::<Result<i32, f64>>(),
             "Result<i32, f64>"
         );
     }
@@ -670,21 +676,27 @@ mod tests {
     fn nested_generics() {
         type Deep = Option<Result<Vec<MyStruct>, MyEnum>>;
         assert_eq!(
-            get_only_type_name_generic::<Deep>(),
+            get_type_name_without_scope_generic::<Deep>(),
             "Option<Result<Vec<MyStruct>, MyEnum>>"
         );
     }
 
     #[test]
     fn custom_struct_and_enum() {
-        assert_eq!(get_only_type_name_generic::<MyStruct>(), "MyStruct");
-        assert_eq!(get_only_type_name_generic::<MyEnum>(), "MyEnum");
+        assert_eq!(
+            get_type_name_without_scope_generic::<MyStruct>(),
+            "MyStruct"
+        );
+        assert_eq!(get_type_name_without_scope_generic::<MyEnum>(), "MyEnum");
     }
 
     #[test]
     fn pointer_and_reference() {
-        assert_eq!(get_only_type_name_generic::<&str>(), "&str");
-        assert_eq!(get_only_type_name_generic::<*const i32>(), "*const i32");
+        assert_eq!(get_type_name_without_scope_generic::<&str>(), "&str");
+        assert_eq!(
+            get_type_name_without_scope_generic::<*const i32>(),
+            "*const i32"
+        );
     }
 
     // nested modules used to exercise path stripping
@@ -709,24 +721,33 @@ mod tests {
 
     #[test]
     fn nested_modules_simple() {
-        assert_eq!(get_only_type_name_generic::<outer::inner::Deep>(), "Deep");
-        assert_eq!(get_only_type_name_generic::<a::b::c::Z>(), "Z");
-        assert_eq!(get_only_type_name_generic::<outer::inner::E>(), "E");
+        assert_eq!(
+            get_type_name_without_scope_generic::<outer::inner::Deep>(),
+            "Deep"
+        );
+        assert_eq!(get_type_name_without_scope_generic::<a::b::c::Z>(), "Z");
+        assert_eq!(
+            get_type_name_without_scope_generic::<outer::inner::E>(),
+            "E"
+        );
     }
 
     #[test]
     fn nested_modules_with_generics() {
         type T1 = outer::inner::Wrap<outer::inner::Deep>;
         type T2 = outer::inner::Wrap<outer::inner::Wrap<outer::inner::Deep>>;
-        assert_eq!(get_only_type_name_generic::<T1>(), "Wrap<Deep>");
-        assert_eq!(get_only_type_name_generic::<T2>(), "Wrap<Wrap<Deep>>");
+        assert_eq!(get_type_name_without_scope_generic::<T1>(), "Wrap<Deep>");
+        assert_eq!(
+            get_type_name_without_scope_generic::<T2>(),
+            "Wrap<Wrap<Deep>>"
+        );
     }
 
     #[test]
     fn long_std_path_nested_generics() {
         type LongNested = ::alloc::collections::BTreeMap<String, Vec<Vec<String>>>;
         assert_eq!(
-            get_only_type_name_generic::<LongNested>(),
+            get_type_name_without_scope_generic::<LongNested>(),
             "BTreeMap<String, Vec<Vec<String>>>"
         );
     }

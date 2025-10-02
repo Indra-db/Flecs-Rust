@@ -6,7 +6,7 @@
 use crate::core::utility::id;
 use crate::core::{
     ComponentId, EntityView, FlecsConstantId, IdOperations, SEPARATOR, World, WorldProvider,
-    ecs_pair, flecs, register_componment_data_explicit,
+    ecs_pair, flecs, register_component_data_explicit,
 };
 use crate::sys;
 
@@ -85,7 +85,7 @@ impl World {
         let module = if T::is_registered_with_world(self) && m != 0 {
             self.component::<T>().entity
         } else {
-            let id = self.entity_from_id(register_componment_data_explicit::<T, true>(
+            let id = self.entity_from_id(register_component_data_explicit::<T, true>(
                 world,
                 core::ptr::null(),
             ));
