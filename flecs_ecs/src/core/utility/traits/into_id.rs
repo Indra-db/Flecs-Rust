@@ -16,6 +16,7 @@ where
     const IS_TYPE_TAG: bool;
     const IS_TYPED_REF: bool;
     const IS_TYPED_MUT_REF: bool;
+    type CastType;
 
     #[doc(hidden)] // not meant to be used by the user
     #[inline]
@@ -46,6 +47,7 @@ impl<T: InternalIntoEntity> IntoId for T {
     const IS_TYPE_TAG: bool = <T as InternalIntoEntity>::IS_TYPE_TAG;
     const IS_TYPED_REF: bool = <T as InternalIntoEntity>::IS_TYPED_REF;
     const IS_TYPED_MUT_REF: bool = <T as InternalIntoEntity>::IS_TYPED_MUT_REF;
+    type CastType = T::CastType;
 
     #[doc(hidden)] // not meant to be used by the user
     #[inline]

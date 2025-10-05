@@ -516,12 +516,12 @@ pub(crate) fn generate_tag_trait(has_fields: bool) -> proc_macro2::TokenStream {
     if has_fields {
         quote! {
             const IS_TAG: bool = false;
-            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
         }
     } else {
         quote! {
             const IS_TAG: bool = true;
-            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
         }
     }
 }
@@ -968,6 +968,9 @@ pub(crate) fn impl_cached_component_data_struct(
                 const IS_TYPE_TAG: bool = true;
                 const IS_TYPED_REF: bool = false;
                 const IS_TYPED_MUT_REF: bool = false;
+                type CastType = Self;
+                type IsTyped = flecs_ecs::core::FlecsIsTyped;
+                type IsTag = <Self as flecs_ecs::core::ComponentInfo>::TagType;
                 fn into_entity<'a>(
                     self,
                     world: impl flecs_ecs::core::WorldProvider<'a>,
@@ -986,6 +989,9 @@ pub(crate) fn impl_cached_component_data_struct(
                 const IS_TYPE_TAG: bool = true;
                 const IS_TYPED_REF: bool = true;
                 const IS_TYPED_MUT_REF: bool = false;
+                type CastType = Self;
+                type IsTyped = flecs_ecs::core::FlecsIsTyped;
+                type IsTag = <Self as flecs_ecs::core::ComponentInfo>::TagType;
                 fn into_entity<'a>(
                     self,
                     world: impl flecs_ecs::core::WorldProvider<'a>,
@@ -1004,6 +1010,9 @@ pub(crate) fn impl_cached_component_data_struct(
                 const IS_TYPE_TAG: bool = true;
                 const IS_TYPED_REF: bool = false;
                 const IS_TYPED_MUT_REF: bool = true;
+                type CastType = Self;
+                type IsTyped = flecs_ecs::core::FlecsIsTyped;
+                type IsTag = <Self as flecs_ecs::core::ComponentInfo>::TagType;
                 fn into_entity<'a>(
                     self,
                     world: impl flecs_ecs::core::WorldProvider<'a>,
@@ -1305,7 +1314,7 @@ pub(crate) fn impl_cached_component_data_enum(
                 const IS_ENUM: bool = true;
                 const IS_TAG: bool = false;
                 type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+                flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
                 const IMPLS_CLONE: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
@@ -1333,7 +1342,7 @@ pub(crate) fn impl_cached_component_data_enum(
                 const IS_ENUM: bool = true;
                 const IS_TAG: bool = false;
                 type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+                flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
                 const IMPLS_CLONE: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
@@ -1402,6 +1411,10 @@ pub(crate) fn impl_cached_component_data_enum(
             const IS_TYPE_TAG: bool = true;
             const IS_TYPED_REF: bool = false;
             const IS_TYPED_MUT_REF: bool = false;
+            type CastType = Self;
+            type IsTyped = flecs_ecs::core::FlecsIsTyped;
+            type IsTag = <Self as flecs_ecs::core::ComponentInfo>::TagType;
+
             fn into_entity<'a>(self, world: impl flecs_ecs::core::WorldProvider<'a>) -> flecs_ecs::core::Entity {
                 let world = world.world();
                 *<Self as flecs_ecs::core::EnumComponentInfo>::id_variant(&self, world)

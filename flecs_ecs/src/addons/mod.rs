@@ -103,7 +103,7 @@ macro_rules! create_pre_registered_extern_component {
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+                flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
         }
 
         impl TagComponent for $struct_name {}
@@ -170,7 +170,7 @@ macro_rules! impl_component_traits_primitive_type {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
-            type TagType = FlecsFirstIsNotATag;
+            type TagType = FlecsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_ORD: bool = true;

@@ -18,7 +18,7 @@ impl<T: ComponentId> ComponentType<flecs_ecs::core::Struct> for Opaque<'static, 
 impl<T: ComponentId> ComponentInfo for Opaque<'static, T> {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType = FlecsFirstIsNotATag;
+    type TagType = FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
     const IMPLS_PARTIAL_EQ: bool = false;

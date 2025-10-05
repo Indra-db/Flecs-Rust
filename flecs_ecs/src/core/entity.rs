@@ -72,7 +72,7 @@ impl Entity {
 //     const IMPLS_DEFAULT: bool = false;
 //     const IS_REF: bool = false;
 //     const IS_MUT: bool = false;
-//     type TagType = FlecsFirstIsNotATag;
+//     type TagType = FlecsNotATag;
 // }
 
 // impl ComponentId for Entity {

@@ -1,5 +1,10 @@
+use core::ffi::c_void;
+
 use super::{super::id::Id, WorldProvider};
-use crate::core::{ComponentId, ComponentInfo, Entity};
+use crate::core::{
+    ComponentId, ComponentInfo, ConditionalCachedRefTypeSelector, Entity, FlecsCachedRefPairType,
+    FlecsIsATag, FlecsIsNotTyped, FlecsIsTyped,
+};
 
 pub trait IntoEntity {
     const IS_TYPED_PAIR: bool;
@@ -11,6 +16,9 @@ pub trait IntoEntity {
     const IS_TYPE_TAG: bool;
     const IS_TYPED_REF: bool;
     const IS_TYPED_MUT_REF: bool;
+    type CastType;
+    type IsTyped;
+    type IsTag;
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity;
 }
 
@@ -24,6 +32,10 @@ impl<T: ComponentId> IntoEntity for Id<T> {
     const IS_TYPE_TAG: bool = T::IS_TAG;
     const IS_TYPED_REF: bool = <T as ComponentInfo>::IS_REF;
     const IS_TYPED_MUT_REF: bool = <T as ComponentInfo>::IS_MUT;
+    type CastType = T;
+    type IsTyped = FlecsIsTyped;
+    type IsTag = T::TagType;
+
     #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         world.world().component_id::<T>()
@@ -40,6 +52,10 @@ impl<T: Into<Entity>> IntoEntity for T {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    type CastType = c_void;
+    type IsTyped = FlecsIsNotTyped;
+    type IsTag = FlecsIsATag;
+
     #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         self.into()
@@ -57,6 +73,11 @@ pub trait InternalIntoEntity {
     const IS_TYPE_TAG: bool;
     const IS_TYPED_REF: bool;
     const IS_TYPED_MUT_REF: bool;
+    type CastType;
+    type IsFirstTyped;
+    type IsSecondTyped;
+    type IsFirstATag;
+    type IsSecondATag;
 
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity;
 }
@@ -72,6 +93,12 @@ impl<T: IntoEntity> InternalIntoEntity for T {
     const IS_TYPE_TAG: bool = <T as IntoEntity>::IS_TYPE_TAG;
     const IS_TYPED_REF: bool = T::IS_TYPED_REF;
     const IS_TYPED_MUT_REF: bool = T::IS_TYPED_MUT_REF;
+    type CastType = T::CastType;
+    type IsFirstTyped = T::IsTyped;
+    type IsSecondTyped = T::IsTyped;
+    type IsFirstATag = T::IsTag;
+    type IsSecondATag = T::IsTag;
+
     #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         self.into_entity(world)
@@ -91,6 +118,12 @@ impl InternalIntoEntity for crate::core::Id {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    type CastType = core::ffi::c_void;
+    type IsFirstTyped = FlecsIsNotTyped;
+    type IsSecondTyped = FlecsIsNotTyped;
+    type IsFirstATag = FlecsIsATag;
+    type IsSecondATag = FlecsIsATag;
+
     #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity(self.0)
@@ -110,6 +143,12 @@ impl InternalIntoEntity for crate::core::IdView<'_> {
     const IS_TYPE_TAG: bool = false;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    type CastType = core::ffi::c_void;
+    type IsFirstTyped = FlecsIsNotTyped;
+    type IsSecondTyped = FlecsIsNotTyped;
+    type IsFirstATag = FlecsIsATag;
+    type IsSecondATag = FlecsIsATag;
+
     #[inline(always)]
     fn into_entity<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity(*self.id)
@@ -121,9 +160,17 @@ impl<T, U> InternalIntoEntity for (T, U)
 where
     T: InternalIntoEntity,
     U: InternalIntoEntity,
+    ConditionalCachedRefTypeSelector<
+        <T as InternalIntoEntity>::IsFirstTyped,
+        <U as InternalIntoEntity>::IsSecondTyped,
+        <T as InternalIntoEntity>::IsFirstATag,
+        <U as InternalIntoEntity>::IsSecondATag,
+        T,
+        U,
+    >: FlecsCachedRefPairType,
 {
     const IS_TYPED_PAIR: bool = true;
-    const IS_TYPED: bool = T::IS_TYPED;
+    const IS_TYPED: bool = T::IS_TYPED | U::IS_TYPED;
     const IF_ID_IS_DEFAULT: bool = T::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
     const IS_TYPED_SECOND: bool = U::IS_TYPED;
     const IF_ID_IS_DEFAULT_SECOND: bool = U::IF_ID_IS_DEFAULT; //we don't know if the id is default or not
@@ -131,6 +178,18 @@ where
     const IS_TYPE_TAG: bool = T::IS_TYPE_TAG & U::IS_TYPE_TAG;
     const IS_TYPED_REF: bool = false;
     const IS_TYPED_MUT_REF: bool = false;
+    type IsFirstTyped = T::IsFirstTyped;
+    type IsSecondTyped = U::IsFirstTyped;
+    type IsFirstATag = T::IsFirstATag;
+    type IsSecondATag = U::IsFirstATag;
+    type CastType = <ConditionalCachedRefTypeSelector<
+        T::IsFirstTyped,
+        U::IsSecondTyped,
+        T::IsFirstATag,
+        U::IsSecondATag,
+        T,
+        U,
+    > as FlecsCachedRefPairType>::Type;
     #[inline(always)]
     fn into_entity<'a>(self, world: impl WorldProvider<'a>) -> Entity {
         let world = world.world();

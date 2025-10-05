@@ -1,4 +1,4 @@
-//! Refs are a fast mechanism for referring to a specific entity/component
+//! Refs are a fast mechanism for referring to a specific entity/component. It caches data to speedup get operations.
 
 use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
@@ -7,13 +7,13 @@ use crate::sys;
 
 /// A cached reference for fast access to a component from a specific entity.
 #[derive(Debug, Clone, Copy)]
-pub struct CachedRef<'a, T: ComponentId + DataComponent> {
-    world: WorldRef<'a>,
-    component_ref: sys::ecs_ref_t,
-    _marker: PhantomData<T>,
+pub struct CachedRef<'a, T> {
+    pub(crate) world: WorldRef<'a>,
+    pub(crate) component_ref: sys::ecs_ref_t,
+    pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
+impl<'a, T> CachedRef<'a, T> {
     /// Create a new ref to a component.
     ///
     /// # Arguments
@@ -24,8 +24,8 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
     pub fn new(
         world: impl WorldProvider<'a>,
         entity: impl Into<Entity>,
-        mut id: sys::ecs_id_t,
-    ) -> Self {
+        component: impl IntoId,
+    ) -> CachedRef<'a, T> {
         let world = world.world();
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case
@@ -33,14 +33,17 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
             sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
         };
 
-        if id == 0 {
-            id = T::entity_id(world);
-        }
+        let id = *component.into_id(world);
+
+        debug_assert!(
+            id != 0,
+            "Tried to create invalid `CachedRef` type. id is 0."
+        );
 
         const {
             assert!(
                 core::mem::size_of::<T>() != 0,
-                "Tried to create invalid `CachedRef` type. Cached Ref cannot be created for zero-sized types / tags."
+                "Cached Ref cannot be created for zero-sized types / tags."
             );
         }
 
@@ -59,13 +62,36 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
             component_ref.entity, 0,
             "Tried to create invalid `CachedRef` type."
         );
-        CachedRef {
-            world: world.world(),
+        CachedRef::<T> {
+            world,
             component_ref,
             _marker: PhantomData,
         }
     }
 
+    /// Return entity associated with reference.
+    pub fn entity(&self) -> EntityView<'a> {
+        EntityView::new_from(self.world, self.component_ref.entity)
+    }
+
+    /// Return component associated with reference.
+    fn component(&self) -> IdView<'a> {
+        IdView::new_from_id(self.world, self.component_ref.id)
+    }
+
+    pub fn has(&mut self) -> bool {
+        !unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            )
+        }
+        .is_null()
+    }
+}
+
+impl<'a, T: ComponentId> CachedRef<'a, T> {
     /// Try to get component from ref.
     pub fn try_get<R>(&mut self, callback: impl FnOnce(&mut T) -> R) -> Option<R> {
         NonNull::new(unsafe {
@@ -91,25 +117,32 @@ impl<'a, T: ComponentId + DataComponent> CachedRef<'a, T> {
 
         callback(unsafe { ref_comp.as_mut() })
     }
+}
 
-    /// Return entity associated with reference.
-    pub fn entity(&self) -> EntityView<'a> {
-        EntityView::new_from(self.world, self.component_ref.entity)
-    }
-
-    /// Return component associated with reference.
-    fn component(&self) -> IdView<'a> {
-        IdView::new_from_id(self.world, self.component_ref.id)
-    }
-
-    pub fn has(&mut self) -> bool {
-        !unsafe {
+impl<'a> CachedRef<'a, core::ffi::c_void> {
+    /// Try to get component from ref.
+    pub fn try_get<R>(&mut self, callback: impl FnOnce(*mut core::ffi::c_void) -> R) -> Option<R> {
+        NonNull::new(unsafe {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
                 self.component_ref.id,
             )
-        }
-        .is_null()
+        })
+        .map(NonNull::as_ptr)
+        .map(callback)
+    }
+
+    pub fn get<R>(&mut self, callback: impl FnOnce(*mut core::ffi::c_void) -> R) -> R {
+        let ref_comp = NonNull::new(unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            )
+        })
+        .expect("Component not found, use try_get if you want to handle this case");
+
+        callback(ref_comp.as_ptr())
     }
 }

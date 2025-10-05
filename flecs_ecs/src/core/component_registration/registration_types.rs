@@ -1,6 +1,8 @@
 #![doc(hidden)]
 use flecs_ecs_derive::Component;
 
+use crate::core::InternalIntoEntity;
+
 use super::ComponentId;
 
 pub struct Enum;
@@ -35,4 +37,25 @@ where
     Second: ComponentId,
 {
     phantom: core::marker::PhantomData<(T, First, Second)>,
+}
+
+pub struct ConditionalCachedRefTypeSelector<
+    IsFirstTyped,
+    IsSecondTyped,
+    IsFirstATag,
+    IsSecondATag,
+    First,
+    Second,
+> where
+    First: InternalIntoEntity,
+    Second: InternalIntoEntity,
+{
+    phantom: core::marker::PhantomData<(
+        IsFirstTyped,
+        IsSecondTyped,
+        IsFirstATag,
+        IsSecondATag,
+        First,
+        Second,
+    )>,
 }

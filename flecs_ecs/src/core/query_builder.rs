@@ -411,7 +411,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// set term with enum wildcard
-    fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self {
+    fn with_enum_wildcard<T: ComponentType<Enum> + ComponentId>(&mut self) -> &mut Self
+    where
+        (crate::core::utility::id::Id<T>, u64): InternalIntoEntity,
+    {
         self.with((T::id(), flecs::Wildcard::ID))
     }
 
@@ -436,7 +439,10 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// set term without enum wildcard
     fn without_enum_wildcard<T: ComponentId + ComponentType<Enum> + EnumComponentInfo>(
         &mut self,
-    ) -> &mut Self {
+    ) -> &mut Self
+    where
+        (crate::core::utility::id::Id<T>, u64): InternalIntoEntity,
+    {
         self.with_enum_wildcard::<T>().not()
     }
 

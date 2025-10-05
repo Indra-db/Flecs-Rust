@@ -539,7 +539,7 @@ macro_rules! impl_component_traits_binding_type_w_id {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
-            type TagType = FlecsFirstIsNotATag;
+            type TagType = FlecsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
@@ -613,7 +613,7 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
-            type TagType = FlecsFirstIsNotATag;
+            type TagType = FlecsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;

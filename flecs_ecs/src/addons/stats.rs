@@ -45,8 +45,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
     const IMPLS_PARTIAL_ORD: bool = false;
@@ -110,8 +109,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
     const IMPLS_PARTIAL_ORD: bool = false;
@@ -175,8 +173,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
     const IMPLS_PARTIAL_ORD: bool = false;
@@ -240,8 +237,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = false;
     const IMPLS_PARTIAL_ORD: bool = false;
@@ -303,8 +299,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool = true;
     const IMPLS_PARTIAL_ORD: bool = false;

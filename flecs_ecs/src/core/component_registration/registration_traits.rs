@@ -796,6 +796,11 @@ pub trait FlecsPairType {
 }
 
 #[doc(hidden)]
+pub trait FlecsCachedRefPairType {
+    type Type;
+}
+
+#[doc(hidden)]
 impl<T> FlecsDefaultType for ConditionalTypeSelector<false, T> {
     type Type = FlecsNoneDefaultDummy;
 }
@@ -848,13 +853,18 @@ where
 }
 
 #[doc(hidden)]
-pub struct FlecsFirstIsNotATag;
+pub struct FlecsIsATag;
+#[doc(hidden)]
+pub struct FlecsNotATag;
 
 #[doc(hidden)]
-pub struct FlecsFirstIsATag;
+pub struct FlecsIsTyped;
 
 #[doc(hidden)]
-impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsNotATag, T, U>
+pub struct FlecsIsNotTyped;
+
+#[doc(hidden)]
+impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsNotATag, T, U>
 where
     T: ComponentId,
     U: ComponentId,
@@ -864,7 +874,7 @@ where
 }
 
 #[doc(hidden)]
-impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsFirstIsATag, T, U>
+impl<T, U> FlecsPairType for ConditionalTypePairSelector<FlecsIsATag, T, U>
 where
     T: ComponentId,
     U: ComponentId,
@@ -872,3 +882,105 @@ where
     type Type = U;
     const IS_FIRST: bool = false;
 }
+
+#[doc(hidden)]
+impl<IsFirstTyped, IsSecondTyped, T, U> FlecsCachedRefPairType
+    for ConditionalCachedRefTypeSelector<
+        IsFirstTyped,
+        IsSecondTyped,
+        FlecsIsATag,
+        FlecsIsATag,
+        T,
+        U,
+    >
+where
+    T: InternalIntoEntity,
+    U: InternalIntoEntity,
+{
+    type Type = core::ffi::c_void;
+}
+
+#[doc(hidden)]
+impl<IsFirstTyped, IsSecondTyped, IsSecondATag, T, U> FlecsCachedRefPairType
+    for ConditionalCachedRefTypeSelector<
+        IsFirstTyped,
+        IsSecondTyped,
+        FlecsNotATag,
+        IsSecondATag,
+        T,
+        U,
+    >
+where
+    T: InternalIntoEntity,
+    U: InternalIntoEntity,
+{
+    type Type = T::CastType;
+}
+
+#[doc(hidden)]
+impl<IsSecondTyped, T, U> FlecsCachedRefPairType
+    for ConditionalCachedRefTypeSelector<
+        FlecsIsNotTyped,
+        IsSecondTyped,
+        FlecsIsATag,
+        FlecsNotATag,
+        T,
+        U,
+    >
+where
+    T: InternalIntoEntity,
+    U: InternalIntoEntity,
+{
+    type Type = core::ffi::c_void;
+}
+
+#[doc(hidden)]
+impl<IsSecondTyped, T, U> FlecsCachedRefPairType
+    for ConditionalCachedRefTypeSelector<
+        FlecsIsTyped,
+        IsSecondTyped,
+        FlecsIsATag,
+        FlecsNotATag,
+        T,
+        U,
+    >
+where
+    T: InternalIntoEntity,
+    U: InternalIntoEntity,
+{
+    type Type = U::CastType;
+}
+
+// #[doc(hidden)]
+// impl<IsSecondTyped, IsSecondTag, T, U> FlecsCachedRefPairType
+//     for ConditionalCachedRefTypeSelector<
+//         FlecsIsTyped,
+//         IsSecondTyped,
+//         FlecsNotATag,
+//         IsSecondTag,
+//         T,
+//         U,
+//     >
+// where
+//     T: InternalIntoEntity,
+//     U: InternalIntoEntity,
+// {
+//     type Type = T::CastType;
+// }
+
+// #[doc(hidden)]
+// impl<IsFirstTyped, T, U> FlecsCachedRefPairType
+//     for ConditionalCachedRefTypeSelector<
+//         IsFirstTyped,
+//         FlecsIsTyped,
+//         FlecsIsATag,
+//         FlecsNotATag,
+//         T,
+//         U,
+//     >
+// where
+//     T: InternalIntoEntity,
+//     U: InternalIntoEntity,
+// {
+//     type Type = U::CastType;
+// }

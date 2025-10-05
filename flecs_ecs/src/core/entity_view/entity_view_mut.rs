@@ -964,39 +964,28 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Get reference to component specified by id.
+    /// Get reference to a id. If it's a component, it provides a typed interface, otherwise an untyped (c_void) interface.
     /// A reference allows for quick and safe access to a component value, and is
     /// a faster alternative to repeatedly calling 'get' for the same component.
-    ///
-    /// The method accepts a component id argument, which can be used to create a
-    /// ref to a component that is different from the provided type. This allows
-    /// for creating a base type ref that points to a derived type:
-    ///
-    /// # Safety
-    ///
-    /// If the provided component id is not binary compatible with the specified
-    /// type, the behavior is undefined.
     ///
     /// ```no_run
     /// use flecs_ecs::prelude::*;
     ///
     /// #[derive(Component)]
-    /// struct Base {
-    ///     x: i32,
-    /// };
-    /// #[derive(Component)]
-    /// struct Derived {
-    ///     x: i32,
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
     /// };
     ///
     /// let world = World::new();
     ///
-    /// let base = world.component::<Base>();
-    /// let derived = world.component::<Derived>().is_a(base);
+    /// let entity = world.entity().set(Position { x: 10.0, y: 20.0 });
     ///
-    /// let entity = world.entity().set(Derived { x: 10 });
+    /// let mut pos_ref = entity.cached_ref(Position::id());
     ///
-    /// let base_ref = entity.get_ref_w_id::<Base>(derived.id());
+    /// pos_ref.get(|pos| {
+    ///     println!("Position: ({}, {})", pos.x, pos.y);
+    /// });
     /// ```
     ///
     /// # Type Parameters
@@ -1010,107 +999,8 @@ impl<'a> EntityView<'a> {
     /// # Returns
     ///
     /// The reference.
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::get_ref()`]
-    /// * [`EntityView::get_ref_first()`]
-    /// * [`EntityView::get_ref_second()`]
-    pub fn get_ref_w_id<T>(&self, component: impl IntoId) -> CachedRef<'a, T::CastType>
-    where
-        T: ComponentOrPairId,
-        T::CastType: DataComponent,
-    {
-        CachedRef::<T::CastType>::new(self.world, *self.id, *component.into_id(self.world))
-    }
-
-    /// Get a reference to a component or pair.
-    ///
-    /// A reference allows for quick and safe access to a component value, and is
-    /// a faster alternative to repeatedly calling `get` for the same component.
-    ///
-    /// - `T`: Component for which to get a reference.
-    ///
-    /// Returns: The reference component.
-    pub fn get_ref<T>(&self) -> CachedRef<'a, T::CastType>
-    where
-        T: ComponentOrPairId,
-        T::CastType: DataComponent,
-    {
-        CachedRef::<T::CastType>::new(self.world, *self.id, T::get_id(self.world))
-    }
-
-    /// Get a reference to the first component of pair
-    ///
-    /// A reference allows for quick and safe access to a component value, and is
-    /// a faster alternative to repeatedly calling `get` for the same component.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The entity associated with the second component in the pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The type of the first component in the pair.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the first component in the pair.
-    pub fn get_ref_first<First: ComponentId + DataComponent>(
-        self,
-        second: impl Into<Entity>,
-    ) -> CachedRef<'a, First> {
-        let first = First::entity_id(self.world);
-        let second = *second.into();
-        let pair = ecs_pair(first, second);
-        ecs_assert!(
-            !(unsafe { sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.is_null()),
-            FlecsErrorCode::InvalidParameter,
-            "pair is not a component"
-        );
-        ecs_assert!(
-            unsafe { *sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.component == first,
-            FlecsErrorCode::InvalidParameter,
-            "type of pair is not First"
-        );
-        CachedRef::<First>::new(self.world, *self.id, pair)
-    }
-
-    /// Get a reference to the second component of pair
-    ///
-    /// A reference allows for quick and safe access to a component value, and is
-    /// a faster alternative to repeatedly calling `get` for the same component.
-    ///
-    /// # Arguments
-    ///
-    /// * `first` - The entity associated with the first component in the pair.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `Second` - The type of the second component in the pair.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the first component in the pair.
-    pub fn get_ref_second<Second: ComponentId + DataComponent>(
-        &self,
-        first: impl Into<Entity>,
-    ) -> CachedRef<'_, Second> {
-        let first = *first.into();
-        let second = Second::entity_id(self.world);
-        let pair = ecs_pair(first, second);
-        ecs_assert!(
-            !(unsafe { sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.is_null()),
-            FlecsErrorCode::InvalidParameter,
-            "pair is not a component"
-        );
-        ecs_assert!(
-            unsafe { *sys::ecs_get_type_info(self.world.world_ptr(), pair,) }.component == second,
-            FlecsErrorCode::InvalidParameter,
-            "type of pair is not Second"
-        );
-
-        CachedRef::<Second>::new(self.world, *self.id, pair)
+    pub fn cached_ref<T: IntoId>(&self, component: T) -> CachedRef<'a, <T as IntoId>::CastType> {
+        CachedRef::<<T as IntoId>::CastType>::new(self.world, *self.id, component)
     }
 
     /// Clear an entity.

@@ -239,16 +239,13 @@ impl World {
     /// - `T`: Component for which to get a reference.
     ///
     /// Returns: The reference singleton component.
-    ///
-    /// # See also
-    // #[doc(alias = "world::get_ref")]
-    // #[inline(always)]
-    pub fn get_ref<T>(&self) -> CachedRef<'_, T::CastType>
-    where
-        T: ComponentOrPairId,
-        T::CastType: DataComponent,
-    {
-        EntityView::new_from(self, T::get_id(self)).get_ref::<T>()
+    #[inline(always)]
+    pub fn cached_ref<'a, T: IntoEntity + Copy>(
+        &'a self,
+        component: T,
+    ) -> CachedRef<'a, <T as IntoEntity>::CastType> {
+        let component_id = component.into_entity(self);
+        EntityView::new_from(self, component_id).cached_ref(component)
     }
 
     /// Get singleton entity for type.

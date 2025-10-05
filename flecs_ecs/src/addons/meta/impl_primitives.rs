@@ -33,7 +33,7 @@ impl ComponentType<flecs_ecs::core::Struct> for EntityView<'static> {}
 impl ComponentInfo for EntityView<'static> {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType = FlecsFirstIsNotATag;
+    type TagType = FlecsNotATag;
     const IMPLS_CLONE: bool = true;
     const IMPLS_DEFAULT: bool =
         { flecs_ecs::core::utility::types::ImplementsDefault::<EntityView<'static>>::IMPLS };
@@ -102,8 +102,7 @@ impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for String {}
 impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for String {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType =
-        flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsNotATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<String>::IMPLS };
     const IMPLS_DEFAULT: bool =
         { flecs_ecs::core::utility::types::ImplementsDefault::<String>::IMPLS };

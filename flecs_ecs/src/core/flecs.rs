@@ -65,7 +65,7 @@ macro_rules! create_pre_registered_component {
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+                flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
         }
 
         impl TagComponent for $struct_name {}
@@ -637,7 +637,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         { flecs_ecs::core::utility::types::ImplementsPartialOrd::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
-    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsFirstIsATag;
+    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
 }
 
 impl InternalComponentHooks for () {}
