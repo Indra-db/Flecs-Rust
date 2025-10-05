@@ -209,7 +209,7 @@ Some of the features that make Flecs stand out are:
 * query variables
 * toggleable components
 * entity disabling
-* builtin hierchies with automatic cleanup
+* builtin hierarchies with automatic cleanup
 * prefabs, prefab inheritance, prefab slots, prefab hierarchies
 * flecs script & flecs script templates
 * (hierarchical) entity names

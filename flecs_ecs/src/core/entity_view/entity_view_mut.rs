@@ -964,7 +964,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    /// Get reference to a id. If it's a component, it provides a typed interface, otherwise an untyped (c_void) interface.
+    /// Get reference to a id. If it's a component, it provides a typed interface, otherwise an untyped (`c_void`) interface.
     /// A reference allows for quick and safe access to a component value, and is
     /// a faster alternative to repeatedly calling 'get' for the same component.
     ///
@@ -988,17 +988,13 @@ impl<'a> EntityView<'a> {
     /// });
     /// ```
     ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The component for which to get a reference.
-    ///
     /// # Arguments
     ///
     /// * `component` - The component id.
     ///
     /// # Returns
     ///
-    /// The reference.
+    /// The cached reference.
     pub fn cached_ref<T: IntoId>(&self, component: T) -> CachedRef<'a, <T as IntoId>::CastType> {
         CachedRef::<<T as IntoId>::CastType>::new(self.world, *self.id, component)
     }
