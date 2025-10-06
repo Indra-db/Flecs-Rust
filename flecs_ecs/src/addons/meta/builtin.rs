@@ -153,13 +153,13 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
 
     fn ensure_generic_element<T: Default>(data: &mut Vec<T>, elem: usize) -> &mut T {
         if data.len() <= elem {
-            data.resize_with(elem, || T::default());
+            data.resize_with(elem + 1, || T::default());
         }
         &mut data[elem]
     }
 
-    fn resize_generic_vec<T: Default>(data: &mut Vec<T>, elem: usize) {
-        data.resize_with(elem, || T::default());
+    fn resize_generic_vec<T: Default>(data: &mut Vec<T>, new_size: usize) {
+        data.resize_with(new_size, || T::default());
     }
 
     // Ensure element exists, return
