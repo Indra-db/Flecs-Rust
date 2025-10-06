@@ -1,3 +1,10 @@
+//! Internal utilities for generating tuple implementations.
+//!
+//! This module provides the `Tuples` struct for parsing tuple macro input
+//! and the `expand_tuples` function for generating macro invocations.
+
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 use syn::{
     Ident, LitInt, Result,
     parse::{Parse, ParseStream},
@@ -30,5 +37,41 @@ impl Parse for Tuples {
             end,
             idents,
         })
+    }
+}
+
+/// Expansion function for the `tuples` macro.
+///
+/// This generates macro invocations for a range of tuple sizes, allowing the library
+/// to generate trait implementations for tuples of different arities.
+///
+/// # Arguments
+///
+/// * `input` - A `Tuples` struct containing the macro to invoke and the range of tuple sizes
+///
+/// # Returns
+///
+/// A `TokenStream` containing the generated macro invocations
+pub(crate) fn expand_tuples(input: Tuples) -> TokenStream {
+    let len = 1 + input.end - input.start;
+    let mut tuples = Vec::with_capacity(len);
+    for i in 0..=len {
+        tuples.push(format_ident!("P{}", i));
+    }
+
+    let macro_ident = &input.macro_ident;
+    let invocations = (input.start..=input.end).map(|i| {
+        let tuples = &tuples[..i];
+        let idents = &input.idents;
+
+        quote! {
+            #macro_ident!(#(#idents,)* #(#tuples),*);
+        }
+    });
+
+    quote! {
+        #(
+            #invocations
+        )*
     }
 }

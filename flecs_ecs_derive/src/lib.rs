@@ -13,7 +13,7 @@ use alloc::vec::Vec;
 
 use proc_macro::TokenStream as ProcMacroTokenStream;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{Data, DeriveInput, Fields, ItemFn, parse_macro_input};
 
 use crate::tuples::Tuples;
@@ -331,12 +331,16 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     #[cfg(feature = "flecs_query_rust_traits")]
-    let name = parse_macro_input!(input as Ident);
-    #[cfg(feature = "flecs_query_rust_traits")]
-    return rust_traits::expand_ecs_rust_trait(name).into();
+    {
+        let name = parse_macro_input!(input as Ident);
+        return rust_traits::expand_ecs_rust_trait(name).into();
+    }
 
     #[cfg(not(feature = "flecs_query_rust_traits"))]
-    ProcMacroTokenStream::new()
+    {
+        let _ = input;
+        ProcMacroTokenStream::new()
+    }
 }
 
 /// Attribute macro that conditionally applies the appropriate extern ABI based on target platform.
@@ -394,28 +398,12 @@ pub fn extern_abi(
     ProcMacroTokenStream::from(output)
 }
 
+/// Internal macro for generating tuple implementations.
+///
+/// This macro is used internally by the library and is not part of the public API.
+#[doc(hidden)]
 #[proc_macro]
 pub fn tuples(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as Tuples);
-    let len = 1 + input.end - input.start;
-    let mut tuples = Vec::with_capacity(len);
-    for i in 0..=len {
-        tuples.push(format_ident!("P{}", i));
-    }
-
-    let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|i| {
-        let tuples = &tuples[..i];
-        let idents = &input.idents;
-
-        quote! {
-            #macro_ident!(#(#idents,)* #(#tuples),*);
-        }
-    });
-
-    ProcMacroTokenStream::from(quote! {
-        #(
-            #invocations
-        )*
-    })
+    tuples::expand_tuples(input).into()
 }
