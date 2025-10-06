@@ -22,6 +22,7 @@ use syn::Ident;
 
 mod component;
 mod dsl;
+mod extern_abi;
 #[cfg(feature = "flecs_query_rust_traits")]
 mod rust_traits;
 mod tuples;
@@ -368,34 +369,7 @@ pub fn extern_abi(
     input: ProcMacroTokenStream,
 ) -> ProcMacroTokenStream {
     let input_fn = parse_macro_input!(input as ItemFn);
-
-    let fn_name = &input_fn.sig.ident;
-    let fn_inputs = &input_fn.sig.inputs;
-    let fn_output = &input_fn.sig.output;
-    let fn_block = &input_fn.block;
-    let fn_generics = &input_fn.sig.generics;
-    let fn_where_clause = &input_fn.sig.generics.where_clause;
-    let fn_vis = &input_fn.vis;
-    let fn_attrs = &input_fn.attrs;
-
-    // Check if there's already an extern specification
-    if input_fn.sig.abi.is_some() {
-        return quote! {
-            compile_error!("Function already has an extern ABI specification. Remove it to use #[extern_abi].");
-        }.into();
-    }
-
-    let output = quote! {
-        #(#fn_attrs)*
-        #[cfg(target_family = "wasm")]
-        #fn_vis extern "C" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
-
-        #(#fn_attrs)*
-        #[cfg(not(target_family = "wasm"))]
-        #fn_vis extern "C-unwind" fn #fn_name #fn_generics(#fn_inputs) #fn_output #fn_where_clause #fn_block
-    };
-
-    ProcMacroTokenStream::from(output)
+    extern_abi::expand_extern_abi(input_fn).into()
 }
 
 /// Internal macro for generating tuple implementations.
