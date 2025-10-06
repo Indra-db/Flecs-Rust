@@ -1491,3 +1491,83 @@ pub(crate) fn check_repr_c(input: &syn::DeriveInput) -> (bool, TokenStream) {
         quote! { flecs_ecs::core::component_registration::NoneEnum },
     ) // Return false if no `#[repr(C)]` and variants is found
 }
+
+/// Expansion function for the `Component` derive macro.
+///
+/// This function handles the complete expansion logic for deriving the Component trait,
+/// including determining component type (struct/enum), checking for tag/data components,
+/// and generating appropriate trait implementations.
+///
+/// # Arguments
+///
+/// * `input` - A `DeriveInput` containing the parsed struct or enum to derive Component for
+///
+/// # Returns
+///
+/// A `TokenStream` containing all generated trait implementations
+pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro2::TokenStream {
+    use alloc::vec::Vec;
+
+    // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
+    let (flecs_traits_calls, has_flecs_meta, flecs_name) = collect_flecs_traits_calls(&input);
+
+    let has_repr_c = check_repr_c(&input);
+    let has_on_registration = input
+        .attrs
+        .iter()
+        .any(|attr| attr.path().is_ident("on_registration"));
+
+    let mut generated_impls: Vec<proc_macro2::TokenStream> = Vec::new();
+
+    match input.data.clone() {
+        syn::Data::Struct(data_struct) => {
+            let has_fields = match data_struct.fields {
+                syn::Fields::Named(ref fields) => !fields.named.is_empty(),
+                syn::Fields::Unnamed(ref fields) => !fields.unnamed.is_empty(),
+                syn::Fields::Unit => false,
+            };
+            let is_tag = generate_tag_trait(has_fields);
+            generated_impls.push(impl_cached_component_data_struct(
+                &mut input,
+                has_fields,
+                &is_tag,
+                has_on_registration,
+                &flecs_traits_calls,
+                &flecs_name,
+            ));
+        }
+        syn::Data::Enum(_) => {
+            let is_tag = generate_tag_trait(!has_repr_c.0);
+            if !has_repr_c.0 {
+                generated_impls.push(impl_cached_component_data_struct(
+                    &mut input,
+                    true,
+                    &is_tag,
+                    has_on_registration,
+                    &flecs_traits_calls,
+                    &flecs_name,
+                ));
+            } else {
+                generated_impls.push(impl_cached_component_data_enum(
+                    &mut input,
+                    has_on_registration,
+                    has_repr_c.1,
+                    &flecs_traits_calls,
+                    &flecs_name,
+                ));
+            }
+        }
+        _ => {
+            return quote! { compile_error!("The type is neither a struct nor an enum!"); };
+        }
+    };
+
+    input.generics.make_where_clause();
+
+    let meta_impl = impl_meta(&input, has_repr_c.0, input.ident.clone(), has_flecs_meta);
+
+    quote! {
+        #( #generated_impls )*
+        #meta_impl
+    }
+}

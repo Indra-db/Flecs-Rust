@@ -9,12 +9,8 @@ extern crate proc_macro;
 #[macro_use]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use proc_macro::TokenStream as ProcMacroTokenStream;
-use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{Data, DeriveInput, Fields, ItemFn, parse_macro_input};
+use syn::{DeriveInput, ItemFn, parse_macro_input};
 
 use crate::tuples::Tuples;
 #[cfg(feature = "flecs_query_rust_traits")]
@@ -72,71 +68,8 @@ mod tuples;
 /// ```
 #[proc_macro_derive(Component, attributes(flecs_skip, on_registration, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
-    let mut input = parse_macro_input!(input as DeriveInput);
-
-    // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
-    let (flecs_traits_calls, has_flecs_meta, flecs_name) =
-        component::collect_flecs_traits_calls(&input);
-
-    let has_repr_c = component::check_repr_c(&input);
-    let has_on_registration = input
-        .attrs
-        .iter()
-        .any(|attr| attr.path().is_ident("on_registration"));
-
-    let mut generated_impls: Vec<TokenStream> = Vec::new();
-
-    match input.data.clone() {
-        Data::Struct(data_struct) => {
-            let has_fields = match data_struct.fields {
-                Fields::Named(ref fields) => !fields.named.is_empty(),
-                Fields::Unnamed(ref fields) => !fields.unnamed.is_empty(),
-                Fields::Unit => false,
-            };
-            let is_tag = component::generate_tag_trait(has_fields);
-            generated_impls.push(component::impl_cached_component_data_struct(
-                &mut input,
-                has_fields,
-                &is_tag,
-                has_on_registration,
-                &flecs_traits_calls,
-                &flecs_name,
-            ));
-        }
-        Data::Enum(_) => {
-            let is_tag = component::generate_tag_trait(!has_repr_c.0);
-            if !has_repr_c.0 {
-                generated_impls.push(component::impl_cached_component_data_struct(
-                    &mut input,
-                    true,
-                    &is_tag,
-                    has_on_registration,
-                    &flecs_traits_calls,
-                    &flecs_name,
-                ));
-            } else {
-                generated_impls.push(component::impl_cached_component_data_enum(
-                    &mut input,
-                    has_on_registration,
-                    has_repr_c.1,
-                    &flecs_traits_calls,
-                    &flecs_name,
-                ));
-            }
-        }
-        _ => return quote! { compile_error!("The type is neither a struct nor an enum!"); }.into(),
-    };
-
-    input.generics.make_where_clause();
-
-    let meta_impl = component::impl_meta(&input, has_repr_c.0, input.ident.clone(), has_flecs_meta);
-
-    let output = quote! {
-        #( #generated_impls )*
-        #meta_impl
-    };
-
-    output.into()
+    let input = parse_macro_input!(input as DeriveInput);
+    component::expand_component_derive(input).into()
 }
 
 /// Function-like macro for defining a query with `QueryBuilder`.
