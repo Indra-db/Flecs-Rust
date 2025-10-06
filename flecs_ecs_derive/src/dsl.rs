@@ -722,3 +722,100 @@ impl Parse for Observer {
         })
     }
 }
+
+/// Expansion function for the `query` macro.
+///
+/// Generates a query builder with the appropriate method calls based on the DSL terms.
+///
+/// # Arguments
+///
+/// * `input` - A `Builder` struct containing the query name, world, and DSL terms
+///
+/// # Returns
+///
+/// A `TokenStream` containing the generated query builder code
+pub(crate) fn expand_query(input: Builder) -> TokenStream {
+    let mut terms = input.dsl.terms;
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let world = input.world;
+
+    match input.name {
+        Some(name) => quote! {
+            (#world).query_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            (#world).query::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+    }
+}
+
+/// Expansion function for the `system` macro.
+///
+/// Generates a system builder with the appropriate method calls based on the DSL terms.
+///
+/// # Arguments
+///
+/// * `input` - A `Builder` struct containing the system name, world, and DSL terms
+///
+/// # Returns
+///
+/// A `TokenStream` containing the generated system builder code
+pub(crate) fn expand_system(input: Builder) -> TokenStream {
+    let mut terms = input.dsl.terms;
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let world = input.world;
+
+    match input.name {
+        Some(name) => quote! {
+            (#world).system_named::<#iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            (#world).system::<#iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+    }
+}
+
+/// Expansion function for the `observer` macro.
+///
+/// Generates an observer builder with the appropriate method calls based on the DSL terms.
+///
+/// # Arguments
+///
+/// * `input` - An `Observer` struct containing the observer name, world, event type, and DSL terms
+///
+/// # Returns
+///
+/// A `TokenStream` containing the generated observer builder code
+pub(crate) fn expand_observer(input: Observer) -> TokenStream {
+    let mut terms = input.dsl.terms;
+    let (iter_type, builder_calls) = expand_dsl(&mut terms);
+    let event_type = input.event;
+    let world = input.world;
+
+    match input.name {
+        Some(name) => quote! {
+            (#world).observer_named::<#event_type, #iter_type>(#name)
+            #(
+                #builder_calls
+            )*
+        },
+        None => quote! {
+            (#world).observer::<#event_type, #iter_type>()
+            #(
+                #builder_calls
+            )*
+        },
+    }
+}

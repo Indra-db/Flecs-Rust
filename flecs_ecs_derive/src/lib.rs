@@ -208,33 +208,7 @@ pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as dsl::Builder);
-    let mut terms = input.dsl.terms;
-
-    let (iter_type, builder_calls) = dsl::expand_dsl(&mut terms);
-    let world = input.world;
-    //TODO 2024 edition doesn't support it anymore. Need to find workaround
-    //let doc = input.dsl.doc;
-    let output = match input.name {
-        Some(name) => quote! {
-            //{
-                //#doc
-                (#world).query_named::<#iter_type>(#name)
-                #(
-                    #builder_calls
-                )*
-            //}
-        },
-        None => quote! {
-            //{
-                //#doc
-                (#world).query::<#iter_type>()
-                #(
-                    #builder_calls
-                )*
-            //}
-        },
-    };
-    ProcMacroTokenStream::from(output)
+    dsl::expand_query(input).into()
 }
 
 /// Function-like macro for defining a system with `SystemBuilder`.
@@ -249,35 +223,7 @@ pub fn query(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as dsl::Builder);
-    let mut terms = input.dsl.terms;
-
-    let (iter_type, builder_calls) = dsl::expand_dsl(&mut terms);
-    let world = input.world;
-
-    //TODO 2024 edition doesn't support it anymore. Need to find workaround
-    //let doc = input.dsl.doc;
-    let output = match input.name {
-        Some(name) => quote! {
-            //{
-                //#doc
-                (#world).system_named::<#iter_type>(#name)
-                #(
-                    #builder_calls
-                )*
-            //}
-
-        },
-        None => quote! {
-            //{
-                //#doc
-                (#world).system::<#iter_type>()
-                #(
-                    #builder_calls
-                )*
-            //}
-        },
-    };
-    ProcMacroTokenStream::from(output)
+    dsl::expand_system(input).into()
 }
 
 /// Function-like macro for defining an observer with `ObserverBuilder`.
@@ -292,36 +238,7 @@ pub fn system(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 #[proc_macro]
 pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as dsl::Observer);
-    let mut terms = input.dsl.terms;
-
-    let (iter_type, builder_calls) = dsl::expand_dsl(&mut terms);
-    let event_type = input.event;
-    let world = input.world;
-
-    //TODO 2024 edition doesn't support it anymore. Need to find workaround
-    //let doc = input.dsl.doc;
-    let output = match input.name {
-        Some(name) => quote! {
-            //{
-                //#doc
-                (#world).observer_named::<#event_type, #iter_type>(#name)
-                #(
-                    #builder_calls
-                )*
-            //}
-        },
-        None => quote! {
-            //{
-                //#doc
-                (#world).observer::<#event_type, #iter_type>()
-                #(
-                    #builder_calls
-                )*
-            //}
-        },
-    };
-
-    ProcMacroTokenStream::from(output)
+    dsl::expand_observer(input).into()
 }
 
 /// Generates a `<TraitName>Trait` component struct with helper methods for Flecs-based dynamic trait registration.
