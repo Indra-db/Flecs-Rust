@@ -1,0 +1,325 @@
+//! Rust trait support for Flecs ECS.
+//!
+//! This module provides macro support for registering Rust traits as Flecs components,
+//! enabling dynamic dispatch through the ECS system. This is particularly useful when you
+//! want to query components by trait implementation rather than concrete types.
+//!
+//! # Overview
+//!
+//! The `ecs_rust_trait!` macro generates a component wrapper around a Rust trait, allowing:
+//! - Registration of vtables for each trait implementor
+//! - Dynamic casting from entities to trait objects
+//! - Querying entities that implement a specific trait
+//!
+//! # How it works
+//!
+//! 1. The macro generates a `<TraitName>Trait` component struct that stores vtable information
+//! 2. Each concrete type implementing the trait registers its vtable with `register_vtable::<T>()`
+//! 3. Components can be queried using the generated trait component
+//! 4. Retrieved components can be cast to trait objects using `cast()` or `cast_mut()`
+//!
+//! # Usage Pattern
+//!
+//! 1. Define your trait
+//! 2. Call `ecs_rust_trait!` with the trait name
+//! 3. Implement the trait for your component types
+//! 4. Register vtables for each implementor type
+//! 5. Query components that implement the trait using the generated trait component
+//! 6. Cast components to trait objects as needed
+//!
+//! # Example
+//!
+//! ```ignore
+//! use flecs_ecs::prelude::*;
+//!
+//! // 1. Define a trait
+//! pub trait Shapes {
+//!     fn calculate(&self) -> u64;
+//! }
+//!
+//! // 2. Generate the trait component
+//! ecs_rust_trait!(Shapes);
+//!
+//! // 3. Implement the trait for component types
+//! #[derive(Component)]
+//! pub struct Circle {
+//!     radius: f32,
+//! }
+//!
+//! impl Shapes for Circle {
+//!     fn calculate(&self) -> u64 {
+//!         1
+//!     }
+//! }
+//!
+//! #[derive(Component)]
+//! pub struct Square {
+//!     side: f32,
+//! }
+//!
+//! impl Shapes for Square {
+//!     fn calculate(&self) -> u64 {
+//!         2
+//!     }
+//! }
+//!
+//! #[derive(Component)]
+//! pub struct Triangle {
+//!     side: f32,
+//! }
+//!
+//! impl Shapes for Triangle {
+//!     fn calculate(&self) -> u64 {
+//!         3
+//!     }
+//! }
+//!
+//! let world = World::new();
+//!
+//! // 4. Register the vtable per type that implements the trait
+//! ShapesTrait::register_vtable::<Circle>(&world);
+//! ShapesTrait::register_vtable::<Square>(&world);
+//! ShapesTrait::register_vtable::<Triangle>(&world);
+//!
+//! // Create entities with the components
+//! world.entity_named("circle").set(Circle { radius: 5.0 });
+//! world.entity_named("square").set(Square { side: 5.0 });
+//! world.entity_named("triangle").set(Triangle { side: 5.0 });
+//!
+//! // 5. Query entities that implement the trait
+//! let query = world.query::<()>().with(ShapesTrait::id()).build();
+//!
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         let world = it.world();
+//!         for i in it.iter() {
+//!             let e = it.get_entity(i).unwrap();
+//!             let id = it.id(0);
+//!             // 6. Cast to trait object and use it
+//!             let shape = ShapesTrait::cast(e, id);
+//!             let calc = shape.calculate();
+//!             println!("{} - calc: {}", e.name(), calc);
+//!         }
+//!     }
+//! });
+//!
+//! // Output:
+//! // circle - calc: 1
+//! // square - calc: 2
+//! // triangle - calc: 3
+//! ```
+//!
+//! # Feature flag
+//!
+//! This module is only available when the `flecs_query_rust_traits` feature is enabled.
+
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
+use syn::Ident;
+
+/// Expansion function for the `ecs_rust_trait` macro.
+///
+/// This function is called by the `ecs_rust_trait` proc macro in `lib.rs`.
+/// It generates a component struct and implementation methods for trait object handling.
+///
+/// For a trait named `MyTrait`, this generates:
+/// - `MyTraitTrait` struct: A component that stores vtable information
+/// - `MyTraitTrait::new(vtable: usize)`: Constructor (typically not used directly)
+/// - `MyTraitTrait::register_vtable::<T>(world)`: Registers the vtable for type `T`
+/// - `MyTraitTrait::cast(entity, id)`: Casts entity data to `&dyn MyTrait`
+/// - `MyTraitTrait::cast_mut(entity, id)`: Casts entity data to `&mut dyn MyTrait`
+///
+/// # Arguments
+///
+/// * `name` - The identifier of the trait to wrap
+///
+/// # Returns
+///
+/// A `TokenStream` containing the generated code for the trait component.
+///
+/// # Generated Code Structure
+///
+/// The generated code includes:
+/// 1. A component struct with a `vtable` field
+/// 2. Implementation of the `RustTrait` marker trait
+/// 3. Methods for vtable registration and trait object casting
+pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
+    let struct_name = format_ident!("{}Trait", name);
+
+    quote! {
+        /// Generated component for dynamic trait dispatch.
+        ///
+        /// This component stores vtable information to enable casting entities
+        /// to trait objects at runtime. It is automatically generated by the
+        /// `ecs_rust_trait!` macro.
+        #[derive(Component, Default, Clone)]
+        pub struct #struct_name {
+            /// The vtable pointer for this trait implementation.
+            ///
+            /// This is extracted from the trait object's fat pointer representation
+            /// and is used to reconstruct trait objects when casting.
+            vtable: usize,
+        }
+
+        impl flecs_ecs::core::component_registration::registration_traits::RustTrait for #struct_name {}
+
+        impl #struct_name {
+            /// Creates a new trait component with the specified vtable pointer.
+            ///
+            /// # Arguments
+            ///
+            /// * `vtable` - The vtable pointer extracted from a trait object
+            ///
+            /// # Returns
+            ///
+            /// A new instance of the trait component.
+            ///
+            /// # Note
+            ///
+            /// This is typically not called directly by user code. Use `register_vtable` instead.
+            pub fn new(vtable: usize) -> Self {
+                Self {
+                    vtable
+                }
+            }
+
+            /// Registers the vtable for a concrete type that implements the trait.
+            ///
+            /// This method must be called once for each type that implements the trait
+            /// before querying or casting entities of that type. It sets up the necessary
+            /// relationships in the ECS system to enable dynamic dispatch.
+            ///
+            /// # Type Parameters
+            ///
+            /// * `T` - A type that implements both the trait and `ComponentId`
+            ///
+            /// # Arguments
+            ///
+            /// * `world` - The Flecs world in which to register the vtable
+            ///
+            /// # Returns
+            ///
+            /// The vtable pointer as a `usize`.
+            ///
+            /// # How it works
+            ///
+            /// 1. Creates a dangling pointer to extract the vtable without allocating
+            /// 2. Extracts the vtable from the trait object's fat pointer representation
+            /// 3. Establishes an `is_a` relationship between the concrete type and trait component
+            /// 4. Stores the vtable information in the ECS system
+            ///
+            /// # Example
+            ///
+            /// ```ignore
+            /// ShapesTrait::register_vtable::<Circle>(&world);
+            /// ShapesTrait::register_vtable::<Square>(&world);
+            /// ```
+            pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
+                // Create a dangling pointer to T and cast it to a trait object
+                // This gives us access to the vtable without needing an actual instance
+                let trait_obj_ptr = std::ptr::NonNull::<T>::dangling() as std::ptr::NonNull<dyn #name>;
+
+                // Extract the vtable from the fat pointer (data_ptr, vtable)
+                let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj_ptr) };
+
+                // Set up the inheritance relationship: T is_a TraitComponent
+                let id = world.component::<T>();
+                let id_self = world.component::<Self>();
+                id.is_a(id_self);
+
+                // Store the vtable in the trait component
+                id.set_id(Self::new(vtable), (id_self, id_self));
+                vtable
+            }
+
+            /// Casts an entity's component data to an immutable trait object reference.
+            ///
+            /// This method reconstructs a trait object from the entity's component data
+            /// and the stored vtable information, enabling dynamic dispatch on entities
+            /// that implement the trait.
+            ///
+            /// # Arguments
+            ///
+            /// * `entity` - The entity containing the component to cast
+            /// * `derived_id` - The component ID of the concrete type (typically obtained from a query iterator)
+            ///
+            /// # Returns
+            ///
+            /// An immutable reference to the trait object.
+            ///
+            /// # Safety
+            ///
+            /// This method uses unsafe operations to reconstruct the trait object.
+            /// It is safe as long as:
+            /// - The entity actually has the component indicated by `derived_id`
+            /// - The vtable was registered correctly for the component's type
+            /// - The component data is valid for the lifetime `'a`
+            ///
+            /// # Example
+            ///
+            /// ```ignore
+            /// let shape = ShapesTrait::cast(entity, component_id);
+            /// let result = shape.calculate();
+            /// ```
+            pub fn cast<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
+                // Get the raw pointer to the component data
+                let data_ptr = entity.get_untyped(derived_id) as usize;
+
+                // Retrieve the stored vtable from the component's trait data
+                let vtable_ptr = entity
+                    .world()
+                    .component_untyped_from(*derived_id)
+                    .cloned::<&(Self, Self)>()
+                    .vtable;
+
+                // Reconstruct the trait object from the data pointer and vtable
+                unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
+            }
+
+            /// Casts an entity's component data to a mutable trait object reference.
+            ///
+            /// This method reconstructs a mutable trait object from the entity's component data
+            /// and the stored vtable information, enabling dynamic dispatch with mutation on entities
+            /// that implement the trait.
+            ///
+            /// # Arguments
+            ///
+            /// * `entity` - The entity containing the component to cast
+            /// * `derived_id` - The component ID of the concrete type (typically obtained from a query iterator)
+            ///
+            /// # Returns
+            ///
+            /// A mutable reference to the trait object.
+            ///
+            /// # Safety
+            ///
+            /// This method uses unsafe operations to reconstruct the trait object.
+            /// It is safe as long as:
+            /// - The entity actually has the component indicated by `derived_id`
+            /// - The vtable was registered correctly for the component's type
+            /// - No other references to the component data exist (Rust's borrowing rules still apply)
+            /// - The component data is valid for the lifetime `'a`
+            ///
+            /// # Example
+            ///
+            /// ```ignore
+            /// let shape = ShapesTrait::cast_mut(entity, component_id);
+            /// shape.modify_internal_state();
+            /// ```
+            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
+                // Get the raw mutable pointer to the component data
+                let data_ptr = entity.get_untyped_mut(derived_id) as usize;
+
+                // Retrieve the stored vtable from the component's trait data
+                let vtable_ptr = entity
+                    .world()
+                    .component_untyped_from(*derived_id)
+                    .cloned::<&(Self, Self)>()
+                    .vtable;
+
+                // Reconstruct the mutable trait object from the data pointer and vtable
+                unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
+            }
+        }
+    }
+}
