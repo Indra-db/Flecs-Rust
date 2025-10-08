@@ -174,9 +174,120 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     dsl::expand_observer(input).into()
 }
 
-/// Generates a `<TraitName>Trait` component struct with helper methods for Flecs-based dynamic trait registration.
+/// Rust trait support for Flecs ECS.
 ///
-/// See the [`rust_traits`] module for complete documentation, usage patterns, examples, and API reference.
+/// This module provides macro support for registering Rust traits as Flecs components,
+/// enabling dynamic dispatch through the ECS system. This is particularly useful when you
+/// want to query components by trait implementation rather than concrete types.
+///
+/// # Overview
+///
+/// The `ecs_rust_trait!` macro generates a component wrapper around a Rust trait, allowing:
+/// - Registration of vtables for each trait implementor
+/// - Dynamic casting from entities to trait objects
+/// - Querying entities that implement a specific trait
+///
+/// # How it works
+///
+/// 1. The macro generates a `<TraitName>Trait` component struct that stores vtable information
+/// 2. Each concrete type implementing the trait registers its vtable with `register_vtable::<T>()`
+/// 3. Components can be queried using the generated trait component
+/// 4. Retrieved components can be cast to trait objects using `cast()` or `cast_mut()`
+///
+/// # Usage Pattern
+///
+/// 1. Define your trait
+/// 2. Call `ecs_rust_trait!` with the trait name
+/// 3. Implement the trait for your component types
+/// 4. Register vtables for each implementor type
+/// 5. Query components that implement the trait using the generated trait component
+/// 6. Cast components to trait objects as needed
+///
+/// # Example
+///
+/// ```ignore
+/// use flecs_ecs::prelude::*;
+///
+/// // 1. Define a trait
+/// pub trait Shapes {
+///     fn calculate(&self) -> u64;
+/// }
+///
+/// // 2. Generate the trait component
+/// ecs_rust_trait!(Shapes);
+///
+/// // 3. Implement the trait for component types
+/// #[derive(Component)]
+/// pub struct Circle {
+///     radius: f32,
+/// }
+///
+/// impl Shapes for Circle {
+///     fn calculate(&self) -> u64 {
+///         1
+///     }
+/// }
+///
+/// #[derive(Component)]
+/// pub struct Square {
+///     side: f32,
+/// }
+///
+/// impl Shapes for Square {
+///     fn calculate(&self) -> u64 {
+///         2
+///     }
+/// }
+///
+/// #[derive(Component)]
+/// pub struct Triangle {
+///     side: f32,
+/// }
+///
+/// impl Shapes for Triangle {
+///     fn calculate(&self) -> u64 {
+///         3
+///     }
+/// }
+///
+/// let world = World::new();
+///
+/// // 4. Register the vtable per type that implements the trait
+/// ShapesTrait::register_vtable::<Circle>(&world);
+/// ShapesTrait::register_vtable::<Square>(&world);
+/// ShapesTrait::register_vtable::<Triangle>(&world);
+///
+/// // Create entities with the components
+/// world.entity_named("circle").set(Circle { radius: 5.0 });
+/// world.entity_named("square").set(Square { side: 5.0 });
+/// world.entity_named("triangle").set(Triangle { side: 5.0 });
+///
+/// // 5. Query entities that implement the trait
+/// let query = world.query::<()>().with(ShapesTrait::id()).build();
+///
+/// query.run(|mut it| {
+///     while it.next() {
+///         let world = it.world();
+///         for i in it.iter() {
+///             let e = it.get_entity(i).unwrap();
+///             let id = it.id(0);
+///             // 6. Cast to trait object and use it
+///             let shape = ShapesTrait::cast(e, id);
+///             let calc = shape.calculate();
+///             println!("{} - calc: {}", e.name(), calc);
+///         }
+///     }
+/// });
+///
+/// // Output:
+/// // circle - calc: 1
+/// // square - calc: 2
+/// // triangle - calc: 3
+/// ```
+///
+/// # Feature flag
+///
+/// This module is only available when the `flecs_query_rust_traits` feature is enabled.
 #[proc_macro]
 pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     #[cfg(feature = "flecs_query_rust_traits")]
