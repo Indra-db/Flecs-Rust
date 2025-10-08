@@ -245,43 +245,57 @@ pub fn expand_term_builder_calls(term: &Term, index: u32, iter_term: bool) -> Op
             );
         }
         TermType::Equality(eq_expr) => {
-            expand_equality_builder_calls(eq_expr, iter_term, &mut term_accessor, &mut needs_accessor, &mut ops);
+            expand_equality_builder_calls(
+                eq_expr,
+                iter_term,
+                &mut term_accessor,
+                &mut needs_accessor,
+                &mut ops,
+            );
         }
         TermType::Scope(scope_terms) => {
             // Scope: expand to .scope_open() ... .scope_close()
             // Note: scope_open() already creates the term, so we don't need .term()
-            
+
             // Add scope_open with operator if needed
             // For !{ }, we want .scope_open().not()
             ops.push(quote! { .scope_open() });
-            
+
             // Apply operator to scope_open (e.g., .not() for !{ })
             if term.oper != TermOper::And {
                 expand_operator_builder_calls(&term.oper, iter_term, term.span, &mut ops);
             }
-            
+
             // Expand all terms inside the scope
             for (idx, scope_term) in scope_terms.iter().enumerate() {
-                if let Some(term_expansion) = expand_term_builder_calls(scope_term, idx as u32, false) {
+                if let Some(term_expansion) =
+                    expand_term_builder_calls(scope_term, idx as u32, false)
+                {
                     ops.push(term_expansion);
                 }
             }
-            
+
             // Add scope_close
             ops.push(quote! { .scope_close() });
-            
+
             // Skip operator expansion later
             // We return early after configuring access
-            expand_access_builder_calls(term.access, term.reference, iter_term, term.span, &mut ops);
-            
+            expand_access_builder_calls(
+                term.access,
+                term.reference,
+                iter_term,
+                term.span,
+                &mut ops,
+            );
+
             // Return without term_accessor since scope_open already creates the term
             if !ops.is_empty() {
                 return Some(quote! {
                     #( #ops )*
                 });
-            } else {
-                return None;
-            }
+            };
+
+            return None;
         }
     }
 

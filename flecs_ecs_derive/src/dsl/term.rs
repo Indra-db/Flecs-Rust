@@ -200,7 +200,7 @@ impl Parse for TermId {
 /// # Pairs in Flecs
 ///
 /// Pairs represent relationships between entities:
-/// - (ChildOf, Parent): Entity is a child of Parent
+/// - (`ChildOf`, Parent): Entity is a child of Parent
 /// - (Likes, Food): Entity likes Food
 /// - (*, Target): Any relationship with Target
 #[allow(clippy::large_enum_variant)]
@@ -250,7 +250,6 @@ pub struct EqualityExpr {
     /// Right side (entity, string, or variable)
     pub right: TermIdent,
 }
-
 
 /// A complete term in the DSL
 ///
@@ -343,17 +342,17 @@ impl Parse for Term {
         let access = input.parse::<Access>()?;
         let mut oper = input.parse::<TermOper>()?;
         let reference = input.parse::<Reference>()?;
-        
+
         // Check for scope: { terms... }
         if input.peek(syn::token::Brace) {
             let scope_content;
             syn::braced!(scope_content in input);
-            
+
             // Parse all terms inside the scope
             let mut scope_terms = Vec::new();
             while !scope_content.is_empty() {
                 scope_terms.push(scope_content.parse::<Term>()?);
-                
+
                 // Handle comma separators
                 if scope_content.peek(Token![,]) {
                     scope_content.parse::<Token![,]>()?;
@@ -361,7 +360,7 @@ impl Parse for Term {
                     break;
                 }
             }
-            
+
             return Ok(Term {
                 access,
                 reference,
@@ -371,16 +370,19 @@ impl Parse for Term {
                 span,
             });
         }
-        
+
         // Check for equality expression: $var == entity or $var != entity or $var ~= "string"
         if input.peek(Token![$]) {
             let lookahead = input.fork();
             let _left = lookahead.parse::<TermIdent>();
-            if _left.is_ok() && (lookahead.peek(Token![==]) || lookahead.peek(Token![!=]) 
-                || (lookahead.peek(Token![~]) && lookahead.peek2(Token![=]))) {
+            if _left.is_ok()
+                && (lookahead.peek(Token![==])
+                    || lookahead.peek(Token![!=])
+                    || (lookahead.peek(Token![~]) && lookahead.peek2(Token![=])))
+            {
                 // This is an equality expression
                 let left = input.parse::<TermIdent>()?;
-                
+
                 let equality_oper = if input.peek(Token![==]) {
                     input.parse::<Token![==]>()?;
                     EqualityOper::Equal
@@ -396,18 +398,17 @@ impl Parse for Term {
                 } else {
                     unreachable!()
                 };
-                
+
                 let right = input.parse::<TermIdent>()?;
-                
+
                 // Check if this is a negated match (string starts with '!')
-                if equality_oper == EqualityOper::Match {
-                    if let TermIdent::Literal(lit) = &right {
-                        if lit.value().starts_with('!') {
-                            oper = TermOper::Not;
-                        }
-                    }
+                if equality_oper == EqualityOper::Match
+                    && let TermIdent::Literal(lit) = &right
+                    && lit.value().starts_with('!')
+                {
+                    oper = TermOper::Not;
                 }
-                
+
                 return Ok(Term {
                     access,
                     reference,
@@ -422,7 +423,7 @@ impl Parse for Term {
                 });
             }
         }
-        
+
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
             if !input.peek(Token![,]) && !input.peek(Token![|]) && !input.is_empty() {

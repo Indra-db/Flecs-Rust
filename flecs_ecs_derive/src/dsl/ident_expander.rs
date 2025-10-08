@@ -5,7 +5,7 @@ use quote::quote;
 
 use super::types::TermIdent;
 
-/// Expands a TermIdent for use in a first/second position of a pair
+/// Expands a `TermIdent` for use in a first/second position of a pair
 pub fn expand_pair_component(
     ident: &TermIdent,
     iter_term: bool,
@@ -44,14 +44,12 @@ pub fn expand_pair_component(
             ops.push(setter);
         }
         _ => {
-            if !iter_term {
-                if let Some(ty) = super::types::expand_type(ident) {
-                    let setter = match position {
-                        PairPosition::First => quote! { .set_first(id::<#ty>()) },
-                        PairPosition::Second => quote! { .set_second(id::<#ty>()) },
-                    };
-                    ops.push(setter);
-                }
+            if !iter_term && let Some(ty) = super::types::expand_type(ident) {
+                let setter = match position {
+                    PairPosition::First => quote! { .set_first(id::<#ty>()) },
+                    PairPosition::Second => quote! { .set_second(id::<#ty>()) },
+                };
+                ops.push(setter);
             }
         }
     }
@@ -59,7 +57,7 @@ pub fn expand_pair_component(
     ops
 }
 
-/// Expands a TermIdent for use as a source
+/// Expands a `TermIdent` for use as a source
 pub fn expand_source(ident: &TermIdent) -> TokenStream {
     match ident {
         TermIdent::Variable(var) => {

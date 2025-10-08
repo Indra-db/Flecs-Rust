@@ -379,7 +379,7 @@ pub(crate) fn peek_trav(input: ParseStream) -> bool {
         || input.peek(Token![self])
 }
 
-/// Expands a TermIdent to its TokenStream representation for types
+/// Expands a `TermIdent` to its `TokenStream` representation for types
 pub fn expand_type(ident: &TermIdent) -> Option<TokenStream> {
     use quote::quote;
 

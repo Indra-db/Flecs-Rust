@@ -10,18 +10,18 @@ use quote::{quote, quote_spanned};
 use super::term::{Term, TermId, TermType};
 use super::types::{Reference, TermIdent, TermOper, expand_type};
 
-/// Expands traversal operations for a TermId
+/// Expands traversal operations for a `TermId`
 ///
 /// Traversal operations control how queries traverse relationships in the ECS hierarchy.
 /// This includes operations like `up`, `cascade`, `desc`, and `self`.
 ///
 /// # Arguments
 ///
-/// * `term` - The TermId containing traversal configuration
+/// * `term` - The `TermId` containing traversal configuration
 ///
 /// # Returns
 ///
-/// A vector of TokenStreams representing the traversal method calls
+/// A vector of `TokenStreams` representing the traversal method calls
 pub fn expand_trav(term: &TermId) -> Vec<TokenStream> {
     let mut ops = Vec::new();
     if term.trav_up {
@@ -68,7 +68,7 @@ pub fn expand_trav(term: &TermId) -> Vec<TokenStream> {
 ///
 /// # Returns
 ///
-/// An optional TokenStream representing the iterator type for this term
+/// An optional `TokenStream` representing the iterator type for this term
 pub fn expand_term_type(term: &Term) -> Option<TokenStream> {
     let ty = match &term.ty {
         TermType::Pair(first, second) => {
@@ -117,8 +117,8 @@ pub fn expand_term_type(term: &Term) -> Option<TokenStream> {
 /// # Returns
 ///
 /// A tuple containing:
-/// - The iterator type as a TokenStream
-/// - A vector of builder call TokenStreams
+/// - The iterator type as a `TokenStream`
+/// - A vector of builder call `TokenStreams`
 pub fn expand_dsl(terms: &mut [Term]) -> (TokenStream, Vec<TokenStream>) {
     super::builder::build_query_components(terms)
 }

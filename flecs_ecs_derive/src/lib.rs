@@ -184,7 +184,7 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     #[cfg(feature = "flecs_query_rust_traits")]
     {
         let name = parse_macro_input!(input as Ident);
-        return rust_traits::expand_ecs_rust_trait(name).into();
+        rust_traits::expand_ecs_rust_trait(name).into()
     }
 
     #[cfg(not(feature = "flecs_query_rust_traits"))]
