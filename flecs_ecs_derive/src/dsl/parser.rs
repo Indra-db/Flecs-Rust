@@ -35,7 +35,11 @@ impl Parse for Dsl {
         });
 
         let mut terms = Vec::new();
-        terms.push(input.parse::<Term>()?);
+        
+        // Parse the first term (which might be a parenthesized group with OR expressions)
+        let first_terms = parse_term_or_group(input)?;
+        terms.extend(first_terms);
+        
         while input.peek(Token![,]) || input.peek(Token![|]) {
             if input.peek(Token![|]) {
                 input.parse::<Token![|]>()?;
@@ -49,11 +53,103 @@ impl Parse for Dsl {
                     break;
                 }
             }
-            terms.push(input.parse::<Term>()?);
+            let next_terms = parse_term_or_group(input)?;
+            terms.extend(next_terms);
         }
 
         Ok(Dsl { terms, _doc: doc })
     }
+}
+
+/// Parse a single term or a parenthesized group containing multiple terms with OR
+fn parse_term_or_group(input: ParseStream) -> Result<Vec<Term>> {
+    // Check if this is a parenthesized equality expression with OR
+    if input.peek(syn::token::Paren) {
+        let lookahead = input.fork();
+        let inner;
+        syn::parenthesized!(inner in lookahead);
+        
+        // Check if it looks like an equality expression by looking for $variable
+        if inner.peek(Token![$]) {
+            // Look ahead to detect OR operator or equality operators
+            // We need to properly scan the token stream instead of converting to string
+            let has_or = contains_or_operator(&inner);
+            let has_equality = contains_equality_operator(&inner);            if has_or {
+                // This is a group of OR'd equality expressions
+                // Parse them as separate terms
+                let paren_content;
+                syn::parenthesized!(paren_content in input);
+                
+                let mut group_terms = Vec::new();
+                group_terms.push(paren_content.parse::<Term>()?);
+                
+                while paren_content.peek(Token![|]) && paren_content.peek2(Token![|]) {
+                    paren_content.parse::<Token![|]>()?;
+                    paren_content.parse::<Token![|]>()?;
+                    // Check if the previous term already has a Not operator
+                    // If so, combine it with Or to create NotOr
+                    let last_term = group_terms.last_mut().unwrap();
+                    if last_term.oper == super::types::TermOper::Not {
+                        last_term.oper = super::types::TermOper::NotOr;
+                    } else {
+                        last_term.oper = super::types::TermOper::Or;
+                    }
+                    group_terms.push(paren_content.parse::<Term>()?);
+                }
+                
+                return Ok(group_terms);
+            } else if has_equality {
+                // This is a single parenthesized equality expression
+                let paren_content;
+                syn::parenthesized!(paren_content in input);
+                return Ok(vec![paren_content.parse::<Term>()?]);
+            }
+        }
+    }
+    
+    // Not a special case, parse as normal term
+    Ok(vec![input.parse::<Term>()?])
+}
+
+/// Check if a ParseStream contains the OR operator (||)
+fn contains_or_operator(input: ParseStream) -> bool {
+    let mut cursor = input.cursor();
+    while let Some((tt, next)) = cursor.token_tree() {
+        if let proc_macro2::TokenTree::Punct(punct) = tt {
+            if punct.as_char() == '|' {
+                // Check if the next token is also |
+                if let Some((proc_macro2::TokenTree::Punct(next_punct), _)) = next.token_tree() {
+                    if next_punct.as_char() == '|' {
+                        return true;
+                    }
+                }
+            }
+        }
+        cursor = next;
+    }
+    false
+}
+
+/// Check if a ParseStream contains an equality operator (==, !=, ~=)
+fn contains_equality_operator(input: ParseStream) -> bool {
+    let mut cursor = input.cursor();
+    while let Some((tt, next)) = cursor.token_tree() {
+        if let proc_macro2::TokenTree::Punct(punct) = tt {
+            match punct.as_char() {
+                '=' | '!' | '~' => {
+                    // Check if the next token is =
+                    if let Some((proc_macro2::TokenTree::Punct(next_punct), _)) = next.token_tree() {
+                        if next_punct.as_char() == '=' {
+                            return true;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        cursor = next;
+    }
+    false
 }
 
 /// Builder structure for queries and systems

@@ -5,8 +5,8 @@ use quote::{quote, quote_spanned};
 
 use super::expansion::{expand_term_type, expand_trav};
 use super::ident_expander::{PairPosition, expand_pair_component, expand_source};
-use super::term::{Term, TermType};
-use super::types::{Access, Reference, TermIdent, TermOper, expand_type};
+use super::term::{EqualityExpr, Term, TermType};
+use super::types::{Access, EqualityOper, Reference, TermIdent, TermOper, expand_type};
 
 /// Generate builder calls for a pair term
 fn expand_pair_builder_calls(
@@ -85,6 +85,74 @@ fn expand_component_builder_calls(
     }
 }
 
+/// Generate builder calls for equality expressions
+fn expand_equality_builder_calls(
+    eq_expr: &EqualityExpr,
+    iter_term: bool,
+    term_accessor: &mut TokenStream,
+    needs_accessor: &mut bool,
+    ops: &mut Vec<TokenStream>,
+) {
+    // Determine the predicate type based on the operator
+    let predicate = match eq_expr.oper {
+        EqualityOper::Equal | EqualityOper::NotEqual => quote! { flecs::PredEq },
+        EqualityOper::Match => quote! { flecs::PredMatch },
+    };
+
+    // Check if we need to strip '!' prefix from match strings
+    let needs_negation = if eq_expr.oper == EqualityOper::Match {
+        if let TermIdent::Literal(lit) = &eq_expr.right {
+            lit.value().starts_with('!')
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    // Expand the right side based on its type
+    let right_value = match &eq_expr.right {
+        TermIdent::Type(ty) => quote! { #ty::id() },
+        TermIdent::Literal(lit) => {
+            // Check if it starts with '!' for negated match
+            let lit_value = lit.value();
+            if needs_negation {
+                let stripped = &lit_value[1..];
+                quote! { #stripped }
+            } else {
+                quote! { #lit }
+            }
+        }
+        TermIdent::Variable(var) => {
+            // var.value() returns "source" for $"source", but we need "$source"
+            let var_name = format!("${}", var.value());
+            quote! { #var_name }
+        }
+        TermIdent::Local(ident) => quote! { #ident },
+        _ => quote! { compile_error!("Unsupported right side for equality expression") },
+    };
+
+    // Create the pair for the with() call
+    if !iter_term {
+        *term_accessor = quote! { .with((#predicate, #right_value)) };
+        *needs_accessor = true;
+    }
+
+    // Set the source to the left variable if it's a variable
+    // Important: Keep the $ prefix for variables!
+    match &eq_expr.left {
+        TermIdent::Variable(var) => {
+            // var.value() returns "this" for $"this", but we need "$this" for set_src
+            let var_name = format!("${}", var.value());
+            ops.push(quote! { .set_src(#var_name) });
+        }
+        TermIdent::Local(ident) => {
+            ops.push(quote! { .set_src(#ident) });
+        }
+        _ => {}
+    }
+}
+
 /// Generate builder calls for operator configuration
 fn expand_operator_builder_calls(
     oper: &TermOper,
@@ -102,6 +170,10 @@ fn expand_operator_builder_calls(
         match oper {
             TermOper::Not => ops.push(quote! { .not() }),
             TermOper::Or => ops.push(quote! { .or() }),
+            TermOper::NotOr => {
+                ops.push(quote! { .not() });
+                ops.push(quote! { .or() });
+            }
             TermOper::AndFrom => ops.push(quote! { .and_from() }),
             TermOper::NotFrom => ops.push(quote! { .not_from() }),
             TermOper::OrFrom => ops.push(quote! { .or_from() }),
@@ -158,7 +230,7 @@ pub fn expand_term_builder_calls(term: &Term, index: u32, iter_term: bool) -> Op
         quote! { .term_at(#index) }
     };
 
-    // Expand term type (component or pair)
+    // Expand term type (component, pair, or equality expression)
     match &term.ty {
         TermType::Pair(first, second) => {
             expand_pair_builder_calls(first, second, iter_term, &mut ops);
@@ -171,6 +243,9 @@ pub fn expand_term_builder_calls(term: &Term, index: u32, iter_term: bool) -> Op
                 &mut needs_accessor,
                 &mut ops,
             );
+        }
+        TermType::Equality(eq_expr) => {
+            expand_equality_builder_calls(eq_expr, iter_term, &mut term_accessor, &mut needs_accessor, &mut ops);
         }
     }
 

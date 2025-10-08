@@ -82,6 +82,10 @@ pub fn expand_term_type(term: &Term) -> Option<TokenStream> {
             let id = id.ident.as_ref()?;
             expand_type(id)?
         }
+        TermType::Equality(_) => {
+            // Equality expressions are not part of the iterator type
+            return None;
+        }
     };
 
     let access_type = match term.reference {

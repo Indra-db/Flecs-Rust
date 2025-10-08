@@ -40,7 +40,7 @@ use syn::{
     parse::{Parse, ParseStream},
 };
 
-use super::types::{Access, Reference, TermIdent, TermOper, peek_id, peek_trav};
+use super::types::{Access, EqualityOper, Reference, TermIdent, TermOper, peek_id, peek_trav};
 
 /// Term identifier with traversal options
 ///
@@ -209,7 +209,46 @@ pub enum TermType {
     Pair(TermId, TermId),
     /// Single component
     Component(TermId),
+    /// Equality expression: variable == entity/string
+    Equality(EqualityExpr),
 }
+
+/// Equality expression for comparing variables
+///
+/// Represents expressions like `$this == UssEnterprise` or `$this ~= "Uss"`
+///
+/// # Fields
+///
+/// - `left`: Left side variable (e.g., `$this`, `$"parent"`)
+/// - `oper`: Comparison operator (==, !=, ~=)
+/// - `right`: Right side (entity, string, or variable)
+///
+/// # Examples
+///
+/// ```ignore
+/// $this == UssEnterprise
+///   → EqualityExpr {
+///       left: Variable("this"),
+///       oper: Equal,
+///       right: Type(UssEnterprise)
+///     }
+///
+/// $this ~= "Uss"
+///   → EqualityExpr {
+///       left: Variable("this"),
+///       oper: Match,
+///       right: Literal("Uss")
+///     }
+/// ```
+pub struct EqualityExpr {
+    /// Left side variable
+    pub left: TermIdent,
+    /// Comparison operator
+    pub oper: super::types::EqualityOper,
+    /// Right side (entity, string, or variable)
+    pub right: TermIdent,
+}
+
 
 /// A complete term in the DSL
 ///
@@ -300,8 +339,60 @@ impl Parse for Term {
     fn parse(input: ParseStream) -> Result<Self> {
         let span = input.span();
         let access = input.parse::<Access>()?;
-        let oper = input.parse::<TermOper>()?;
+        let mut oper = input.parse::<TermOper>()?;
         let reference = input.parse::<Reference>()?;
+        
+        // Check for equality expression: $var == entity or $var != entity or $var ~= "string"
+        if input.peek(Token![$]) {
+            let lookahead = input.fork();
+            let _left = lookahead.parse::<TermIdent>();
+            if _left.is_ok() && (lookahead.peek(Token![==]) || lookahead.peek(Token![!=]) 
+                || (lookahead.peek(Token![~]) && lookahead.peek2(Token![=]))) {
+                // This is an equality expression
+                let left = input.parse::<TermIdent>()?;
+                
+                let equality_oper = if input.peek(Token![==]) {
+                    input.parse::<Token![==]>()?;
+                    EqualityOper::Equal
+                } else if input.peek(Token![!=]) {
+                    input.parse::<Token![!=]>()?;
+                    // NotEqual should add .not() operator
+                    oper = TermOper::Not;
+                    EqualityOper::NotEqual
+                } else if input.peek(Token![~]) {
+                    input.parse::<Token![~]>()?;
+                    input.parse::<Token![=]>()?;
+                    EqualityOper::Match
+                } else {
+                    unreachable!()
+                };
+                
+                let right = input.parse::<TermIdent>()?;
+                
+                // Check if this is a negated match (string starts with '!')
+                if equality_oper == EqualityOper::Match {
+                    if let TermIdent::Literal(lit) = &right {
+                        if lit.value().starts_with('!') {
+                            oper = TermOper::Not;
+                        }
+                    }
+                }
+                
+                return Ok(Term {
+                    access,
+                    reference,
+                    oper,
+                    source: TermId::new(None, input.span()),
+                    ty: TermType::Equality(EqualityExpr {
+                        left,
+                        oper: equality_oper,
+                        right,
+                    }),
+                    span,
+                });
+            }
+        }
+        
         if peek_id(&input) {
             let initial = input.parse::<TermId>()?;
             if !input.peek(Token![,]) && !input.peek(Token![|]) && !input.is_empty() {

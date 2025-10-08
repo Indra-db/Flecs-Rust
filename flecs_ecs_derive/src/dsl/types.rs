@@ -289,9 +289,38 @@ pub enum TermOper {
     OrFrom,
     /// Either this or next term: `A || B`
     Or,
+    /// Combination of Not and Or: `!A || B` (internal)
+    NotOr,
     /// Both terms must match (implicit)
     #[default]
     And,
+}
+
+/// Equality operator type for comparison expressions
+///
+/// Used in advanced query expressions to compare variables with entities or names.
+///
+/// # Operators
+///
+/// - `Equal`: Matches exact entity or name (`==`)
+/// - `NotEqual`: Negates exact match (`!=`)
+/// - `Match`: Fuzzy string matching (`~=`)
+///
+/// # Examples
+///
+/// ```ignore
+/// $this == UssEnterprise        // EqualityOper::Equal
+/// $this != UssEnterprise        // EqualityOper::NotEqual
+/// $this ~= "Uss"                // EqualityOper::Match
+/// ```
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum EqualityOper {
+    /// Exact match: `==`
+    Equal,
+    /// Not equal: `!=`
+    NotEqual,
+    /// Fuzzy match: `~=`
+    Match,
 }
 
 /// Custom keywords used in the DSL
