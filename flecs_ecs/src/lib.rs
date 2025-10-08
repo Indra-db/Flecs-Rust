@@ -2,6 +2,11 @@
 //!
 //! This library provides a comprehensive and low-overhead Rust binding for [flecs].
 //!
+//! ## DSL Documentation
+//!
+//! For comprehensive documentation on the Flecs Rust DSL (query!, system!, observer! macros),
+//! see the **[dsl module](dsl/index.html)**.
+//!
 //! [Flecs]: https://www.flecs.dev/
 
 //this is commented since `no_std` is not ready yet
@@ -32,6 +37,18 @@ pub use flecs_ecs_sys as sys;
 pub mod core;
 
 pub mod addons;
+
+/// Flecs Rust DSL documentation and examples.
+///
+/// This module contains comprehensive documentation for the Flecs Rust DSL, including:
+/// - Query syntax and operators
+/// - System and observer macros
+/// - Complete working examples
+///
+/// All code examples in this module are tested with `cargo test --doc`.
+///
+/// See the [dsl module documentation](dsl/index.html) for the full guide.
+pub mod dsl;
 
 /// this is to allow using the proc macro's inside lib itself that implements its own traits.
 extern crate self as flecs_ecs;
