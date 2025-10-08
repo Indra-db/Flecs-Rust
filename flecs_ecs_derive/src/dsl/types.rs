@@ -8,7 +8,7 @@
 //!
 //! # Examples
 //!
-//! ```ignore
+//! ```text
 //! // Reference types
 //! &Position        → Reference::Ref
 //! &mut Velocity    → Reference::Mut

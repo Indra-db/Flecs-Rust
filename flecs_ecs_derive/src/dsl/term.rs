@@ -16,7 +16,7 @@
 //!
 //! # Examples
 //!
-//! ```ignore
+//! ```text
 //! // Simple component
 //! &Position
 //!   → Term { reference: Ref, ty: Component(Position), ... }

@@ -177,8 +177,6 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// Generates a `<TraitName>Trait` component struct with helper methods for Flecs-based dynamic trait registration.
 ///
 /// See the [`rust_traits`] module for complete documentation, usage patterns, examples, and API reference.
-///
-/// [`rust_traits`]: crate::rust_traits
 #[proc_macro]
 pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     #[cfg(feature = "flecs_query_rust_traits")]
