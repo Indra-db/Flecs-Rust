@@ -211,6 +211,8 @@ pub enum TermType {
     Component(TermId),
     /// Equality expression: variable == entity/string
     Equality(EqualityExpr),
+    /// Scope: { terms... }
+    Scope(Vec<Term>),
 }
 
 /// Equality expression for comparing variables
@@ -341,6 +343,34 @@ impl Parse for Term {
         let access = input.parse::<Access>()?;
         let mut oper = input.parse::<TermOper>()?;
         let reference = input.parse::<Reference>()?;
+        
+        // Check for scope: { terms... }
+        if input.peek(syn::token::Brace) {
+            let scope_content;
+            syn::braced!(scope_content in input);
+            
+            // Parse all terms inside the scope
+            let mut scope_terms = Vec::new();
+            while !scope_content.is_empty() {
+                scope_terms.push(scope_content.parse::<Term>()?);
+                
+                // Handle comma separators
+                if scope_content.peek(Token![,]) {
+                    scope_content.parse::<Token![,]>()?;
+                } else if !scope_content.is_empty() {
+                    break;
+                }
+            }
+            
+            return Ok(Term {
+                access,
+                reference,
+                oper,
+                source: TermId::new(None, input.span()),
+                ty: TermType::Scope(scope_terms),
+                span,
+            });
+        }
         
         // Check for equality expression: $var == entity or $var != entity or $var ~= "string"
         if input.peek(Token![$]) {

@@ -86,6 +86,10 @@ pub fn expand_term_type(term: &Term) -> Option<TokenStream> {
             // Equality expressions are not part of the iterator type
             return None;
         }
+        TermType::Scope(_) => {
+            // Scopes are not part of the iterator type
+            return None;
+        }
     };
 
     let access_type = match term.reference {
