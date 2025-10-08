@@ -3,8 +3,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::parser::Builder;
 use super::expansion::expand_dsl;
+use super::parser::Builder;
 
 /// Expansion function for the `system` macro.
 ///

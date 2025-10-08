@@ -1,11 +1,11 @@
 // DSL parser and builder structures
 
 use proc_macro2::TokenStream;
+use quote::quote;
 use syn::{
     Expr, LitStr, Result, Token, Type,
     parse::{Parse, ParseStream},
 };
-use quote::quote;
 
 use super::term::Term;
 

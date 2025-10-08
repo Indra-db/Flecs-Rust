@@ -6,9 +6,13 @@ use quote::quote;
 use super::types::TermIdent;
 
 /// Expands a TermIdent for use in a first/second position of a pair
-pub fn expand_pair_component(ident: &TermIdent, iter_term: bool, position: PairPosition) -> Vec<TokenStream> {
+pub fn expand_pair_component(
+    ident: &TermIdent,
+    iter_term: bool,
+    position: PairPosition,
+) -> Vec<TokenStream> {
     let mut ops = Vec::new();
-    
+
     match ident {
         TermIdent::Variable(var) => {
             let var_name = format!("${}", var.value());
@@ -51,7 +55,7 @@ pub fn expand_pair_component(ident: &TermIdent, iter_term: bool, position: PairP
             }
         }
     }
-    
+
     ops
 }
 

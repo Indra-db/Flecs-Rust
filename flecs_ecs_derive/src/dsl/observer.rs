@@ -3,8 +3,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::parser::Observer;
 use super::expansion::expand_dsl;
+use super::parser::Observer;
 
 /// Expansion function for the `observer` macro.
 ///

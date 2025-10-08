@@ -7,8 +7,8 @@
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 
-use super::term::{TermId, Term, TermType};
-use super::types::{TermIdent, Reference, TermOper, expand_type};
+use super::term::{Term, TermId, TermType};
+use super::types::{Reference, TermIdent, TermOper, expand_type};
 
 /// Expands traversal operations for a TermId
 ///

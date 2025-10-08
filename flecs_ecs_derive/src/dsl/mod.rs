@@ -14,18 +14,18 @@
 // - `system`: System-specific expansion logic
 // - `observer`: Observer-specific expansion logic
 
-mod types;
-mod term;
-mod parser;
-mod ident_expander;
 mod builder;
 mod expansion;
+mod ident_expander;
+mod observer;
+mod parser;
 mod query;
 mod system;
-mod observer;
+mod term;
+mod types;
 
 // Re-export public API
+pub use observer::expand_observer;
 pub use parser::{Builder, Observer};
 pub use query::expand_query;
 pub use system::expand_system;
-pub use observer::expand_observer;

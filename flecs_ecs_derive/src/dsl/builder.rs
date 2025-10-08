@@ -3,10 +3,10 @@
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 
+use super::expansion::{expand_term_type, expand_trav};
+use super::ident_expander::{PairPosition, expand_pair_component, expand_source};
 use super::term::{Term, TermType};
 use super::types::{Access, Reference, TermIdent, TermOper, expand_type};
-use super::expansion::{expand_trav, expand_term_type};
-use super::ident_expander::{expand_pair_component, expand_source, PairPosition};
 
 /// Generate builder calls for a pair term
 fn expand_pair_builder_calls(
@@ -19,10 +19,18 @@ fn expand_pair_builder_calls(
     let second_id = second.ident.as_ref().expect("Pair with no second.");
 
     // Expand first component
-    ops.extend(expand_pair_component(first_id, iter_term, PairPosition::First));
-    
+    ops.extend(expand_pair_component(
+        first_id,
+        iter_term,
+        PairPosition::First,
+    ));
+
     // Expand second component
-    ops.extend(expand_pair_component(second_id, iter_term, PairPosition::Second));
+    ops.extend(expand_pair_component(
+        second_id,
+        iter_term,
+        PairPosition::Second,
+    ));
 
     // Configure traversal for first
     let id_ops = expand_trav(first);
@@ -141,11 +149,7 @@ fn expand_access_builder_calls(
 }
 
 /// Expands a single term into builder calls
-pub fn expand_term_builder_calls(
-    term: &Term,
-    index: u32,
-    iter_term: bool,
-) -> Option<TokenStream> {
+pub fn expand_term_builder_calls(term: &Term, index: u32, iter_term: bool) -> Option<TokenStream> {
     let mut ops = Vec::new();
     let mut needs_accessor = false;
     let mut term_accessor = if !iter_term {

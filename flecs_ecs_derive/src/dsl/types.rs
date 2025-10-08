@@ -1,17 +1,59 @@
-// Core types for DSL parsing
+//! Core types for DSL parsing
+//!
+//! This module defines the fundamental types used throughout the DSL implementation:
+//! - `Reference`: Tracks Rust reference types (&, &mut, none)
+//! - `Access`: Tracks Flecs access specifiers ([in], [out], etc.)
+//! - `TermIdent`: Different kinds of component identifiers
+//! - `TermOper`: Query operators (!, ?, ||, etc.)
+//!
+//! # Examples
+//!
+//! ```ignore
+//! // Reference types
+//! &Position        → Reference::Ref
+//! &mut Velocity    → Reference::Mut
+//! Tag              → Reference::None
+//!
+//! // Access specifiers
+//! [in] Position    → Access::In
+//! [out] Velocity   → Access::Out
+//! [filter] Tag     → Access::Filter
+//!
+//! // Term identifiers
+//! Position         → TermIdent::Type
+//! "Position"       → TermIdent::Literal
+//! $var             → TermIdent::Variable
+//! *                → TermIdent::Wildcard
+//! ```
 
 use proc_macro2::TokenStream;
 use syn::{
-    Ident, LitStr, Path, Result, Token, Type,
+    Ident, LitStr, Path, Result, Token, Type, bracketed,
     parse::{Parse, ParseStream},
-    token::Bracket, bracketed,
+    token::Bracket,
 };
 
 /// Reference type for terms (&, &mut, or none)
+///
+/// Determines how a component is accessed in the query iterator:
+/// - `Ref`: Immutable reference, allows multiple readers
+/// - `Mut`: Mutable reference, exclusive access
+/// - `None`: No reference, component is filtered but not accessed
+///
+/// # Examples
+///
+/// ```ignore
+/// query!(world, &Position)      // Reference::Ref
+/// query!(world, &mut Velocity)  // Reference::Mut  
+/// query!(world, Tag)            // Reference::None (filter only)
+/// ```
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Reference {
+    /// Mutable reference (&mut T)
     Mut,
+    /// Immutable reference (&T)
     Ref,
+    /// No reference - component exists but is not accessed
     #[default]
     None,
 }
@@ -33,13 +75,43 @@ impl Parse for Reference {
 }
 
 /// Access specifier for terms ([in], [out], [inout], [filter], [none])
+///
+/// Controls how Flecs handles component access:
+/// - `In`: Read-only access (optimization hint)
+/// - `Out`: Write-only access, current value not read
+/// - `InOut`: Read-write access
+/// - `Filter`: Component matched but not accessed (most efficient)
+/// - `None`: No data access needed
+/// - `Omitted`: No explicit access specified (inferred from reference type)
+///
+/// # Examples
+///
+/// ```ignore
+/// query!(world, [in] Position)      // Access::In
+/// query!(world, [out] &mut Vel)     // Access::Out
+/// query!(world, [filter] Active)    // Access::Filter
+/// query!(world, &Position)          // Access::Omitted (inferred as In)
+/// ```
+///
+/// # Performance
+///
+/// - `Filter`: Most efficient, no data access
+/// - `In`: Allows parallel access
+/// - `Out`: Optimization when current value not needed
+/// - `InOut`: Full access, may block parallel queries
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Access {
+    /// Read-only access [in]
     In,
+    /// Write-only access [out]
     Out,
+    /// Read-write access [inout]
     InOut,
+    /// Match only, no access [filter]
     Filter,
+    /// No access needed [none]
     None,
+    /// No explicit access specifier (inferred)
     #[default]
     Omitted,
 }
@@ -74,15 +146,52 @@ impl Parse for Access {
 }
 
 /// Identifier type for terms (can be a type, variable, literal, etc.)
+///
+/// Represents different ways to identify components in the DSL:
+///
+/// # Variants
+///
+/// - `Local`: Local Rust identifier (e.g., `$my_id`)
+/// - `Variable`: Named query variable (e.g., `$"parent"`)
+/// - `Type`: Rust type (e.g., `Position`)
+/// - `EnumType`: Flecs enum type (e.g., `variant Color`)
+/// - `Literal`: String literal name (e.g., `"Position"`)
+/// - `SelfType`: The `Self` type in generic contexts
+/// - `SelfVar`: The `$self` variable for current entity
+/// - `Wildcard`: Wildcard matcher `*` (matches any)
+/// - `Any`: Universal matcher `_` (matches anything)
+///
+/// # Examples
+///
+/// ```ignore
+/// query!(world, Position)           // TermIdent::Type
+/// query!(world, "Position")         // TermIdent::Literal
+/// query!(world, $parent)            // TermIdent::Local
+/// query!(world, $"parent")          // TermIdent::Variable
+/// query!(world, *)                  // TermIdent::Wildcard
+/// query!(world, _)                  // TermIdent::Any
+/// query!(world, variant Color)      // TermIdent::EnumType
+/// query!(world, Self)               // TermIdent::SelfType
+/// query!(world, $self)              // TermIdent::SelfVar
+/// ```
 pub enum TermIdent {
+    /// Local Rust identifier: `$my_id`
     Local(Ident),
+    /// Named query variable: `$"parent"`
     Variable(LitStr),
+    /// Rust type: `Position`
     Type(Type),
+    /// Flecs enum type: `variant Color`
     EnumType(Path),
+    /// String literal: `"Position"`
     Literal(LitStr),
+    /// Self type in generic context
     SelfType,
+    /// Self variable for current entity
     SelfVar,
+    /// Wildcard: `*` (matches any)
     Wildcard,
+    /// Universal: `_` (matches anything)
     Any,
 }
 
@@ -135,14 +244,52 @@ pub(crate) fn peek_id(input: &ParseStream) -> bool {
 }
 
 /// Operator type for terms (not, optional, and|, not|, or|, or, and)
+///
+/// Controls how terms are combined in the query:
+///
+/// # Operators
+///
+/// - `And`: Default, all terms must match (implicit)
+/// - `Or`: Either this term or the next must match (`||`)
+/// - `Not`: Term must not match (`!`)
+/// - `Optional`: Term may or may not match (`?`)
+/// - `AndFrom`: Match with component from previous term (`and|`)
+/// - `NotFrom`: Exclude component from previous term (`not|`)
+/// - `OrFrom`: Match one of components from previous term (`or|`)
+///
+/// # Examples
+///
+/// ```ignore
+/// query!(world, &Position, &Velocity)    // And (implicit)
+/// query!(world, &Position, !Dead)        // Not
+/// query!(world, &Position, ?&Velocity)   // Optional
+/// query!(world, &Pos || &Vel)            // Or
+/// query!(world, &Position, and| Parent)  // AndFrom
+/// query!(world, &Position, not| Dead)    // NotFrom
+/// query!(world, &Position, or| Source)   // OrFrom
+/// ```
+///
+/// # Semantics
+///
+/// - `And`: A ∧ B (both must be true)
+/// - `Or`: A ∨ B (at least one must be true)
+/// - `Not`: A ∧ ¬B (A must be true, B must be false)
+/// - `Optional`: A ∧ (B ∨ ¬B) (A must be true, B doesn't matter)
 #[derive(Default, Debug, PartialEq, Eq)]
 pub enum TermOper {
+    /// Exclude entities with this term: `!Tag`
     Not,
+    /// Term is optional: `?&Component`
     Optional,
+    /// Match with component from previous term: `and| Source`
     AndFrom,
+    /// Exclude component from previous term: `not| Dead`
     NotFrom,
+    /// Match one from previous term: `or| Source`
     OrFrom,
+    /// Either this or next term: `A || B`
     Or,
+    /// Both terms must match (implicit)
     #[default]
     And,
 }
@@ -206,7 +353,7 @@ pub(crate) fn peek_trav(input: ParseStream) -> bool {
 /// Expands a TermIdent to its TokenStream representation for types
 pub fn expand_type(ident: &TermIdent) -> Option<TokenStream> {
     use quote::quote;
-    
+
     match ident {
         TermIdent::Type(ty) => Some(quote! { #ty }),
         TermIdent::EnumType(ty) => Some(quote! { #ty }),

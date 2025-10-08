@@ -1,23 +1,105 @@
-// Term-related structures for DSL parsing
+//! Term-related structures for DSL parsing
+//!
+//! This module defines the structures that represent parsed query terms:
+//! - `TermId`: Component identifier with optional traversal
+//! - `TermType`: Either a single component or a pair
+//! - `Term`: Complete term with all metadata
+//!
+//! # Term Structure
+//!
+//! A complete term consists of:
+//! ```text
+//! [access] operator reference type(source | traversal)
+//!   ↓        ↓        ↓         ↓      ↓        ↓
+//! [filter]   !        &      Position  up    ChildOf
+//! ```
+//!
+//! # Examples
+//!
+//! ```ignore
+//! // Simple component
+//! &Position
+//!   → Term { reference: Ref, ty: Component(Position), ... }
+//!
+//! // Component with traversal
+//! &Position(up ChildOf)
+//!   → Term { ty: Component(Position { trav_up: true, ... }), ... }
+//!
+//! // Pair
+//! (ChildOf, Parent)
+//!   → Term { ty: Pair(ChildOf, Parent), ... }
+//!
+//! // Complex term
+//! [filter] !Tag(source | up Parent)
+//!   → Term { access: Filter, oper: Not, source: ..., ... }
+//! ```
 
 use proc_macro2::Span;
 use syn::{
-    Result, Token,
+    Result, Token, parenthesized,
     parse::{Parse, ParseStream},
-    parenthesized,
 };
 
 use super::types::{Access, Reference, TermIdent, TermOper, peek_id, peek_trav};
 
 /// Term identifier with traversal options
+///
+/// Represents a component identifier along with optional relationship traversal.
+/// Traversal controls how the query follows relationships in the entity hierarchy.
+///
+/// # Fields
+///
+/// - `ident`: The component identifier (type, variable, etc.)
+/// - `trav_self`: Include the entity itself
+/// - `trav_up`: Traverse up the hierarchy
+/// - `up_ident`: Specific relationship to traverse up
+/// - `trav_desc`: Traverse down (descending/breadth-first)
+/// - `trav_cascade`: Traverse down (cascading/depth-first)
+/// - `cascade_ident`: Specific relationship to cascade
+/// - `span`: Source location for error reporting
+///
+/// # Examples
+///
+/// ```ignore
+/// // Simple identifier
+/// Position
+///   → TermId { ident: Some(Position), trav_self: false, ... }
+///
+/// // With up traversal
+/// Position(up ChildOf)
+///   → TermId { ident: Some(Position), trav_up: true, up_ident: Some(ChildOf), ... }
+///
+/// // With cascade
+/// Position(cascade ChildOf)
+///   → TermId { ident: Some(Position), trav_cascade: true, cascade_ident: Some(ChildOf), ... }
+///
+/// // Combined traversal
+/// Position(self up cascade ChildOf)
+///   → TermId { trav_self: true, trav_up: true, trav_cascade: true, ... }
+/// ```
+///
+/// # Traversal Semantics
+///
+/// - `up`: Look for component on parent entities
+/// - `cascade`: Depth-first iteration over children
+/// - `desc`: Breadth-first iteration over children
+/// - `self`: Include current entity (usually combined with traversal)
 pub struct TermId {
+    /// The component identifier
     pub ident: Option<TermIdent>,
+    /// Include the entity itself in traversal
     pub trav_self: bool,
+    /// Traverse up the hierarchy
     pub trav_up: bool,
+    /// Specific relationship for up traversal
     pub up_ident: Option<TermIdent>,
+    /// Traverse down breadth-first
     pub trav_desc: bool,
+    /// Traverse down depth-first
     pub trav_cascade: bool,
+    /// Specific relationship for cascade traversal
     pub cascade_ident: Option<TermIdent>,
+    /// Source span for error reporting
     pub span: Span,
 }
 
@@ -40,7 +122,7 @@ impl Parse for TermId {
     fn parse(input: ParseStream) -> Result<Self> {
         use super::types::kw;
         use syn::Ident;
-        
+
         let span: Span = input.span();
         let ident = if !peek_trav(input) {
             let ident = input.parse::<TermIdent>()?;
@@ -88,19 +170,129 @@ impl Parse for TermId {
 }
 
 /// Term type (either a component or a pair)
+///
+/// Represents the fundamental type of a query term:
+/// - `Component`: A single component type
+/// - `Pair`: A relationship pair (First, Second)
+///
+/// # Examples
+///
+/// ```ignore
+/// // Component
+/// Position
+///   → TermType::Component(TermId { ident: Some(Position), ... })
+///
+/// // Pair
+/// (ChildOf, Parent)
+///   → TermType::Pair(
+///         TermId { ident: Some(ChildOf), ... },
+///         TermId { ident: Some(Parent), ... }
+///     )
+///
+/// // Wildcard pair
+/// (ChildOf, *)
+///   → TermType::Pair(
+///         TermId { ident: Some(ChildOf), ... },
+///         TermId { ident: Some(Wildcard), ... }
+///     )
+/// ```
+///
+/// # Pairs in Flecs
+///
+/// Pairs represent relationships between entities:
+/// - (ChildOf, Parent): Entity is a child of Parent
+/// - (Likes, Food): Entity likes Food
+/// - (*, Target): Any relationship with Target
 #[allow(clippy::large_enum_variant)]
 pub enum TermType {
+    /// Relationship pair: (First, Second)
     Pair(TermId, TermId),
+    /// Single component
     Component(TermId),
 }
 
 /// A complete term in the DSL
+///
+/// Represents a fully parsed query term with all its attributes:
+/// - How it's accessed (access)
+/// - Whether it's a reference (reference)
+/// - How it combines with other terms (oper)
+/// - Where to find the component (source)
+/// - What component/pair it refers to (ty)
+///
+/// # Fields
+///
+/// - `access`: Access mode ([in], [out], [filter], etc.)
+/// - `reference`: Rust reference type (&, &mut, none)
+/// - `oper`: Logical operator (!, ?, ||, etc.)
+/// - `source`: Optional explicit source entity
+/// - `ty`: The component or pair being queried
+/// - `span`: Source location for error reporting
+///
+/// # Examples
+///
+/// ```ignore
+/// // Simple read-only component
+/// &Position
+///   → Term {
+///       access: Omitted,
+///       reference: Ref,
+///       oper: And,
+///       source: TermId { ident: None, ... },
+///       ty: Component(Position),
+///       span: ...
+///     }
+///
+/// // Filtered component with NOT operator
+/// ![filter] Dead
+///   → Term {
+///       access: Filter,
+///       reference: None,
+///       oper: Not,
+///       ty: Component(Dead),
+///       ...
+///     }
+///
+/// // Optional mutable component
+/// ?&mut Velocity
+///   → Term {
+///       reference: Mut,
+///       oper: Optional,
+///       ty: Component(Velocity),
+///       ...
+///     }
+///
+/// // Pair with explicit source
+/// (ChildOf, Parent)(source)
+///   → Term {
+///       source: TermId { ident: Some(source), ... },
+///       ty: Pair(ChildOf, Parent),
+///       ...
+///     }
+/// ```
+///
+/// # Term Order
+///
+/// Terms with references (&, &mut) must come before filter terms:
+/// ```ignore
+/// // ✓ Valid
+/// query!(world, &Position, &mut Velocity, !Dead, [filter] Active)
+///
+/// // ✗ Invalid - reference after filter
+/// query!(world, Tag, &Position)  // Compile error!
+/// ```
 pub struct Term {
+    /// Access mode: [in], [out], [filter], etc.
     pub access: Access,
+    /// Rust reference: &, &mut, or none
     pub reference: Reference,
+    /// Logical operator: !, ?, ||, etc.
     pub oper: TermOper,
+    /// Optional explicit source entity
     pub source: TermId,
+    /// Component or pair being queried
     pub ty: TermType,
+    /// Source span for error reporting
     pub span: Span,
 }
 
