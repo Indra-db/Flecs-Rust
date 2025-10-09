@@ -158,8 +158,8 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
         &mut data[elem]
     }
 
-    fn resize_generic_vec<T: Default>(data: &mut Vec<T>, elem: usize) {
-        data.resize_with(elem + 1, || T::default());
+    fn resize_generic_vec<T: Default>(data: &mut Vec<T>, new_size: usize) {
+        data.resize_with(new_size, || T::default());
     }
 
     // Ensure element exists, return
