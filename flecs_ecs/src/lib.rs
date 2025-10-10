@@ -2,10 +2,10 @@
 //!
 //! This library provides a comprehensive and low-overhead Rust binding for [flecs].
 //!
-//! ## DSL Documentation
+//! ## Documentation
 //!
-//! For comprehensive documentation on the Flecs Rust DSL (query!, system!, observer! macros),
-//! see the **[dsl module](dsl/index.html)**.
+//! - **[Component Macro](component_macro/index.html)** - Complete guide to the `#[derive(Component)]` macro
+//! - **[DSL Module](dsl/index.html)** - Query, system, and observer DSL documentation
 //!
 //! [Flecs]: https://www.flecs.dev/
 
@@ -49,6 +49,17 @@ pub mod addons;
 ///
 /// See the [dsl module documentation](dsl/index.html) for the full guide.
 pub mod dsl;
+
+/// Component derive macro documentation and usage guide.
+///
+/// This module contains comprehensive documentation for the `Component` derive macro, including:
+/// - Basic component registration
+/// - Component traits (Transitive, Sparse, etc.)
+/// - Hooks (on_add, on_set, on_remove, on_replace)
+/// - Add and set attributes
+/// - Meta information
+/// - Common patterns and best practices
+pub mod component_macro;
 
 /// this is to allow using the proc macro's inside lib itself that implements its own traits.
 extern crate self as flecs_ecs;
