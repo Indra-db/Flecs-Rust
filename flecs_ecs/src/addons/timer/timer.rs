@@ -8,7 +8,7 @@ use crate::core::{
     ComponentId, Entity, EntityView, IntoEntity, QueryTuple, World, WorldProvider, WorldRef,
 };
 
-use super::system::{System, SystemBuilder};
+use super::super::system::{System, SystemBuilder};
 
 pub trait TimerAPI: Sized {
     fn world(&self) -> WorldRef<'_>;

@@ -4,7 +4,7 @@ use crate::core::{InternalComponentHooks, OnComponentRegistration, World, WorldP
 use crate::sys;
 
 #[cfg(feature = "flecs_module")]
-use super::module::Module;
+use super::super::module::Module;
 
 /// Component that stores world statistics
 pub type WorldStats = sys::EcsWorldStats;
@@ -22,7 +22,7 @@ pub struct Stats;
 impl Module for Stats {
     fn module(world: &World) {
         #[cfg(feature = "flecs_units")]
-        world.import::<super::units::Units>();
+        world.import::<super::super::units::Units>();
         unsafe { sys::FlecsStatsImport(world.ptr_mut()) };
         world.component::<WorldSummary>();
         world.component::<WorldStats>();

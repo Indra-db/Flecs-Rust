@@ -1,41 +1,44 @@
-use core::ops::Deref;
-use core::ptr::addr_of;
-
-use crate::addons::create_pre_registered_extern_component;
-use crate::core::*;
-use crate::sys;
-use flecs_ecs_sys::*; //for all the alerts
-
+/// Marker component, added to an entity to indicate it is an alert.
 pub trait SeverityAlert {}
 
-create_pre_registered_extern_component!(
-    Alert,
-    FLECS_IDEcsAlertID_,
-    "Component added to alert, and used as first element of alert severity pair."
-);
+pub mod flecs {
+    use super::SeverityAlert;
+    use crate::addons::create_pre_registered_extern_component;
+    use crate::core::*;
+    use crate::sys;
+    use crate::sys::*;
+    use core::ops::Deref;
+    use core::ptr::addr_of;
 
-create_pre_registered_extern_component!(Info, EcsAlertInfo, "Info alert severity.");
-create_pre_registered_extern_component!(Warning, EcsAlertWarning, "Warning alert severity.");
-create_pre_registered_extern_component!(Error, EcsAlertError, "Error alert severity.");
-create_pre_registered_extern_component!(Critical, EcsAlertCritical, "Critical alert severity.");
+    create_pre_registered_extern_component!(
+        Alert,
+        FLECS_IDEcsAlertID_,
+        "Component added to alert, and used as first element of alert severity pair."
+    );
 
-impl SeverityAlert for Info {}
-impl SeverityAlert for Warning {}
-impl SeverityAlert for Error {}
-impl SeverityAlert for Critical {}
+    create_pre_registered_extern_component!(Info, EcsAlertInfo, "Info alert severity.");
+    create_pre_registered_extern_component!(Warning, EcsAlertWarning, "Warning alert severity.");
+    create_pre_registered_extern_component!(Error, EcsAlertError, "Error alert severity.");
+    create_pre_registered_extern_component!(Critical, EcsAlertCritical, "Critical alert severity.");
 
-create_pre_registered_extern_component!(
-    AlertsActive,
-    FLECS_IDEcsAlertsActiveID_,
-    "Component added to alert source which tracks how many active alerts there are."
-);
-create_pre_registered_extern_component!(
-    AlertInstance,
-    FLECS_IDEcsAlertInstanceID_,
-    "Component added to alert instance."
-);
-create_pre_registered_extern_component!(
-    AlertTimeout,
-    FLECS_IDEcsAlertTimeoutID_,
-    "Component added to alert which tracks how long an alert has been inactive."
-);
+    impl SeverityAlert for Info {}
+    impl SeverityAlert for Warning {}
+    impl SeverityAlert for Error {}
+    impl SeverityAlert for Critical {}
+
+    create_pre_registered_extern_component!(
+        AlertsActive,
+        FLECS_IDEcsAlertsActiveID_,
+        "Component added to alert source which tracks how many active alerts there are."
+    );
+    create_pre_registered_extern_component!(
+        AlertInstance,
+        FLECS_IDEcsAlertInstanceID_,
+        "Component added to alert instance."
+    );
+    create_pre_registered_extern_component!(
+        AlertTimeout,
+        FLECS_IDEcsAlertTimeoutID_,
+        "Component added to alert which tracks how long an alert has been inactive."
+    );
+}

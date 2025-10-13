@@ -12,6 +12,7 @@
 //this is commented since `no_std` is not ready yet
 //#![cfg_attr(not(feature = "std"), no_std)] // Enable `no_std` if `std` feature is disabled
 #![allow(dead_code)]
+#![allow(clippy::module_inception)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(all(

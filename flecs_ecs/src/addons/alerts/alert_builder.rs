@@ -1,10 +1,9 @@
 //! [`AlertBuilder`] is a builder pattern for creating [`Alert`]s.
 
+use super::*;
 use crate::core::internals::*;
 use crate::core::*;
 use crate::sys;
-
-use super::Alert;
 
 use core::mem::ManuallyDrop;
 
