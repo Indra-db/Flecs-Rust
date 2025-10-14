@@ -23,6 +23,8 @@ pub trait ClonedComponentPointers<T: ClonedTuple> {
         record: *const ecs_record_t,
     ) -> Self;
 
+    fn new_singleton<'a, const SHOULD_PANIC: bool>(world: impl WorldProvider<'a>) -> Self;
+
     fn get_tuple<'a>(&self) -> T::TupleType<'a>;
 
     fn has_all_components(&self) -> bool;
@@ -48,6 +50,28 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
             world,
             entity,
             record,
+            &mut array_components[..],
+            #[cfg(feature = "flecs_safety_locks")]
+            &mut safety_info,
+        );
+
+        Self {
+            array_components,
+            has_all_components,
+            #[cfg(feature = "flecs_safety_locks")]
+            safety_info,
+            _marker: PhantomData::<T>,
+        }
+    }
+
+    fn new_singleton<'a, const SHOULD_PANIC: bool>(world: impl WorldProvider<'a>) -> Self {
+        let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
+
+        #[cfg(feature = "flecs_safety_locks")]
+        let mut safety_info = [sys::ecs_safety_info_t::default(); LEN];
+
+        let has_all_components = T::populate_array_ptrs_singleton::<SHOULD_PANIC>(
+            world,
             &mut array_components[..],
             #[cfg(feature = "flecs_safety_locks")]
             &mut safety_info,
@@ -143,10 +167,89 @@ pub trait ClonedTuple: Sized {
         Self::Pointers::new::<'a, SHOULD_PANIC>(world, entity, record)
     }
 
+    fn create_ptrs_singleton<'a, const SHOULD_PANIC: bool>(
+        world: impl WorldProvider<'a>,
+    ) -> Self::Pointers {
+        Self::Pointers::new_singleton::<'a, SHOULD_PANIC>(world)
+    }
+
+    #[inline(always)]
+    fn internal_populate_array_ptrs<'a, const SHOULD_PANIC: bool, T: ClonedTupleTypeOperation>(
+        world: &WorldRef<'a>,
+        world_ptr: *mut sys::ecs_world_t,
+        entity: u64,
+        record: *const ecs_record_t,
+        id: u64,
+        components: &mut [*mut c_void],
+        has_all_components: &mut bool,
+        index: usize,
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [SafetyInfo],
+    ) {
+        let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
+        let component_ptr = get_ptr.component_ptr;
+
+        if <T::OnlyType as ComponentOrPairId>::IS_PAIR {
+            assert!(
+                {
+                    let first = ecs_first(id, world);
+                    first != flecs::Wildcard::ID && first != flecs::Any::ID
+                },
+                "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
+            );
+
+            assert!(
+                {
+                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
+                    let cast_id =
+                        world.component_id::<<T::OnlyType as ComponentOrPairId>::CastType>();
+                    id != 0 && id == cast_id
+                },
+                "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
+            );
+        }
+
+        if component_ptr.is_null() {
+            components[index] = core::ptr::null_mut();
+            if !T::IS_OPTION {
+                if SHOULD_PANIC {
+                    ecs_assert!(false, FlecsErrorCode::OperationFailed,
+                    "Component `{}` not found on `EntityView::cloned` operation
+                    with parameters: `{}`.
+                    Use `try_cloned` variant to avoid assert/panicking if you want to handle the error
+                    or use `Option<{}> instead to handle individual cases.",
+                    core::any::type_name::<T::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<T::ActualType>());
+                    panic!(
+                        "Component `{}` not found on `EntityView::cloned` operation
+                with parameters: `{}`.
+                Use `try_cloned` variant to avoid assert/panicking if
+                you want to handle the error or use `Option<{}>
+                instead to handle individual cases.",
+                        core::any::type_name::<T::OnlyType>(),
+                        core::any::type_name::<Self>(),
+                        core::any::type_name::<T::ActualType>()
+                    );
+                }
+                *has_all_components = false;
+            }
+        } else {
+            components[index] = component_ptr;
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                safety_info[index] = get_ptr.si;
+            }
+        }
+    }
+
     fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
+        components: &mut [*mut c_void],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
+    ) -> bool;
+
+    fn populate_array_ptrs_singleton<'a, const SHOULD_PANIC: bool>(
+        world: impl WorldProvider<'a>,
         components: &mut [*mut c_void],
         #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
     ) -> bool;
@@ -177,59 +280,54 @@ where
         let world_ptr = unsafe {
             sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t
         };
-        let table = unsafe { (*record).table };
         let entity = *entity;
         let mut has_all_components = true;
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
-        let component_ptr = get_ptr.component_ptr;
-
-        if <A::OnlyType as ComponentOrPairId>::IS_PAIR {
-            assert!(
-                {
-                    let first = ecs_first(id, world_ref);
-                    first != flecs::Wildcard::ID && first != flecs::Any::ID
-                },
-                "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
-            );
-
-            assert!(
-                {
-                    let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
-                    let cast_id =
-                        world_ref.component_id::<<A::OnlyType as ComponentOrPairId>::CastType>();
-                    id != 0 && id == cast_id
-                },
-                "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
-            );
-        }
-
-        if component_ptr.is_null() {
-            components[0] = core::ptr::null_mut();
-            has_all_components = false;
-            if SHOULD_PANIC && !A::IS_OPTION {
-                ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                    "Component `{}` not found on `EntityView::cloned` operation
-                    with parameters: `{}`.
-                    Use `try_cloned` variant to avoid assert/panicking if you want to handle the error
-                    or use `Option<{}> instead to handle individual cases.",
-                    core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType>());
-                panic!("Component `{}` not found on `EntityView::cloned` operation
-                with parameters: `{}`.
-                Use `try_cloned` variant to avoid assert/panicking if
-                you want to handle the error or use `Option<{}>
-                instead to handle individual cases.",
-                core::any::type_name::<A::OnlyType>(), core::any::type_name::<Self>(), core::any::type_name::<A::ActualType>());
-            }
-        } else {
-            components[0] = component_ptr;
+        Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
+            &world_ref,
+            world_ptr,
+            entity,
+            record,
+            id,
+            components,
+            &mut has_all_components,
+            0,
             #[cfg(feature = "flecs_safety_locks")]
-            {
-                safety_info[0] = get_ptr.si;
-            }
-        }
+            safety_info,
+        );
+
+        has_all_components
+    }
+
+    fn populate_array_ptrs_singleton<'a, const SHOULD_PANIC: bool>(
+    world: impl WorldProvider<'a>,
+    components: &mut [*mut c_void],
+    #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
+    ) -> bool {
+        let world_ref = world.world();
+        let world_ptr = unsafe {
+            sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t
+        };
+        let entity = <<A::OnlyType as ComponentOrPairId>::First>::entity_id(world);
+        let record = unsafe { sys::ecs_record_find(world_ptr, entity) };
+        let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
+        let mut has_all_components = true;
+
+
+        Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
+            &world_ref,
+            world_ptr,
+            entity,
+            record,
+            id,
+            components,
+            &mut has_all_components,
+            0,
+            #[cfg(feature = "flecs_safety_locks")]
+            safety_info,
+        );
 
         has_all_components
     }
@@ -299,7 +397,6 @@ macro_rules! impl_cloned_tuple {
 
                 let world_ref = world.world();
                 let world_ptr = unsafe { sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t };
-                let table = unsafe { (*record).table };
                 let entity = *entity;
                 let mut index : usize = 0;
                 let mut has_all_components = true;
@@ -307,59 +404,40 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
-                    let component_ptr = get_ptr.component_ptr;
-
-                    if <$t::OnlyType as ComponentOrPairId>::IS_PAIR {
-                        assert!(
-                            {
-                                let first = ecs_first(id, world_ref);
-                                first != flecs::Wildcard::ID && first != flecs::Any::ID
-                            },
-                            "Pair with flecs::Wildcard or flecs::Any as first terms are not supported"
-                        );
-
-                        assert!(
-                            {
-                                let id = unsafe { sys::ecs_get_typeid(world_ptr, id) };
-                                let cast_id =
-                                    world_ref.component_id::<<$t::OnlyType as ComponentOrPairId>::CastType>();
-                                id != 0 && id == cast_id
-                            },
-                            "Pair is not a (data) component. Possible cause: PairIsTag trait or cast type is not the same as the pair due to flecs::Wildcard or flecs::Any"
-                        );
-                    }
-
-                    if !component_ptr.is_null() {
-                        components[index] = component_ptr;
+                    Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
                         #[cfg(feature = "flecs_safety_locks")]
-                        {
-                            safety_info[index] = get_ptr.si;
-                        }
-                    } else {
-                        components[index] = core::ptr::null_mut();
-                        if !$t::IS_OPTION {
-                            if SHOULD_PANIC {
-                                ecs_assert!(false, FlecsErrorCode::OperationFailed,
-                                    "Component `{}` not found on `EntityView::cloned` operation 
-                                    with parameters: `{}`. 
-                                    Use `try_cloned` variant to avoid assert/panicking if you want to handle 
-                                    the error or use `Option<{}> instead to handle individual cases.",
-                                    core::any::type_name::<$t::OnlyType>(), core::any::type_name::<Self>(),
-                                    core::any::type_name::<$t::ActualType>());
-                                panic!("Component `{}` not found on `EntityView::cloned`operation 
-                                with parameters: `{}`. 
-                                Use `try_cloned` variant to avoid assert/panicking if you want to handle the error 
-                                or use `Option<{}> instead to handle individual cases.", core::any::type_name::<$t::OnlyType>(),
-                                core::any::type_name::<Self>(), core::any::type_name::<$t::ActualType>());
-                            }
-                            has_all_components = false;
-                        }
-                    }
+                        safety_info);
+
                     index += 1;
                 )*
 
                 has_all_components
+            }
+
+            #[allow(unused)]
+            fn populate_array_ptrs_singleton<'a, const SHOULD_PANIC: bool>(
+                world: impl WorldProvider<'a>, components: &mut [*mut c_void],
+                #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t]
+            ) -> bool {
+                let world_ref = world.world();
+                let world_ptr = unsafe { sys::ecs_get_world(world_ref.ptr_mut() as *const c_void) as *mut sys::ecs_world_t };
+                let mut index : usize = 0;
+                let mut has_all_components = true;
+
+                $(
+                    let entity = <<$t::OnlyType as ComponentOrPairId>::First>::entity_id(world_ref);
+                    let record = unsafe { sys::ecs_record_find(world_ptr, entity) };
+                    let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
+
+                    Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
+                        #[cfg(feature = "flecs_safety_locks")]
+                        safety_info);
+
+                    index += 1;
+                )*
+
+                has_all_components
+
             }
 
             #[allow(unused, clippy::unused_unit)]

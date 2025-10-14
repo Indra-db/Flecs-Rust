@@ -249,15 +249,72 @@ impl World {
     ///
     /// * [`World::get()`]
     #[must_use]
-    pub fn cloned<T: ClonedTupleTypeOperation>(&self) -> T::ActualType
-    where
-        T::OnlyType: ComponentOrPairId,
-    {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::First>::entity_id(self),
-        );
-        entity.cloned::<T>()
+    pub fn cloned<T: ClonedTuple>(&self) -> <T as cloned_tuple::ClonedTuple>::TupleType<'_> {
+        let tuple_data = T::create_ptrs_singleton::<true>(self);
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            let world = self.world.real_world();
+            let safety_info = tuple_data.safety_info();
+
+            let multithreaded = self.world.is_currently_multithreaded();
+
+            if multithreaded {
+                __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+            } else {
+                // single-threaded mode
+                __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+            }
+        }
+        tuple_data.get_tuple()
+    }
+
+    /// Tries to clone a singleton component and/or relationship from the world and returns it.
+    /// each component type must be marked `&`. This helps Rust type checker to determine if it's a relationship.
+    /// use `Option` wrapper to indicate if the component is optional.
+    /// use `()` tuple format when getting multiple components.
+    ///
+    /// If the world does not have all the requested components, returns [`None`].
+    /// If the world has all the requested components, returns the cloned components wrapped in [`Some`].
+    ///
+    /// # Note
+    ///
+    /// - You cannot clone component tags with this function.
+    /// - You can only clone relationships with a payload, so where one is not a tag / not a zst.
+    ///
+    /// # Panics
+    ///
+    /// - This will panic if within the function you do any operation that could invalidate the reference.
+    ///   This happens when the entity is moved to a different table in memory. Such as adding
+    ///   removing components or creating/deleting entities where the entity belongs to the same table.
+    ///   In case you need to do such operations, you can either do it after the get operation or
+    ///   use a different approach to avoid invalidating the reference.
+    pub fn try_cloned<T: ClonedTuple>(
+        &self,
+    ) -> Option<<T as cloned_tuple::ClonedTuple>::TupleType<'_>> {
+        let tuple_data = T::create_ptrs_singleton::<false>(self);
+
+        //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
+        let has_all_components = tuple_data.has_all_components();
+
+        if has_all_components {
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let world = self.world.real_world();
+                let safety_info = tuple_data.safety_info();
+
+                let multithreaded = self.world.is_currently_multithreaded();
+
+                if multithreaded {
+                    __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                } else {
+                    __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                }
+            }
+            Some(tuple_data.get_tuple())
+        } else {
+            None
+        }
     }
 
     /// Get a reference to a singleton component.
