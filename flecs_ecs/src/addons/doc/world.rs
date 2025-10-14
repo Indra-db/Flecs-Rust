@@ -33,7 +33,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::doc_name()`]
+    /// * [`Doc::doc_name()`](super::Doc::doc_name)
     /// * [`World::doc_name()`]
     #[inline(always)]
     pub fn doc_name(&self, entity: impl IntoEntity) -> Option<String> {
@@ -56,7 +56,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::doc_brief()`]
+    /// * [`Doc::doc_brief()`](super::Doc::doc_brief)
     /// * [`World::doc_brief()`]
     #[inline(always)]
     pub fn doc_brief(&self, entity: impl IntoEntity) -> Option<String> {
@@ -79,7 +79,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::doc_detail()`]
+    /// * [`Doc::doc_detail()`](super::Doc::doc_detail)
     /// * [`World::doc_detail()`]
     #[inline(always)]
     pub fn doc_detail(&self, entity: impl IntoEntity) -> Option<String> {
@@ -101,7 +101,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::doc_link()`]
+    /// * [`Doc::doc_link()`](super::Doc::doc_link)
     /// * [`World::doc_link()`]
     #[inline(always)]
     pub fn doc_link(&self, entity: impl IntoEntity) -> Option<String> {
@@ -123,7 +123,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::doc_color()`]
+    /// * [`Doc::doc_color()`](super::Doc::doc_color)
     /// * [`World::doc_color()`]
     #[inline(always)]
     pub fn doc_color(&self, entity: impl IntoEntity) -> Option<String> {
@@ -139,8 +139,8 @@ impl World {
     /// # See Also
     ///
     /// * [`World::doc_uuid()`]
-    /// * [`Doc::doc_uuid()`]
-    /// * [`Doc::set_doc_uuid()`]
+    /// * [`Doc::doc_uuid()`](super::Doc::doc_uuid)
+    /// * [`Doc::set_doc_uuid()`](super::Doc::set_doc_uuid)
     pub fn doc_uuid(&self, entity: impl IntoEntity) -> Option<String> {
         let cstr = NonNull::new(unsafe {
             sys::ecs_doc_get_uuid(self.world_ptr(), *entity.into_entity(self))
@@ -163,7 +163,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_name()`]
+    /// * [`Doc::set_doc_name()`](super::Doc::set_doc_name)
     /// * [`World::set_doc_name()`]
     #[inline(always)]
     pub fn set_doc_name(&self, entity: impl IntoEntity, name: &str) {
@@ -186,7 +186,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_brief()`]
+    /// * [`Doc::set_doc_brief()`](super::Doc::set_doc_brief)
     /// * [`World::set_doc_brief()`]
     #[inline(always)]
     pub fn set_doc_brief(&self, entity: impl IntoEntity, brief: &str) {
@@ -209,7 +209,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_detail()`]
+    /// * [`Doc::set_doc_detail()`](super::Doc::set_doc_detail)
     /// * [`World::set_doc_detail()`]
     #[inline(always)]
     pub fn set_doc_detail(&self, entity: impl IntoEntity, detail: &str) {
@@ -232,7 +232,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_link()`]
+    /// * [`Doc::set_doc_link()`](super::Doc::set_doc_link)
     /// * [`World::set_doc_link()`]
     #[inline(always)]
     pub fn set_doc_link(&self, entity: impl IntoEntity, link: &str) {
@@ -257,7 +257,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_color()`]
+    /// * [`Doc::set_doc_color()`](super::Doc::set_doc_color)
     /// * [`World::set_doc_color()`]
     #[inline(always)]
     pub fn set_doc_color(&self, entity: impl IntoEntity, color: &str) {
@@ -281,10 +281,10 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`Doc::set_doc_uuid()`]
+    /// * [`Doc::set_doc_uuid()`](super::Doc::set_doc_uuid)
     /// * [`World::set_doc_uuid()`]
     /// * [`World::doc_uuid()`]
-    /// * [`Doc::doc_uuid()`]
+    /// * [`Doc::doc_uuid()`](super::Doc::doc_uuid)
     pub fn set_doc_uuid(&self, entity: impl IntoEntity, uuid: &str) {
         let uuid = compact_str::format_compact!("{}\0", uuid);
         unsafe {
