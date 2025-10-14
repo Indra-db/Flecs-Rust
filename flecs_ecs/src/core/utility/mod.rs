@@ -6,6 +6,8 @@ mod functions;
 pub mod id;
 pub(crate) mod id_map;
 mod log;
+#[cfg(feature = "flecs_safety_locks")]
+pub(crate) mod safety;
 pub mod traits;
 pub mod types;
 
@@ -14,7 +16,8 @@ pub use functions::*;
 pub use id::id;
 pub(crate) use id_map::*;
 pub use log::*;
-
+#[cfg(feature = "flecs_safety_locks")]
+pub(crate) use safety::*;
 #[doc(hidden)]
 pub use traits::*;
 #[doc(hidden)]

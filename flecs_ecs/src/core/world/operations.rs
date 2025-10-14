@@ -1420,7 +1420,7 @@ impl World {
 
         let entity = EntityView::new_from(
             self,
-            <<(First, Second) as ComponentOrPairId>::CastType as ComponentId>::entity_id(self),
+            <<(First, Second) as ComponentOrPairId>::First as ComponentId>::entity_id(self),
         );
         entity.set_pair::<First, Second>(data);
     }

@@ -68,12 +68,10 @@ pub trait WorldGet<Return> {
     ///     .is_some();
     /// assert!(has_run);
     /// ```
-    fn try_get<T: GetTupleTypeOperation>(
+    fn try_get<T: GetTuple>(
         &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Option<Return>
-    where
-        T::OnlyType: ComponentOrPairId;
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
+    ) -> Option<Return>;
 
     /// gets a mutable or immutable singleton component and/or relationship(s) from the world and return a value.
     /// Only one singleton component at a time is retrievable, but you can call this function multiple times within the callback.
@@ -129,40 +127,71 @@ pub trait WorldGet<Return> {
     /// # See also
     ///
     /// * [`World::cloned()`]
-    fn get<T: GetTupleTypeOperation>(
-        &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Return
-    where
-        T::OnlyType: ComponentOrPairId;
+    fn get<T: GetTuple>(&self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return)
+    -> Return;
 }
 impl<Return> WorldGet<Return> for World {
-    fn try_get<T: GetTupleTypeOperation>(
+    fn try_get<T: GetTuple>(
         &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Option<Return>
-    where
-        T::OnlyType: ComponentOrPairId,
-    {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
-        );
-        entity.try_get::<T>(callback)
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
+    ) -> Option<Return> {
+        let tuple_data = T::create_ptrs_singleton::<false>(self);
+        let has_all_components = tuple_data.has_all_components();
+
+        if has_all_components {
+            let tuple = tuple_data.get_tuple();
+
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let world_ref = self.world();
+                let multithreaded = self.is_currently_multithreaded();
+
+                if multithreaded {
+                    return Some(get_rw_lock::<T, Return, true>(
+                        &world_ref, callback, tuple_data, tuple,
+                    ));
+                }
+                return Some(get_rw_lock::<T, Return, false>(
+                    &world_ref, callback, tuple_data, tuple,
+                ));
+            }
+
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                self.defer_begin();
+                let ret = callback(tuple);
+                self.defer_end();
+                return Some(ret);
+            }
+        }
+        None
     }
 
-    fn get<T: GetTupleTypeOperation>(
+    fn get<T: GetTuple>(
         &self,
-        callback: impl for<'e> FnOnce(T::ActualType<'e>) -> Return,
-    ) -> Return
-    where
-        T::OnlyType: ComponentOrPairId,
-    {
-        let entity = EntityView::new_from(
-            self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
-        );
-        entity.get::<T>(callback)
+        callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
+    ) -> Return {
+        let tuple_data = T::create_ptrs_singleton::<true>(self);
+        let tuple = tuple_data.get_tuple();
+
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            let world_ref = self.world();
+            let multithreaded = self.is_currently_multithreaded();
+            if multithreaded {
+                get_rw_lock::<T, Return, true>(&world_ref, callback, tuple_data, tuple)
+            } else {
+                get_rw_lock::<T, Return, false>(&world_ref, callback, tuple_data, tuple)
+            }
+        }
+
+        #[cfg(not(feature = "flecs_safety_locks"))]
+        {
+            self.defer_begin();
+            let ret = callback(tuple);
+            self.defer_end();
+            ret
+        }
     }
 }
 
@@ -226,7 +255,7 @@ impl World {
     {
         let entity = EntityView::new_from(
             self,
-            <<T::OnlyType as ComponentOrPairId>::CastType>::entity_id(self),
+            <<T::OnlyType as ComponentOrPairId>::First>::entity_id(self),
         );
         entity.cloned::<T>()
     }
