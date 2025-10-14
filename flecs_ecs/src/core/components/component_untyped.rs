@@ -39,8 +39,23 @@ impl<'a> UntypedComponent<'a> {
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
+        let desc = crate::sys::ecs_entity_desc_t {
+            name: core::ptr::null(),
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: core::ptr::null(),
+            use_low_id: true,
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
+        };
+        let id = unsafe { crate::sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+
         UntypedComponent {
-            entity: EntityView::new(world),
+            entity: EntityView::new_from(world, id),
         }
     }
 
@@ -51,8 +66,25 @@ impl<'a> UntypedComponent<'a> {
     /// * `world`: the world.
     /// * `id`: the id of the component to reference.
     pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let desc = crate::sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            _canary: 0,
+            id: 0,
+            parent: 0,
+            symbol: core::ptr::null(),
+            use_low_id: true,
+            add: core::ptr::null(),
+            add_expr: core::ptr::null(),
+            set: core::ptr::null(),
+        };
+        let id = unsafe { crate::sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+
         UntypedComponent {
-            entity: EntityView::new_named(world, name),
+            entity: EntityView::new_from(world, id),
         }
     }
 
