@@ -1,6 +1,7 @@
 use crate::core::*;
+use crate::sys;
 
-pub(crate) fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
+pub(crate) fn rw_locking<T: GetTuple, Return, const MULTITHREADED: bool>(
     world: &WorldRef,
     callback: impl FnOnce(<T as GetTuple>::TupleType<'_>) -> Return,
     tuple_data: <T as GetTuple>::Pointers,
@@ -87,4 +88,40 @@ pub(crate) fn get_rw_lock<T: GetTuple, Return, const MULTITHREADED: bool>(
         }
     }
     ret
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) fn clone_locking<const MULTITHREADED: bool>(
+    world: WorldRef<'_>,
+    components: &[*mut core::ffi::c_void],
+    safety_info: &[sys::ecs_safety_info_t],
+) {
+    let stage_id = if MULTITHREADED {
+        world.stage_id()
+    } else {
+        0 // stage_id is not used in single-threaded mode
+    };
+
+    for (index, si) in safety_info.iter().enumerate() {
+        // skip missing components
+        if unsafe { components.get_unchecked(index).is_null() } {
+            continue;
+        }
+
+        if !si.cr.is_null() {
+            sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
+            sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
+            continue;
+        }
+
+        //check if no writes are present so we can clone
+        get_table_column_lock_read_begin::<MULTITHREADED>(
+            &world,
+            si.table,
+            si.column_index,
+            stage_id,
+        );
+        table_column_lock_read_end::<MULTITHREADED>(si.table, si.column_index, stage_id);
+    }
 }

@@ -1245,42 +1245,6 @@ impl<'a> EntityView<'a> {
     }
 }
 
-#[cfg(feature = "flecs_safety_locks")]
-#[inline(always)]
-fn __cloned_locks<const MULTITHREADED: bool>(
-    world: WorldRef<'_>,
-    components: &[*mut c_void],
-    safety_info: &[sys::ecs_safety_info_t],
-) {
-    let stage_id = if MULTITHREADED {
-        world.stage_id()
-    } else {
-        0 // stage_id is not used in single-threaded mode
-    };
-
-    for (index, si) in safety_info.iter().enumerate() {
-        // skip missing components
-        if unsafe { components.get_unchecked(index).is_null() } {
-            continue;
-        }
-
-        if !si.cr.is_null() {
-            sparse_id_record_lock_read_begin::<MULTITHREADED>(&world, si.cr);
-            sparse_id_record_lock_read_end::<MULTITHREADED>(si.cr);
-            continue;
-        }
-
-        //check if no writes are present so we can clone
-        get_table_column_lock_read_begin::<MULTITHREADED>(
-            &world,
-            si.table,
-            si.column_index,
-            stage_id,
-        );
-        table_column_lock_read_end::<MULTITHREADED>(si.table, si.column_index, stage_id);
-    }
-}
-
 pub trait EntityViewGet<'a, Return>: WorldProvider<'a> + Sized {
     /// gets mutable or immutable component(s) and/or relationship(s) from an entity in a callback and return a value.
     /// each component type must be marked `&` or `&mut` to indicate if it is mutable or not.
@@ -1455,14 +1419,14 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
                 let multithreaded = self.world.is_currently_multithreaded();
 
                 if multithreaded {
-                    return Some(get_rw_lock::<T, Return, true>(
+                    return Some(rw_locking::<T, Return, true>(
                         &self.world,
                         callback,
                         tuple_data,
                         tuple,
                     ));
                 }
-                return Some(get_rw_lock::<T, Return, false>(
+                return Some(rw_locking::<T, Return, false>(
                     &self.world,
                     callback,
                     tuple_data,
@@ -1496,9 +1460,9 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         {
             let multithreaded = self.world.is_currently_multithreaded();
             if multithreaded {
-                get_rw_lock::<T, Return, true>(&self.world, callback, tuple_data, tuple)
+                rw_locking::<T, Return, true>(&self.world, callback, tuple_data, tuple)
             } else {
-                get_rw_lock::<T, Return, false>(&self.world, callback, tuple_data, tuple)
+                rw_locking::<T, Return, false>(&self.world, callback, tuple_data, tuple)
             }
         }
 
@@ -1586,10 +1550,10 @@ impl<'a> EntityView<'a> {
             let multithreaded = self.world.is_currently_multithreaded();
 
             if multithreaded {
-                __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                clone_locking::<true>(world, tuple_data.component_ptrs(), safety_info);
             } else {
                 // single-threaded mode
-                __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                clone_locking::<false>(world, tuple_data.component_ptrs(), safety_info);
             }
         }
 
@@ -1676,9 +1640,9 @@ impl<'a> EntityView<'a> {
                 let multithreaded = self.world.is_currently_multithreaded();
 
                 if multithreaded {
-                    __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                    clone_locking::<true>(world, tuple_data.component_ptrs(), safety_info);
                 } else {
-                    __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                    clone_locking::<false>(world, tuple_data.component_ptrs(), safety_info);
                 }
             }
             Some(tuple_data.get_tuple())

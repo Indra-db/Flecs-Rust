@@ -147,11 +147,11 @@ impl<Return> WorldGet<Return> for World {
                 let multithreaded = self.is_currently_multithreaded();
 
                 if multithreaded {
-                    return Some(get_rw_lock::<T, Return, true>(
+                    return Some(rw_locking::<T, Return, true>(
                         &world_ref, callback, tuple_data, tuple,
                     ));
                 }
-                return Some(get_rw_lock::<T, Return, false>(
+                return Some(rw_locking::<T, Return, false>(
                     &world_ref, callback, tuple_data, tuple,
                 ));
             }
@@ -179,9 +179,9 @@ impl<Return> WorldGet<Return> for World {
             let world_ref = self.world();
             let multithreaded = self.is_currently_multithreaded();
             if multithreaded {
-                get_rw_lock::<T, Return, true>(&world_ref, callback, tuple_data, tuple)
+                rw_locking::<T, Return, true>(&world_ref, callback, tuple_data, tuple)
             } else {
-                get_rw_lock::<T, Return, false>(&world_ref, callback, tuple_data, tuple)
+                rw_locking::<T, Return, false>(&world_ref, callback, tuple_data, tuple)
             }
         }
 
@@ -254,16 +254,16 @@ impl World {
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let world = self.world.real_world();
+            let world = self.real_world();
             let safety_info = tuple_data.safety_info();
 
-            let multithreaded = self.world.is_currently_multithreaded();
+            let multithreaded = self.is_currently_multithreaded();
 
             if multithreaded {
-                __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                clone_locking::<true>(world, tuple_data.component_ptrs(), safety_info);
             } else {
                 // single-threaded mode
-                __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                clone_locking::<false>(world, tuple_data.component_ptrs(), safety_info);
             }
         }
         tuple_data.get_tuple()
@@ -300,15 +300,15 @@ impl World {
         if has_all_components {
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let world = self.world.real_world();
+                let world = self.real_world();
                 let safety_info = tuple_data.safety_info();
 
-                let multithreaded = self.world.is_currently_multithreaded();
+                let multithreaded = self.is_currently_multithreaded();
 
                 if multithreaded {
-                    __cloned_locks::<true>(world, tuple_data.component_ptrs(), safety_info);
+                    clone_locking::<true>(world, tuple_data.component_ptrs(), safety_info);
                 } else {
-                    __cloned_locks::<false>(world, tuple_data.component_ptrs(), safety_info);
+                    clone_locking::<false>(world, tuple_data.component_ptrs(), safety_info);
                 }
             }
             Some(tuple_data.get_tuple())

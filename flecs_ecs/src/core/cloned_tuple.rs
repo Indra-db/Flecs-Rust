@@ -183,7 +183,7 @@ pub trait ClonedTuple: Sized {
         components: &mut [*mut c_void],
         has_all_components: &mut bool,
         index: usize,
-        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [SafetyInfo],
+        #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_safety_info_t],
     ) {
         let get_ptr = unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
         let component_ptr = get_ptr.component_ptr;
