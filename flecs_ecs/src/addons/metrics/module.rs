@@ -1,6 +1,6 @@
 use flecs_ecs_derive::Component;
 
-use crate::{core::World, prelude::Module};
+use crate::{addons::module::Module, core::World};
 
 #[derive(Clone, Copy, Component, Default)]
 pub struct MetricsModule;

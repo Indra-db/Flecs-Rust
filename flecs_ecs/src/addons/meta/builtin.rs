@@ -1,4 +1,4 @@
-use core::ffi::CStr;
+use core::ffi::{CStr, c_void};
 use flecs_ecs::prelude::*;
 use flecs_ecs::sys;
 
@@ -7,6 +7,8 @@ extern crate std;
 
 extern crate alloc;
 use alloc::{format, string::String, vec::Vec};
+
+use crate::addons::meta::ecs_serializer::EcsSerializer;
 
 macro_rules! generate_vec_meta_registration {
     ($world:ident, $($t:ty),*) => {
@@ -169,4 +171,18 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
     ts.resize(resize_generic_vec::<T>);
 
     ts
+}
+
+pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Entity> {
+    let mut opaque = Opaque::<Entity>::new(world);
+    opaque.as_type(flecs::meta::Entity::ID);
+    opaque.serialize(|ser: &Serializer, data: &Entity| {
+        let id: Id = <Entity as Into<Id>>::into(*data);
+        let id: u64 = *id;
+        ser.value_id(flecs::meta::Entity::ID, &id as *const u64 as *const c_void)
+    });
+    opaque.assign_entity(|dst: &mut Entity, _world: WorldRef<'a>, e: Entity| {
+        *dst = e;
+    });
+    opaque
 }

@@ -4,11 +4,9 @@ use core::ops::{Deref, DerefMut};
 
 use flecs_ecs_sys::{self as sys};
 
-use crate::core::{
-    ComponentId, Entity, EntityView, IntoEntity, QueryTuple, World, WorldProvider, WorldRef,
-};
+use crate::core::{ComponentId, Entity, EntityView, WorldProvider, WorldRef};
 
-use super::super::system::{System, SystemBuilder};
+use super::super::system::System;
 
 pub trait TimerAPI: Sized {
     fn world(&self) -> WorldRef<'_>;
@@ -212,25 +210,6 @@ impl TimerAPI for Timer<'_> {
     }
 }
 
-impl World {
-    /// Find or register a singleton Timer
-    pub fn timer(&self) -> Timer<'_> {
-        Timer::new(self)
-    }
-
-    /// Find or register a Timer
-    pub fn timer_from<T: ComponentId>(&self) -> Timer<'_> {
-        Timer::new_from::<T>(self)
-    }
-
-    /// Enable randomizing initial time value of timers.
-    /// Initializes timers with a random time value, which can improve scheduling as systems/timers
-    /// for the same interval don't all happen on the same tick.
-    pub fn randomize_timers(&self) {
-        unsafe { sys::ecs_randomize_timers(self.ptr_mut()) }
-    }
-}
-
 impl TimerAPI for System<'_> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'_> {
@@ -250,70 +229,5 @@ impl TimerAPI for System<'_> {
     #[inline(always)]
     fn id(&self) -> Entity {
         self.id
-    }
-}
-
-impl System<'_> {
-    /// Assign tick source to system based on an id.
-    /// Systems can be their own tick source, which can be any of the tick sources (one shot timers, interval times and rate filters).
-    /// However, in some cases it is must be guaranteed that different systems tick on the exact same frame.
-    ///
-    /// This cannot be guaranteed by giving two systems the same interval/rate filter as it is possible
-    /// that one system is (for example) disabled, which would cause the systems to go out of sync.
-    /// To provide these guarantees, systems must use the same tick source, which is what this operation enables.
-    ///
-    /// When two systems share the same tick source, it is guaranteed that they tick in the same frame.
-    /// The provided tick source can be any entity that is a tick source, including another system.
-    /// If the provided entity is not a tick source the system will not be ran.
-    ///
-    /// To disassociate a tick source from a system, use [`System::reset_tick_source()`](crate::addons::system::System::reset_tick_source).
-    pub fn set_tick_source(&self, id: impl IntoEntity) {
-        unsafe {
-            sys::ecs_set_tick_source(
-                self.entity.world_ptr_mut(),
-                *self.id,
-                *id.into_entity(self.world),
-            );
-        }
-    }
-
-    /// Reset, disassociate a tick source from a system
-    pub fn reset_tick_source(&self) {
-        unsafe { sys::ecs_set_tick_source(self.entity.world_ptr_mut(), *self.id, 0) }
-    }
-}
-
-impl<T: QueryTuple> SystemBuilder<'_, T> {
-    /// Set system interval.
-    ///
-    /// This operation will cause the system to be ran at the specified interval.
-    ///
-    /// The timer is synchronous, and is incremented each frame by `delta_time`.
-    pub fn set_interval(&mut self, interval: f32) -> &mut Self {
-        self.desc.interval = interval;
-        self
-    }
-
-    /// Sets a rate filter on the system, causing it to run once every `rate`
-    /// ticks. The tick source may be any entity, including another system.
-    pub fn set_tick_source_rate(&mut self, tick_source: impl Into<Entity>, rate: i32) -> &mut Self {
-        self.desc.rate = rate;
-        self.desc.tick_source = *tick_source.into();
-        self
-    }
-
-    /// Sets a rate filter on the system, causing it to run once every `rate`
-    /// ticks. If a tick source was provided, this just updates the rate of the
-    /// system.
-    pub fn set_rate(&mut self, rate: i32) -> &mut Self {
-        self.desc.rate = rate;
-        self
-    }
-
-    /// Set tick source.
-    /// This operation sets a shared tick source for the system.
-    pub fn set_tick_source(&mut self, tick_source: impl IntoEntity) -> &mut Self {
-        self.desc.tick_source = *tick_source.into_entity(self.world());
-        self
     }
 }

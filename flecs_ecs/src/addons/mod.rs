@@ -1,41 +1,67 @@
 #[cfg(feature = "flecs_app")]
 pub mod app;
+#[cfg(feature = "flecs_app")]
+pub use app::*;
 
 #[cfg(feature = "flecs_doc")]
 pub mod doc;
+#[cfg(feature = "flecs_doc")]
+pub use doc::*;
 
 #[cfg(feature = "flecs_module")]
 pub mod module;
+#[cfg(feature = "flecs_module")]
+pub use module::*;
 
 #[cfg(feature = "flecs_system")]
 pub mod system;
+#[cfg(feature = "flecs_system")]
+pub use system::*;
 
 #[cfg(feature = "flecs_pipeline")]
 pub mod pipeline;
+#[cfg(feature = "flecs_pipeline")]
+pub use pipeline::*;
 
 #[cfg(feature = "flecs_stats")]
 pub mod stats;
+#[cfg(feature = "flecs_stats")]
+pub use stats::*;
 
 #[cfg(feature = "flecs_timer")]
 pub mod timer;
+#[cfg(feature = "flecs_timer")]
+pub use timer::*;
 
 #[cfg(feature = "flecs_meta")]
 pub mod meta;
+#[cfg(feature = "flecs_meta")]
+pub use meta::*;
 
 #[cfg(feature = "flecs_script")]
 pub mod script;
+#[cfg(feature = "flecs_script")]
+pub use script::*;
 
 #[cfg(feature = "flecs_json")]
 pub mod json;
+#[cfg(feature = "flecs_json")]
+pub use json::*;
 
 #[cfg(feature = "flecs_units")]
 pub mod units;
+#[cfg(feature = "flecs_units")]
+pub use units::*;
 
 #[cfg(feature = "flecs_metrics")]
 pub mod metrics;
+#[cfg(feature = "flecs_metrics")]
+pub use metrics::*;
 
 #[cfg(feature = "flecs_alerts")]
 pub mod alerts;
+#[cfg(feature = "flecs_alerts")]
+pub use alerts::*;
 
 // this is not feature gated to flecs_meta so calling `.meta()` on a component will always work despite meta being disabled.
 pub trait Meta<Component> {
@@ -74,7 +100,7 @@ macro_rules! create_pre_registered_extern_component {
             type Target = u64;
             #[inline(always)]
             fn deref(&self) -> &Self::Target {
-                unsafe { &*addr_of!($static_id) }
+                unsafe { &*core::ptr::addr_of!($static_id) }
             }
         }
 

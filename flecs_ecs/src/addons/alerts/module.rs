@@ -1,4 +1,7 @@
-use crate::{addons::metrics::MetricsModule, core::World, prelude::Module};
+use crate::{
+    addons::{metrics::MetricsModule, module::Module},
+    core::World,
+};
 use flecs_ecs_derive::Component;
 
 #[derive(Clone, Copy, Component, Default)]
