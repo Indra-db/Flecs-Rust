@@ -528,18 +528,18 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 crate::core::Entity($id)
             }
         }
-        impl FlecsConstantId for $name {
+        impl crate::core::FlecsConstantId for $name {
             const ID: u64 = $id;
         }
-        impl DataComponent for $name {}
+        impl crate::core::DataComponent for $name {}
 
-        impl ComponentType<flecs_ecs::core::Struct> for $name {}
+        impl crate::core::ComponentType<flecs_ecs::core::Struct> for $name {}
 
         impl ComponentInfo for $name {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
-            type TagType = FlecsNotATag;
+            type TagType = crate::core::FlecsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
@@ -548,10 +548,10 @@ macro_rules! impl_component_traits_binding_type_w_id {
             const IS_MUT: bool = false;
         }
 
-        impl ComponentId for $name {
+        impl crate::core::ComponentId for $name {
             type UnderlyingType = $name;
-            type UnderlyingEnumType = NoneEnum;
-            type UnderlyingTypeOfEnum = NoneEnum;
+            type UnderlyingEnumType = crate::core::NoneEnum;
+            type UnderlyingTypeOfEnum = crate::core::NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -560,42 +560,50 @@ macro_rules! impl_component_traits_binding_type_w_id {
                 Self::get_or_init_index(&INDEX)
             }
             fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_lifecycle_actions::<$name>(type_hooks);
+                crate::core::register_lifecycle_actions::<$name>(type_hooks);
             }
             fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
             fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_copy_lifecycle_action::<$name>(type_hooks);
+                crate::core::register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
             ) -> sys::ecs_entity_t {
                 $id
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
                 _name: &str,
             ) -> sys::ecs_entity_t {
                 $id
             }
 
-            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
+            fn is_registered_with_world<'a>(_: impl crate::core::WorldProvider<'a>) -> bool {
                 true
             }
 
-            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl crate::core::WorldProvider<'a>) -> sys::ecs_id_t {
                 $id
             }
         }
 
         impl InternalComponentHooks for $name {
-            fn internal_on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
+            fn internal_on_component_registration(
+                _world: crate::core::WorldRef,
+                _component_id: crate::core::Entity,
+            ) {
+            }
         }
 
         impl OnComponentRegistration for $name {
-            fn on_component_registration(_world: WorldRef, _component_id: super::Entity) {}
+            fn on_component_registration(
+                _world: crate::core::WorldRef,
+                _component_id: crate::core::Entity,
+            ) {
+            }
         }
     };
 }
@@ -605,15 +613,15 @@ pub(crate) use impl_component_traits_binding_type_w_id;
 #[allow(unused_macros)]
 macro_rules! impl_component_traits_binding_type_w_static_id {
     ($name:ident, $id:ident) => {
-        impl DataComponent for $name {}
+        impl crate::core::DataComponent for $name {}
 
-        impl ComponentType<flecs_ecs::core::Struct> for $name {}
+        impl crate::core::ComponentType<flecs_ecs::core::Struct> for $name {}
 
         impl ComponentInfo for $name {
             const IS_GENERIC: bool = false;
             const IS_ENUM: bool = false;
             const IS_TAG: bool = false;
-            type TagType = FlecsNotATag;
+            type TagType = crate::core::FlecsNotATag;
             const IMPLS_CLONE: bool = true;
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
@@ -622,10 +630,10 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             const IS_MUT: bool = false;
         }
 
-        impl ComponentId for $name {
+        impl crate::core::ComponentId for $name {
             type UnderlyingType = $name;
-            type UnderlyingEnumType = NoneEnum;
-            type UnderlyingTypeOfEnum = NoneEnum;
+            type UnderlyingEnumType = crate::core::NoneEnum;
+            type UnderlyingTypeOfEnum = crate::core::NoneEnum;
 
             #[inline(always)]
             fn index() -> u32 {
@@ -634,32 +642,32 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
                 Self::get_or_init_index(&INDEX)
             }
             fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_lifecycle_actions::<$name>(type_hooks);
+                crate::core::register_lifecycle_actions::<$name>(type_hooks);
             }
             fn __register_default_hooks(_type_hooks: &mut sys::ecs_type_hooks_t) {}
 
             fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-                register_copy_lifecycle_action::<$name>(type_hooks);
+                crate::core::register_copy_lifecycle_action::<$name>(type_hooks);
             }
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
             ) -> sys::ecs_entity_t {
                 unsafe { $id }
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
                 _name: &str,
             ) -> sys::ecs_entity_t {
                 unsafe { $id }
             }
 
-            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
+            fn is_registered_with_world<'a>(_: impl crate::core::WorldProvider<'a>) -> bool {
                 true
             }
 
-            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl crate::core::WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $id }
             }
         }

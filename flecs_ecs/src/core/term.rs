@@ -48,17 +48,17 @@ impl<'a> TermRef<'a> {
     }
 
     pub fn src_id(&self) -> Entity {
-        let id = self.term.src.id & !flecs::TermRefFlags::ID;
+        let id = self.term.src.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 
     pub fn first_id(&self) -> Entity {
-        let id = self.term.first.id & !flecs::TermRefFlags::ID;
+        let id = self.term.first.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 
     pub fn second_id(&self) -> Entity {
-        let id = self.term.second.id & !flecs::TermRefFlags::ID;
+        let id = self.term.second.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 }
@@ -261,19 +261,19 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
 
     /// Get the src id of term of the current term set
     fn src_id(&self) -> Entity {
-        let id = self.current_term().src.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().src.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 
     /// Get the first of term of the current term set
     fn first_id(&self) -> Entity {
-        let id = self.current_term().first.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().first.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 
     /// Get the second of term of the current term set
     fn second_id(&self) -> Entity {
-        let id = self.current_term().second.id & !flecs::TermRefFlags::ID;
+        let id = self.current_term().second.id & !flecs::term_flags::TermRefFlags::ID;
         Entity(id)
     }
 
@@ -326,7 +326,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
         let name = core::mem::ManuallyDrop::new(format!("{name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
-        term_ref.id |= flecs::IsEntity::ID;
+        term_ref.id |= flecs::term_flags::IsEntity::ID;
         self.term_builder_mut().str_ptrs_to_free.push(name);
         self
     }
@@ -341,7 +341,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
 
         let var_name = core::mem::ManuallyDrop::new(format!("{var_name}\0"));
         let term_ref = self.term_ref_mut();
-        term_ref.id |= flecs::IsVariable::ID;
+        term_ref.id |= flecs::term_flags::IsVariable::ID;
         term_ref.name = var_name.as_ptr() as *mut _;
         self.term_builder_mut().str_ptrs_to_free.push(var_name);
         self

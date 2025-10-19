@@ -132,33 +132,33 @@ macro_rules! create_pre_registered_extern_component {
                 flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
         }
 
-        impl TagComponent for $struct_name {}
+        impl crate::core::TagComponent for $struct_name {}
 
-        impl ComponentType<Struct> for $struct_name {}
+        impl crate::core::ComponentType<crate::core::Struct> for $struct_name {}
 
-        impl ComponentId for $struct_name {
+        impl crate::core::ComponentId for $struct_name {
             type UnderlyingType = $struct_name;
-            type UnderlyingEnumType = NoneEnum;
-            type UnderlyingTypeOfEnum = NoneEnum;
+            type UnderlyingEnumType = crate::core::NoneEnum;
+            type UnderlyingTypeOfEnum = crate::core::NoneEnum;
 
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
             ) -> sys::ecs_entity_t {
                 unsafe { $static_id }
             }
 
             fn __register_or_get_id_named<'a, const MANUAL_REGISTRATION_CHECK: bool>(
-                _world: impl WorldProvider<'a>,
+                _world: impl crate::core::WorldProvider<'a>,
                 _name: &str,
             ) -> sys::ecs_entity_t {
                 unsafe { $static_id }
             }
 
-            fn is_registered_with_world<'a>(_: impl WorldProvider<'a>) -> bool {
+            fn is_registered_with_world<'a>(_: impl crate::core::WorldProvider<'a>) -> bool {
                 true
             }
 
-            fn entity_id<'a>(_world: impl WorldProvider<'a>) -> sys::ecs_id_t {
+            fn entity_id<'a>(_world: impl crate::core::WorldProvider<'a>) -> sys::ecs_id_t {
                 unsafe { $static_id }
             }
 
