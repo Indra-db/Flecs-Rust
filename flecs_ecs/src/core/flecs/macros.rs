@@ -1,14 +1,9 @@
 use super::*;
-macro_rules! create_pre_registered_component {
-    ($struct_name:ident, $const_name:ident) => {
-        create_pre_registered_component!($struct_name, $const_name, "");
-    };
-    ($struct_name:ident, $const_name:ident, $doc:tt) => {
-        #[derive(Debug, Default, Clone)]
-        #[allow(clippy::empty_docs)]
-        #[doc = $doc]
-        pub struct $struct_name;
 
+// Macro to implement all the necessary traits for a pre-registered component struct.
+// Use this when you want to define the struct with custom documentation separately.
+macro_rules! impl_pre_registered_component {
+    ($struct_name:ident, $const_name:ident) => {
         impl crate::core::utility::traits::FlecsConstantId for $struct_name {
             const ID: u64 = $const_name;
         }
@@ -116,6 +111,24 @@ macro_rules! create_pre_registered_component {
     };
 }
 
+pub(crate) use impl_pre_registered_component;
+
+// Macro to define a pre-registered component struct with all necessary trait implementations.
+// This macro creates the struct definition and then calls impl_pre_registered_component to add the implementations.
+macro_rules! create_pre_registered_component {
+    ($struct_name:ident, $const_name:ident) => {
+        create_pre_registered_component!($struct_name, $const_name, "");
+    };
+    ($struct_name:ident, $const_name:ident, $doc:tt) => {
+        #[derive(Debug, Default, Clone)]
+        #[allow(clippy::empty_docs)]
+        #[doc = $doc]
+        pub struct $struct_name;
+
+        impl_pre_registered_component!($struct_name, $const_name);
+    };
+}
+
 pub(crate) use create_pre_registered_component;
 
 // Component-trait specialization: same as create_pre_registered_component but also
@@ -132,3 +145,14 @@ macro_rules! create_component_trait {
 }
 
 pub(crate) use create_component_trait;
+
+// Macro to implement component trait on an existing struct.
+// Use this when you want to define the struct with custom documentation separately.
+macro_rules! impl_component_trait {
+    ($struct_name:ident, $const_name:ident) => {
+        impl_pre_registered_component!($struct_name, $const_name);
+        impl crate::core::flecs::FlecsComponentTrait for $struct_name {}
+    };
+}
+
+pub(crate) use impl_component_trait;

@@ -1,4 +1,3 @@
-
 use super::*;
 
 pub type Timer = crate::sys::EcsTimer;

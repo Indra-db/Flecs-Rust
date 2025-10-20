@@ -50,3 +50,15 @@ create_pre_registered_component!(PredLookup, ECS_PRED_LOOKUP);
 // builtin marker entities for query scopes
 create_pre_registered_component!(ScopeOpen, ECS_SCOPE_OPEN);
 create_pre_registered_component!(ScopeClose, ECS_SCOPE_CLOSE);
+
+// Builtin relationships
+create_component_trait!(
+    ChildOf,
+    ECS_CHILD_OF,
+    "Builtin relationship. Allows for the creation of entity hierarchies."
+);
+create_component_trait!(
+    IsA,
+    ECS_IS_A,
+    "Builtin relationship. Used to express that one entity is equivalent to another."
+);

@@ -14,6 +14,8 @@ pub mod rest;
 pub mod script;
 #[cfg(feature = "flecs_system")]
 pub mod system;
+#[cfg(feature = "flecs_system")]
+pub use system::*;
 #[cfg(feature = "flecs_timer")]
 pub mod timer;
 
