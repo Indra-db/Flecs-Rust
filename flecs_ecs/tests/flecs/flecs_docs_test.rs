@@ -2569,8 +2569,6 @@ fn flecs_docs_component_traits_compile_test() {
     #[derive(Component)]
     struct Serializable; // Tag, contains no data
 
-    impl flecs::FlecsTrait for Serializable {}
-
     #[derive(Component)]
     struct Position {
         x: f32,

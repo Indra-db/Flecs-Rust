@@ -262,8 +262,6 @@ fn component_traits_pairistag_trait_20() {
     #[derive(Component)]
     struct Serializable; // Tag, contains no data
 
-    impl flecs::FlecsTrait for Serializable {}
-
     let e = world
         .entity()
         .set(Position { x: 10.0, y: 20.9 })

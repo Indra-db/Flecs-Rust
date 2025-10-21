@@ -8,8 +8,6 @@ macro_rules! impl_pre_registered_component {
             const ID: u64 = $const_name;
         }
 
-        impl crate::core::flecs::FlecsTrait for $struct_name {}
-
         impl From<$struct_name> for flecs_ecs::core::Entity {
             #[inline]
             fn from(_view: $struct_name) -> Self {
