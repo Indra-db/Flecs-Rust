@@ -8,10 +8,10 @@ use syn::{
 };
 
 // Parse #[flecs(...)] attribute and build calls to _component.add_trait::<flecs::...>();
-// Additionally parse special options like `meta` and `name = "..."`.
+// Additionally parse special options like `meta`, `on_registration`, and `name = "..."`.
 pub(crate) fn collect_flecs_traits_calls(
     input: &DeriveInput,
-) -> (TokenStream, bool, Option<LitStr>) {
+) -> (TokenStream, bool, bool, Option<LitStr>) {
     use syn::{
         parenthesized, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma,
     };
@@ -21,6 +21,7 @@ pub(crate) fn collect_flecs_traits_calls(
         Pair(Path, Path),
         Name(LitStr),
         Meta,
+        OnRegistration,
         Add(Vec<Type>),
         Set(Vec<Expr>),
         Traits(Vec<Item>),
@@ -179,13 +180,16 @@ pub(crate) fn collect_flecs_traits_calls(
                     ))
                 }
             } else {
-                // Bare identifier/path entry. Recognize `meta` specially.
+                // Bare identifier/path entry. Recognize `meta` and `on_registration` specially.
                 if input.peek(Ident) {
                     let fork = input.fork();
                     let ident_peek: Ident = fork.parse()?;
                     if ident_peek == "meta" {
                         let _ = input.parse::<Ident>()?;
                         Ok(Item::Meta)
+                    } else if ident_peek == "on_registration" {
+                        let _ = input.parse::<Ident>()?;
+                        Ok(Item::OnRegistration)
                     } else {
                         let p: Path = input.parse()?;
                         Ok(Item::Single(p))
@@ -228,6 +232,7 @@ pub(crate) fn collect_flecs_traits_calls(
 
     let mut out = TokenStream::new();
     let mut has_flecs_meta = false;
+    let mut has_on_registration = false;
     let mut flecs_name: Option<LitStr> = None;
     // Track ordering across all #[flecs(...)] attributes as encountered
     let mut position: usize = 0;
@@ -294,6 +299,9 @@ pub(crate) fn collect_flecs_traits_calls(
                                 meta_pos = Some(position);
                             }
                         }
+                        Item::OnRegistration => {
+                            has_on_registration = true;
+                        }
                         Item::Add(tys) => {
                             for ty in tys {
                                 match ty {
@@ -353,6 +361,9 @@ pub(crate) fn collect_flecs_traits_calls(
                                 out.extend(quote! { compile_error!("Duplicate `name` in #[flecs(...)] attribute"); });
                             }
                         }
+                        Item::Single(_) | Item::Pair(_, _) => {
+                            out.extend(quote! { compile_error!("Traits should be wrapped in traits(...). Use #[flecs(traits(YourTrait))]"); });
+                        }
                         _ => {
                             out.extend(quote! { compile_error!("Unexpected item in #[flecs(...)] attribute"); });
                         }
@@ -403,7 +414,7 @@ pub(crate) fn collect_flecs_traits_calls(
         out
     };
 
-    (out, has_flecs_meta, flecs_name)
+    (out, has_flecs_meta, has_on_registration, flecs_name)
 }
 
 pub(crate) fn impl_meta(
@@ -1509,13 +1520,10 @@ pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro
     use alloc::vec::Vec;
 
     // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
-    let (flecs_traits_calls, has_flecs_meta, flecs_name) = collect_flecs_traits_calls(&input);
+    let (flecs_traits_calls, has_flecs_meta, has_on_registration, flecs_name) =
+        collect_flecs_traits_calls(&input);
 
     let has_repr_c = check_repr_c(&input);
-    let has_on_registration = input
-        .attrs
-        .iter()
-        .any(|attr| attr.path().is_ident("on_registration"));
 
     let mut generated_impls: Vec<proc_macro2::TokenStream> = Vec::new();
 

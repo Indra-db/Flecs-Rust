@@ -91,7 +91,7 @@ fn temp_test_hook() {
 #[test]
 fn on_component_registration() {
     #[derive(Component)]
-    #[on_registration]
+    #[flecs(on_registration)]
     struct OnRegistration {
         x: i32,
     }
@@ -109,7 +109,7 @@ fn on_component_registration() {
     }
 
     #[derive(Component)]
-    #[on_registration]
+    #[flecs(on_registration)]
     struct OnRegistrationTag {
         x: i32,
     }
@@ -159,7 +159,7 @@ fn on_component_registration() {
 #[test]
 fn on_component_registration_named() {
     #[derive(Component)]
-    #[on_registration]
+    #[flecs(on_registration)]
     struct OnRegistration {
         x: i32,
     }
@@ -177,7 +177,7 @@ fn on_component_registration_named() {
     }
 
     #[derive(Component)]
-    #[on_registration]
+    #[flecs(on_registration)]
     struct OnRegistrationTag {
         x: i32,
     }

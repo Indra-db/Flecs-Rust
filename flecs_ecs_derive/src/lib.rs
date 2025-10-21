@@ -66,7 +66,7 @@ mod tuples;
 ///     Jumping,
 /// }
 /// ```
-#[proc_macro_derive(Component, attributes(flecs_skip, on_registration, flecs))]
+#[proc_macro_derive(Component, attributes(flecs_skip, flecs))]
 pub fn component_derive(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     component::expand_component_derive(input).into()
