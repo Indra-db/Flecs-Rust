@@ -1,3 +1,5 @@
+//! Contains flags, components used for ids
+
 use super::*;
 create_pre_registered_component!(Pair, ECS_PAIR, "Indicates that the id is a pair.");
 create_pre_registered_component!(

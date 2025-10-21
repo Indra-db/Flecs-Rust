@@ -1,3 +1,5 @@
+//! Contains core pre-registered components used by various core features.
+
 use super::*;
 
 // Builtin component ids

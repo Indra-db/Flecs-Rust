@@ -8,6 +8,7 @@ use crate::sys;
 
 use hashbrown::hash_map::Entry;
 
+/// A marker trait to indicate that a component represents a trait
 #[cfg(feature = "flecs_query_rust_traits")]
 pub trait RustTrait {}
 
@@ -108,7 +109,15 @@ pub trait InternalComponentHooks {
     fn internal_on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 
+/// A trait that holds a fn `on_component_registration`. This automatically gets implemented
+/// on types with the `Component` derive macro, unless the attribute `flecs(on_registration)` is used.
+/// When it is used, the user can specify what should happen when a component is registered.
+///
+/// # See also
+/// * [`component_macro`](crate::component_macro) documentation for examples and more info
 pub trait OnComponentRegistration: InternalComponentHooks {
+    /// This function is called when a component is first registered.
+    /// Implementing it allows for custom injectable code to be executed on component registration
     fn on_component_registration(_world: WorldRef, _component_id: Entity) {}
 }
 

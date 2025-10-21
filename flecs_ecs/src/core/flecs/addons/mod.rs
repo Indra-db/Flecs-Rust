@@ -1,26 +1,46 @@
+//! pre-registered components used for addons.
+
 use super::*;
 
 #[cfg(feature = "flecs_alerts")]
 pub mod alerts;
+#[cfg(feature = "flecs_alerts")]
+pub use alerts::*;
+
 #[cfg(feature = "flecs_doc")]
 pub mod doc;
+#[cfg(feature = "flecs_doc")]
+pub use doc::*;
+
 #[cfg(feature = "flecs_meta")]
 pub mod meta;
+#[cfg(feature = "flecs_meta")]
+pub use meta::*;
+
 #[cfg(feature = "flecs_pipeline")]
 pub mod pipeline;
+#[cfg(feature = "flecs_pipeline")]
+pub use pipeline::*;
+
 #[cfg(feature = "flecs_rest")]
 pub mod rest;
+#[cfg(feature = "flecs_rest")]
+pub use rest::*;
+
 #[cfg(feature = "flecs_script")]
 pub mod script;
+#[cfg(feature = "flecs_script")]
+pub use script::*;
+
 #[cfg(feature = "flecs_system")]
 pub mod system;
 #[cfg(feature = "flecs_system")]
 pub use system::*;
+
 #[cfg(feature = "flecs_timer")]
 pub mod timer;
-
-#[cfg(feature = "flecs_script")]
-pub use script::Script;
+#[cfg(feature = "flecs_timer")]
+pub use timer::*;
 
 #[cfg(all(
     not(feature = "flecs_meta"),

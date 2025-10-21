@@ -4,7 +4,7 @@
 //!
 //! ## Documentation
 //!
-//! - **[Component Macro](component_macro/index.html)** - Complete guide to the `#[derive(Component)]` macro
+//! - **[Component Macro](component_macro/index.html)** - Complete guide to the `#[derive(Component)]` macro and all its attributes.
 //! - **[DSL Module](dsl/index.html)** - Query, system, and observer DSL documentation
 //!
 //! [Flecs]: https://www.flecs.dev/

@@ -1,3 +1,5 @@
+//! Contains phases of pipeline
+
 use super::*;
 create_pre_registered_component!(Pipeline, ECS_PIPELINE);
 create_pre_registered_component!(OnStart, ECS_ON_START);

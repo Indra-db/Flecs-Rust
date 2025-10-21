@@ -1,3 +1,5 @@
+//! Script pre-registered component
+
 use super::*;
 use crate::sys::FLECS_IDEcsScriptID_;
 pub type Script = crate::sys::EcsScript;

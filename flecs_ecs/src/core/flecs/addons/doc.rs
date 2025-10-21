@@ -1,3 +1,5 @@
+//! Doc pre-registered components.
+
 use super::*;
 create_pre_registered_component!(Description, ECS_DOC_DESCRIPTION);
 create_pre_registered_component!(Brief, ECS_DOC_BRIEF);

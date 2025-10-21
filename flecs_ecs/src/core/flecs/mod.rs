@@ -9,13 +9,13 @@ mod macros;
 pub(crate) use macros::*;
 
 // Core components and traits
-mod component_traits;
+pub mod component_traits;
 pub use component_traits::*;
 
-mod builtin;
+pub mod builtin;
 pub use builtin::*;
 
-mod events;
+pub mod events;
 pub use events::*;
 
 // Flags
@@ -27,7 +27,5 @@ pub mod term_flags;
 pub mod unit_component;
 
 // Feature-gated addons
-mod addons;
+pub mod addons;
 pub use addons::*;
-
-pub trait FlecsTrait {}

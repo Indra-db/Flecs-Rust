@@ -1,3 +1,5 @@
+//! Alerts pre-registered components.
+
 use super::*;
 use crate::addons::create_pre_registered_extern_component;
 use crate::sys::*;

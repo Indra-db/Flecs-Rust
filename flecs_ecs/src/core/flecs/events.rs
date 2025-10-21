@@ -1,3 +1,5 @@
+//! Contains events used in Observers
+
 use super::*;
 
 create_pre_registered_component!(

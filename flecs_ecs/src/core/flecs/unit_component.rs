@@ -1,3 +1,5 @@
+//! Type `()` implementation as a Flecs component
+
 use crate::core::{ComponentInfo, InternalComponentHooks, OnComponentRegistration};
 use crate::sys;
 

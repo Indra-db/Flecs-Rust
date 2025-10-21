@@ -1,3 +1,5 @@
+//! Rest module component
+
 use super::*;
 // REST module components
 #[repr(C)]

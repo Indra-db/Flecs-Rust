@@ -1,5 +1,4 @@
 //! Query flags discovered & set during query creation.
-//!
 use super::*;
 create_pre_registered_component!(
     MatchPrefab,
