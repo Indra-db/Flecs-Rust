@@ -484,6 +484,59 @@
 //! }
 //! ```
 //!
+//! ## Component Registration Callbacks
+//!
+//! The `on_registration` attribute allows you to execute custom code when a component is registered with the world.
+//! This is useful for performing one-time initialization, adding additional traits, or configuring the component entity.
+//!
+//! ### Basic Usage
+//!
+//! When using the `on_registration` attribute, your component must implement the `OnComponentRegistration` trait:
+//!
+//! ```rust
+//! # use flecs_ecs::prelude::*;
+//! #[derive(Component)]
+//! #[flecs(on_registration)]
+//! struct MyComponent {
+//!     value: i32,
+//! }
+//!
+//! impl OnComponentRegistration for MyComponent {
+//!     fn on_component_registration(world: WorldRef, component_id: Entity) {
+//!         // Custom registration logic here
+//!         let component = world.component_untyped_from(component_id);
+//!         // ...
+//!     }
+//! }
+//! ```
+//!
+//! ### Registering Singleton Data
+//!
+//! Initialize singleton components during registration:
+//!
+//! ```rust
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component, Default)]
+//! # struct Counter { count: u32 }
+//! #[derive(Component, Default)]
+//! #[flecs(on_registration, traits(Singleton))]
+//! struct GameConfig {
+//!     max_players: u32,
+//! }
+//!
+//! impl OnComponentRegistration for GameConfig {
+//!     fn on_component_registration(world: WorldRef, _component_id: Entity) {
+//!         // Initialize global configuration
+//!         world.set(GameConfig { max_players: 4 });
+//!     }
+//! }
+//! ```
+//!
+//! ### Important Notes
+//!
+//! - The callback is executed **once** when the component is first registered
+//! - Registration happens lazily when the component is first used
+//!
 //! ## Combining Attributes
 //!
 //! All `#[flecs(...)]` attributes can be combined. Here's a complex example:
@@ -498,6 +551,7 @@
 //! #[flecs(
 //!     name = "GameEntity",
 //!     meta,
+//!     on_registration,
 //!     traits(
 //!         Sparse,
 //!         (OnInstantiate, Inherit),
@@ -515,6 +569,13 @@
 //! )]
 //! struct ComplexComponent {
 //!     data: i32,
+//! }
+//!
+//! impl OnComponentRegistration for ComplexComponent {
+//!     fn on_component_registration(world: WorldRef, component_id: Entity) {
+//!         // Custom registration logic
+//!         println!("ComplexComponent registered with id: {:?}", component_id);
+//!     }
 //! }
 //! ```
 //!

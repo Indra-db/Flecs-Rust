@@ -50,13 +50,9 @@ pub use json::*;
 
 #[cfg(feature = "flecs_units")]
 pub mod units;
-#[cfg(feature = "flecs_units")]
-pub use units::*;
 
 #[cfg(feature = "flecs_metrics")]
 pub mod metrics;
-#[cfg(feature = "flecs_metrics")]
-pub use metrics::*;
 
 #[cfg(feature = "flecs_alerts")]
 pub mod alerts;
