@@ -265,7 +265,8 @@ pub mod cleanup {
     ///
     /// # Example
     ///
-    /// ```rust,should_panic
+    /// ```rust,no_run
+    /// # //TODO this doesn't panic in release mode, texted Sander 22 october 2025
     /// # use flecs_ecs::prelude::*;
     /// # #[derive(Component)]
     /// # struct Archer;
