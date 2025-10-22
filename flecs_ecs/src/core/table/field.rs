@@ -1,4 +1,41 @@
-//! Table column API.
+//! Field access for table columns.
+//!
+//! This module provides typed and untyped access to table columns (fields).
+//! Fields represent contiguous arrays of component data within a table, enabling efficient
+//! iteration and access patterns.
+//!
+//! # Key Types
+//!
+//! - [`Field`]: Immutable access to a typed component field
+//! - [`FieldMut`]: Mutable access to a typed component field
+//! - [`FieldUntyped`] / [`FieldUntypedMut`]: Untyped access for dynamic component types
+//! - [`FieldIndex`]: Type-safe index for accessing specific rows without bounds checks
+//! - [`FieldAt`] / [`FieldAtMut`]: Access to individual components that are sparse.
+//!
+//! # Example
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! # #[derive(Component)]
+//! # struct Velocity { x: f32, y: f32 }
+//! # let world = World::new();
+//! # world.entity().set(Position { x: 0.0, y: 0.0 }).set(Velocity { x: 1.0, y: 1.0 });
+//! let query = world.new_query::<(&mut Position, &Velocity)>();
+//!
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         let mut pos = it.field_mut::<Position>(0);
+//!         let vel = it.field::<Velocity>(1);
+//!
+//!         for i in it.iter() {
+//!             pos[i].x += vel[i].x;
+//!             pos[i].y += vel[i].y;
+//!         }
+//!     }
+//! });
+//! ```
 
 #[cfg(feature = "flecs_safety_locks")]
 use super::iter::FieldError;
@@ -14,6 +51,42 @@ use core::ptr::NonNull;
 // TODO I can probably return two different field types, one for shared and one for non-shared
 // then I can customize the index behavior
 
+/// Type-safe index for accessing field rows without bounds checks.
+///
+/// `FieldIndex` is returned by [`TableIter::iter()`](crate::core::TableIter::iter) and provides
+/// unchecked access to field elements. This is safe because the index can only be constructed
+/// from the iterator itself, guaranteeing it's within bounds.
+///
+/// Using `FieldIndex` eliminates bounds checking overhead during iteration, making it
+/// significantly faster than using `usize` indexing in hot loops.
+///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # #[derive(Component)]
+/// # struct Position { x: f32, y: f32 }
+/// # let world = World::new();
+/// # world.entity().set(Position { x: 1.0, y: 2.0 });
+/// # let query = world.new_query::<&Position>();
+/// query.run(|mut it| {
+///     while it.next() {
+///         let pos = it.field::<Position>(0);
+///
+///         // iter() returns FieldIndex - no bounds checks
+///         for i in it.iter() {
+///             let position = &pos[i]; // Unchecked access
+///         }
+///     }
+/// });
+/// ```
+///
+/// # Safety
+///
+/// While indexing with `FieldIndex` is unchecked, it's safe because:
+/// - `FieldIndex` can only be obtained from `TableIter::iter()`
+/// - The iterator guarantees all indices are within the valid range
+/// - Manual construction requires `unsafe` and proper validation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FieldIndex(pub(crate) usize);
 
@@ -45,11 +118,31 @@ impl From<FieldIndex> for usize {
     }
 }
 
-/// Wrapper class around a table column with immutable access.
+/// Immutable accessor for a typed table column (field).
 ///
-/// # Type parameters
+/// `Field` provides read-only access to a contiguous array of components of type `T` within
+/// a table. It supports both regular component fields and shared components (components that
+/// are the same for all entities in the table).
 ///
-/// * `T`: The type of the column.
+/// # Type Parameters
+///
+/// - `T`: The component type stored in this field
+/// - `LOCK`: Whether to check for mut aliasing, true when `flecs_safety_locks` feature is turned on.
+///
+/// # Shared Components
+///
+/// Shared components are stored once per table rather than once per entity. When accessing
+/// a shared component, only index 0 is valid. Use [`is_shared()`](Self::is_shared) to check
+/// if a field is shared before iterating.
+///
+/// # Indexing
+///
+/// `Field` supports indexing with both [`FieldIndex`] (unchecked) and `usize` (checked):
+///
+/// - [`FieldMut`] for mutable access
+/// - [`FieldUntyped`] for untyped access
+/// - [`TableIter::field()`](crate::core::TableIter::field)
+/// - [`TableIter::field_mut()`](crate::core::TableIter::field_mut)
 pub struct Field<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
@@ -309,11 +402,50 @@ impl<'a, T, const LOCK: bool> Index<usize> for Field<'a, T, LOCK> {
     }
 }
 
-/// Wrapper class around a table column with mutable access.
+/// Mutable accessor for a typed table column (field).
 ///
-/// # Type parameters
+/// `FieldMut` provides read-write access to a contiguous array of components of type `T`
+/// within a table. It supports both regular component fields and shared components.
 ///
-/// * `T`: The type of the column.
+/// # Type Parameters
+///
+/// - `T`: The component type stored in this field
+/// - `LOCK`: Whether to check for mut aliasing, true when `flecs_safety_locks` feature is turned on.
+///
+/// # Indexing
+///
+/// `FieldMut` supports indexing with both [`FieldIndex`] (unchecked) and `usize` (checked):
+///
+/// # Slice Access
+///
+/// For bulk operations, use [`as_mut_slice()`](Self::as_mut_slice) to get direct slice access:
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # #[derive(Component)]
+/// # struct Position { x: f32, y: f32 }
+/// # let world = World::new();
+/// # world.entity().set(Position { x: 1.0, y: 2.0 });
+/// # let query = world.new_query::<&mut Position>();
+/// query.run(|mut it| {
+///     while it.next() {
+///         let mut pos = it.field_mut::<Position>(0);
+///         
+///         // Direct slice access
+///         for p in pos.as_mut_slice() {
+///             p.x *= 2.0;
+///             p.y *= 2.0;
+///         }
+///     }
+/// });
+/// ```
+///
+/// # See Also
+///
+/// - [`Field`] for immutable access
+/// - [`FieldUntypedMut`] for untyped mutable access
+/// - [`TableIter::field()`](crate::core::TableIter::field)
+/// - [`TableIter::field_mut()`](crate::core::TableIter::field_mut)
 pub struct FieldMut<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
@@ -770,8 +902,39 @@ impl<'a, T> FieldAtMut<'a, T> {
     }
 }
 
-/// Wrapper class around an untyped table column with immutable access.
-/// This class is used primarily for dynamic component types.
+/// Untyped immutable accessor for a table column.
+///
+/// `FieldUntyped` provides read-only access to a component field when the component type
+/// is not known at compile time. This is primarily used for dynamic component types or
+/// when working with the Flecs C API directly.
+///
+/// # Safety
+///
+/// Since this class provides untyped access, the caller must ensure:
+/// - The returned pointers are cast to the correct type
+/// - Indices are within bounds (`< count`)
+/// - The component size matches expectations
+///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # let world = World::new();
+/// # let comp_id = world.component::<i32>().id();
+/// # world.entity().set(42_i32);
+/// # let query = world.query::<()>().with(comp_id).build();
+/// query.run(|mut it| {
+///     while it.next() {
+///         let field = it.field_untyped(0);
+///         
+///         for i in 0..it.count() {
+///             let ptr = field.at(i);
+///             // Cast to appropriate type
+///             let value = unsafe { *(ptr as *const i32) };
+///         }
+///     }
+/// });
+/// ```
 pub struct FieldUntyped {
     pub(crate) array: *const c_void,
     pub(crate) size: usize,
@@ -820,8 +983,43 @@ impl FieldUntyped {
     }
 }
 
-/// Wrapper class around an untyped table column with mutable access.
-/// This class is used primarily for dynamic component types.
+/// Untyped mutable accessor for a table column.
+///
+/// `FieldUntypedMut` provides read-write access to a component field when the component type
+/// is not known at compile time. This is primarily used for dynamic component types or
+/// when working with the Flecs C API directly.
+///
+/// # Safety
+///
+/// Since this class provides untyped mutable access, the caller must ensure:
+/// - The returned pointers are cast to the correct type
+/// - Indices are within bounds (`< count`)
+/// - The component size matches expectations
+/// - Proper alignment requirements are met
+/// - No aliasing violations occur
+///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # let world = World::new();
+/// # let comp_id = world.component::<i32>().id();
+/// # world.entity().set(42_i32);
+/// # let query = world.query::<()>().with(comp_id).build();
+/// query.run(|mut it| {
+///     while it.next() {
+///         let field = it.field_untyped_mut(0);
+///         
+///         for i in 0..it.count() {
+///             let ptr = field.at_mut(i);
+///             // Cast to appropriate type and modify
+///             unsafe {
+///                 *(ptr as *mut i32) += 1;
+///             }
+///         }
+///     }
+/// });
+/// ```
 pub struct FieldUntypedMut {
     pub(crate) array: *mut c_void,
     pub(crate) size: usize,

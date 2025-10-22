@@ -7,7 +7,7 @@ impl InternalComponentHooks for () {}
 
 impl OnComponentRegistration for () {}
 
-impl flecs_ecs::core::component_registration::registration_traits::ComponentId for () {
+impl flecs_ecs::core::component_registration::ComponentId for () {
     type UnderlyingType = ();
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
     type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
@@ -26,7 +26,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         const IMPLS_DEFAULT: bool = <() as ComponentInfo>::IMPLS_DEFAULT;
 
         if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,()>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >( type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,()>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >( type_hooks);
         }
     }
 
@@ -34,7 +34,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         const IMPLS_CLONE: bool = <() as ComponentInfo>::IMPLS_CLONE;
 
         if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,()>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >( type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,()>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >( type_hooks);
         } else {
             flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<()>(
                 type_hooks,
@@ -47,7 +47,7 @@ impl flecs_ecs::core::TagComponent for () {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for () {}
 
-impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for () {
+impl flecs_ecs::core::component_registration::ComponentInfo for () {
     const IS_GENERIC: bool = false;
     const IS_ENUM: bool = false;
     const IS_TAG: bool = true;
@@ -59,5 +59,5 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
         { flecs_ecs::core::utility::types::ImplementsPartialOrd::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
-    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
+    type TagType = flecs_ecs::core::component_registration::FlecsIsATag;
 }

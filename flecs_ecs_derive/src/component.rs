@@ -527,12 +527,12 @@ pub(crate) fn generate_tag_trait(has_fields: bool) -> proc_macro2::TokenStream {
     if has_fields {
         quote! {
             const IS_TAG: bool = false;
-            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
+            type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
         }
     } else {
         quote! {
             const IS_TAG: bool = true;
-            type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
+            type TagType = flecs_ecs::core::component_registration::FlecsIsATag;
         }
     }
 }
@@ -706,12 +706,12 @@ pub(crate) fn impl_cached_component_data_struct(
         quote! {
 
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
                 const IS_ENUM: bool =  <#name as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
-                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
                 } else if !IS_ENUM {
                     flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(
                         type_hooks,
@@ -720,11 +720,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
 
                 if IMPLS_CLONE {
-                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
                 } else {
                     flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
                         type_hooks,
@@ -733,11 +733,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_ORD: bool = #name::IMPLS_PARTIAL_ORD;
 
                 if IMPLS_PARTIAL_ORD {
-                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::FlecsPartialOrdType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -748,11 +748,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_EQ: bool = #name::IMPLS_PARTIAL_EQ;
 
                 if IMPLS_PARTIAL_EQ {
-                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::FlecsPartialEqType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -766,12 +766,12 @@ pub(crate) fn impl_cached_component_data_struct(
         quote! {
 
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::<'_>::IMPLS_DEFAULT;
                 const IS_ENUM: bool =  <#name::<'_> as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
-                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name #type_generics>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
                 } else if !IS_ENUM {
                     flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name #type_generics>(
                         type_hooks,
@@ -780,11 +780,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::<'_>::IMPLS_CLONE;
 
                 if IMPLS_CLONE {
-                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name #type_generics>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
                 } else {
                     flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
                         type_hooks,
@@ -793,11 +793,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_ORD: bool = #name::<'_>::IMPLS_PARTIAL_ORD;
 
                 if IMPLS_PARTIAL_ORD {
-                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name #type_generics>as flecs_ecs::core::component_registration::FlecsPartialOrdType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -808,11 +808,11 @@ pub(crate) fn impl_cached_component_data_struct(
             }
 
             fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_EQ: bool = #name::<'_>::IMPLS_PARTIAL_EQ;
 
                 if IMPLS_PARTIAL_EQ {
-                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name #type_generics>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name #type_generics>as flecs_ecs::core::component_registration::FlecsPartialEqType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -929,7 +929,7 @@ pub(crate) fn impl_cached_component_data_struct(
         quote! {
             impl #impl_generics  flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for #name #type_generics #where_clause{}
 
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+            impl #impl_generics flecs_ecs::core::component_registration::ComponentInfo for #name #type_generics #where_clause {
                 #is_generic_const
                 const IS_ENUM: bool = false;
 
@@ -952,7 +952,7 @@ pub(crate) fn impl_cached_component_data_struct(
     };
 
     let component_id = quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics
+        impl #impl_generics flecs_ecs::core::component_registration::ComponentId for #name #type_generics
         #where_clause_quote
         {
             type UnderlyingType = #name #type_generics;
@@ -1045,7 +1045,7 @@ pub(crate) fn impl_cached_component_data_struct(
             quote! {}
         };
         quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
+        impl #impl_generics flecs_ecs::core::component_registration::InternalComponentHooks for #name #type_generics {
             #pre_name
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
@@ -1053,7 +1053,7 @@ pub(crate) fn impl_cached_component_data_struct(
 
                 #flecs_traits_calls
 
-                <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+                <Self as flecs_ecs::core::component_registration::OnComponentRegistration>::on_component_registration(world, component_id);
             }
         }
         }
@@ -1063,7 +1063,7 @@ pub(crate) fn impl_cached_component_data_struct(
         quote! {}
     } else {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+            impl #impl_generics flecs_ecs::core::component_registration::OnComponentRegistration for #name #type_generics {
                 #[inline(always)]
                 fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
             }
@@ -1247,12 +1247,12 @@ pub(crate) fn impl_cached_component_data_enum(
             }
 
             fn __register_default_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_DEFAULT: bool =  #name::IMPLS_DEFAULT;
                 const IS_ENUM: bool =  <#name as ComponentInfo>::IS_ENUM;
 
                 if IMPLS_DEFAULT {
-                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,#name>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
                 } else if !IS_ENUM {
                     flecs_ecs::core::lifecycle_traits::register_ctor_panic_lifecycle_actions::<#name>(
                         type_hooks,
@@ -1261,11 +1261,11 @@ pub(crate) fn impl_cached_component_data_enum(
             }
 
             fn __register_clone_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_CLONE: bool = #name::IMPLS_CLONE;
 
                 if IMPLS_CLONE {
-                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,#name>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
                 } else {
                     flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<#name>(
                         type_hooks,
@@ -1274,11 +1274,11 @@ pub(crate) fn impl_cached_component_data_enum(
             }
 
             fn __register_compare_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_ORD: bool = #name::IMPLS_PARTIAL_ORD;
 
                 if IMPLS_PARTIAL_ORD {
-                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialOrdType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_ord_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_ORD,#name>as flecs_ecs::core::component_registration::FlecsPartialOrdType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -1289,11 +1289,11 @@ pub(crate) fn impl_cached_component_data_enum(
             }
 
             fn __register_equals_hooks(type_hooks: &mut flecs_ecs::sys::ecs_type_hooks_t) {
-                use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+                use flecs_ecs::core::component_registration::ComponentInfo;
                 const IMPLS_PARTIAL_EQ: bool = #name::IMPLS_PARTIAL_EQ;
 
                 if IMPLS_PARTIAL_EQ {
-                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::registration_traits::FlecsPartialEqType> ::Type, >(
+                    flecs_ecs::core::lifecycle_traits::register_partial_eq_lifecycle_action::<<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_PARTIAL_EQ,#name>as flecs_ecs::core::component_registration::FlecsPartialEqType> ::Type, >(
                         type_hooks,
                     );
                 } else {
@@ -1306,7 +1306,7 @@ pub(crate) fn impl_cached_component_data_enum(
 
     let component_id = if !is_generic {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentId for #name #type_generics #where_clause{
+            impl #impl_generics flecs_ecs::core::component_registration::ComponentId for #name #type_generics #where_clause{
                 type UnderlyingType = #name;
                 type UnderlyingEnumType = #name;
                 type UnderlyingTypeOfEnum = #underlying_enum_type;
@@ -1320,12 +1320,12 @@ pub(crate) fn impl_cached_component_data_enum(
 
     let component_info = if !is_generic {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+            impl #impl_generics flecs_ecs::core::component_registration::ComponentInfo for #name #type_generics #where_clause {
                 const IS_GENERIC: bool = false;
                 const IS_ENUM: bool = true;
                 const IS_TAG: bool = false;
                 type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
+                flecs_ecs::core::component_registration::FlecsNotATag;
                 const IMPLS_CLONE: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
@@ -1348,12 +1348,12 @@ pub(crate) fn impl_cached_component_data_enum(
         }
     } else {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::ComponentInfo for #name #type_generics #where_clause {
+            impl #impl_generics flecs_ecs::core::component_registration::ComponentInfo for #name #type_generics #where_clause {
                 const IS_GENERIC: bool = true;
                 const IS_ENUM: bool = true;
                 const IS_TAG: bool = false;
                 type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
+                flecs_ecs::core::component_registration::FlecsNotATag;
                 const IMPLS_CLONE: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsClone::<#name #type_generics>::IMPLS
@@ -1386,7 +1386,7 @@ pub(crate) fn impl_cached_component_data_enum(
             quote! {}
         };
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::InternalComponentHooks for #name #type_generics {
+            impl #impl_generics flecs_ecs::core::component_registration::InternalComponentHooks for #name #type_generics {
                 #pre_name
                 #[inline(always)]
                 fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
@@ -1394,7 +1394,7 @@ pub(crate) fn impl_cached_component_data_enum(
 
                     #flecs_traits_calls
 
-                    <Self as flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration>::on_component_registration(world, component_id);
+                    <Self as flecs_ecs::core::component_registration::OnComponentRegistration>::on_component_registration(world, component_id);
                 }
             }
         }
@@ -1404,7 +1404,7 @@ pub(crate) fn impl_cached_component_data_enum(
         quote! {}
     } else {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::registration_traits::OnComponentRegistration for #name #type_generics {
+            impl #impl_generics flecs_ecs::core::component_registration::OnComponentRegistration for #name #type_generics {
                 #[inline(always)]
                 fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
             }

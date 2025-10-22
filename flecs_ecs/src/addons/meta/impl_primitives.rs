@@ -99,10 +99,10 @@ impl flecs_ecs::core::DataComponent for String {}
 
 impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for String {}
 
-impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo for String {
+impl flecs_ecs::core::component_registration::ComponentInfo for String {
     const IS_ENUM: bool = false;
     const IS_TAG: bool = false;
-    type TagType = flecs_ecs::core::component_registration::registration_traits::FlecsNotATag;
+    type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
     const IMPLS_CLONE: bool = { flecs_ecs::core::utility::types::ImplementsClone::<String>::IMPLS };
     const IMPLS_DEFAULT: bool =
         { flecs_ecs::core::utility::types::ImplementsDefault::<String>::IMPLS };
@@ -112,7 +112,7 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentInfo
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = false;
 }
-impl flecs_ecs::core::component_registration::registration_traits::ComponentId for String {
+impl flecs_ecs::core::component_registration::ComponentId for String {
     type UnderlyingType = String;
     type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
     type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
@@ -127,17 +127,17 @@ impl flecs_ecs::core::component_registration::registration_traits::ComponentId f
         flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<String>(type_hooks);
     }
     fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+        use flecs_ecs::core::component_registration::ComponentInfo;
         const IMPLS_DEFAULT: bool = String::IMPLS_DEFAULT;
         if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,String>as flecs_ecs::core::component_registration::registration_traits::FlecsDefaultType> ::Type, >(type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,String>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
         }
     }
     fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::registration_traits::ComponentInfo;
+        use flecs_ecs::core::component_registration::ComponentInfo;
         const IMPLS_CLONE: bool = String::IMPLS_CLONE;
         if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,String>as flecs_ecs::core::component_registration::registration_traits::FlecsCloneType> ::Type, >(type_hooks);
+            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,String>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
         } else {
             flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<String>(
                 type_hooks,

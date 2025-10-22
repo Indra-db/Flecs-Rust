@@ -49,8 +49,7 @@ macro_rules! impl_pre_registered_component {
             const IMPLS_PARTIAL_ORD: bool = false;
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
-            type TagType =
-                flecs_ecs::core::component_registration::registration_traits::FlecsIsATag;
+            type TagType = flecs_ecs::core::component_registration::FlecsIsATag;
         }
 
         impl crate::core::TagComponent for $struct_name {}

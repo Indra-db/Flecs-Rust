@@ -161,7 +161,7 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             vtable: usize,
         }
 
-        impl flecs_ecs::core::component_registration::registration_traits::RustTrait for #struct_name {}
+        impl flecs_ecs::core::component_registration::RustTrait for #struct_name {}
 
         impl #struct_name {
             /// Creates a new trait component with the specified vtable pointer.
@@ -214,7 +214,7 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             /// ShapesTrait::register_vtable::<Circle>(&world);
             /// ShapesTrait::register_vtable::<Square>(&world);
             /// ```
-            pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::registration_traits::ComponentId>(world: &flecs_ecs::core::World) -> usize {
+            pub fn register_vtable<T: #name + flecs_ecs::core::component_registration::ComponentId>(world: &flecs_ecs::core::World) -> usize {
                 // Create a dangling pointer to T and cast it to a trait object
                 // This gives us access to the vtable without needing an actual instance
                 let trait_obj_ptr = std::ptr::NonNull::<T>::dangling() as std::ptr::NonNull<dyn #name>;

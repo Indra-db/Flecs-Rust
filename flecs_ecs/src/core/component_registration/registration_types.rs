@@ -3,7 +3,7 @@ use flecs_ecs_derive::Component;
 
 use crate::core::InternalIntoEntity;
 
-use super::ComponentId;
+use super::registration_traits::ComponentId;
 
 pub struct Enum;
 

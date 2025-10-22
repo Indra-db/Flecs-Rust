@@ -1,3 +1,98 @@
+//! Multi-source field access for table iterators.
+//!
+//! This module provides the [`TableIter::get()`] method which enables safe access to
+//! fields from different sources (different tables), handling mutable aliasing checks
+//! when the `flecs_safety_locks` feature is enabled.
+//!
+//! # Mutable Access
+//!
+//! To get mutable access to a field, wrap its index with `Mut()`:
+//!
+//! ```rust
+//! # use flecs_ecs::prelude::*;
+//! # use flecs_ecs::core::table::Mut;
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! # #[derive(Component)]
+//! # struct Parent;
+//! # let world = World::new();
+//! # let parent = world.entity().set(Position { x: 0.0, y: 0.0 });
+//! # world.entity().set(Position { x: 1.0, y: 1.0 }).child_of(parent);
+//! # let query = world.query::<(&mut Position, &Position)>().term_at(1).parent().build();
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         // Get mutable field 0 and immutable field 1
+//!         // Uses Mut(0) to indicate field 0 is mutable
+//!         match it.get::<Position, _>((Mut(0), 1)) {
+//!             (Ok(mut pos), Ok(parent_pos)) => {
+//!                 for i in it.iter() {
+//!                     pos[i].x = parent_pos[i].x;
+//!                     pos[i].y = parent_pos[i].y;
+//!                 }
+//!             }
+//!             _ => {}
+//!         }
+//!     }
+//! });
+//! ```
+//!
+//! when aliasing is possible, this can be handled with the (Ok(_), Err(_)) match arm.
+//!
+//! ```rust
+//! # #[derive(Component, Debug)]
+//! # struct TP {
+//! #     x: i32,
+//! # }
+//! # #[derive(Component, Debug)]
+//! # struct Relx;
+//! # #[derive(Component, Debug)]
+//! # struct Unit;
+//! # let world = World::new();
+//! let parent = world.entity().set(TP { x: 1 });
+//! parent.add((id::<Relx>(), parent));
+//! world
+//!     .entity()
+//!     .add(Unit)
+//!     .set(TP { x: 4 })
+//!     .add((id::<Relx>(), parent));
+//! let mut ok_alias = false;
+//! let mut ok_normal = false;
+//! world
+//!     .query::<(&mut TP, &TP)>()
+//!     .with((id::<Relx>(), "$parent"))
+//!     .term_at(1)
+//!     .set_src("$parent")
+//!     .build()
+//!     .run(|mut it| {
+//!         while it.next() {
+//!             match it.get::<TP, _>((Mut(0), 1)) {
+//!                 (Ok(_tp1), Ok(_tp2)) => {
+//!                     // table no alias issues
+//!                     ok_normal = true;
+//!                 }
+//!                 (Ok(_tp), Err(_)) => {
+//!                     // aliasing detected, only one reference allowed & returned
+//!                     ok_alias = true;
+//!                 }
+//!                 _ => {
+//!                     unreachable!();
+//!                 }
+//!             }
+//!         }
+//!     });//!
+//! assert!(ok_alias, "Expected to detect aliasing and return an error");
+//! assert!(
+//!     ok_normal,
+//!     "Expected to get a valid result without aliasing error"
+//! );
+//! ```
+//!
+//! # Aliasing Detection
+//!
+//! When `flecs_safety_locks` is enabled, attempting to get mutable and immutable
+//! access to the same table will return an error, preventing undefined behavior
+//! from mutable aliasing.
+
 use flecs_ecs::prelude::*;
 
 use super::iter::FieldError;
@@ -15,7 +110,10 @@ where
     }
 }
 
-struct Mut(usize);
+/// Wrapper to indicate that a field should be accessed mutably.
+///
+/// Used with [`TableIter::get()`] to specify which fields require mutable access.
+pub struct Mut(pub usize);
 
 pub trait FieldsTuple<T: ComponentId>: Sized {
     type TupleType<'w>
@@ -351,17 +449,22 @@ mod tests {
     #[derive(Component, Debug)]
     struct Relx;
 
+    #[derive(Component, Debug)]
+    struct Unit;
+
     #[test]
-    #[should_panic]
     #[cfg(feature = "flecs_safety_locks")]
     fn multi_src_same_table_err() {
         let world = World::new();
-
         let parent = world.entity().set(TP { x: 1 });
         parent.add((id::<Relx>(), parent));
-
-        world.entity().set(TP { x: 4 }).add((id::<Relx>(), parent));
-
+        world
+            .entity()
+            .add(Unit)
+            .set(TP { x: 4 })
+            .add((id::<Relx>(), parent));
+        let mut ok_alias = false;
+        let mut ok_normal = false;
         world
             .query::<(&mut TP, &TP)>()
             .with((id::<Relx>(), "$parent"))
@@ -371,9 +474,13 @@ mod tests {
             .run(|mut it| {
                 while it.next() {
                     match it.get::<TP, _>((Mut(0), 1)) {
-                        (Ok(_), Ok(_)) => {}
-                        (Ok(_), Err(_)) => {
-                            panic!();
+                        (Ok(_tp1), Ok(_tp2)) => {
+                            // table no alias issues
+                            ok_normal = true;
+                        }
+                        (Ok(_tp), Err(_)) => {
+                            // aliasing detected, only one reference allowed & returned
+                            ok_alias = true;
                         }
                         _ => {
                             unreachable!();
@@ -381,6 +488,12 @@ mod tests {
                     }
                 }
             });
+
+        assert!(ok_alias, "Expected to detect aliasing and return an error");
+        assert!(
+            ok_normal,
+            "Expected to get a valid result without aliasing error"
+        );
     }
 
     #[test]

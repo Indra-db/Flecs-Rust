@@ -1,4 +1,96 @@
-//! Table is a wrapper class that gives direct access to the component arrays of a table, the table data
+//! Table access and iteration utilities.
+//!
+//! This module provides direct access to tables and their component data. Tables are the
+//! internal storage structure in Flecs that group entities with the same component composition
+//! (archetype). Understanding and working with tables is essential for high-performance ECS operations.
+//!
+//! # What are Tables?
+//!
+//! In Flecs, entities with the same set of components are stored together in tables. Each table
+//! represents a unique archetype - a specific combination of components. This storage model enables:
+//!
+//! - **Cache-friendly iteration**: Components of the same type are stored contiguously in memory
+//! - **Fast component access**: Direct array indexing without indirection
+//! - **Efficient queries**: Query matching can be done at the table level
+//!
+//! # Module Organization
+//!
+//! - [`Table`]: The main wrapper providing access to table metadata and component arrays
+//! - [`TableIter`]: Iterator for traversing tables and accessing component data during queries
+//! - [`Field`] and [`FieldMut`]: Typed access to component columns (fields) within a table
+//! - [`FieldUntyped`] and [`FieldUntypedMut`]: Untyped access for dynamic component types
+//! - [`FieldIndex`]: Type-safe index for accessing specific entity rows in a field
+//! - [`TableFlags`]: Bitflags describing table properties and capabilities
+//!
+//! # Common Use Cases
+//!
+//! ## Accessing Table Information
+//!
+//! ```rust, no_run
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! # #[derive(Component)]
+//! # struct Velocity { x: f32, y: f32 }
+//! # let world = World::new();
+//! let e = world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.0, y: 0.0 });
+//! if let Some(table) = e.table() {
+//!     // Access table directly
+//!     println!("Entity is in table: {table:?}, with archetype: {:?}", table.archetype());
+//! }
+//! ```
+//!
+//! ## Iterating with Fields
+//!
+//! The most common pattern is using [`TableIter`] within queries to access component data:
+//!
+//! ```rust,no_run
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! # #[derive(Component)]
+//! # struct Velocity { x: f32, y: f32 }
+//! # let world = World::new();
+//! # world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.1, y: 0.2 });
+//! let query = world.new_query::<(&mut Position, &Velocity)>();
+//!
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         // For each matching table
+//!         let mut pos = it.field_mut::<Position>(0);
+//!         let vel = it.field::<Velocity>(1);
+//!
+//!         for i in it.iter() {
+//!             // For each entity in the table
+//!             pos[i].x += vel[i].x;
+//!             pos[i].y += vel[i].y;
+//!         }
+//!     }
+//! });
+//! ```
+//!
+//! ## Type-Safe Indexing
+//!
+//! [`FieldIndex`] provides bounds-check-free indexing when iterating:
+//!
+//! ```rust,no_run
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! # let world = World::new();
+//! # world.entity().set(Position { x: 1.0, y: 2.0 });
+//! # let query = world.new_query::<&Position>();
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         let pos = it.field::<Position>(0);
+//!
+//!         // iter() returns FieldIndex, which allows unchecked access
+//!         for i in it.iter() {
+//!             let position = &pos[i]; // No bounds check
+//!         }
+//!     }
+//! });
+//! ```
 
 mod field;
 mod flags;
