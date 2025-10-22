@@ -139,10 +139,39 @@ impl From<FieldIndex> for usize {
 ///
 /// `Field` supports indexing with both [`FieldIndex`] (unchecked) and `usize` (checked):
 ///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # #[derive(Component)]
+/// # struct Position { x: f32, y: f32 }
+/// # #[derive(Component)]
+/// # struct Velocity { x: f32, y: f32 }
+/// # let world = World::new();
+/// # world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.5, y: 0.5 });
+/// # let query = world.new_query::<(&mut Position, &Velocity)>();
+/// query.run(|mut it| {
+///     while it.next() {
+///         let mut pos = it.field_mut::<Position>(0);
+///         let vel = it.field::<Velocity>(1);
+///         for i in it.iter() {
+///             let mut position = &mut pos[i];
+///             let velocity = &vel[i];
+///             position.x += velocity.x;
+///             position.y += velocity.y;
+///         }
+///     }
+/// });
+/// ```
+///
+/// # See also
+///
 /// - [`FieldMut`] for mutable access
 /// - [`FieldUntyped`] for untyped access
 /// - [`TableIter::field()`](crate::core::TableIter::field)
+/// - [`TableIter::get_field()`](crate::core::TableIter::get_field)
 /// - [`TableIter::field_mut()`](crate::core::TableIter::field_mut)
+/// - [`TableIter::get_field_mut()`](crate::core::TableIter::get_field_mut)
 pub struct Field<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a [T],
     pub(crate) is_shared: bool,
@@ -416,25 +445,26 @@ impl<'a, T, const LOCK: bool> Index<usize> for Field<'a, T, LOCK> {
 ///
 /// `FieldMut` supports indexing with both [`FieldIndex`] (unchecked) and `usize` (checked):
 ///
-/// # Slice Access
-///
-/// For bulk operations, use [`as_mut_slice()`](Self::as_mut_slice) to get direct slice access:
+/// # Example
 ///
 /// ```
 /// # use flecs_ecs::prelude::*;
 /// # #[derive(Component)]
 /// # struct Position { x: f32, y: f32 }
+/// # #[derive(Component)]
+/// # struct Velocity { x: f32, y: f32 }
 /// # let world = World::new();
-/// # world.entity().set(Position { x: 1.0, y: 2.0 });
-/// # let query = world.new_query::<&mut Position>();
+/// # world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.5, y: 0.5 });
+/// # let query = world.new_query::<(&mut Position, &Velocity)>();
 /// query.run(|mut it| {
 ///     while it.next() {
 ///         let mut pos = it.field_mut::<Position>(0);
-///         
-///         // Direct slice access
-///         for p in pos.as_mut_slice() {
-///             p.x *= 2.0;
-///             p.y *= 2.0;
+///         let vel = it.field::<Velocity>(1);
+///         for i in it.iter() {
+///             let mut position = &mut pos[i];
+///             let velocity = &vel[i];
+///             position.x += velocity.x;
+///             position.y += velocity.y;
 ///         }
 ///     }
 /// });
@@ -445,7 +475,8 @@ impl<'a, T, const LOCK: bool> Index<usize> for Field<'a, T, LOCK> {
 /// - [`Field`] for immutable access
 /// - [`FieldUntypedMut`] for untyped mutable access
 /// - [`TableIter::field()`](crate::core::TableIter::field)
-/// - [`TableIter::field_mut()`](crate::core::TableIter::field_mut)
+/// - [`TableIter::get_field()`](crate::core::TableIter::get_field)
+/// - [`TableIter::get_field_mut()`](crate::core::TableIter::get_field_mut)
 pub struct FieldMut<'a, T, const LOCK: bool> {
     pub(crate) slice_components: &'a mut [T],
     pub(crate) is_shared: bool,
@@ -757,6 +788,59 @@ impl<'a, T, const LOCK: bool> IndexMut<usize> for FieldMut<'a, T, LOCK> {
     }
 }
 
+/// Immutable accessor for a single sparse component at a specific row.
+///
+/// `FieldAt` provides read-only access to a single component instance for sparse components.
+/// Unlike [`Field`] which provides array access to densely stored components, `FieldAt` is
+/// used when components are stored sparsely (not contiguously in memory).
+///
+/// see the [`Sparse`](crate::core::flecs::Sparse) trait for more information.
+///
+/// # When to Use
+///
+/// Use `FieldAt` when:
+/// - Working with sparse components (marked with the [`Sparse`](crate::core::flecs::Sparse) trait)
+///
+/// # Safety
+///
+/// When `flecs_safety_locks` is enabled, `FieldAt` automatically tracks access and prevents
+/// mutable aliasing violations by acquiring read locks on construction and releasing them on drop.
+///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # #[derive(Component)]
+/// # struct Position { x: f32, y: f32 }
+/// # #[derive(Component)]
+/// # struct Velocity { x: f32, y: f32 }
+/// # let world = World::new();
+/// // Mark Position as sparse
+/// world.component::<Position>().add_trait::<flecs::Sparse>();
+///
+/// # world.entity().set(Position { x: 10.0, y: 20.0 }).set(Velocity { x: 1.0, y: 2.0 });
+/// let query = world.query::<(&mut Position, &Velocity)>().build();
+///
+/// query.run(|mut it| {
+///     while it.next() {
+///         let vel = it.field::<Velocity>(1);
+///
+///         for i in it.iter() {
+///             // Access sparse component for each row
+///             let mut pos = it.field_at_mut::<Position>(0, i);
+///             pos.x += vel[i].x;
+///             pos.y += vel[i].y;
+///         }
+///     }
+/// });
+/// ```
+///
+/// # See Also
+///
+/// - [`Field`] for dense component access
+/// - [`TableIter::field_at()`](crate::core::TableIter::field_at) to obtain `FieldAt`
+/// - [`TableIter::field_at_mut()`](crate::core::TableIter::field_at_mut) for mutable access
+/// - [`FieldAtMut`] for mutable sparse component access
 pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
     #[cfg(feature = "flecs_safety_locks")]
@@ -825,6 +909,27 @@ impl<'a, T> FieldAt<'a, T> {
     }
 }
 
+/// Mutable accessor for a single sparse component at a specific row.
+///
+/// `FieldAtMut` provides read-write access to a single component instance for sparse components.
+/// It works the same way as [`FieldAt`], but allows modification of the component data.
+///
+/// see the [`Sparse`](crate::core::flecs::Sparse) trait for more information.
+///
+/// # Safety
+///
+/// When `flecs_safety_locks` is enabled, `FieldAtMut` automatically tracks mutable access and
+/// prevents aliasing violations by acquiring write locks on construction and releasing them on drop.
+///
+/// # Example
+///
+/// See [`FieldAt`] for a complete usage example.
+///
+/// # See Also
+///
+/// - [`FieldAt`] for immutable sparse component access
+/// - [`FieldMut`] for dense mutable component access
+/// - [`TableIter::field_at_mut()`](crate::core::TableIter::field_at_mut) to obtain `FieldAtMut`
 pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
     #[cfg(feature = "flecs_safety_locks")]
@@ -926,7 +1031,7 @@ impl<'a, T> FieldAtMut<'a, T> {
 /// query.run(|mut it| {
 ///     while it.next() {
 ///         let field = it.field_untyped(0);
-///         
+///
 ///         for i in 0..it.count() {
 ///             let ptr = field.at(i);
 ///             // Cast to appropriate type
@@ -1009,7 +1114,7 @@ impl FieldUntyped {
 /// query.run(|mut it| {
 ///     while it.next() {
 ///         let field = it.field_untyped_mut(0);
-///         
+///
 ///         for i in 0..it.count() {
 ///             let ptr = field.at_mut(i);
 ///             // Cast to appropriate type and modify

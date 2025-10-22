@@ -731,7 +731,9 @@
 //! # let world = World::new();
 //! # #[derive(Component)]
 //! # struct LocatedIn;
-//! world.component::<LocatedIn>().add_trait::<flecs::Transitive>();
+//! world
+//!     .component::<LocatedIn>()
+//!     .add_trait::<flecs::Transitive>();
 //! # #[derive(Component)]
 //! # struct SanFrancisco;
 //! query!(world, (LocatedIn, SanFrancisco | self));
@@ -964,4 +966,3 @@
 //! // Match spaceships where all of the engines are healthy
 //! query!(world, SpaceShip, !{ (Engine, $"engine"), !Healthy($"engine") });
 //! ```
-//!

@@ -82,9 +82,9 @@ where
     /// query.run(|mut it| {
     ///     while it.next() {
     ///         //for each different table
+    ///         let pos = it.field::<Position>(0);
     ///         for i in it.iter() {
     ///             //for each entity in the table
-    ///             let pos = it.field::<Position>(0);
     ///             assert_eq!(pos[0].x, 1.0);
     ///             assert_eq!(pos[0].y, 2.0);
     ///         }
@@ -471,6 +471,36 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&mut Position, &Velocity)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let mut pos = it.field_mut::<Position>(0);
+    ///         let vel = it.field::<Velocity>(1);
+    ///         for i in it.iter() {
+    ///             let mut position = &mut pos[i];
+    ///             let velocity = &vel[i];
+    ///             position.x += velocity.x;
+    ///             position.y += velocity.y;
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::get_field`]
+    /// * [`TableIter::field_mut`]
+    /// * [`TableIter::get_field_mut`]
     #[inline(always)]
     pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
@@ -487,6 +517,45 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&mut Position, Option<&Velocity>)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let mut pos = it.get_field_mut::<Position>(0).unwrap();
+    ///         let vel = it.get_field::<Velocity>(1);
+    ///
+    ///         if let Some(vel) = vel {
+    ///             for i in it.iter() {
+    ///                 let mut position = &mut pos[i];
+    ///                 let velocity = &vel[i];
+    ///                 position.x += velocity.x;
+    ///                 position.y += velocity.y;
+    ///             }
+    ///         } else {
+    ///             for i in it.iter() {
+    ///                 let mut position = &mut pos[i];
+    ///                 position.x += 0.1;
+    ///                 position.y += 0.1;
+    ///             }
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::field`]
+    /// * [`TableIter::field_mut`]
+    /// * [`TableIter::get_field_mut`]
     #[inline(always)]
     pub fn get_field<T: ComponentId>(
         &self,
@@ -506,6 +575,36 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&mut Position, &Velocity)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let mut pos = it.field_mut::<Position>(0);
+    ///         let vel = it.field::<Velocity>(1);
+    ///         for i in it.iter() {
+    ///             let mut position = &mut pos[i];
+    ///             let velocity = &vel[i];
+    ///             position.x += velocity.x;
+    ///             position.y += velocity.y;
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::field`]
+    /// * [`TableIter::get_field`]
+    /// * [`TableIter::get_field_mut`]
     #[inline(always)]
     pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
@@ -513,7 +612,7 @@ where
         self.field_internal_mut::<T::UnderlyingType, true>(index)
     }
 
-    /// Get mutable access to field data.
+    /// Get mutable access to field data wrapped in Option. This is useful with optional fields.
     ///
     /// # Arguments
     ///
@@ -522,6 +621,45 @@ where
     /// # Returns
     ///
     /// Returns a column object that can be used to access the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&mut Position, Option<&Velocity>)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let mut pos = it.get_field_mut::<Position>(0).unwrap();
+    ///         let vel = it.get_field::<Velocity>(1);
+    ///
+    ///         if let Some(vel) = vel {
+    ///             for i in it.iter() {
+    ///                 let mut position = &mut pos[i];
+    ///                 let velocity = &vel[i];
+    ///                 position.x += velocity.x;
+    ///                 position.y += velocity.y;
+    ///             }
+    ///         } else {
+    ///             for i in it.iter() {
+    ///                 let mut position = &mut pos[i];
+    ///                 position.x += 0.1;
+    ///                 position.y += 0.1;
+    ///             }
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::field`]
+    /// * [`TableIter::field_mut`]
+    /// * [`TableIter::get_field`]
     #[inline(always)]
     pub fn get_field_mut<T: ComponentId>(
         &'a self,
@@ -596,17 +734,66 @@ where
         self.get_field_untyped_internal_mut(index)
     }
 
-    /// Get the typed field data for the specified row
-    /// This function may be used to access shared fields when row is set to 0.
+    /// Get immutable access to a sparse component at a specific row.
+    ///
+    /// This method is used to access sparse components (marked with the [`Sparse`](crate::core::flecs::Sparse) trait)
+    /// on a per-entity basis during iteration. Unlike [`field()`](Self::field) which returns an array
+    /// of densely-packed components, `field_at()` retrieves a single component instance for the
+    /// specified row.
+    ///
+    /// # Sparse Components
+    ///
+    /// Sparse components are not stored contiguously in memory, so they must be accessed one at
+    /// a time using this method. This is more efficient for components that are only present on
+    /// a small subset of entities or where add/remove speed matters more than query speed.
     ///
     /// # Arguments
     ///
-    /// * `index` - The index.
-    /// * `row` - The row index.
+    /// * `index` - The field index in the query
+    /// * `row` - The row index (entity index within the current table iteration)
     ///
     /// # Returns
     ///
-    /// An option containing a reference to the field data
+    /// A [`FieldAt`] accessor providing immutable access to the component
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component at the specified field index is not sparse. Use this method
+    /// only for components marked with the `Sparse` trait.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// // Mark Position as sparse
+    /// world.component::<Position>().add_trait::<flecs::Sparse>();
+    ///
+    /// # world.entity().set(Position { x: 10.0, y: 20.0 }).set(Velocity { x: 1.0, y: 2.0 });
+    /// let query = world.query::<(&Position, &Velocity)>().build();
+    ///
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let vel = it.field::<Velocity>(1);
+    ///
+    ///         for i in it.iter() {
+    ///             // Access sparse component for this specific row
+    ///             let pos = it.field_at::<Position>(0, i);
+    ///             println!("Entity at ({}, {})", pos.x, pos.y);
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`field_at_mut()`](Self::field_at_mut) for mutable access
+    /// - [`field()`](Self::field) for dense component access
+    /// - [`FieldAt`] for the returned accessor type
     pub fn field_at<T: ComponentId>(
         &'a self,
         index: i8,
@@ -658,8 +845,59 @@ where
         self.get_field_at_sparse_internal::<T>(index, row)
     }
 
-    /// Get the mutable typed field data for the specified row
-    /// This function may be used to access shared fields when row is set to 0.
+    /// Get mutable access to a sparse component at a specific row.
+    ///
+    /// This method provides mutable access to sparse components on a per-entity basis during
+    /// iteration. It works the same way as [`field_at()`](Self::field_at), but allows
+    /// modification of the component data.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index in the query
+    /// * `row` - The row index (entity index within the current table iteration)
+    ///
+    /// # Returns
+    ///
+    /// A [`FieldAtMut`] accessor providing mutable access to the component
+    ///
+    /// # Panics
+    ///
+    /// Panics if the component at the specified field index is not sparse.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// // Mark Position as sparse
+    /// world.component::<Position>().add_trait::<flecs::Sparse>();
+    ///
+    /// # world.entity().set(Position { x: 10.0, y: 20.0 }).set(Velocity { x: 1.0, y: 2.0 });
+    /// let query = world.query::<(&mut Position, &Velocity)>().build();
+    ///
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         let vel = it.field::<Velocity>(1);
+    ///
+    ///         for i in it.iter() {
+    ///             // Mutably access sparse component for this specific row
+    ///             let mut pos = it.field_at_mut::<Position>(0, i);
+    ///             pos.x += vel[i].x;
+    ///             pos.y += vel[i].y;
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`field_at()`](Self::field_at) for immutable access
+    /// - [`field_mut()`](Self::field_mut) for dense mutable component access
+    /// - [`FieldAtMut`] for the returned accessor type
     #[allow(clippy::mut_from_ref)]
     pub fn field_at_mut<T: ComponentId>(
         &'a self,
@@ -773,17 +1011,11 @@ where
     ///
     /// let comp = world.component::<Action>();
     ///
-    /// world
-    ///     .component::<DerivedAction>()
-    ///     .is_a(Action::id());
+    /// world.component::<DerivedAction>().is_a(Action::id());
     ///
-    /// world
-    ///     .component::<DerivedAction>()
-    ///     .is_a(Action::id());
+    /// world.component::<DerivedAction>().is_a(Action::id());
     ///
-    /// world
-    ///     .component::<DerivedAction2>()
-    ///     .is_a(Action::id());
+    /// world.component::<DerivedAction2>().is_a(Action::id());
     ///
     /// let entity = world.entity().add(DerivedAction).add(DerivedAction2);
     ///

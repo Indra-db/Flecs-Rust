@@ -33,10 +33,16 @@
 //! # #[derive(Component)]
 //! # struct Velocity { x: f32, y: f32 }
 //! # let world = World::new();
-//! let e = world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.0, y: 0.0 });
+//! let e = world
+//!     .entity()
+//!     .set(Position { x: 1.0, y: 2.0 })
+//!     .set(Velocity { x: 0.0, y: 0.0 });
 //! if let Some(table) = e.table() {
 //!     // Access table directly
-//!     println!("Entity is in table: {table:?}, with archetype: {:?}", table.archetype());
+//!     println!(
+//!         "Entity is in table: {table:?}, with archetype: {:?}",
+//!         table.archetype()
+//!     );
 //! }
 //! ```
 //!

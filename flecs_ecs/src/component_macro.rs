@@ -23,7 +23,9 @@
 //! #[derive(Component)]
 //! struct Serialize;
 //! #[derive(Component, Default)]
-//! struct ComponentData { value: i32 }
+//! struct ComponentData {
+//!     value: i32,
+//! }
 //! ```
 //!
 //! ## The Basics
@@ -47,8 +49,7 @@
 //! # #[derive(Component)]
 //! # struct Position { x: f32, y: f32 }
 //! # let world = World::new();
-//! let entity = world.entity()
-//!     .set(Position { x: 10.0, y: 20.0 });
+//! let entity = world.entity().set(Position { x: 10.0, y: 20.0 });
 //! ```
 //!
 //! ### Tag Components
@@ -87,12 +88,16 @@
 //! // Valid - name and meta first
 //! #[derive(Component)]
 //! #[flecs(name = "CustomName", meta, traits(Sparse))]
-//! struct Component1 { value: i32 }
+//! struct Component1 {
+//!     value: i32,
+//! }
 //!
 //! // Valid - meta and name first (reversed order)
 //! #[derive(Component)]
 //! #[flecs(meta, name = "CustomName", traits(Sparse))]
-//! struct Component2 { value: i32 }
+//! struct Component2 {
+//!     value: i32,
+//! }
 //!
 //! // Invalid - traits before name/meta
 //! // #[flecs(traits(Sparse), name = "CustomName")]  // Compile error!
@@ -251,7 +256,7 @@
 //! #[flecs(meta)]
 //! struct Component {
 //!     pub_data: i32,
-//!     
+//!
 //!     #[flecs_skip]
 //!     private_data: String,
 //! }

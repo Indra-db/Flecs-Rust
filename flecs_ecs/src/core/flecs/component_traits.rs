@@ -141,8 +141,8 @@ impl_component_trait!(CanToggle, ECS_CAN_TOGGLE);
 ///     .observer::<flecs::OnRemove, ()>()
 ///     .with(Node)
 ///     .each_entity(|e, _| {
-/// // This observer will be invoked when a Node is removed
-/// });
+///         // This observer will be invoked when a Node is removed
+///     });
 ///
 /// let p = world.entity().add(Node);
 /// let c = world.entity().add(Node).child_of(p);
@@ -246,7 +246,9 @@ pub mod cleanup {
     /// ```rust
     /// # use flecs_ecs::prelude::*;
     /// # let world = World::new();
-    /// world.component::<flecs::ChildOf>().add_trait::<(flecs::OnDeleteTarget, flecs::Delete)>();
+    /// world
+    ///     .component::<flecs::ChildOf>()
+    ///     .add_trait::<(flecs::OnDeleteTarget, flecs::Delete)>();
     /// let p = world.entity();
     /// let e = world.entity().child_of(p);
     ///
@@ -327,7 +329,9 @@ pub mod cleanup {
     /// ```rust
     /// # use flecs_ecs::prelude::*;
     /// # let world = World::new();
-    /// world.component::<flecs::ChildOf>().add_trait::<(flecs::OnDeleteTarget, flecs::Delete)>();
+    /// world
+    ///     .component::<flecs::ChildOf>()
+    ///     .add_trait::<(flecs::OnDeleteTarget, flecs::Delete)>();
     /// let p = world.entity();
     /// let e = world.entity().child_of(p);
     ///
@@ -363,7 +367,9 @@ pub use cleanup::*;
 /// # let world = World::new();
 ///
 /// // or
-/// world.component::<Position>().add_trait::<flecs::DontFragment>();
+/// world
+///     .component::<Position>()
+///     .add_trait::<flecs::DontFragment>();
 /// ```
 ///
 /// Components with the `DontFragment` trait have the following limitations:
@@ -449,13 +455,11 @@ impl_component_trait!(Final, ECS_FINAL);
 /// # let world = World::new();
 /// world.component::<Unit>().add_trait::<flecs::Inheritable>();
 ///
-/// let q = world.query::<()>()
-///   .with(Unit)
-///   .build();
+/// let q = world.query::<()>().with(Unit).build();
 ///
 /// world.component::<Warrior>().is_a(Unit::id());
 ///
-/// q.each_entity(|e, _|  {
+/// q.each_entity(|e, _| {
 ///     // ...
 /// });
 /// ```
@@ -796,7 +800,9 @@ impl_component_trait!(Reflexive, ECS_REFLEXIVE);
 /// # let world = World::new();
 /// # #[derive(Component)]
 /// # struct TimeOfDay(f32);
-/// world.component::<TimeOfDay>().add_trait::<flecs::Singleton>();
+/// world
+///     .component::<TimeOfDay>()
+///     .add_trait::<flecs::Singleton>();
 ///
 /// world.set(TimeOfDay(0.0));
 /// ```
@@ -820,9 +826,11 @@ impl_component_trait!(Reflexive, ECS_REFLEXIVE);
 /// let q = world.new_query::<(&Position, &Velocity, &TimeOfDay)>();
 ///
 /// // Is the same as
-/// let q = world.query::<(&Position, &Velocity, &TimeOfDay)>()
-///   .term_at(2).set_src(TimeOfDay::id())
-///   .build();
+/// let q = world
+///     .query::<(&Position, &Velocity, &TimeOfDay)>()
+///     .term_at(2)
+///     .set_src(TimeOfDay::id())
+///     .build();
 /// ```
 #[derive(Debug, Default, Clone)]
 pub struct Singleton;
@@ -911,7 +919,9 @@ impl_component_trait!(Target, ECS_TARGET);
 /// #[derive(Component)]
 /// struct Serializable;
 ///
-/// world.component::<Serializable>().add_trait::<flecs::Trait>();
+/// world
+///     .component::<Serializable>()
+///     .add_trait::<flecs::Trait>();
 /// ```
 #[derive(Debug, Default, Clone)]
 pub struct Trait;
