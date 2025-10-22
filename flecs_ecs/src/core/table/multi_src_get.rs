@@ -39,6 +39,7 @@
 //! when aliasing is possible, this can be handled with the (Ok(_), Err(_)) match arm.
 //!
 //! ```rust
+//! # use flecs_ecs::prelude::*;
 //! # #[derive(Component, Debug)]
 //! # struct TP {
 //! #     x: i32,
@@ -79,7 +80,8 @@
 //!                 }
 //!             }
 //!         }
-//!     });//!
+//!     });
+//! #[cfg(feature = "flecs_safety_locks")]
 //! assert!(ok_alias, "Expected to detect aliasing and return an error");
 //! assert!(
 //!     ok_normal,
