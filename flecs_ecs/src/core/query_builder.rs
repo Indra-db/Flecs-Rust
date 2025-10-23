@@ -5,9 +5,9 @@
 //! allowing you to add terms, configure caching behavior, and apply advanced filtering
 //! before creating the final [`Query`] object.
 //!
-//! > 📚 **For comprehensive documentation**, see the [Flecs Query Manual](https://www.flecs.dev/flecs/md_docs_2Queries.html)
+//! > **For comprehensive documentation**, see the [Flecs Query Manual](https://www.flecs.dev/flecs/md_docs_2Queries.html)
 //!
-//! > 💡 **See also**: The [`query!`](crate::query) macro from the [DSL module](crate::dsl) provides
+//! > **See also**: The `query!` macro from the [DSL module](crate::dsl) provides
 //! > a declarative syntax for creating queries that closely mirrors the Flecs Query Language.
 //!
 //! # Quick Start
@@ -32,7 +32,8 @@
 //! # let world = World::new();
 //!
 //! // Build a query with additional conditions
-//! let query = world.query::<(&Position, &Velocity)>()
+//! let query = world
+//!     .query::<(&Position, &Velocity)>()
 //!     .with(Enemy)
 //!     .without((Planet, Mars))
 //!     .build();
@@ -74,7 +75,8 @@
 //! # #[derive(Component)] struct Velocity { x: f32, y: f32 }
 //! # #[derive(Component)] struct Enemy;
 //! # let world = World::new();
-//! let query = world.query::<(&Position, &Velocity)>()
+//! let query = world
+//!     .query::<(&Position, &Velocity)>()
 //!     .with(Enemy)
 //!     .set_cache_kind(QueryCacheKind::Auto)
 //!     .build();
@@ -92,9 +94,7 @@
 //! # #[derive(Component)] struct Enemy;
 //! # let world = World::new();
 //! // Query Position but only for entities with Enemy tag
-//! let query = world.query::<&Position>()
-//!     .with(Enemy)
-//!     .build();
+//! let query = world.query::<&Position>().with(Enemy).build();
 //!
 //! // Enemy tag is required but not part of iteration
 //! query.each(|pos| {
@@ -112,9 +112,7 @@
 //! # #[derive(Component)] struct Dead;
 //! # let world = World::new();
 //! // Query Position but exclude dead entities
-//! let query = world.query::<&Position>()
-//!     .without(&Dead)
-//!     .build();
+//! let query = world.query::<&Position>().without(&Dead).build();
 //!
 //! query.each(|pos| {
 //!     println!("Living entity at ({}, {})", pos.x, pos.y);
@@ -135,9 +133,7 @@
 //! let apples = world.entity_named("Apples");
 //!
 //! // Query entities that like apples
-//! let query = world.query::<&Position>()
-//!     .with((Likes, apples))
-//!     .build();
+//! let query = world.query::<&Position>().with((Likes, apples)).build();
 //! ```
 //!
 //! ## Cache Control
@@ -149,11 +145,13 @@
 //! # #[derive(Component)] struct Position { x: f32, y: f32 }
 //! # let world = World::new();
 //! // Explicitly set cache kind
-//! let cached = world.query::<&Position>()
+//! let cached = world
+//!     .query::<&Position>()
 //!     .set_cache_kind(QueryCacheKind::Auto)
 //!     .build();
 //!
-//! let uncached = world.query::<&Position>()
+//! let uncached = world
+//!     .query::<&Position>()
 //!     .set_cache_kind(QueryCacheKind::None)
 //!     .build();
 //! ```
@@ -174,7 +172,8 @@
 //!
 //! # let world = World::new();
 //! // Find entities that eat healthy food
-//! let query = world.query::<()>()
+//! let query = world
+//!     .query::<()>()
 //!     .with((Eats, "$food"))
 //!     .with(Healthy)
 //!     .set_src("$food")
@@ -196,8 +195,7 @@
 //! # #[derive(Component)] struct Position { x: f32, y: f32 }
 //! # #[derive(Component)] struct Health(i32);
 //! # let world = World::new();
-//! let query = world.query::<(&Position, Option<&Health>)>()
-//!     .build();
+//! let query = world.query::<(&Position, Option<&Health>)>().build();
 //!
 //! query.each(|(pos, health)| {
 //!     if let Some(health) = health {
@@ -214,9 +212,16 @@
 //! # use flecs_ecs::prelude::*;
 //! # #[derive(Component)] struct Position { x: f32, y: f32 }
 //! # let world = World::new();
-//! let query = world.query::<&Position>()
+//! let query = world
+//!     .query::<&Position>()
 //!     .order_by::<Position>(|_e1, p1: &Position, _e2, p2: &Position| {
-//!         if p1.x < p2.x { -1 } else if p1.x > p2.x { 1 } else { 0 }
+//!         if p1.x < p2.x {
+//!             -1
+//!         } else if p1.x > p2.x {
+//!             1
+//!         } else {
+//!             0
+//!         }
 //!     })
 //!     .build();
 //!
@@ -245,16 +250,16 @@
 //!
 //! # let world = World::new();
 //! // Create a query grouped by the Group relationship
-//! let query = world.query::<&Position>()
-//!     .group_by(Group)
-//!     .build();
+//! let query = world.query::<&Position>().group_by(Group).build();
 //!
 //! // Create entities with different group targets
-//! world.entity()
+//! world
+//!     .entity()
 //!     .add((Group, Team1))
 //!     .set(Position { x: 1.0, y: 1.0 });
 //!
-//! world.entity()
+//! world
+//!     .entity()
 //!     .add((Group, Team2))
 //!     .set(Position { x: 2.0, y: 2.0 });
 //!
@@ -292,9 +297,9 @@
 //! - [Query module documentation](crate::core::query) for iteration examples
 //! - [Flecs Query Manual](https://www.flecs.dev/flecs/md_docs_2Queries.html) for comprehensive documentation
 //!
-//! [`QueryCacheKind::Auto`]: flecs::QueryCacheKind::Auto
-//! [`QueryCacheKind::All`]: flecs::QueryCacheKind::All
-//! [`QueryCacheKind::None`]: flecs::QueryCacheKind::None
+//! [`QueryCacheKind::Auto`]
+//! [`QueryCacheKind::All`]
+//! [`QueryCacheKind::None`]
 
 use core::ffi::c_void;
 use core::mem::ManuallyDrop;
@@ -322,10 +327,16 @@ use flecs_ecs_derive::extern_abi;
 /// use flecs_ecs::prelude::*;
 ///
 /// #[derive(Component)]
-/// struct Position { x: f32, y: f32 }
+/// struct Position {
+///     x: f32,
+///     y: f32,
+/// }
 ///
 /// #[derive(Component)]
-/// struct Velocity { x: f32, y: f32 }
+/// struct Velocity {
+///     x: f32,
+///     y: f32,
+/// }
 ///
 /// #[derive(Component)]
 /// struct Enemy;
@@ -333,9 +344,7 @@ use flecs_ecs_derive::extern_abi;
 /// let world = World::new();
 ///
 /// // Build a query with additional filtering
-/// let query = world.query::<(&Position, &Velocity)>()
-///     .with(Enemy)
-///     .build();
+/// let query = world.query::<(&Position, &Velocity)>().with(Enemy).build();
 ///
 /// query.each(|(pos, vel)| {
 ///     // Only processes enemies with Position and Velocity
@@ -391,7 +400,6 @@ use flecs_ecs_derive::extern_abi;
 /// [module documentation](crate::core::query_builder) for comprehensive examples of:
 ///
 /// - [`with()`](QueryBuilder::with) / [`without()`](QueryBuilder::without) - Add/exclude components
-/// - [`with_id()`](QueryBuilder::with_id) - Add relationship conditions
 /// - [`set_cache_kind()`](QueryBuilder::set_cache_kind) - Control caching behavior
 /// - [`order_by()`](QueryBuilder::order_by) - Sort results
 /// - [`group_by()`](QueryBuilder::group_by) - Group results

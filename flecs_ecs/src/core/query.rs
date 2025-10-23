@@ -1,6 +1,6 @@
 //! Queries for iterating over entities that match conditions.
 //!
-//! Queries enable games to quickly find entities that match a list of conditions,
+//! Queries enable applications to quickly find entities that match a list of conditions,
 //! and are at the core of many Flecs features like systems, observers, tooling,
 //! and serialization. Queries can match anything from simple component lists to
 //! complex patterns against entity relationship graphs.
@@ -13,15 +13,22 @@
 //! use flecs_ecs::prelude::*;
 //!
 //! #[derive(Component)]
-//! struct Position { x: f32, y: f32 }
+//! struct Position {
+//!     x: f32,
+//!     y: f32,
+//! }
 //!
 //! #[derive(Component)]
-//! struct Velocity { x: f32, y: f32 }
+//! struct Velocity {
+//!     x: f32,
+//!     y: f32,
+//! }
 //!
 //! let world = World::new();
 //!
 //! // Create some entities
-//! world.entity()
+//! world
+//!     .entity()
 //!     .set(Position { x: 0.0, y: 0.0 })
 //!     .set(Velocity { x: 1.0, y: 2.0 });
 //!
@@ -54,7 +61,8 @@
 //! let query = world.new_query_named::<(&Position, &Velocity)>("movement");
 //!
 //! // Or explicitly request caching
-//! let query = world.query::<(&Position, &Velocity)>()
+//! let query = world
+//!     .query::<(&Position, &Velocity)>()
 //!     .set_cache_kind(QueryCacheKind::Auto)
 //!     .build();
 //!
@@ -76,7 +84,8 @@
 //! let query = world.new_query::<&Position>();
 //!
 //! // Or explicitly disable caching
-//! let query = world.query::<&Position>()
+//! let query = world
+//!     .query::<&Position>()
 //!     .set_cache_kind(QueryCacheKind::None)
 //!     .build();
 //!
@@ -143,7 +152,7 @@
 //!     while it.next() {
 //!         let mut pos = it.field_mut::<Position>(0);
 //!         let vel = it.field::<Velocity>(1);
-//!         
+//!
 //!         for i in it.iter() {
 //!             pos[i].x += vel[i].x;
 //!             pos[i].y += vel[i].y;
@@ -182,7 +191,8 @@
 //! # #[derive(Component)] struct Velocity { x: f32, y: f32 }
 //! # #[derive(Component)] struct Enemy;
 //! # let world = World::new();
-//! let query = world.query::<(&Position, &Velocity)>()
+//! let query = world
+//!     .query::<(&Position, &Velocity)>()
 //!     .with(Enemy)
 //!     .without(flecs::Prefab)
 //!     .build();
@@ -202,14 +212,13 @@
 //! let apples = world.entity_named("Apples");
 //! let burgers = world.entity_named("Burgers");
 //!
-//! world.entity_named("Bob")
+//! world
+//!     .entity_named("Bob")
 //!     .add((Eats, apples))
 //!     .add((Eats, burgers));
 //!
 //! // Query for entities that eat apples
-//! let query = world.query::<()>()
-//!     .with((Eats, apples))
-//!     .build();
+//! let query = world.query::<()>().with((Eats, apples)).build();
 //!
 //! query.each_entity(|entity, _| {
 //!     println!("{} eats apples", entity.name());
@@ -228,7 +237,7 @@
 //!     Up,
 //!     Down,
 //!     Left,
-//!     Right
+//!     Right,
 //! }
 //!
 //! # let world = World::new();
@@ -236,9 +245,7 @@
 //! world.entity().add_enum(Direction::Down);
 //!
 //! // Query for entities with Direction::Up
-//! let query = world.query::<()>()
-//!     .with_enum(Direction::Up)
-//!     .build();
+//! let query = world.query::<()>().with_enum(Direction::Up).build();
 //!
 //! query.each_entity(|entity, _| {
 //!     println!("{} is facing up", entity.name());
@@ -264,9 +271,7 @@
 //! let q2 = world.new_query_named::<&Position>("positions");
 //!
 //! // Builder: complex query with additional terms
-//! let q3 = world.query::<&Position>()
-//!     .with(flecs::Prefab)
-//!     .build();
+//! let q3 = world.query::<&Position>().with(flecs::Prefab).build();
 //! ```
 //!
 //! # Query Lifetime and Ownership
@@ -302,7 +307,7 @@
 //! - [`World::new_query()`] for creating simple queries
 //! - [`World::query()`] for creating query builders
 //! - [`World::each()`] for quick one-off iterations
-//! - [`TableIter`](crate::core::TableIter) for low-level table iteration
+//! - [`TableIter`] for low-level table iteration
 
 use core::panic;
 use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
@@ -335,7 +340,8 @@ use crate::sys;
 /// let q1 = world.new_query::<(&Position, &Velocity)>();
 ///
 /// // Complex query - use builder for additional conditions
-/// let q2 = world.query::<(&Position, &Velocity)>()
+/// let q2 = world
+///     .query::<(&Position, &Velocity)>()
 ///     .without(flecs::Prefab)
 ///     .build();
 /// ```
@@ -392,7 +398,8 @@ use crate::sys;
 /// let cached = world.new_query_named::<&Position>("positions");
 ///
 /// // Explicit control
-/// let custom = world.query::<&Position>()
+/// let custom = world
+///     .query::<&Position>()
 ///     .set_cache_kind(QueryCacheKind::Auto)
 ///     .build();
 /// ```
@@ -436,7 +443,8 @@ use crate::sys;
 /// # #[derive(Component)] struct Velocity { x: f32, y: f32 }
 /// # #[derive(Component)] struct Enemy;
 /// # let world = World::new();
-/// let query = world.query::<(&Position, &Velocity)>()
+/// let query = world
+///     .query::<(&Position, &Velocity)>()
 ///     .with(Enemy)
 ///     .without(flecs::Prefab)
 ///     .build();
