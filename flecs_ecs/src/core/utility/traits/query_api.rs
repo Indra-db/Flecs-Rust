@@ -50,11 +50,78 @@ where
     /// The following function signatures is valid:
     ///  - func(comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
+    /// # Safety
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
     /// # See also
     ///
     /// * [`World::each()`]
+    /// * [`QueryAPI::each_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
     #[inline(always)]
-    fn each(&self, mut func: impl FnMut(T::TupleType<'_>)) {
+    fn each(&self, func: impl FnMut(T::TupleType<'_>)) {
+        self.each_internal::<true>(func);
+    }
+
+    /// Each iterator without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`each()`](QueryAPI::each) that skips all mutable aliasing checks
+    /// for maximum performance. Use this when you are certain that no component aliasing can occur.
+    ///
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each()`](QueryAPI::each) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other
+    /// - No mutable references alias with immutable references to the same component
+    /// - The query terms don't create situations where the same component is accessed mutably multiple times
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// struct Velocity {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let query = world.new_query::<(&mut Position, &Velocity)>();
+    ///
+    /// // Safe: Position and Velocity are different components
+    /// unsafe {
+    ///     query.each_unchecked(|(pos, vel)| {
+    ///         pos.x += vel.x;
+    ///         pos.y += vel.y;
+    ///     });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`QueryAPI::each()`] - Safe variant with aliasing checks
+    #[inline(always)]
+    unsafe fn each_unchecked(&self, func: impl FnMut(T::TupleType<'_>)) {
+        self.each_internal::<false>(func);
+    }
+
+    /// Internal implementation for both checked and unchecked each iteration.
+    #[inline(always)]
+    fn each_internal<const CHECKED: bool>(&self, mut func: impl FnMut(T::TupleType<'_>)) {
         let mut iter = self.retrieve_iter();
         let world = self.world();
 
@@ -67,13 +134,20 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            if iter.row_fields == 0 {
-                while self.iter_next(&mut iter) {
-                    internal_each_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+            if CHECKED {
+                if iter.row_fields == 0 {
+                    while self.iter_next(&mut iter) {
+                        internal_each_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+                    }
+                } else {
+                    while self.iter_next(&mut iter) {
+                        internal_each_iter_next::<T, false, true>(&mut iter, &world, &mut func);
+                    }
                 }
             } else {
+                // Unchecked: always use false for sparse terms check
                 while self.iter_next(&mut iter) {
-                    internal_each_iter_next::<T, false, true>(&mut iter, &world, &mut func);
+                    internal_each_iter_next::<T, false, false>(&mut iter, &world, &mut func);
                 }
             }
         }
@@ -84,11 +158,73 @@ where
     /// The following function signatures is valid:
     ///  - func(e : Entity , comp1 : &mut T1, comp2 : &mut T2, ...)
     ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
     /// # See also
     ///
     /// * [`World::each_entity()`]
+    /// * [`QueryAPI::each_entity_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
     #[inline(always)]
-    fn each_entity(&self, mut func: impl FnMut(EntityView, T::TupleType<'_>)) {
+    fn each_entity(&self, func: impl FnMut(EntityView, T::TupleType<'_>)) {
+        self.each_entity_internal::<true>(func);
+    }
+
+    /// Each entity iterator without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`each_entity()`](QueryAPI::each_entity) that skips all mutable
+    /// aliasing checks for maximum performance. Use this when you are certain that no component
+    /// aliasing can occur.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each_entity()`](QueryAPI::each_entity) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other
+    /// - No mutable references alias with immutable references to the same component
+    /// - The query terms don't create situations where the same component is accessed mutably multiple times
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let query = world.new_query::<&mut Position>();
+    ///
+    /// // Safe: Only one mutable component per entity
+    /// unsafe {
+    ///     query.each_entity_unchecked(|entity, pos| {
+    ///         println!("{}: ({}, {})", entity.name(), pos.x, pos.y);
+    ///         pos.x += 1.0;
+    ///     });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`QueryAPI::each_entity()`] - Safe variant with aliasing checks
+    #[inline(always)]
+    unsafe fn each_entity_unchecked(&self, func: impl FnMut(EntityView, T::TupleType<'_>)) {
+        self.each_entity_internal::<false>(func);
+    }
+
+    /// Internal implementation for both checked and unchecked `each_entity` iteration.
+    #[inline(always)]
+    fn each_entity_internal<const CHECKED: bool>(
+        &self,
+        mut func: impl FnMut(EntityView, T::TupleType<'_>),
+    ) {
         let world = self.world();
         let mut iter = self.retrieve_iter();
 
@@ -100,13 +236,24 @@ where
         }
         #[cfg(feature = "flecs_safety_locks")]
         {
-            if iter.row_fields == 0 {
-                while self.iter_next(&mut iter) {
-                    internal_each_entity_iter_next::<T, false, false>(&mut iter, &world, &mut func);
+            if CHECKED {
+                if iter.row_fields == 0 {
+                    while self.iter_next(&mut iter) {
+                        internal_each_entity_iter_next::<T, false, false>(
+                            &mut iter, &world, &mut func,
+                        );
+                    }
+                } else {
+                    while self.iter_next(&mut iter) {
+                        internal_each_entity_iter_next::<T, false, true>(
+                            &mut iter, &world, &mut func,
+                        );
+                    }
                 }
             } else {
+                // Unchecked: always use false for sparse terms check
                 while self.iter_next(&mut iter) {
-                    internal_each_entity_iter_next::<T, false, true>(&mut iter, &world, &mut func);
+                    internal_each_entity_iter_next::<T, false, false>(&mut iter, &world, &mut func);
                 }
             }
         }
@@ -116,6 +263,9 @@ where
     /// which contains more information about the object being iterated.
     /// The `usize` argument contains the index of the entity being iterated,
     /// which can be used to obtain entity-specific data from the `TableIter` object.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
     ///
     /// # Example
     /// ```
@@ -151,8 +301,77 @@ where
     /// // Output:
     /// //  "adam": Position { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
     /// ```
-    fn each_iter(&self, mut func: impl FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>))
+    ///
+    /// # See also
+    ///
+    /// * [`QueryAPI::each_iter_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
+    fn each_iter(&self, func: impl FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>))
     where
+        P: ComponentId,
+    {
+        self.each_iter_internal::<true>(func);
+    }
+
+    /// Each iterator without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`each_iter()`](QueryAPI::each_iter) that skips all mutable
+    /// aliasing checks for maximum performance. Use this when you are certain that no component
+    /// aliasing can occur.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each_iter()`](QueryAPI::each_iter) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other
+    /// - No mutable references alias with immutable references to the same component
+    /// - The query terms don't create situations where the same component is accessed mutably multiple times
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component, Debug)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    /// let query = world.new_query::<&mut Position>();
+    ///
+    /// // Safe: Only one mutable component per entity
+    /// unsafe {
+    ///     query.each_iter_unchecked(|it, index, pos| {
+    ///         let entity = it.entity(index);
+    ///         println!("{}: {:?}", entity.name(), pos);
+    ///         pos.x += 1;
+    ///     });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`QueryAPI::each_iter()`] - Safe variant with aliasing checks
+    unsafe fn each_iter_unchecked(
+        &self,
+        func: impl FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
+    ) where
+        P: ComponentId,
+    {
+        self.each_iter_internal::<false>(func);
+    }
+
+    /// Internal implementation for both checked and unchecked `each_iter` iteration.
+    #[inline(always)]
+    fn each_iter_internal<const CHECKED: bool>(
+        &self,
+        mut func: impl FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
+    ) where
         P: ComponentId,
     {
         let world = self.world();
@@ -166,13 +385,20 @@ where
         }
         #[cfg(feature = "flecs_safety_locks")]
         {
-            if iter.row_fields == 0 {
-                while self.iter_next(&mut iter) {
-                    internal_each_iter::<T, P, false, false>(&mut iter, &world, &mut func);
+            if CHECKED {
+                if iter.row_fields == 0 {
+                    while self.iter_next(&mut iter) {
+                        internal_each_iter::<T, P, false, false>(&mut iter, &world, &mut func);
+                    }
+                } else {
+                    while self.iter_next(&mut iter) {
+                        internal_each_iter::<T, P, false, true>(&mut iter, &world, &mut func);
+                    }
                 }
             } else {
+                // Unchecked: always use false for sparse terms check
                 while self.iter_next(&mut iter) {
-                    internal_each_iter::<T, P, false, true>(&mut iter, &world, &mut func);
+                    internal_each_iter::<T, P, false, false>(&mut iter, &world, &mut func);
                 }
             }
         }

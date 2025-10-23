@@ -197,7 +197,7 @@ pub mod private {
 
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        fn execute_run_each<Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_run_each<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(T::TupleType<'_>),
         {
@@ -207,14 +207,26 @@ pub mod private {
                 let world = WorldRef::from_ptr(iter.world);
                 let each = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
+
                 #[cfg(feature = "flecs_safety_locks")]
-                if table_iter.iter.row_fields == 0 {
-                    while table_iter.internal_next() {
-                        internal_each_iter_next::<T, true, false>(table_iter.iter, &world, each);
+                if CHECKED {
+                    if table_iter.iter.row_fields == 0 {
+                        while table_iter.internal_next() {
+                            internal_each_iter_next::<T, true, false>(
+                                table_iter.iter,
+                                &world,
+                                each,
+                            );
+                        }
+                    } else {
+                        while table_iter.internal_next() {
+                            internal_each_iter_next::<T, true, true>(table_iter.iter, &world, each);
+                        }
                     }
                 } else {
+                    // Unchecked: always use false for sparse terms check
                     while table_iter.internal_next() {
-                        internal_each_iter_next::<T, true, true>(table_iter.iter, &world, each);
+                        internal_each_iter_next::<T, true, false>(table_iter.iter, &world, each);
                     }
                 }
 
@@ -229,7 +241,7 @@ pub mod private {
 
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        fn execute_run_each_entity<Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_run_each_entity<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(EntityView, T::TupleType<'_>),
         {
@@ -239,18 +251,30 @@ pub mod private {
                 let world = WorldRef::from_ptr(iter.world);
                 let each_entity = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
+
                 #[cfg(feature = "flecs_safety_locks")]
-                if table_iter.iter.row_fields == 0 {
-                    while table_iter.internal_next() {
-                        internal_each_entity_iter_next::<T, true, false>(
-                            table_iter.iter,
-                            &world,
-                            each_entity,
-                        );
+                if CHECKED {
+                    if table_iter.iter.row_fields == 0 {
+                        while table_iter.internal_next() {
+                            internal_each_entity_iter_next::<T, true, false>(
+                                table_iter.iter,
+                                &world,
+                                each_entity,
+                            );
+                        }
+                    } else {
+                        while table_iter.internal_next() {
+                            internal_each_entity_iter_next::<T, true, true>(
+                                table_iter.iter,
+                                &world,
+                                each_entity,
+                            );
+                        }
                     }
                 } else {
+                    // Unchecked: always use false for sparse terms check
                     while table_iter.internal_next() {
-                        internal_each_entity_iter_next::<T, true, true>(
+                        internal_each_entity_iter_next::<T, true, false>(
                             table_iter.iter,
                             &world,
                             each_entity,
@@ -273,7 +297,7 @@ pub mod private {
 
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[extern_abi]
-        fn execute_run_each_iter<Func>(iter: *mut sys::ecs_iter_t)
+        fn execute_run_each_iter<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
             Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
         {
@@ -283,18 +307,34 @@ pub mod private {
                 let world = WorldRef::from_ptr(iter.world);
                 let each_iter = &mut *(iter.run_ctx as *mut Func);
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
+
                 #[cfg(feature = "flecs_safety_locks")]
-                if table_iter.iter.row_fields == 0 {
+                if CHECKED {
+                    if table_iter.iter.row_fields == 0 {
+                        while table_iter.internal_next() {
+                            internal_each_iter::<T, P, false, false>(
+                                table_iter.iter,
+                                &world,
+                                each_iter,
+                            );
+                        }
+                    } else {
+                        while table_iter.internal_next() {
+                            internal_each_iter::<T, P, false, true>(
+                                table_iter.iter,
+                                &world,
+                                each_iter,
+                            );
+                        }
+                    }
+                } else {
+                    // Unchecked: always use false for sparse terms check
                     while table_iter.internal_next() {
                         internal_each_iter::<T, P, false, false>(
                             table_iter.iter,
                             &world,
                             each_iter,
                         );
-                    }
-                } else {
-                    while table_iter.internal_next() {
-                        internal_each_iter::<T, P, false, true>(table_iter.iter, &world, each_iter);
                     }
                 }
 

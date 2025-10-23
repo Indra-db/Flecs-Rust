@@ -501,11 +501,69 @@ where
     /// * [`TableIter::get_field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field_mut`]
+    /// * [`TableIter::field_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
     pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true>(index);
         self.field_internal::<T::UnderlyingType, true>(index)
+    }
+
+    /// Get immutable access to field data without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`field()`](TableIter::field) that bypasses the mutable
+    /// aliasing detection when the `flecs_safety_locks` feature is enabled.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`field()`](TableIter::field) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable references to the same component exist simultaneously
+    /// - The field data is not being modified while this immutable reference exists
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to access the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<&Position>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         // Safe: read-only access with no mutable aliases
+    ///         let pos = unsafe { it.field_unchecked::<Position>(0) };
+    ///         for i in it.iter() {
+    ///             println!("Position: ({}, {})", pos[i].x, pos[i].y);
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::field`] - Safe variant with aliasing checks
+    /// * [`TableIter::get_field_unchecked`]
+    /// * [`TableIter::field_mut_unchecked`]
+    /// * [`TableIter::get_field_mut_unchecked`]
+    #[inline(always)]
+    pub unsafe fn field_unchecked<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Field<'a, T::UnderlyingType, false> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, true, true>(index);
+        self.field_internal::<T::UnderlyingType, false>(index)
     }
 
     /// Get immutable access to field data.
@@ -556,6 +614,7 @@ where
     /// * [`TableIter::field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field_mut`]
+    /// * [`TableIter::get_field_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
     pub fn get_field<T: ComponentId>(
         &self,
@@ -564,6 +623,73 @@ where
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true>(index);
         self.get_field_internal::<T::UnderlyingType, true>(index)
+    }
+
+    /// Get immutable access to field data wrapped in Option, without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`get_field()`](TableIter::get_field) that bypasses the mutable
+    /// aliasing detection when the `flecs_safety_locks` feature is enabled. This is useful with optional fields.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`get_field()`](TableIter::get_field) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable references to the same component exist simultaneously
+    /// - The field data is not being modified while this immutable reference exists
+    /// - Thread safety is maintained in multi-threaded contexts
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns Some with a column object that can be used to access the field data, or None if the field doesn't exist.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&Position, Option<&Velocity>)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         // Safe: read-only access with no mutable aliases
+    ///         let pos = unsafe { it.get_field_unchecked::<Position>(0).unwrap() };
+    ///         let vel = unsafe { it.get_field_unchecked::<Velocity>(1) };
+    ///
+    ///         if let Some(vel) = vel {
+    ///             for i in it.iter() {
+    ///                 println!(
+    ///                     "Pos: ({}, {}), Vel: ({}, {})",
+    ///                     pos[i].x, pos[i].y, vel[i].x, vel[i].y
+    ///                 );
+    ///             }
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::get_field`] - Safe variant with aliasing checks
+    /// * [`TableIter::field_unchecked`]
+    /// * [`TableIter::field_mut_unchecked`]
+    /// * [`TableIter::get_field_mut_unchecked`]
+    #[inline(always)]
+    pub unsafe fn get_field_unchecked<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Option<Field<'a, T::UnderlyingType, false>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, true, true>(index);
+        self.get_field_internal::<T::UnderlyingType, false>(index)
     }
 
     /// Get mutable access to field data.
@@ -605,11 +731,74 @@ where
     /// * [`TableIter::field`]
     /// * [`TableIter::get_field`]
     /// * [`TableIter::get_field_mut`]
+    /// * [`TableIter::field_mut_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
     pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true>(index);
         self.field_internal_mut::<T::UnderlyingType, true>(index)
+    }
+
+    /// Get mutable access to field data without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`field_mut()`](TableIter::field_mut) that bypasses the mutable
+    /// aliasing detection when the `flecs_safety_locks` feature is enabled.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`field_mut()`](TableIter::field_mut) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No other references (mutable or immutable) to the same component exist simultaneously
+    /// - The field data is not being accessed from multiple threads without proper synchronization
+    /// - No aliasing violations occur with other field accesses
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns a column object that can be used to mutate the field data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 }).set(Velocity { x: 0.1, y: 0.2 });
+    /// # let query = world.new_query::<(&mut Position, &Velocity)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         // Safe: Position and Velocity are different components
+    ///         let mut pos = unsafe { it.field_mut_unchecked::<Position>(0) };
+    ///         let vel = unsafe { it.field_unchecked::<Velocity>(1) };
+    ///         for i in it.iter() {
+    ///             pos[i].x += vel[i].x;
+    ///             pos[i].y += vel[i].y;
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::field_mut`] - Safe variant with aliasing checks
+    /// * [`TableIter::field_unchecked`]
+    /// * [`TableIter::get_field_unchecked`]
+    /// * [`TableIter::get_field_mut_unchecked`]
+    #[inline(always)]
+    pub unsafe fn field_mut_unchecked<T: ComponentId>(
+        &'a self,
+        index: i8,
+    ) -> FieldMut<'a, T::UnderlyingType, false> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, false, true>(index);
+        self.field_internal_mut::<T::UnderlyingType, false>(index)
     }
 
     /// Get mutable access to field data wrapped in Option. This is useful with optional fields.
@@ -660,6 +849,7 @@ where
     /// * [`TableIter::field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field`]
+    /// * [`TableIter::get_field_mut_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
     pub fn get_field_mut<T: ComponentId>(
         &'a self,
@@ -668,6 +858,76 @@ where
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true>(index);
         self.get_field_internal_mut::<T::UnderlyingType, true>(index)
+    }
+
+    /// Get mutable access to field data wrapped in Option, without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`get_field_mut()`](TableIter::get_field_mut) that bypasses the mutable
+    /// aliasing detection when the `flecs_safety_locks` feature is enabled. This is useful with optional fields.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`get_field_mut()`](TableIter::get_field_mut) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No other references (mutable or immutable) to the same component exist simultaneously
+    /// - The field data is not being accessed from multiple threads without proper synchronization
+    /// - No aliasing violations occur with other field accesses
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Returns
+    ///
+    /// Returns Some with a column object that can be used to mutate the field data, or None if the field doesn't exist.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// # #[derive(Component)]
+    /// # struct Position { x: f32, y: f32 }
+    /// # #[derive(Component)]
+    /// # struct Velocity { x: f32, y: f32 }
+    /// # let world = World::new();
+    /// # world.entity().set(Position { x: 1.0, y: 2.0 });
+    /// # let query = world.new_query::<(&mut Position, Option<&Velocity>)>();
+    /// query.run(|mut it| {
+    ///     while it.next() {
+    ///         // Safe: Position and Velocity are different components
+    ///         let mut pos = unsafe { it.get_field_mut_unchecked::<Position>(0).unwrap() };
+    ///         let vel = unsafe { it.get_field_unchecked::<Velocity>(1) };
+    ///
+    ///         if let Some(vel) = vel {
+    ///             for i in it.iter() {
+    ///                 pos[i].x += vel[i].x;
+    ///                 pos[i].y += vel[i].y;
+    ///             }
+    ///         } else {
+    ///             for i in it.iter() {
+    ///                 pos[i].x += 0.1;
+    ///                 pos[i].y += 0.1;
+    ///             }
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// # See also
+    /// * [`TableIter::get_field_mut`] - Safe variant with aliasing checks
+    /// * [`TableIter::field_unchecked`]
+    /// * [`TableIter::get_field_unchecked`]
+    /// * [`TableIter::field_mut_unchecked`]
+    #[inline(always)]
+    pub unsafe fn get_field_mut_unchecked<T: ComponentId>(
+        &'a self,
+        index: i8,
+    ) -> Option<FieldMut<'a, T::UnderlyingType, false>> {
+        #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
+        self.field_safety_checks::<T, false, true>(index);
+        self.get_field_internal_mut::<T::UnderlyingType, false>(index)
     }
 
     /// Get immutable access to untyped field data.

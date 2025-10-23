@@ -16,7 +16,90 @@ where
     /// Set context
     fn set_context(&mut self, context: *mut c_void) -> &mut Self;
 
+    /// Each iterator for systems.
+    ///
+    /// The "each" iterator accepts a function that is invoked for each matching entity.
+    /// The function signature is: `func(comp1: &mut T1, comp2: &mut T2, ...)`
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`SystemAPI::each_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
     fn each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(T::TupleType<'_>) + 'static,
+    {
+        self.each_internal::<Func, true>(func)
+    }
+
+    /// Each iterator for systems without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`each()`](SystemAPI::each) that skips all mutable aliasing
+    /// checks for maximum performance. Use this when you are certain that no component aliasing
+    /// can occur.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each()`](SystemAPI::each) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other
+    /// - No mutable references alias with immutable references to the same component
+    /// - The system's query terms don't create situations where the same component is accessed mutably multiple times
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// struct Velocity {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: Position and Velocity are different components
+    /// unsafe {
+    ///     world
+    ///         .system::<(&mut Position, &Velocity)>()
+    ///         .each_unchecked(|(pos, vel)| {
+    ///             pos.x += vel.x;
+    ///             pos.y += vel.y;
+    ///         });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`SystemAPI::each()`] - Safe variant with aliasing checks
+    unsafe fn each_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(T::TupleType<'_>) + 'static,
+    {
+        self.each_internal::<Func, false>(func)
+    }
+
+    /// Internal implementation for both checked and unchecked each iteration.
+    fn each_internal<Func, const CHECKED: bool>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(T::TupleType<'_>) + 'static,
     {
@@ -33,12 +116,94 @@ where
 
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
-        self.set_desc_run(Some(Self::execute_run_each::<Func> as ExternIterFn));
+
+        if CHECKED {
+            self.set_desc_run(Some(Self::execute_run_each::<Func, true> as ExternIterFn));
+        } else {
+            self.set_desc_run(Some(Self::execute_run_each::<Func, false> as ExternIterFn));
+        }
 
         self.build()
     }
 
+    /// Each entity iterator for systems.
+    ///
+    /// The `each_entity` iterator accepts a function that is invoked for each matching entity.
+    /// The function signature is: `func(entity: EntityView, comp1: &mut T1, comp2: &mut T2, ...)`
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`SystemAPI::each_entity_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
     fn each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(EntityView, T::TupleType<'_>) + 'static,
+    {
+        self.each_entity_internal::<Func, true>(func)
+    }
+
+    /// Each entity iterator for systems without aliasing checks.
+    ///
+    /// This is an unsafe variant of [`each_entity()`](SystemAPI::each_entity) that skips all
+    /// mutable aliasing checks for maximum performance. Use this when you are certain that no
+    /// component aliasing can occur.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each_entity()`](SystemAPI::each_entity) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other
+    /// - No mutable references alias with immutable references to the same component
+    /// - The system's query terms don't create situations where the same component is accessed mutably multiple times
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: Only one mutable component per entity
+    /// unsafe {
+    ///     world
+    ///         .system::<&mut Position>()
+    ///         .each_entity_unchecked(|entity, pos| {
+    ///             println!("{}: ({}, {})", entity.name(), pos.x, pos.y);
+    ///             pos.x += 1.0;
+    ///         });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`SystemAPI::each_entity()`] - Safe variant with aliasing checks
+    unsafe fn each_entity_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(EntityView, T::TupleType<'_>) + 'static,
+    {
+        self.each_entity_internal::<Func, false>(func)
+    }
+
+    /// Internal implementation for both checked and unchecked `each_entity` iteration.
+    fn each_entity_internal<Func, const CHECKED: bool>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(EntityView, T::TupleType<'_>) + 'static,
     {
@@ -55,7 +220,15 @@ where
         self.set_run_binding_context(each_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(Self::execute_run_each_entity::<Func> as ExternIterFn));
+        if CHECKED {
+            self.set_desc_run(Some(
+                Self::execute_run_each_entity::<Func, true> as ExternIterFn,
+            ));
+        } else {
+            self.set_desc_run(Some(
+                Self::execute_run_each_entity::<Func, false> as ExternIterFn,
+            ));
+        }
 
         self.build()
     }
@@ -99,7 +272,84 @@ where
     /// // Output:
     /// //  "adam": Position2 { x: 10, y: 20 } - "(flecs_ecs.main.Likes,eva)"
     /// ```
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`SystemAPI::each_iter_unchecked()`] - Unsafe variant without aliasing checks for maximum performance
     fn each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
+    {
+        self.each_iter_internal::<Func, true>(func)
+    }
+
+    /// Unchecked version of `each_iter` that bypasses mutable aliasing checks.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`each_iter()`](SystemAPI::each_iter) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// This function bypasses the runtime mutable aliasing checks when `flecs_safety_locks` feature is enabled.
+    /// The caller must ensure that:
+    /// - No two components in the query signature alias the same type mutably
+    /// - Component access patterns don't violate Rust's aliasing rules
+    ///
+    /// **When to use:**
+    /// - Performance-critical hot paths where aliasing is guaranteed safe by design
+    /// - After profiling shows significant overhead from safety checks
+    /// - In production code where query signatures are well-tested and known safe
+    ///
+    /// **Performance benefit:**
+    /// - Zero runtime cost from aliasing detection logic
+    /// - More efficient sparse component handling
+    /// - Optimal code generation without conditional safety branches
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: no aliasing possible with single component
+    /// unsafe {
+    ///     world
+    ///         .system::<&mut Position>()
+    ///         .each_iter_unchecked(|it, index, pos| {
+    ///             pos.x += 1.0;
+    ///         });
+    /// }
+    /// ```
+    unsafe fn each_iter_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
+    {
+        self.each_iter_internal::<Func, false>(func)
+    }
+
+    /// Internal implementation for `each_iter` and `each_iter_unchecked`.
+    ///
+    /// Uses const generic `CHECKED` parameter to control safety checking at compile time.
+    /// When `CHECKED = true`, performs aliasing checks (if `flecs_safety_locks` enabled).
+    /// When `CHECKED = false`, bypasses all safety checks for maximum performance.
+    #[inline]
+    fn each_iter_internal<Func, const CHECKED: bool>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
     {
@@ -116,7 +366,9 @@ where
         self.set_run_binding_context(each_iter_static_ref as *mut _ as *mut c_void);
         self.set_run_binding_context_free(Some(Self::free_callback::<Func>));
 
-        self.set_desc_run(Some(Self::execute_run_each_iter::<Func> as ExternIterFn));
+        self.set_desc_run(Some(
+            Self::execute_run_each_iter::<Func, CHECKED> as ExternIterFn,
+        ));
 
         self.build()
     }
@@ -459,7 +711,14 @@ where
     T: QueryTuple,
     P: ComponentId,
 {
-    /// Variant of [`SystemAPI::each`] which allows the system to run in multiple threads
+    /// Variant of [`SystemAPI::each`] which allows the system to run in multiple threads.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each_unchecked()`] - Unsafe variant without aliasing checks
     fn par_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(T::TupleType<'_>) + Send + Sync + 'static,
@@ -468,7 +727,76 @@ where
         self.each(func)
     }
 
-    /// Variant of [`SystemAPI::each_entity`] which allows the system to run in multiple threads
+    /// Variant of [`SystemAPI::each_unchecked`] which allows the system to run in multiple threads.
+    ///
+    /// This is an unsafe variant of [`par_each()`](ParSystemAPI::par_each) that skips all mutable
+    /// aliasing checks for maximum performance in parallel execution.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`par_each()`](ParSystemAPI::par_each) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other across parallel executions
+    /// - No mutable references alias with immutable references to the same component
+    /// - The system's query terms don't create situations where the same component is accessed mutably multiple times
+    /// - Thread safety is maintained when running in parallel
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// #[derive(Component)]
+    /// struct Velocity {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: Position and Velocity are different components
+    /// unsafe {
+    ///     world
+    ///         .system::<(&mut Position, &Velocity)>()
+    ///         .par_each_unchecked(|(pos, vel)| {
+    ///             pos.x += vel.x;
+    ///             pos.y += vel.y;
+    ///         });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each()`] - Safe variant with aliasing checks
+    unsafe fn par_each_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        unsafe { self.each_unchecked(func) }
+    }
+
+    /// Variant of [`SystemAPI::each_entity`] which allows the system to run in multiple threads.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each_entity_unchecked()`] - Unsafe variant without aliasing checks
     fn par_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
@@ -477,13 +805,131 @@ where
         self.each_entity(func)
     }
 
-    /// Variant of [`SystemAPI::each_iter`] which allows the system to run in multiple threads
+    /// Variant of [`SystemAPI::each_entity_unchecked`] which allows the system to run in multiple threads.
+    ///
+    /// This is an unsafe variant of [`par_each_entity()`](ParSystemAPI::par_each_entity) that skips
+    /// all mutable aliasing checks for maximum performance in parallel execution.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`par_each_entity()`](ParSystemAPI::par_each_entity) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other across parallel executions
+    /// - No mutable references alias with immutable references to the same component
+    /// - The system's query terms don't create situations where the same component is accessed mutably multiple times
+    /// - Thread safety is maintained when running in parallel
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: Only one mutable component per entity
+    /// unsafe {
+    ///     world
+    ///         .system::<&mut Position>()
+    ///         .par_each_entity_unchecked(|entity, pos| {
+    ///             pos.x += 1.0;
+    ///             pos.y += 1.0;
+    ///         });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each_entity()`] - Safe variant with aliasing checks
+    unsafe fn par_each_entity_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        unsafe { self.each_entity_unchecked(func) }
+    }
+
+    /// Variant of [`SystemAPI::each_iter`] which allows the system to run in multiple threads.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function performs runtime checks
+    /// for mutable component aliasing and sparse component handling.
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each_iter_unchecked()`] - Unsafe variant without aliasing checks
     fn par_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
     {
         self.set_multi_threaded(true);
         self.each_iter(func)
+    }
+
+    /// Variant of [`SystemAPI::each_iter_unchecked`] which allows the system to run in multiple threads.
+    ///
+    /// This is an unsafe variant of [`par_each_iter()`](ParSystemAPI::par_each_iter) that skips
+    /// all mutable aliasing checks for maximum performance in parallel execution.
+    ///
+    /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
+    /// safety checks that [`par_each_iter()`](ParSystemAPI::par_each_iter) would normally perform.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - No mutable component references alias with each other across parallel executions
+    /// - No mutable references alias with immutable references to the same component
+    /// - The system's query terms don't create situations where the same component is accessed mutably multiple times
+    /// - Thread safety is maintained when running in parallel
+    ///
+    /// Violating these guarantees will result in undefined behavior.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: f32,
+    ///     y: f32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Safe: no aliasing possible with single component
+    /// unsafe {
+    ///     world
+    ///         .system::<&mut Position>()
+    ///         .par_each_iter_unchecked(|it, index, pos| {
+    ///             pos.x += 1.0;
+    ///         });
+    /// }
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`ParSystemAPI::par_each_iter()`] - Safe variant with aliasing checks
+    unsafe fn par_each_iter_unchecked<Func>(
+        &mut self,
+        func: Func,
+    ) -> <Self as builder::Builder<'a>>::BuiltType
+    where
+        Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+    {
+        self.set_multi_threaded(true);
+        unsafe { self.each_iter_unchecked(func) }
     }
 
     /// Variant of [`SystemAPI::run`] which allows the system to run in multiple threads
