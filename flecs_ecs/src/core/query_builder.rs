@@ -1,4 +1,300 @@
-//! Builder for [`Query`].
+//! Builder for constructing complex queries with additional conditions and configuration.
+//!
+//!
+//! The [`QueryBuilder`] provides a fluent interface for building queries incrementally,
+//! allowing you to add terms, configure caching behavior, and apply advanced filtering
+//! before creating the final [`Query`] object.
+//!
+//! > 📚 **For comprehensive documentation**, see the [Flecs Query Manual](https://www.flecs.dev/flecs/md_docs_2Queries.html)
+//!
+//! > 💡 **See also**: The [`query!`](crate::query) macro from the [DSL module](crate::dsl) provides
+//! > a declarative syntax for creating queries that closely mirrors the Flecs Query Language.
+//!
+//! # Quick Start
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! #
+//! # #[derive(Component)]
+//! # struct Position { x: f32, y: f32 }
+//! #
+//! # #[derive(Component)]
+//! # struct Velocity { x: f32, y: f32 }
+//! #
+//! # #[derive(Component)]
+//! # struct Enemy;
+//! #
+//! # #[derive(Component)]
+//! # struct Mars;
+//! #
+//! # #[derive(Component)]
+//! # struct Planet;
+//! # let world = World::new();
+//!
+//! // Build a query with additional conditions
+//! let query = world.query::<(&Position, &Velocity)>()
+//!     .with(Enemy)
+//!     .without((Planet, Mars))
+//!     .build();
+//!
+//! query.each(|(pos, vel)| {
+//!     // Only processes enemies with Position and Velocity, but not those who are on Mars
+//! });
+//! ```
+//!
+//! # Builder vs Direct Creation
+//!
+//! There are two ways to create queries:
+//!
+//! ## Direct Creation (Simple Queries)
+//!
+//! Use [`World::new_query()`] for simple queries with just component types:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # #[derive(Component)] struct Velocity { x: f32, y: f32 }
+//! # let world = World::new();
+//! // Fast and simple - creates uncached query immediately
+//! let query = world.new_query::<(&Position, &Velocity)>();
+//! ```
+//!
+//! ## Builder Pattern (Complex Queries)
+//!
+//! Use [`World::query()`] to get a builder when you need:
+//! - Additional filtering with `with()` / `without()`
+//! - Relationship conditions
+//! - Cache configuration
+//! - Ordering or grouping
+//! - Variables and query DSL features
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # #[derive(Component)] struct Velocity { x: f32, y: f32 }
+//! # #[derive(Component)] struct Enemy;
+//! # let world = World::new();
+//! let query = world.query::<(&Position, &Velocity)>()
+//!     .with(Enemy)
+//!     .set_cache_kind(QueryCacheKind::Auto)
+//!     .build();
+//! ```
+//!
+//! # Common Builder Methods
+//!
+//! ## Adding Terms with `with()`
+//!
+//! Add components that must be present but aren't needed in the iteration:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # #[derive(Component)] struct Enemy;
+//! # let world = World::new();
+//! // Query Position but only for entities with Enemy tag
+//! let query = world.query::<&Position>()
+//!     .with(Enemy)
+//!     .build();
+//!
+//! // Enemy tag is required but not part of iteration
+//! query.each(|pos| {
+//!     println!("Enemy at ({}, {})", pos.x, pos.y);
+//! });
+//! ```
+//!
+//! ## Filtering with `without()`
+//!
+//! Exclude entities that have certain components:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # #[derive(Component)] struct Dead;
+//! # let world = World::new();
+//! // Query Position but exclude dead entities
+//! let query = world.query::<&Position>()
+//!     .without(&Dead)
+//!     .build();
+//!
+//! query.each(|pos| {
+//!     println!("Living entity at ({}, {})", pos.x, pos.y);
+//! });
+//! ```
+//!
+//! ## Relationship Queries
+//!
+//! Query entities based on their relationships:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! #[derive(Component)]
+//! struct Likes;
+//!
+//! # let world = World::new();
+//! let apples = world.entity_named("Apples");
+//!
+//! // Query entities that like apples
+//! let query = world.query::<&Position>()
+//!     .with((Likes, apples))
+//!     .build();
+//! ```
+//!
+//! ## Cache Control
+//!
+//! Configure query caching behavior:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # let world = World::new();
+//! // Explicitly set cache kind
+//! let cached = world.query::<&Position>()
+//!     .set_cache_kind(QueryCacheKind::Auto)
+//!     .build();
+//!
+//! let uncached = world.query::<&Position>()
+//!     .set_cache_kind(QueryCacheKind::None)
+//!     .build();
+//! ```
+//!
+//! # Advanced Features
+//!
+//! ## Variables
+//!
+//! Use query variables to match related entities:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! #[derive(Component)]
+//! struct Eats;
+//!
+//! #[derive(Component)]
+//! struct Healthy;
+//!
+//! # let world = World::new();
+//! // Find entities that eat healthy food
+//! let query = world.query::<()>()
+//!     .with((Eats, "$food"))
+//!     .with(Healthy)
+//!     .set_src("$food")
+//!     .build();
+//!
+//! let food_var = query.find_var("food").unwrap();
+//!
+//! query.each_iter(|it, _, _| {
+//!     println!("Eats {}", it.get_var(food_var).name());
+//! });
+//! ```
+//!
+//! ## Optional Components
+//!
+//! Match components that may or may not be present:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # #[derive(Component)] struct Health(i32);
+//! # let world = World::new();
+//! let query = world.query::<(&Position, Option<&Health>)>()
+//!     .build();
+//!
+//! query.each(|(pos, health)| {
+//!     if let Some(health) = health {
+//!         println!("Entity at ({}, {}) has {} health", pos.x, pos.y, health.0);
+//!     }
+//! });
+//! ```
+//!
+//! ## Ordering
+//!
+//! Sort query results by component values:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! # let world = World::new();
+//! let query = world.query::<&Position>()
+//!     .order_by::<Position>(|_e1, p1: &Position, _e2, p2: &Position| {
+//!         if p1.x < p2.x { -1 } else if p1.x > p2.x { 1 } else { 0 }
+//!     })
+//!     .build();
+//!
+//! // Entities are now iterated in order of Position.x
+//! query.each(|pos| {
+//!     println!("Position: ({}, {})", pos.x, pos.y);
+//! });
+//! ```
+//!
+//! ## Grouping
+//!
+//! Group query results by relationship target for better cache locality.
+//! This groups entities that share the same relationship target together:
+//!
+//! ```
+//! # use flecs_ecs::prelude::*;
+//! # #[derive(Component)] struct Position { x: f32, y: f32 }
+//! #[derive(Component)]
+//! struct Group;
+//!
+//! #[derive(Component)]
+//! struct Team1;
+//!
+//! #[derive(Component)]
+//! struct Team2;
+//!
+//! # let world = World::new();
+//! // Create a query grouped by the Group relationship
+//! let query = world.query::<&Position>()
+//!     .group_by(Group)
+//!     .build();
+//!
+//! // Create entities with different group targets
+//! world.entity()
+//!     .add((Group, Team1))
+//!     .set(Position { x: 1.0, y: 1.0 });
+//!
+//! world.entity()
+//!     .add((Group, Team2))
+//!     .set(Position { x: 2.0, y: 2.0 });
+//!
+//! // Entities with the same (Group, Target) are iterated together
+//! query.run(|mut it| {
+//!     while it.next() {
+//!         let world = it.world();
+//!         let group = world.entity_from_id(it.group_id());
+//!         println!("Group: {}", group.name());
+//!     }
+//! });
+//! ```
+//!
+//! # Performance Considerations
+//!
+//! ## Cached vs Uncached
+//!
+//! - **Cached queries** ([`QueryCacheKind::Auto`] or [`QueryCacheKind::All`]):
+//!   - Faster iteration (very fast)
+//!   - Slower creation
+//!   - Higher memory usage
+//!   - Best for: Queries evaluated every frame (e.g. systems)
+//!
+//! - **Uncached queries** ([`QueryCacheKind::None`]):
+//!   - Faster creation
+//!   - Slower iteration
+//!   - Minimal memory overhead
+//!   - Best for: Ad-hoc queries, one-time lookups
+//!
+//! # See Also
+//!
+//! - [`Query`] for the resulting query object
+//! - [`World::query()`] to create a query builder
+//! - [`World::new_query()`] to create queries directly
+//! - [Query module documentation](crate::core::query) for iteration examples
+//! - [Flecs Query Manual](https://www.flecs.dev/flecs/md_docs_2Queries.html) for comprehensive documentation
+//!
+//! [`QueryCacheKind::Auto`]: flecs::QueryCacheKind::Auto
+//! [`QueryCacheKind::All`]: flecs::QueryCacheKind::All
+//! [`QueryCacheKind::None`]: flecs::QueryCacheKind::None
 
 use core::ffi::c_void;
 use core::mem::ManuallyDrop;
@@ -14,13 +310,44 @@ extern crate alloc;
 use alloc::{format, vec::Vec};
 use flecs_ecs_derive::extern_abi;
 
-/// Builder for [`Query`].
+/// Builder for constructing complex [`Query`] objects.
 ///
-/// # Example
+/// `QueryBuilder` provides a fluent interface for incrementally building queries with
+/// additional terms, filters, and configuration options. It's created via [`World::query()`]
+/// and finalized with [`.build()`](QueryBuilder::build).
 ///
-/// This example shows how to return a query or query builder from a function. The lifetime `'static`
-/// is required in the type `&'static Foo` to ensure the components accessed by the query
-/// live long enough to be safely used.
+/// # Basic Usage
+///
+/// ```
+/// use flecs_ecs::prelude::*;
+///
+/// #[derive(Component)]
+/// struct Position { x: f32, y: f32 }
+///
+/// #[derive(Component)]
+/// struct Velocity { x: f32, y: f32 }
+///
+/// #[derive(Component)]
+/// struct Enemy;
+///
+/// let world = World::new();
+///
+/// // Build a query with additional filtering
+/// let query = world.query::<(&Position, &Velocity)>()
+///     .with(Enemy)
+///     .build();
+///
+/// query.each(|(pos, vel)| {
+///     // Only processes enemies with Position and Velocity
+/// });
+/// ```
+///
+/// # Common Patterns
+///
+/// ## Returning from Functions
+///
+/// When returning queries from functions, use `'static` lifetime for component types
+/// to ensure they outlive the function scope:
 ///
 /// ```
 /// use flecs_ecs::prelude::*;
@@ -29,19 +356,52 @@ use flecs_ecs_derive::extern_abi;
 /// struct Foo(u8);
 ///
 /// fn foo_query(world: &World) -> Query<&'static Foo> {
-///     query!(world, &Foo).build()
+///     world.query::<&Foo>().build()
 /// }
 ///
+/// let world = World::new();
+/// let query = foo_query(&world);
+/// query.each(|foo| { /* ... */ });
+/// ```
+///
+/// ## Use in Systems
+///
+/// Queries can be stored and reused within systems:
+///
+/// ```
+/// use flecs_ecs::prelude::*;
+///
+/// #[derive(Component)]
+/// struct Foo(u8);
+///
 /// fn plugin(world: &World) {
-///     let foos = foo_query(world);
+///     let foos = world.query::<&Foo>().build();
 ///
 ///     world.system::<()>().each(move |_| {
 ///         foos.each(|foo| {
-///             // ..
+///             // Reuse query each frame
 ///         });
 ///     });
 /// }
 /// ```
+///
+/// # Builder Methods
+///
+/// The builder provides many methods for configuring queries. See the
+/// [module documentation](crate::core::query_builder) for comprehensive examples of:
+///
+/// - [`with()`](QueryBuilder::with) / [`without()`](QueryBuilder::without) - Add/exclude components
+/// - [`with_id()`](QueryBuilder::with_id) - Add relationship conditions
+/// - [`set_cache_kind()`](QueryBuilder::set_cache_kind) - Control caching behavior
+/// - [`order_by()`](QueryBuilder::order_by) - Sort results
+/// - [`group_by()`](QueryBuilder::group_by) - Group results
+///
+/// # See Also
+///
+/// - [Module documentation](crate::core::query_builder) for detailed examples
+/// - [`Query`] for the resulting query object
+/// - [`World::query()`] to create a builder
+/// - [`World::new_query()`] for simple queries without a builder
 pub struct QueryBuilder<'a, T>
 where
     T: QueryTuple,
