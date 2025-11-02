@@ -1319,7 +1319,7 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     {
         ecs_assert!(
             (unsafe { sys::ecs_id_get_flags(it.real_world, sys::ecs_field_id(it, index)) }
-                & sys::EcsIdIsSparse)
+                & sys::EcsIdSparse)
                 == 0,
             FlecsErrorCode::InvalidOperation,
             "use ecs_field_at to access fields for sparse components"
@@ -1449,7 +1449,7 @@ pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) 
     {
         ecs_assert!(
             (unsafe { sys::ecs_id_get_flags(it.world, sys::ecs_field_id(it, index)) }
-                & sys::EcsIdIsSparse)
+                & sys::EcsIdSparse)
                 == 0,
             FlecsErrorCode::InvalidOperation,
             "use ecs_field_at to access fields for sparse components"

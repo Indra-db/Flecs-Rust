@@ -18,9 +18,9 @@ workspace = true
 libc.workspace = true
 
 [build-dependencies]
-bindgen = "0.71.1"
-cc = "1.2.2"
-regex = "1.11.1"
+bindgen = "0.72.1"
+cc = "1.2.43"
+regex = "1.12.2"
 
 [features]
 # Regenerate the C binding for flecs C

@@ -69,6 +69,8 @@ impl World {
         // module resources.
         module.add_trait::<flecs::Sparse>();
 
+        module.add_trait::<flecs::Singleton>();
+
         // Set scope to our module
         self.set_scope(module);
 

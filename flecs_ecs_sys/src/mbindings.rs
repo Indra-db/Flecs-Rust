@@ -202,6 +202,10 @@ unsafe extern "C" {
 #[test]
 fn compile_test_check_if_any_ecs_world_info_fields_changed() {
     let info = ecs_world_info_t {
+        creation_time: 0,
+        observers_ran_total: 0,
+        queries_ran_total: 0,
+        systems_ran_total: 0,
         last_component_id: 0,
         min_id: 0,
         max_id: 0,
@@ -224,8 +228,6 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
         table_create_total: 0,
         table_delete_total: 0,
         pipeline_build_count_total: 0,
-        systems_ran_frame: 0,
-        observers_ran_frame: 0,
         tag_id_count: 0,
         component_id_count: 0,
         pair_id_count: 0,
@@ -250,10 +252,10 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
 }
 
 #[cfg(feature = "flecs_safety_locks")]
-impl Default for ecs_safety_info_t {
+impl Default for ecs_lock_target_t {
     #[inline]
     fn default() -> Self {
-        ecs_safety_info_t {
+        ecs_lock_target_t {
             cr: core::ptr::null_mut(),
             table: core::ptr::null_mut(),
             column_index: -1,
@@ -266,7 +268,7 @@ impl Default for ecs_get_ptr_t {
     #[inline]
     fn default() -> Self {
         ecs_get_ptr_t {
-            component_ptr: core::ptr::null_mut(),
+            ptr: core::ptr::null_mut(),
             ..Default::default()
         }
     }

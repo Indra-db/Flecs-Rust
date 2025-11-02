@@ -1,4 +1,5 @@
 use super::*;
+use crate::sys;
 use alloc::string::String;
 use flecs_ecs::core::*;
 
@@ -86,6 +87,66 @@ impl World {
     /// * C API: `ecs_ptr_to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
         Script::to_expr(self, T::id(), value as *const T as *const core::ffi::c_void)
+    }
+
+    /*
+
+    template <typename T>
+    inline T world::get_const_var(
+        const char *name,
+        const T& default_value) const
+    {
+        ecs_value_t value = flecs::_::get_const_var(world_, name);
+        if (!value.ptr) {
+            return default_value;
+        }
+
+        flecs::id_t type = flecs::_::type<T>::id(world_);
+        if (type == value.type) {
+            return *(static_cast<T*>(value.ptr));
+        }
+
+        return flecs::_::get_const_value<T>(
+            world_, name, value, type, default_value);
+    }
+
+    template <typename T>
+    void world::get_const_var(
+        const char *name,
+        T& out,
+        const T& default_value) const
+    {
+        ecs_value_t value = flecs::_::get_const_var(world_, name);
+        if (!value.ptr) {
+            out = default_value;
+            return;
+        }
+
+        flecs::id_t type = flecs::_::type<T>::id(world_);
+        if (type == value.type) {
+            out = *(static_cast<T*>(value.ptr));
+            return;
+        }
+
+        out = flecs::_::get_const_value<T>(
+            world_, name, value, type, default_value);
+    }
+    */
+
+    fn get_const_var<T: ComponentId>(&self, name: &str) -> Option<sys::ecs_value_t> {
+        Script::get_const_var(self, name)
+    }
+
+    fn get_const_numeric<T: ConstNumeric>(&self, value: sys::ecs_value_t) -> T::ConstType {
+        Script::get_const_numeric::<T>(self, value)
+    }
+
+    fn get_const_str(&self, value: sys::ecs_value_t) -> String {
+        Script::get_const_str(self, value)
+    }
+
+    fn get_const_charptr(&self, value: sys::ecs_value_t) -> core::ffi::c_char {
+        Script::get_const_char(self, value)
     }
 
     /// Wraps the provided entity id in a [`ScriptEntityView`].

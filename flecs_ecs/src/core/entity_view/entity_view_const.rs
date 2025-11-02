@@ -408,8 +408,8 @@ impl<'a> EntityView<'a> {
     /// Check if entity is valid.
     ///
     /// Entities are valid if :
-    /// - they are not 0
-    /// - if they are alive
+    /// - its id is not 0
+    /// - if they are alive (see [`EntityView::is_alive()`])
     /// - the id contains a valid bit pattern for an entity
     ///
     ///
@@ -1119,29 +1119,15 @@ impl<'a> EntityView<'a> {
 
         let relationship = relationship.into_entity(self.world);
 
-        if relationship == ECS_CHILD_OF {
-            let mut it: sys::ecs_iter_t = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
-            while unsafe { sys::ecs_children_next(&mut it) } {
-                count += it.count;
-                for i in 0..it.count as usize {
-                    unsafe {
-                        let id = it.entities.add(i);
-                        let ent = EntityView::new_from(self.world, *id);
-                        func(ent);
-                    }
-                }
-            }
-        } else {
-            let mut it: sys::ecs_iter_t =
-                unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship, *self.id)) };
-            while unsafe { sys::ecs_each_next(&mut it) } {
-                count += it.count;
-                for i in 0..it.count as usize {
-                    unsafe {
-                        let id = it.entities.add(i);
-                        let ent = EntityView::new_from(self.world, *id);
-                        func(ent);
-                    }
+        let mut it: sys::ecs_iter_t =
+            unsafe { sys::ecs_children_w_rel(self.world_ptr(), *relationship, *self.id) };
+        while unsafe { sys::ecs_children_next(&mut it) } {
+            count += it.count;
+            for i in 0..it.count as usize {
+                unsafe {
+                    let id = it.entities.add(i);
+                    let ent = EntityView::new_from(self.world, *id);
+                    func(ent);
                 }
             }
         }

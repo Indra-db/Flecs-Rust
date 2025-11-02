@@ -226,4 +226,145 @@ impl<'a> Script<'a> {
         };
         str
     }
+
+    pub fn get_const_var(world: impl WorldProvider<'a>, name: &str) -> Option<sys::ecs_value_t> {
+        let world_ptr = world.world_ptr();
+        let name = compact_str::format_compact!("{}\0", name);
+        let v = unsafe {
+            sys::ecs_lookup_path_w_sep(
+                world_ptr,
+                0,
+                name.as_ptr() as *const _,
+                SEPARATOR.as_ptr(),
+                SEPARATOR.as_ptr(),
+                false,
+            )
+        };
+
+        if v == 0 {
+            // unresolved const variable
+            None
+        } else {
+            let value = unsafe { sys::ecs_const_var_get(world_ptr, v) };
+
+            if value.ptr.is_null() {
+                // entity is not a const variable
+                None
+            } else {
+                Some(value)
+            }
+        }
+    }
+
+    pub fn get_const_numeric<T: ConstNumeric>(
+        world: impl WorldProvider<'a>,
+        value: sys::ecs_value_t,
+    ) -> T::ConstType {
+        let world_ptr = world.world_ptr();
+
+        let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        if T::IS_INT {
+            let cur_value = unsafe { sys::ecs_meta_get_int(&cur) };
+            unsafe { *(&cur_value as *const i64 as *const T::ConstType) }
+        } else if T::IS_UINT {
+            let cur_value = unsafe { sys::ecs_meta_get_uint(&cur) };
+            unsafe { *(&cur_value as *const u64 as *const T::ConstType) }
+        } else
+        /* float */
+        {
+            let cur_value = unsafe { sys::ecs_meta_get_float(&cur) };
+            unsafe { *(&cur_value as *const f64 as *const T::ConstType) }
+        }
+    }
+
+    pub fn get_const_char(
+        world: impl WorldProvider<'a>,
+        value: sys::ecs_value_t,
+    ) -> core::ffi::c_char {
+        let world_ptr = world.world_ptr();
+
+        let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        let cur_value = unsafe { sys::ecs_meta_get_char(&cur) };
+        cur_value as core::ffi::c_char
+    }
+
+    pub fn get_const_str(world: impl WorldProvider<'a>, value: sys::ecs_value_t) -> String {
+        let world_ptr = world.world_ptr();
+
+        let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        let c_str = unsafe { sys::ecs_meta_get_string(&cur) };
+        let str = unsafe { CStr::from_ptr(c_str) }
+            .to_str()
+            .unwrap()
+            .to_owned();
+        str
+    }
+}
+
+pub trait ConstNumeric: Sized {
+    type ConstType: Sized + Copy;
+    const IS_INT: bool;
+    const IS_UINT: bool;
+    const IS_FLOAT: bool;
+}
+
+impl ConstNumeric for i8 {
+    type ConstType = i8;
+    const IS_INT: bool = true;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for i16 {
+    type ConstType = i16;
+    const IS_INT: bool = true;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for i32 {
+    type ConstType = i32;
+    const IS_INT: bool = true;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for i64 {
+    type ConstType = i64;
+    const IS_INT: bool = true;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for u8 {
+    type ConstType = u8;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = true;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for u16 {
+    type ConstType = u16;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = true;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for u32 {
+    type ConstType = u32;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = true;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for u64 {
+    type ConstType = u64;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = true;
+    const IS_FLOAT: bool = false;
+}
+impl ConstNumeric for f32 {
+    type ConstType = f32;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = true;
+}
+impl ConstNumeric for f64 {
+    type ConstType = f64;
+    const IS_INT: bool = false;
+    const IS_UINT: bool = false;
+    const IS_FLOAT: bool = true;
 }

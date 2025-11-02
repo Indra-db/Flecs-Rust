@@ -89,6 +89,10 @@ impl<'a, T> CachedRef<'a, T> {
         }
         .is_null()
     }
+
+    pub fn world(&self) -> WorldRef<'a> {
+        self.world
+    }
 }
 
 impl<'a, T: ComponentId> CachedRef<'a, T> {

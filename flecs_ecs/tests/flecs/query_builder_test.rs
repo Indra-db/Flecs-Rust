@@ -1628,16 +1628,13 @@ fn query_builder_template_term() {
 fn query_builder_typed_term_at() {
     let world = World::new();
 
-    world
-        .component::<Velocity>()
-        .add_trait::<flecs::Singleton>();
-
     world.set(Count(0));
 
     let s = world
         .system::<&Velocity>()
         .with(&mut RelFoo::id())
         .term_at_type::<Velocity>()
+        .set_src(Velocity::id())
         .term_at_type::<RelFoo>()
         .set_second(flecs::Wildcard::ID)
         .run(|mut it| {
@@ -1663,16 +1660,13 @@ fn query_builder_typed_term_at() {
 fn query_builder_typed_term_at_indexed() {
     let world = World::new();
 
-    world
-        .component::<Velocity>()
-        .add_trait::<flecs::Singleton>();
-
     world.set(Count(0));
 
     let s = world
         .system::<&Velocity>()
         .with(&mut RelFoo::id())
         .term_at_checked::<Velocity>(0)
+        .set_src(Velocity::id())
         .term_at_checked::<RelFoo>(1)
         .set_second(flecs::Wildcard::ID)
         .run(|mut it| {

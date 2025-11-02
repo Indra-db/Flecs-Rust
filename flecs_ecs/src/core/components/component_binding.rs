@@ -38,6 +38,11 @@ impl Drop for ComponentBindingCtx {
         {
             unsafe { free_on_set(on_set) };
         }
+        if let Some(on_replace) = self.on_replace
+            && let Some(free_on_replace) = self.free_on_replace
+        {
+            unsafe { free_on_replace(on_replace) };
+        }
     }
 }
 
