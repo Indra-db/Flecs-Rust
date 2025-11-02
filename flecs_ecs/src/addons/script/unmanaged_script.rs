@@ -293,11 +293,11 @@ impl<'a> Script<'a> {
 
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
         let c_str = unsafe { sys::ecs_meta_get_string(&cur) };
-        let str = unsafe { CStr::from_ptr(c_str) }
+
+        unsafe { CStr::from_ptr(c_str) }
             .to_str()
             .unwrap()
-            .to_owned();
-        str
+            .to_owned()
     }
 }
 

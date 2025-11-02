@@ -133,7 +133,7 @@ impl World {
     }
     */
 
-    fn get_const_var<T: ComponentId>(&self, name: &str) -> Option<sys::ecs_value_t> {
+    fn get_const_var(&self, name: &str) -> Option<sys::ecs_value_t> {
         Script::get_const_var(self, name)
     }
 
