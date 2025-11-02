@@ -294,7 +294,7 @@ pub trait GetTuple: Sized {
                         unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
 
                     ecs_assert!(
-                        !constant_value.component_ptr.is_null(),
+                        !constant_value.ptr.is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
