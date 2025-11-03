@@ -66,17 +66,20 @@ impl World {
 
     /// Serialize value into a String.
     /// This operation serializes a value of the provided type to a string.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that `value` points to valid data of the type specified by `id_of_value`.
     ///     
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_expr_id(
+    pub unsafe fn to_expr_id<T: IntoEntity>(
         &self,
-        id_of_value: impl IntoEntity,
-        value: *const core::ffi::c_void,
+        id_of_value: T,
+        value: *const T::CastType,
     ) -> String {
-        Script::to_expr(self, id_of_value, value)
+        unsafe { Script::to_expr(self, id_of_value, value) }
     }
 
     /// Serialize value into a String.
@@ -86,7 +89,7 @@ impl World {
     ///
     /// * C API: `ecs_ptr_to_expr`
     pub fn to_expr<T: ComponentId>(&self, value: &T) -> String {
-        Script::to_expr(self, T::id(), value as *const T as *const core::ffi::c_void)
+        unsafe { Script::to_expr(self, T::id(), value as *const T) }
     }
 
     /*

@@ -368,7 +368,7 @@ pub trait QueryTuple: Sized {
     ) -> Self::TupleType<'a>;
 
     fn create_tuple_with_row<'a>(
-        iter: *const sys::ecs_iter_t,
+        iter: &sys::ecs_iter_t,
         array_components: &'a mut [*mut u8],
         is_ref_array_components: &[bool],
         is_row_array_components: &[bool],
@@ -415,7 +415,10 @@ where
 
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(
+        clippy::not_unsafe_ptr_arg_deref,
+        reason = "x"
+    )]
     #[inline(always)]
     fn register_ids_descriptor_at(
         world: *mut sys::ecs_world_t,
@@ -501,10 +504,9 @@ where
         A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn create_tuple_with_row<'a>(
-            iter: *const sys::ecs_iter_t,
+            iter: &sys::ecs_iter_t,
             array_components: &'a mut [*mut u8],
             is_ref_array_components: &[bool],
             is_row_array_components: &[bool],
@@ -541,13 +543,11 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     type TupleSlice = &'a mut [T];
     const IS_OPTION: bool = false;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe { &mut (*array.add(index)) }
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
         unsafe {
@@ -565,7 +565,6 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
     type TupleSlice = Option<&'a mut [T]>;
     const IS_OPTION: bool = true;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe {
@@ -577,7 +576,6 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
         }
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
         unsafe {
@@ -795,10 +793,9 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused, clippy::unused_unit)]
-            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             #[inline(always)]
             fn create_tuple_with_row<'a>(
-                iter: *const sys::ecs_iter_t,
+                iter: &sys::ecs_iter_t,
                 array_components: &'a mut [*mut u8],
                 is_ref_array_components: &[bool],
                 is_row_array_components: &[bool],

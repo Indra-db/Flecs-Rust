@@ -11,6 +11,13 @@ unsafe fn c_run_post_frame(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::
     (action)(world);
 }
 
+#[extern_abi]
+unsafe fn c_on_destroyed(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
+    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
+    let world = unsafe { WorldRef::from_ptr(world) };
+    (action)(world);
+}
+
 impl World {
     /// deletes and recreates the world
     ///
@@ -126,10 +133,35 @@ impl World {
     }
 
     /// Registers an action to be executed when the world is destroyed.
-    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
-    pub fn on_destroyed(&self, action: sys::ecs_fini_action_t, ctx: *mut c_void) {
+    ///
+    /// This provides a safe, ergonomic way to register cleanup callbacks that will
+    /// be invoked when the world is dropped. The callback receives a [`WorldRef`]
+    /// that can be used to access world state during cleanup.
+    ///
+    /// # Arguments
+    ///
+    /// * `action` - The function to call when the world is destroyed.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    /// world.on_destroyed(|world| {
+    ///     println!("World is being destroyed!");
+    /// });
+    /// // World will be destroyed when it goes out of scope
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * C++ API: `world::atfini`
+    #[doc(alias = "ecs_atfini")]
+    pub fn on_destroyed(&self, action: fn(WorldRef)) {
+        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
         unsafe {
-            sys::ecs_atfini(self.raw_world.as_ptr(), action, ctx);
+            sys::ecs_atfini(self.raw_world.as_ptr(), Some(c_on_destroyed), ctx);
         }
     }
 
@@ -926,7 +958,10 @@ impl World {
     /// # See also
     ///
     /// * [`World::context()`]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
+    #[expect(
+        clippy::not_unsafe_ptr_arg_deref,
+        reason = "this doesn't actually deref the pointer and controls lifetime"
+    )]
     pub fn set_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
         unsafe { sys::ecs_set_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
     }
@@ -989,7 +1024,6 @@ impl World {
     /// # See also
     ///
     /// * [`World::get_binding_context()`]
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn set_binding_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
         unsafe { sys::ecs_set_binding_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
     }
@@ -1218,10 +1252,11 @@ impl World {
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
     /// * C API: `sys::ecs_set_lookup_path`
-    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     // TODO we need to improve this function somehow, it's not very ergonomic
-    pub fn set_lookup_path(&self, search_path: impl Into<Entity>) -> *mut sys::ecs_entity_t {
-        unsafe { sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into()) }
+    pub fn set_lookup_path(&self, search_path: impl IntoEntity) -> *mut sys::ecs_entity_t {
+        unsafe {
+            sys::ecs_set_lookup_path(self.raw_world.as_ptr(), &*search_path.into_entity(self))
+        }
     }
 
     /// Lookup an entity by name.
@@ -1972,7 +2007,6 @@ impl World {
     ///
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
-    #[allow(clippy::not_unsafe_ptr_arg_deref)] // this doesn't actually deref the pointer
     pub fn run_post_frame(&self, action: fn(WorldRef)) {
         let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
         unsafe {

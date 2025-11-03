@@ -79,9 +79,8 @@ pub fn ecs_dependson(entity: u64) -> u64 {
 /// # Returns
 ///
 /// True if the entity has the given pair, false otherwise.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
-pub fn ecs_has_pair(
+pub(crate) fn ecs_has_pair(
     world: *const sys::ecs_world_t,
     entity: impl Into<Entity>,
     first: impl Into<Entity>,
@@ -96,9 +95,8 @@ pub fn ecs_has_pair(
     }
 }
 
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[inline(always)]
-pub fn ecs_add_pair(
+pub(crate) fn ecs_add_pair(
     world: *mut sys::ecs_world_t,
     entity: impl Into<Entity>,
     first: impl Into<Entity>,

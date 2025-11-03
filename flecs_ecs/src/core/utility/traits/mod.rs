@@ -76,7 +76,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -107,7 +107,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -143,7 +143,7 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each_iter<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -174,7 +174,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -195,7 +195,7 @@ pub mod private {
             };
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run_each<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
@@ -239,7 +239,7 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run_each_entity<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
@@ -295,7 +295,10 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(
+            clippy::not_unsafe_ptr_arg_deref,
+            reason = "this doesn't actually deref the pointer"
+        )]
         #[extern_abi]
         fn execute_run_each_iter<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where

@@ -82,10 +82,12 @@ fn std_string_support(world: WorldRef) -> Opaque<String> {
     // Forward core::string value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &String| {
         let data = compact_str::format_compact!("{}\0", data);
-        s.value_id(
-            flecs::meta::String,
-            &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
-        )
+        unsafe {
+            s.value_id(
+                flecs::meta::String,
+                &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
+            )
+        }
     });
 
     // Serialize string into core::string
@@ -106,10 +108,12 @@ pub fn meta_ser_stringify_type_debug<T: core::fmt::Debug>(world: WorldRef) -> Op
     ts.serialize(|s: &Serializer, data: &T| {
         let data = format!("{data:?}");
         let data = compact_str::format_compact!("{data}\0");
-        s.value_id(
-            flecs::meta::String,
-            &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
-        )
+        unsafe {
+            s.value_id(
+                flecs::meta::String,
+                &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
+            )
+        }
     });
 
     ts
@@ -125,10 +129,12 @@ pub fn meta_ser_stringify_type_display<T: core::fmt::Display>(world: WorldRef) -
     ts.serialize(|s: &Serializer, data: &T| {
         let data = format!("{data}");
         let data = compact_str::format_compact!("{data}\0");
-        s.value_id(
-            flecs::meta::String,
-            &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
-        )
+        unsafe {
+            s.value_id(
+                flecs::meta::String,
+                &data.as_ptr() as *const *const u8 as *const core::ffi::c_void,
+            )
+        }
     });
 
     ts
@@ -145,7 +151,7 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
         let world = unsafe { WorldRef::from_ptr(s.world as *mut sys::ecs_world_t) };
         let id = id!(world, T);
         for el in data.iter() {
-            s.value_id(id, el as *const T as *const core::ffi::c_void);
+            unsafe { s.value_id(id, el as *const T as *const core::ffi::c_void) };
         }
         0
     });
@@ -179,7 +185,7 @@ pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Ent
     opaque.serialize(|ser: &Serializer, data: &Entity| {
         let id: Id = <Entity as Into<Id>>::into(*data);
         let id: u64 = *id;
-        ser.value_id(flecs::meta::Entity::ID, &id as *const u64 as *const c_void)
+        unsafe { ser.value_id(flecs::meta::Entity::ID, &id as *const u64 as *const c_void) }
     });
     opaque.assign_entity(|dst: &mut Entity, _world: WorldRef<'a>, e: Entity| {
         *dst = e;

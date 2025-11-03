@@ -205,20 +205,22 @@ impl<'a> Script<'a> {
 
     /// Serialize value into a String.
     /// This operation serializes a value of the provided type to a string.
-    ///     
+    ///
+    /// # Safety
+    /// The caller must ensure that `value` points to valid data of the type specified by `id_of_value`.
+    ///
     /// # See also
     ///
     /// * C API: `ecs_ptr_to_expr`
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub fn to_expr(
+    pub unsafe fn to_expr<T: IntoEntity>(
         world: impl WorldProvider<'a>,
-        id_of_value: impl IntoEntity,
-        value: *const core::ffi::c_void,
+        id_of_value: T,
+        value: *const T::CastType,
     ) -> String {
         let world = world.world();
         let id = *id_of_value.into_entity(world);
         let world = world.world_ptr_mut();
-        let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value) };
+        let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value as *const core::ffi::c_void) };
         let c_str = unsafe { CStr::from_ptr(expr) };
         let str = c_str.to_str().unwrap().to_owned();
         unsafe {

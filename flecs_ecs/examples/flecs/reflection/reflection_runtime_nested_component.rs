@@ -21,7 +21,7 @@ fn main() {
 
     let ptr = e.get_untyped_mut(line);
 
-    let mut cur = world.cursor_id(line, ptr);
+    let mut cur = unsafe { world.cursor_id(line, ptr) };
 
     #[rustfmt::skip]
     fn cursor(cur: &mut Cursor) {

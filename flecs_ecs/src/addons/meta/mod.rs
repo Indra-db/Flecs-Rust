@@ -16,8 +16,6 @@ mod opaque;
 mod untyped_component;
 mod world;
 
-use core::ffi::c_void;
-
 pub use builtin::*;
 pub use component_id_fetcher::*;
 pub use cursor::*;

@@ -350,14 +350,18 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         match data {
             Some(value) => {
                 s.member("Some");
-                s.value_id(id, value as *const T as *const core::ffi::c_void);
+                unsafe {
+                    s.value_id(id, value as *const T as *const core::ffi::c_void);
+                }
             }
             None => {
                 s.member("None");
-                s.value_id(
-                    id!(world, bool),
-                    &false as *const bool as *const core::ffi::c_void,
-                );
+                unsafe {
+                    s.value_id(
+                        id!(world, bool),
+                        &false as *const bool as *const core::ffi::c_void,
+                    );
+                }
             }
         }
         0

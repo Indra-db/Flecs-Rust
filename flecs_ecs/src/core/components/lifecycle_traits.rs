@@ -68,7 +68,6 @@ pub(crate) unsafe fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
     let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
 }
 
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn register_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
     //type_hooks.ctor = Some(ctor::<T>);
     type_hooks.dtor = Some(dtor::<T>);

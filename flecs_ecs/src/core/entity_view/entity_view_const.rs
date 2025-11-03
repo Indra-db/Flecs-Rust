@@ -180,7 +180,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::new_named()`] - Create a named entity
     /// * [`EntityView::new_from()`] - Create from existing ID
     /// * [`World::entity()`] - Preferred way to create entities
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let world_ptr = world.world_ptr_mut();
         let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {

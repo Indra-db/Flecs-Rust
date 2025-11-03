@@ -1003,7 +1003,6 @@ impl<'a> EntityView<'a> {
     ///
     /// This operation removes all components from an entity without recycling
     /// the entity id.
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn clear(&self) {
         unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id) }
     }

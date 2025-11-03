@@ -462,7 +462,6 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     type Tuple = &'a mut T;
     const IS_OPTION: bool = false;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe { &mut (*array.add(index)) }
@@ -473,7 +472,6 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
     type Tuple = Option<&'a mut T>;
     const IS_OPTION: bool = true;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe {

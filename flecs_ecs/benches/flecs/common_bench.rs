@@ -58,7 +58,6 @@ pub fn create_entities(world: &World, count: usize) -> Vec<EntityView<'_>> {
     vec
 }
 
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn create_ids<'a>(
     world: impl WorldProvider<'a>,
     count: usize,

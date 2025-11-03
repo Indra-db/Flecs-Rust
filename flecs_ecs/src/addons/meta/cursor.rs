@@ -9,16 +9,16 @@ pub struct Cursor<'a> {
 
 impl<'a> Cursor<'a> {
     /// Creates a new cursor instance
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    pub(crate) fn new(
+    pub(crate) unsafe fn new<T: IntoEntity>(
         world: impl WorldProvider<'a>,
-        type_id: impl IntoEntity,
-        ptr: *mut core::ffi::c_void,
+        type_id: T,
+        ptr: *mut T::CastType,
     ) -> Self {
         let world = world.world();
         let world_ptr = world.world_ptr();
         let type_id = *type_id.into_entity(world);
-        let cursor = unsafe { sys::ecs_meta_cursor(world_ptr, type_id, ptr) };
+        let cursor =
+            unsafe { sys::ecs_meta_cursor(world_ptr, type_id, ptr as *mut core::ffi::c_void) };
         Self {
             cursor,
             phantom: core::marker::PhantomData,
