@@ -518,7 +518,7 @@ pub(crate) fn internal_each_generic<
     iter: &mut sys::ecs_iter_t,
     extractor: E,
     mut func: F,
-    world: &WorldRef<'_>,
+    _world: &WorldRef<'_>,
 ) {
     const {
         assert!(
@@ -545,14 +545,14 @@ pub(crate) fn internal_each_generic<
         FlecsErrorCode::InvalidOperation,
         "query/system does not return entities ($this variable is not populated).\nSystem: {:?}",
         {
-            let e = world.entity_from_id(iter.system);
+            let e = _world.entity_from_id(iter.system);
             (e.id(), e.get_name())
         }
     );
 
     #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
-        world,
+        _world,
         components_data.safety_table_records(),
     );
 
@@ -578,7 +578,7 @@ pub(crate) fn internal_each_generic<
 
     #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
-        world,
+        _world,
         components_data.safety_table_records(),
     );
 }

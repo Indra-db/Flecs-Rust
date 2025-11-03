@@ -225,7 +225,11 @@ pub(crate) fn collect_flecs_traits_calls(
             .last()
             .map(|s| {
                 let ident = &s.ident;
-                ident == "With" || ident == "OneOf" || ident == "IsA" || ident == "ChildOf"
+                ident == "With"
+                    || ident == "OneOf"
+                    || ident == "IsA"
+                    || ident == "ChildOf"
+                    || ident == "DependsOn"
             })
             .unwrap_or(false)
     }
@@ -255,6 +259,9 @@ pub(crate) fn collect_flecs_traits_calls(
                                     }
                                     Item::Pair(p1, p2) => {
                                         let q1 = qualify(p1);
+                                        // For special relationship traits (With, OneOf, IsA, ChildOf, DependsOn),
+                                        // the second element is always a user component/entity and should not be qualified.
+                                        // For all other trait pairs, qualify the second element.
                                         let q2 = if should_be_unqualified(p1) {
                                             quote! { #p2 }
                                         } else {
