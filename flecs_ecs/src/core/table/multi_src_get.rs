@@ -445,7 +445,7 @@ mod tests {
 
     #[derive(Component, Debug)]
     struct TP {
-        x: i32,
+        _x: i32,
     }
 
     #[derive(Component, Debug)]
@@ -502,8 +502,8 @@ mod tests {
     fn multi_src_diff_table_ok() {
         let world = World::new();
 
-        let parent = world.entity().set(TP { x: 1 });
-        world.entity().set(TP { x: 4 }).child_of(parent);
+        let parent = world.entity().set(TP { _x: 1 });
+        world.entity().set(TP { _x: 4 }).child_of(parent);
 
         let mut ok = false;
 

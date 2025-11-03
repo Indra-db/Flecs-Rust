@@ -313,6 +313,7 @@ fn test_c_vs_rust_ids() {
             assert_eq!(flecs::meta::F64, sys::FLECS_IDecs_f64_tID_);
             assert_eq!(flecs::meta::String, sys::FLECS_IDecs_string_tID_);
             assert_eq!(flecs::meta::Entity, sys::FLECS_IDecs_entity_tID_);
+            assert_eq!(flecs::meta::Id, sys::FLECS_IDecs_id_tID_);
             assert_eq!(flecs::meta::Quantity, sys::EcsQuantity);
             assert_eq!(flecs::meta::EcsOpaque, sys::FLECS_IDEcsOpaqueID_);
 

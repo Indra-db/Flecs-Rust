@@ -61,26 +61,3 @@ impl Default for ComponentBindingCtx {
         }
     }
 }
-impl ComponentBindingCtx {
-    pub(crate) fn new(
-        on_add: Option<*mut c_void>,
-        on_remove: Option<*mut c_void>,
-        on_set: Option<*mut c_void>,
-        on_replace: Option<*mut c_void>,
-        free_on_add: Option<EcsCtxFreeT>,
-        free_on_remove: Option<EcsCtxFreeT>,
-        free_on_set: Option<EcsCtxFreeT>,
-        free_on_replace: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            on_add,
-            on_remove,
-            on_set,
-            on_replace,
-            free_on_add,
-            free_on_remove,
-            free_on_set,
-            free_on_replace,
-        }
-    }
-}

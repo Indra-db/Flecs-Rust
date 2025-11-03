@@ -230,12 +230,6 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    #[inline(always)]
-    pub(crate) fn replace_id(&mut self, id: u64) -> &mut Self {
-        self.id = Entity(id);
-        self
-    }
-
     /// Create a named entity.
     ///
     /// Creates a new entity with the specified name. Named entities can be looked up using
@@ -1850,7 +1844,7 @@ impl<'a> EntityView<'a> {
     /// # See also
     ///
     /// * [`EntityView::target_for()`]
-    pub fn target_for(
+    pub fn target_id_for(
         &self,
         relationship: impl IntoEntity,
         component_id: impl IntoId,
@@ -1867,43 +1861,6 @@ impl<'a> EntityView<'a> {
             None
         } else {
             Some(EntityView::new_from(self.world, id))
-        }
-    }
-
-    // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
-    // TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
-    /// Get the target for a given pair of components and a relationship.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first component type to use for deriving the id.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// * The entity for which the target has been found.
-    ///
-    /// # See also
-    // TODO needs to be made safe
-    pub(crate) fn target_for_first<First: ComponentId + DataComponent>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> *const First {
-        let comp_id = First::entity_id(self.world);
-        ecs_assert!(
-            core::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "First element is size 0"
-        );
-        unsafe {
-            sys::ecs_get_id(
-                self.world.world_ptr(),
-                comp_id,
-                ecs_pair(comp_id, *second.into()),
-            ) as *const First
         }
     }
 
@@ -2343,12 +2300,6 @@ impl<'a> EntityView<'a> {
         );
 
         EntityView::new_from(entity.world(), *self.id)
-    }
-
-    //might not be needed, in the original c++ impl it was used in the get_mut functions.
-    #[doc(hidden)]
-    fn set_stage(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
-        EntityView::new_from(stage, *self.id)
     }
 }
 

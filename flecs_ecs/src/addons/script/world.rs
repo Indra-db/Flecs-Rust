@@ -136,19 +136,19 @@ impl World {
     }
     */
 
-    fn get_const_var(&self, name: &str) -> Option<sys::ecs_value_t> {
+    pub fn get_const_var(&self, name: &str) -> Option<sys::ecs_value_t> {
         Script::get_const_var(self, name)
     }
 
-    fn get_const_numeric<T: ConstNumeric>(&self, value: sys::ecs_value_t) -> T::ConstType {
+    pub fn get_const_numeric<T: ConstNumeric>(&self, value: sys::ecs_value_t) -> T::ConstType {
         Script::get_const_numeric::<T>(self, value)
     }
 
-    fn get_const_str(&self, value: sys::ecs_value_t) -> String {
+    pub fn get_const_str(&self, value: sys::ecs_value_t) -> String {
         Script::get_const_str(self, value)
     }
 
-    fn get_const_charptr(&self, value: sys::ecs_value_t) -> core::ffi::c_char {
+    pub fn get_const_charptr(&self, value: sys::ecs_value_t) -> core::ffi::c_char {
         Script::get_const_char(self, value)
     }
 

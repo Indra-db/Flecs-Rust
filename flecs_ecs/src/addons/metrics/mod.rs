@@ -7,5 +7,3 @@ pub use types::*;
 
 mod untyped_component;
 mod world;
-
-const ECS_EVENT_DESC_ID_COUNT_MAX: usize = 8;

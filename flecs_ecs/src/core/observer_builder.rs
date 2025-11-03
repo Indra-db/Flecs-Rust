@@ -102,6 +102,7 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
+    #[expect(dead_code)]
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: sys::ecs_observer_desc_t,
@@ -130,7 +131,7 @@ impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
     /// # Arguments
     ///
     /// * `flags` - the flags to set
-    fn observer_flags(&mut self, flags: ObserverFlags) -> &mut Self {
+    pub fn set_observer_flags(&mut self, flags: ObserverFlags) -> &mut Self {
         self.desc.flags_ |= flags.bits();
         self
     }

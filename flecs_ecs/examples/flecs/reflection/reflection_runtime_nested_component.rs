@@ -45,7 +45,7 @@ fn main() {
     cursor(&mut cur);
 
     // Convert component to string
-    println!("{:?}", world.to_expr_id(line, ptr));
+    println!("{:?}", unsafe { world.to_expr_id(line, ptr) });
 
     // Output
     // {start: {x: 10.00, y: 20.00}, stop: {x: 30.00, y: 40.00}}

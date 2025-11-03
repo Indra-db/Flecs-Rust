@@ -983,10 +983,12 @@ impl World {
         unsafe { sys::ecs_get_ctx(self.raw_world.as_ptr()) }
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn get_context(world: *mut sys::ecs_world_t) -> *mut WorldCtx {
         unsafe { sys::ecs_get_binding_ctx(world) as *mut WorldCtx }
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn get_components_map(world: *mut sys::ecs_world_t) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
@@ -1000,6 +1002,7 @@ impl World {
         unsafe { &mut (*(self.components.as_ptr())) }
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn get_components_array(world: *mut sys::ecs_world_t) -> &'static mut FlecsArray {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
@@ -1024,6 +1027,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::get_binding_context()`]
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn set_binding_context(&self, ctx: *mut c_void, ctx_free: sys::ecs_ctx_free_t) {
         unsafe { sys::ecs_set_binding_ctx(self.raw_world.as_ptr(), ctx, ctx_free) }
     }
@@ -1037,6 +1041,7 @@ impl World {
     /// # See also
     ///
     /// * [`World::set_binding_context()`]
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn get_binding_context(&self) -> *mut c_void {
         unsafe { sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) }
     }

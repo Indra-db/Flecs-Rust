@@ -722,7 +722,7 @@ where
         }
     }
 
-    pub(crate) fn reference_count(&self) -> i32 {
+    pub fn reference_count(&self) -> i32 {
         unsafe { sys::flecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
     }
 
@@ -731,7 +731,7 @@ where
     /// # Arguments
     ///
     /// * `world` - The world to get the iterator for
-    unsafe fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
+    pub fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 

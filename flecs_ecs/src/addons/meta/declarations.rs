@@ -23,11 +23,6 @@ pub type EcsMember = sys::ecs_member_t;
 pub type EcsEnumConstant = sys::ecs_enum_constant_t;
 pub type EcsBitmaskConstant = sys::ecs_bitmask_constant_t;
 
-// Base type for bitmasks
-pub struct EcsBitmask {
-    value: u32,
-}
-
 #[allow(clippy::unnecessary_cast)]
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Component)]
@@ -40,14 +35,6 @@ pub enum EcsTypeKind {
     VectorType = sys::ecs_type_kind_t_EcsVectorType as u32,
     OpaqueType = sys::ecs_type_kind_t_EcsOpaqueType as u32,
 }
-
-pub(crate) const PRIMITIVE_TYPE: EcsTypeKind = EcsTypeKind::PrimitiveType;
-pub(crate) const BITMASK_TYPE: EcsTypeKind = EcsTypeKind::BitmaskType;
-pub(crate) const ENUM_TYPE: EcsTypeKind = EcsTypeKind::EnumType;
-pub(crate) const STRUCT_TYPE: EcsTypeKind = EcsTypeKind::StructType;
-pub(crate) const ARRAY_TYPE: EcsTypeKind = EcsTypeKind::ArrayType;
-pub(crate) const VECTOR_TYPE: EcsTypeKind = EcsTypeKind::VectorType;
-pub(crate) const OPAQUE_TYPE: EcsTypeKind = EcsTypeKind::OpaqueType;
 
 impl EcsTypeKind {
     pub fn last_type_kind() -> EcsTypeKind {

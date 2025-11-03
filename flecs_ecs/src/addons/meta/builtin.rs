@@ -64,6 +64,7 @@ pub(crate) fn meta_init_builtin(world: &World) {
     map.insert(TypeId::of::<flecs::meta::F64>(), ECS_F64_T);
     map.insert(TypeId::of::<flecs::meta::String>(), ECS_STRING_T);
     map.insert(TypeId::of::<flecs::meta::Entity>(), ECS_ENTITY_T);
+    map.insert(TypeId::of::<flecs::meta::Id>(), ECS_ID_T);
     map.insert(TypeId::of::<flecs::Constant>(), ECS_CONSTANT);
     map.insert(TypeId::of::<flecs::meta::Quantity>(), ECS_QUANTITY);
     map.insert(TypeId::of::<flecs::meta::EcsOpaque>(), ECS_OPAQUE);

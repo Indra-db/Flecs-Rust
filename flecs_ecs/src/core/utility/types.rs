@@ -108,31 +108,6 @@ impl Default for ObserverEntityBindingCtx {
     }
 }
 
-impl ObserverEntityBindingCtx {
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        empty: Option<*mut c_void>,
-        empty_entity: Option<*mut c_void>,
-        payload: Option<*mut c_void>,
-        payload_entity: Option<*mut c_void>,
-        free_empty: Option<EcsCtxFreeT>,
-        free_empty_entity: Option<EcsCtxFreeT>,
-        free_payload: Option<EcsCtxFreeT>,
-        free_payload_entity: Option<EcsCtxFreeT>,
-    ) -> Self {
-        Self {
-            empty,
-            empty_entity,
-            payload,
-            payload_entity,
-            free_empty,
-            free_empty_entity,
-            free_payload,
-            free_payload_entity,
-        }
-    }
-}
-
 pub struct ImplementsClone<T>(core::marker::PhantomData<T>);
 pub struct ImplementsDefault<T>(core::marker::PhantomData<T>);
 pub struct ImplementsPartialEq<T>(core::marker::PhantomData<T>);

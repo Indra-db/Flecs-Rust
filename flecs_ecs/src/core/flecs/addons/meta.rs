@@ -17,6 +17,7 @@ create_pre_registered_component!(F32, ECS_F32_T);
 create_pre_registered_component!(F64, ECS_F64_T);
 create_pre_registered_component!(String, ECS_STRING_T);
 create_pre_registered_component!(Entity, ECS_ENTITY_T);
+create_pre_registered_component!(Id, ECS_ID_T);
 create_pre_registered_component!(Quantity, ECS_QUANTITY);
 create_pre_registered_component!(EcsOpaque, ECS_OPAQUE);
 

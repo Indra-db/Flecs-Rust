@@ -37,7 +37,7 @@ mod tests {
 
     #[derive(Debug, Clone, Component)]
     struct Int {
-        value: i32,
+        _value: i32,
     }
 
     // //#[test]

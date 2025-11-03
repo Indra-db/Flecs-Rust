@@ -57,12 +57,14 @@ extern crate alloc;
 use alloc::boxed::Box;
 use flecs_ecs_derive::extern_abi;
 
+#[expect(dead_code, reason = "possibly used in the future")]
 #[derive(Default)]
 pub(crate) struct RegistersPanicHooks {
     pub(crate) ctor: bool,
     pub(crate) copy: bool,
 }
 
+#[expect(dead_code, reason = "possibly used in the future")]
 #[extern_abi]
 pub(crate) unsafe fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
     let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
@@ -426,160 +428,5 @@ fn check_type_info<T>(_type_info: *const sys::ecs_type_info_t) -> bool {
         unsafe { (*_type_info).size == core::mem::size_of::<T>() as i32 }
     } else {
         true
-    }
-}
-
-mod tests {
-    use core::ffi::c_void;
-
-    use crate::core::lifecycle_traits::move_dtor;
-
-    #[cfg(feature = "std")]
-    extern crate std;
-
-    extern crate alloc;
-    use alloc::{
-        string::{String, ToString},
-        vec,
-        vec::Vec,
-    };
-
-    #[derive(Default, Debug, Clone)]
-    struct MyType {
-        vec: Vec<i32>,
-        text: String,
-        value: i32,
-    }
-
-    //#[test]
-    fn test_move_dtor() {
-        let vec_check = vec![0, 1, 2, 3];
-        let str_check = "original";
-        let val_check = 42;
-
-        let mut moved_to = MyType {
-            vec: Vec::new(),
-            text: String::new(),
-            value: 0,
-        };
-        {
-            let mut original = MyType {
-                vec: vec![0, 1, 2, 3],
-                text: "original".to_string(),
-                value: 42,
-            };
-
-            move_dtor::<MyType>(
-                &mut moved_to as *mut _ as *mut c_void,
-                &mut original as *mut _ as *mut c_void,
-                1,
-                core::ptr::null(),
-            );
-
-            assert_eq!(original.vec, vec_check); // Original should have remained unchanged
-            assert_eq!(original.text, str_check);
-            assert_eq!(original.value, val_check);
-
-            assert_eq!(moved_to.vec, vec_check); // Moved_to should have original's values
-            assert_eq!(moved_to.text, str_check);
-            assert_eq!(moved_to.value, val_check);
-
-            // forget original as that's what happens in C
-            core::mem::forget(original);
-        }
-
-        // Moved to should have not been dropped despite original being out of scope
-
-        assert_eq!(moved_to.vec, vec_check); // Moved_to should have original's values
-        assert_eq!(moved_to.text, str_check);
-        assert_eq!(moved_to.value, val_check);
-    }
-
-    //#[test]
-    #[ignore]
-    fn test_modify_moved_to() {
-        // let mut original = MyType {
-        //     vec: vec![0, 1, 2, 3],
-        //     text: "original".to_string(),
-        //     value: 42,
-        // };
-        // let mut moved_to: MyType = Default::default();
-
-        // move_::<MyType>(
-        //     &mut moved_to as *mut _ as *mut c_void,
-        //     &mut original as *mut _ as *mut c_void,
-        //     1,
-        //     core::ptr::null(),
-        // );
-
-        // moved_to.vec.push(4);
-        // moved_to.text.push_str("_modified");
-        // moved_to.value += 10;
-
-        // assert_eq!(original.vec, Vec::<i32>::new()); // Original should be default
-        // assert_eq!(moved_to.vec, vec![0, 1, 2, 3, 4]); // Moved_to should have new value
-        // assert_eq!(original.text, String::new());
-        // assert_eq!(moved_to.text, "original_modified");
-        // assert_eq!(original.value, 0);
-        // assert_eq!(moved_to.value, 52);
-    }
-
-    //#[test]
-    fn test_generic_copy() {
-        // let original = MyType {
-        //     vec: vec![0, 1, 2, 3],
-        //     text: "original".to_string(),
-        //     value: 42,
-        // };
-        // let mut copied_to: MyType = Default::default();
-
-        // let original_vec_ptr = original.vec.as_ptr();
-
-        // generic_copy::<MyType>(
-        //     &mut copied_to as *mut _ as *mut c_void,
-        //     &original as *const _ as *const c_void,
-        //     1,
-        //     core::ptr::null(),
-        // );
-
-        // assert_eq!(original.vec, vec![0, 1, 2, 3]); // Original should remain unchanged
-        // assert_eq!(copied_to.vec, vec![0, 1, 2, 3]); // copied_to should have original's values
-        // assert_eq!(original.text, "original");
-        // assert_eq!(copied_to.text, "original");
-        // assert_eq!(original.value, 42);
-        // assert_eq!(copied_to.value, 42);
-
-        // // The pointers should be different
-        // assert_ne!(original.vec.as_ptr(), copied_to.vec.as_ptr());
-        // assert_eq!(original.vec.as_ptr(), original_vec_ptr);
-        // assert_ne!(original.text.as_ptr(), copied_to.text.as_ptr());
-    }
-
-    //#[test]
-    fn test_modify_copied_to() {
-        // let original = MyType {
-        //     vec: vec![0, 1, 2, 3],
-        //     text: "original".to_string(),
-        //     value: 42,
-        // };
-        // let mut copied_to: MyType = Default::default();
-
-        // generic_copy::<MyType>(
-        //     &mut copied_to as *mut _ as *mut c_void,
-        //     &original as *const _ as *const c_void,
-        //     1,
-        //     core::ptr::null(),
-        // );
-
-        // copied_to.vec.push(4);
-        // copied_to.text.push_str("_modified");
-        // copied_to.value += 10;
-
-        // assert_eq!(original.vec, vec![0, 1, 2, 3]); // Original should remain unchanged
-        // assert_eq!(copied_to.vec, vec![0, 1, 2, 3, 4]); // copied_to should have the new value
-        // assert_eq!(original.text, "original");
-        // assert_eq!(copied_to.text, "original_modified");
-        // assert_eq!(original.value, 42);
-        // assert_eq!(copied_to.value, 52);
     }
 }

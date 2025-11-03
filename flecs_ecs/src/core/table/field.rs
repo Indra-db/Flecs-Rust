@@ -216,6 +216,7 @@ impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
 impl<'a, T> Field<'a, T, false> {
     #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_lockless(
         slice_components: &'a [T],
         is_shared: bool,
@@ -241,6 +242,7 @@ impl<'a, T> Field<'a, T, false> {
     }
 
     #[inline(always)]
+    #[expect(dead_code, reason = "possibly used in the future")]
     #[cfg(not(feature = "flecs_safety_locks"))]
     pub(crate) fn new_lockless(slice_components: &'a [T], is_shared: bool) -> Self {
         Self {
@@ -523,6 +525,7 @@ impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
 impl<'a, T> FieldMut<'a, T, false> {
     #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_lockless(
         slice_components: &'a mut [T],
         is_shared: bool,
@@ -547,6 +550,7 @@ impl<'a, T> FieldMut<'a, T, false> {
         }
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new_lockless(slice_components: &'a mut [T], is_shared: bool) -> Self {

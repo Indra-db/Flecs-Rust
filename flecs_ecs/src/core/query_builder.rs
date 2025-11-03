@@ -499,6 +499,7 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
+    #[allow(dead_code)] // this may be used in the future
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
@@ -518,6 +519,7 @@ where
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
     /// * `term_index` - The index of the term to create the observer from
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
@@ -605,18 +607,19 @@ where
     }
 }
 
+//this doesn't work because world ptr gets misaligned
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
-#[cfg(not(target_family = "wasm"))]
-type GroupByFn = extern "C-unwind" fn(
-    *mut sys::ecs_world_t,
-    *mut sys::ecs_table_t,
-    sys::ecs_id_t,
-    *mut c_void,
-) -> u64;
+// #[cfg(not(target_family = "wasm"))]
+// type GroupByFn = extern "C-unwind" fn(
+//     *mut sys::ecs_world_t,
+//     *mut sys::ecs_table_t,
+//     sys::ecs_id_t,
+//     *mut c_void,
+// ) -> u64;
 
-#[cfg(target_family = "wasm")]
-type GroupByFn =
-    extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
+// #[cfg(target_family = "wasm")]
+// type GroupByFn =
+//     extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
 
 // Type definitions for OrderBy function pointers
 #[cfg(not(target_family = "wasm"))]

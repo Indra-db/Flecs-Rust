@@ -124,9 +124,10 @@ use alloc::{string::String, vec::Vec};
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug, Clone, Copy, Eq)]
+#[repr(C)]
 pub struct Table<'a> {
-    world: WorldRef<'a>,
     pub(crate) table: NonNull<sys::ecs_table_t>,
+    world: WorldRef<'a>,
 }
 
 impl PartialEq for Table<'_> {
@@ -147,6 +148,11 @@ impl<'a> Table<'a> {
             world: world.world(),
             table,
         }
+    }
+
+    /// Returns the raw table pointer
+    pub fn raw_table_ptr(&self) -> *mut sys::ecs_table_t {
+        self.table.as_ptr()
     }
 }
 

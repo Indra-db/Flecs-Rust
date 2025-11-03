@@ -29,7 +29,7 @@ fn main() {
     cur.pop();
 
     // Convert component to string
-    println!("{:?}", world.to_expr_id(position, ptr));
+    println!("{:?}", unsafe { world.to_expr_id(position, ptr) });
 
     // Output
     //  {x: 10, y: 20}

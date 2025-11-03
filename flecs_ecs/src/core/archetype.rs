@@ -27,7 +27,7 @@ use alloc::{string::String, vec::Vec};
 pub struct Archetype<'a> {
     world: WorldRef<'a>,
     type_vec: &'a [Id],
-    lock: Option<TableLock<'a>>,
+    _lock: Option<TableLock<'a>>,
 }
 
 impl Display for Archetype<'_> {
@@ -55,7 +55,7 @@ impl<'a> Archetype<'a> {
         Archetype {
             world: world.world(),
             type_vec,
-            lock: None,
+            _lock: None,
         }
     }
 
@@ -67,7 +67,7 @@ impl<'a> Archetype<'a> {
         Archetype {
             world: world.world(),
             type_vec,
-            lock: Some(lock),
+            _lock: Some(lock),
         }
     }
 

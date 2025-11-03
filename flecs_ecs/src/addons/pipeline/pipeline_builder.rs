@@ -48,6 +48,7 @@ where
         obj
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_from_desc(world: &'a World, desc: sys::ecs_pipeline_desc_t) -> Self {
         let mut obj = Self {
             desc,
@@ -65,6 +66,7 @@ where
         obj
     }
 
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: sys::ecs_pipeline_desc_t,

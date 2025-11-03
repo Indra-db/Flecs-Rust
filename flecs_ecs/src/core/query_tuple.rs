@@ -527,69 +527,6 @@ where
     }
 }
 
-pub struct Wrapper<T>(T);
-
-pub trait TupleForm<'a, T, U> {
-    type Tuple;
-    type TupleSlice;
-    const IS_OPTION: bool;
-
-    fn return_type_for_tuple(array: *mut U, index: usize) -> Self::Tuple;
-    fn return_type_for_tuple_with_ref(array: *mut U, is_ref: bool, index: usize) -> Self::Tuple;
-}
-
-impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
-    type Tuple = &'a mut T;
-    type TupleSlice = &'a mut [T];
-    const IS_OPTION: bool = false;
-
-    #[inline(always)]
-    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
-        unsafe { &mut (*array.add(index)) }
-    }
-
-    #[inline(always)]
-    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
-        unsafe {
-            if is_ref {
-                &mut (*array.add(0))
-            } else {
-                &mut (*array.add(index))
-            }
-        }
-    }
-}
-
-impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
-    type Tuple = Option<&'a mut T>;
-    type TupleSlice = Option<&'a mut [T]>;
-    const IS_OPTION: bool = true;
-
-    #[inline(always)]
-    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
-        unsafe {
-            if array.is_null() {
-                None
-            } else {
-                Some(&mut (*array.add(index)))
-            }
-        }
-    }
-
-    #[inline(always)]
-    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
-        unsafe {
-            if array.is_null() {
-                None
-            } else if is_ref {
-                Some(&mut (*array.add(0)))
-            } else {
-                Some(&mut (*array.add(index)))
-            }
-        }
-    }
-}
-
 macro_rules! tuple_count {
     () => { 0 };
     ($head:ident) => { 1 };

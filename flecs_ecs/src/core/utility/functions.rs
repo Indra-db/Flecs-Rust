@@ -80,6 +80,7 @@ pub fn ecs_dependson(entity: u64) -> u64 {
 ///
 /// True if the entity has the given pair, false otherwise.
 #[inline(always)]
+#[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) fn ecs_has_pair(
     world: *const sys::ecs_world_t,
     entity: impl Into<Entity>,
@@ -461,6 +462,7 @@ pub(crate) unsafe fn flecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, ro
 /// * `T`: The type to get the `OperKind` for.
 ///
 /// # See also
+#[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER
 }
@@ -490,6 +492,7 @@ pub fn ecs_bit_cond(flags: &mut u32, bit: u32, cond: bool) {
 /// # Note
 ///
 /// This function isn't being used anymore and might be removed in the future.
+#[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char {
     ecs_assert!(
         data.is_ascii(),
@@ -518,6 +521,7 @@ pub(crate) fn copy_and_allocate_c_char_from_rust_str(data: &str) -> *mut c_char 
 ///
 /// This function is for development purposes. It is not intended to be used in production code.
 #[cfg(feature = "std")]
+#[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) unsafe fn print_c_string(c_string: *const c_char) {
     unsafe {
         // Ensure the pointer is not null
@@ -639,6 +643,7 @@ mod tests {
     use super::get_type_name_without_scope_generic;
 
     struct MyStruct;
+    #[allow(dead_code)] //used in test
     enum MyEnum {
         A,
         B,
@@ -702,6 +707,7 @@ mod tests {
         pub mod inner {
             pub struct Deep;
             pub struct Wrap<T>(pub T);
+            #[allow(dead_code)] //used in test
             pub enum E {
                 A,
                 B,
