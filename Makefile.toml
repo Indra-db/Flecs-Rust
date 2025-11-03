@@ -142,5 +142,5 @@ workspace = false
 description = "Run `cargo hack check` for `flecs_ecs` across each feature with specified excludes and features, then build"
 dependencies = ["hack-each-feature-check"]
 command = "cargo"
-args = ["build"]
+args = ["build", "-p", "flecs_ecs", "--features", "flecs_regenerate_binding"]
 workspace = false
