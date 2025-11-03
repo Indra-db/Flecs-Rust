@@ -1843,7 +1843,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::target_for()`]
+    /// * [`EntityView::target_id_for()`]
     pub fn target_id_for(
         &self,
         relationship: impl IntoEntity,
