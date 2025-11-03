@@ -1017,15 +1017,20 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     ///
     /// * `compare`: The compare function used to sort the components.
     ///   The signature of the function must be `fn(Entity, &T, Entity, &T) -> i32`.
-    fn order_by<T>(&mut self, compare: impl OrderByFn<T::UnderlyingType>) -> &mut Self
+    fn order_by<T>(&mut self, compare: impl OrderByFn<T>) -> &mut Self
     where
         T: ComponentId,
         Self: QueryBuilderImpl<'a>,
     {
+        const {
+            assert!(
+                !(T::IS_REF || T::IS_MUT),
+                "order_by<T> requires T to not be a reference"
+            );
+        }
+
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
-            core::mem::transmute::<OrderByFnPtr<T::UnderlyingType>, OrderByFnPtrUnsafe>(
-                compare.to_extern_fn(),
-            )
+            core::mem::transmute::<OrderByFnPtr<T>, OrderByFnPtrUnsafe>(compare.to_extern_fn())
         });
 
         self.__internal_order_by_id(T::entity_id(self.world()), cmp);
