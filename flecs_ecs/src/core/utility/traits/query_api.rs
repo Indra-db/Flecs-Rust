@@ -1732,7 +1732,7 @@ where
 /// e.g. wildcard pairs, which need to be determined on a per table iteration
 /// set to 320 bytes, 5 full cache lines, hopefully logically distributed.
 #[derive(Default)]
-#[expect(dead_code, reason = "possibly used in the future")]
+#[allow(dead_code)] // possibly used in future
 struct ReadWriteCachedInstructions {
     // we expect more reads than writes, hence the 20 to 8 split
     read_ids: smallvec::SmallVec<[u64; 20]>,
