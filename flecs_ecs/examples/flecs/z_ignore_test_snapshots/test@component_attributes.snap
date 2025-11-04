@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"added Position to Bob\nset Position { x: 1.0, y: 2.0 } for Bob\nremoved Position { x: 1.0, y: 2.0 } from Bob\n"

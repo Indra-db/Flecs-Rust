@@ -160,8 +160,9 @@ macro_rules! meta_register_vector_func {
             |world: flecs_ecs::core::WorldRef| -> flecs_ecs::addons::meta::Opaque<Vec<$struct_type>, $struct_type> {
             let mut ts = flecs_ecs::addons::meta::Opaque::<Vec<$struct_type>, $struct_type>::new(world);
 
+            let id = id!(world, $struct_type);
             // Let reflection framework know what kind of struct_type this is
-            ts.as_type(world.vector::<$struct_type>());
+            ts.as_type(world.vector_id(id));
 
             // Forward core::vector value to (JSON/...) serializer
             ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {
@@ -201,8 +202,9 @@ macro_rules! meta_register_vector_func {
             |world: flecs_ecs::core::WorldRef| -> flecs_ecs::addons::meta::Opaque<Vec<$struct_type>, $struct_type> {
                 let mut ts = flecs_ecs::addons::meta::Opaque::<Vec<$struct_type>, $struct_type>::new(world);
 
+                let id = id!(world, $struct_type);
                 // Let reflection framework know what kind of struct_type this is
-                ts.as_type(world.vector::<$struct_type>());
+                ts.as_type(world.vector_id(id));
 
                 // Forward core::vector value to (JSON/...) serializer
                 ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {

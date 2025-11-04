@@ -21,6 +21,7 @@ struct VectorComponent {
     strings: Vec<String>,
 }
 
+#[test]
 fn main() {
     let world = World::new();
 

@@ -8,7 +8,7 @@ use flecs_ecs::prelude::*;
     name = "Position",
     meta,
     // component traits
-    traits(Sparse, (With, WorldPosition)),
+    traits((With, WorldPosition)),
     // adding components
     add((Eats, Apples)),
     // setting components
@@ -42,6 +42,7 @@ pub struct Likes {
 #[derive(Component)]
 pub struct Bob;
 
+#[test]
 fn main() {
     let world = World::new();
 
