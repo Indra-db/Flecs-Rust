@@ -336,7 +336,11 @@ impl<'a, T> Component<'a, T> {
             let on_add = &mut *on_add;
             let world = WorldRef::from_ptr(iter.world);
             let entity = EntityView::new_from(world, *iter.entities);
-            let component: *mut T = flecs_field::<T>(iter, 0);
+            let component = if (iter.ref_fields | iter.up_fields) == 0 {
+                flecs_field::<T>(iter, 0)
+            } else {
+                flecs_field_at::<T>(iter, 0, 0)
+            };
             on_add(entity, &mut *component);
         }
     }
@@ -354,7 +358,11 @@ impl<'a, T> Component<'a, T> {
         let on_set = unsafe { &mut *on_set };
         let world = unsafe { WorldRef::from_ptr(iter.world) };
         let entity = EntityView::new_from(world, unsafe { *iter.entities });
-        let component: *mut T = flecs_field::<T>(iter, 0);
+        let component = if (iter.ref_fields | iter.up_fields) == 0 {
+            flecs_field::<T>(iter, 0)
+        } else {
+            unsafe { flecs_field_at::<T>(iter, 0, 0) }
+        };
         on_set(entity, unsafe { &mut *component });
     }
 
@@ -371,8 +379,16 @@ impl<'a, T> Component<'a, T> {
         let on_replace = unsafe { &mut *on_replace };
         let world = unsafe { WorldRef::from_ptr(iter.world) };
         let entity = EntityView::new_from(world, unsafe { *iter.entities });
-        let prev: *mut T = flecs_field::<T>(iter, 0);
-        let next: *mut T = flecs_field::<T>(iter, 1);
+        let (prev, next) = if (iter.ref_fields | iter.up_fields) == 0 {
+            (flecs_field::<T>(iter, 0), flecs_field::<T>(iter, 1))
+        } else {
+            unsafe {
+                (
+                    flecs_field_at::<T>(iter, 0, 0),
+                    flecs_field_at::<T>(iter, 1, 0),
+                )
+            }
+        };
         on_replace(entity, unsafe { &mut *prev }, unsafe { &mut *next });
     }
 
@@ -390,7 +406,11 @@ impl<'a, T> Component<'a, T> {
             let on_remove = &mut *on_remove;
             let world = WorldRef::from_ptr(iter.world);
             let entity = EntityView::new_from(world, *iter.entities);
-            let component: *mut T = flecs_field::<T>(iter, 0);
+            let component = if (iter.ref_fields | iter.up_fields) == 0 {
+                flecs_field::<T>(iter, 0)
+            } else {
+                flecs_field_at::<T>(iter, 0, 0)
+            };
             on_remove(entity, &mut *component);
         }
     }
