@@ -618,6 +618,15 @@ where
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
     ) -> Self {
+        Self::try_new_from_desc(world, desc).expect(
+            "Failed to create query, this is due to the user creating an invalid query. Most likely by using `expr` with a wrong expression."
+        )
+    }
+
+    pub(crate) fn try_new_from_desc<'a>(
+        world: impl WorldProvider<'a>,
+        desc: &mut sys::ecs_query_desc_t,
+    ) -> Option<Self> {
         if desc.entity != 0 && desc.terms[0].id == 0 {
             let world_ptr = world.world_ptr();
             let query_poly = unsafe {
@@ -636,11 +645,11 @@ where
                     (*world_ctx).inc_query_ref_count();
                     let world_ctx = NonNull::new_unchecked(world_ctx);
 
-                    return Self {
+                    return Some(Self {
                         query,
                         world_ctx,
                         _phantom: PhantomData,
-                    };
+                    });
                 }
             }
         }
@@ -649,9 +658,7 @@ where
         let query_ptr = unsafe { sys::ecs_query_init(world_ptr, desc) };
 
         if query_ptr.is_null() {
-            panic!(
-                "Failed to create query, this is due to the user creating an invalid query. Most likely by using `expr` with a wrong expression."
-            );
+            return None;
         }
 
         unsafe {
@@ -661,11 +668,11 @@ where
 
             let query = NonNull::new_unchecked(query_ptr);
 
-            Self {
+            Some(Self {
                 query,
                 world_ctx,
                 _phantom: PhantomData,
-            }
+            })
         }
     }
 

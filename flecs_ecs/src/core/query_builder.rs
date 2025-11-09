@@ -607,6 +607,56 @@ where
     }
 }
 
+impl<'a, T: QueryTuple> QueryBuilder<'a, T> {
+    /// Attempts to build the query, returning `None` if the query is invalid.
+    ///
+    /// This is a fallible version of [`build()`](Builder::build) that returns `None`
+    /// instead of panicking when query creation fails. Query creation can fail for
+    /// several reasons, most commonly:
+    /// - Invalid query expression syntax (when using `expr()`)
+    /// - Malformed query terms
+    ///
+    /// # Returns
+    ///
+    /// * `Some(Query<T>)` - Successfully created query
+    /// * `None` - Query creation failed
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: f32, y: f32 }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Valid query
+    /// let valid_query = world.query::<&Position>()
+    ///     .try_build();
+    /// assert!(valid_query.is_some());
+    ///
+    /// // Invalid query expression
+    /// let invalid_query = world.query::<()>()
+    ///     .expr("invalid syntax!!!")
+    ///     .try_build();
+    /// assert!(invalid_query.is_none());
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`build()`](Builder::build) - Panicking version that fails fast on invalid queries
+    pub fn try_build(&mut self) -> Option<Query<T>> {
+        let world = self.world;
+        let query = Query::<T>::try_new_from_desc(world, &mut self.desc)?;
+        for s in self.term_builder.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
+        }
+        self.term_builder.str_ptrs_to_free.clear();
+        Some(query)
+    }
+}
+
 //this doesn't work because world ptr gets misaligned
 // Assuming some imports and definitions from your previous example, and adding the required ones for this example.
 // #[cfg(not(target_family = "wasm"))]
