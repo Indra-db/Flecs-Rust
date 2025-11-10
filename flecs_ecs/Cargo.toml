@@ -31,7 +31,7 @@ smallvec = "1.15.1"
 
 # used for backtraces upon hardware exceptions during test
 # only used when "test-with-crash-handler" feature enabled
-test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
+#test_crash_handler = { version = "0.1.0", path = "../test_crash_handler", optional = true }
 
 [dev-dependencies]
 criterion = "0.7.0"
@@ -175,7 +175,7 @@ flecs_journal = ["flecs_ecs_sys/flecs_journal","flecs_log"]
 flecs_nightly_tests = []
 
 # enable a backtrace on crashes during tests, used for e.g. debugging intermittent CI failures
-test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
+#test-with-crash-handler = ["dep:test_crash_handler", "test_crash_handler/crash-handler"]
 
 # most common base features
 # must be kept in sync with base features on flecs_ecs_sys cargo.toml
