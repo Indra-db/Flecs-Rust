@@ -149,4 +149,33 @@ impl<'a> CachedRef<'a, core::ffi::c_void> {
 
         callback(ref_comp.as_ptr())
     }
+
+    /// Try to mutably borrow component from ref.
+    pub fn try_borrow_mut(&mut self) -> Option<&mut T> {
+        NonNull::new(unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            ) as *mut T
+        })
+        .map(|mut t| unsafe { t.as_mut() })
+    }
+
+    /// Mutably borrow component from ref.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the the ref does not refer to a component.
+    pub fn borrow_mut(&mut self) -> &mut T {
+        NonNull::new(unsafe {
+            sys::ecs_ref_get_id(
+                self.world.world_ptr_mut(),
+                &mut self.component_ref,
+                self.component_ref.id,
+            ) as *mut T
+        })
+        .map(|mut t| unsafe { t.as_mut() })
+        .expect("Component not found, use try_get if you want to handle this case")
+    }
 }
