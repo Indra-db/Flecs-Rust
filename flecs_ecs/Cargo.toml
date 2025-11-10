@@ -192,7 +192,7 @@ flecs_base = [
 ]
 
 default = [
-    "flecs_regenerate_binding",
+    #"flecs_regenerate_binding",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",

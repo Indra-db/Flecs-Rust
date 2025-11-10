@@ -182,7 +182,8 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
-                let run = &mut *(iter.run_ctx as *mut Func);
+                let run_ptr = iter.run_ctx.cast::<Func>();
+                let run = &mut *run_ptr;
                 let world = WorldRef::from_ptr(iter.world);
                 internal_run::<P>(iter, run, world);
             }
@@ -191,7 +192,8 @@ pub mod private {
         #[extern_abi]
         fn free_callback<Func>(ptr: *mut c_void) {
             unsafe {
-                drop(Box::from_raw(ptr as *mut Func));
+                let ptr = ptr.cast::<Func>();
+                drop(Box::from_raw(ptr));
             };
         }
 
@@ -205,7 +207,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each = &mut *(iter.run_ctx as *mut Func);
+                let each_ptr = iter.run_ctx.cast::<Func>();
+                let each = &mut *each_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
@@ -249,7 +252,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each_entity = &mut *(iter.run_ctx as *mut Func);
+                let each_entity_ptr = iter.run_ctx.cast::<Func>();
+                let each_entity = &mut *each_entity_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
@@ -308,7 +312,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each_iter = &mut *(iter.run_ctx as *mut Func);
+                let each_iter_ptr = iter.run_ctx.cast::<Func>();
+                let each_iter = &mut *each_iter_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
