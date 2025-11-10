@@ -188,11 +188,11 @@ flecs_base = [
     "flecs_pipeline",
     "flecs_timer",
     "flecs_os_api_impl",
-    #"flecs_safety_locks",
+    "flecs_safety_locks",
 ]
 
 default = [
-    #"flecs_regenerate_binding",
+    "flecs_regenerate_binding",
     #"flecs_nightly_tests",
     "flecs_base",
     "flecs_script",
