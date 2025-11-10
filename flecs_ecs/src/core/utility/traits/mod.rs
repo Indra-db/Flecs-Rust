@@ -546,10 +546,20 @@ pub(crate) fn internal_each_generic<
     ecs_assert!(
         !(E::CONTAINS_ENTITY && iter.entities.is_null()),
         FlecsErrorCode::InvalidOperation,
-        "query/system does not return entities ($this variable is not populated).\nSystem: {:?}",
+        "query/system does not return entities ($this variable is not populated).\nQuery/System: {:?}",
         {
-            let e = _world.entity_from_id(iter.system);
-            (e.id(), e.get_name())
+            if iter.system != 0 {
+                let e = _world.entity_from_id(iter.system);
+                (e.id(), e.get_name())
+            } else {
+                let e = unsafe { (*iter.query).entity };
+                if e == 0 {
+                    (crate::core::Entity(0), Some("<unnamed>".to_string()))
+                } else {
+                    let e = _world.entity_from_id(e);
+                    (e.id(), e.get_name())
+                }
+            }
         }
     );
 
