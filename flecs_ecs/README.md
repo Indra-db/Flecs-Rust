@@ -9,7 +9,7 @@
 ## What is the Flecs Rust API?
 The Rust API is a wrapper around the [Flecs](https://github.com/SanderMertens/flecs) C API. The API is designed to offer Rust developers an intuitive and streamlined interface to harness the full potential of Flecs.
 
-It's based on V4 flecs release, blogpost can be found [here](https://ajmmertens.medium.com/flecs-v4-0-is-out-58e99e331888).
+It's based on V4.1.2 flecs release, blogpost can be found [here](https://ajmmertens.medium.com/flecs-v4-0-is-out-58e99e331888).
 
 ## What is Flecs ECS?
 
@@ -36,13 +36,13 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-flecs_ecs = "0.1.1" 
+flecs_ecs = "0.2.0" 
 
 ```
 
 and start hacking away!
 
-Make sure to check out the Rust docs (improvements coming soon), [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Docs.html), and the 70+ examples in the [examples](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/) directory.
+Make sure to check out the Rust docs, [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Docs.html), and the 70+ examples in the [examples](https://github.com/Indra-db/Flecs-Rust/blob/main/flecs_ecs/examples/flecs/) directory.
 
 For an example integration of Flecs with the following crates:
 
@@ -55,33 +55,44 @@ check out the demo [here](https://github.com/james-j-obrien/flecs-wgpu-demo)
 
 <img src="https://github.com/james-j-obrien/flecs-wgpu-demo/assets/30707409/b3b8f2fc-0758-433e-b82b-e3458f61f244" alt="demo" width="300"/>
 
-## Status: Alpha release
+## Status: Stable
 
-The project is in the alpha release stage where the **core functionality** and some **addons** of Flecs have been **ported** and are available to use today. While there has been a lot of thought put into the current API, it's still in an experimental phase. The project aims to hit stable when all the soundness/safety issues are resolved and the API has been finalized with all of Flecs functionality. We encourage you to explore, test, and provide feedback, but please be aware of potential bugs and breaking changes as we continue to refine the API and add new features.
+The project is stable and used in production. 1.0 release is planned next quarter.
 
 This library was made publicly available on the release date of Flecs V4 release.
 
 #### Safety
 
-One important safety factor that has yet to be addressed is having multiple aliases to the same component. This is a known issue and is being worked on. It will be addressed through a table column lock mechanism.
+This crate enables additional runtime checks by default to preserve Rust's
+borrowing and concurrency guarantees when calling into the underlying C
+Flecs library. Those checks are provided by the `flecs_safety_locks` feature
+(enabled by default) and help prevent unsafe aliasing and concurrent mutable
+access across Flecs callbacks, systems and queries.
+
+These safety checks imposes a runtime cost. If you fully understand the
+characteristics of your application and need maximum performance,
+you may disable `flecs_safety_locks` (e.g. for a Release). Disabling it will
+improve throughput but removes the runtime protections and may lead to
+undefined behavior if the API is used in an unsafe way. This might or might not matter
+depending on the application.
 
 #### Performance
 
-From initial benchmarks and tests, the Rust API is on par with C-level performance, except for where overhead was introduced to make the API safe to use in Rust land (e.g. `get` performance). However, performance improvements are planned to be made in the future.
+From initial benchmarks and tests, the Rust API is on par with C-level performance, except for where overhead was introduced to make the API safe to use in Rust land (e.g. `get` performance). However, more performance improvements are planned to be made in the future.
 
 ### The progress
 
 For detailed feature progress, please visit the [issues](https://github.com/Indra-db/Flecs-Rust/issues) page.
 
 - Core library ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
-- Addons ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) (Meta + Json + Script are a WIP, expected to be released by end of August, experimental phase sooner)
-- Documentation ![](https://geps.dev/progress/65?dangerColor=800000&warningColor=ff9900&successColor=006600) Most functions are documented and contain a C++ alias. Flecs documentation site contains Rust code. The remaining % is for adding mostly doc test examples and refining the Rust docs page.
-- Test suite ![](https://geps.dev/progress/70?dangerColor=800000&warningColor=ff9900&successColor=006600) (entity, query, observers systems test cases are done)
-- Examples ![](https://geps.dev/progress/75?dangerColor=800000&warningColor=ff9900&successColor=006600) For the current feature set, all examples are done.
+- Addons ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) 
+- Documentation ![](https://geps.dev/progress/90?dangerColor=800000&warningColor=ff9900&successColor=006600)
+- Test suite ![](https://geps.dev/progress/80?dangerColor=800000&warningColor=ff9900&successColor=006600)
+- Examples ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600)
 
 ## The Aim
 
-The plan is to match feature parity of the C++ API, starting with the core library (done!) while also being fully documented and tested and addressing any safety issues that may arise. The project aims to provide a safe, idiomatic, and efficient Rust API for Flecs, while also being a good citizen in the Rust ecosystem.
+The plan is to match feature parity of the C++ API while also being fully documented and tested and addressing any safety issues that may arise. The project aims to provide a safe, idiomatic, and efficient Rust API for Flecs, while also being a good citizen in the Rust ecosystem.
 
 ## Contributions
 
@@ -155,9 +166,7 @@ fn main() {
 
 ### What's next?
 
-* Meta, Json, Script addons. This will allow for reflection, serialization, and scripting capabilities for creating entities and components. See the [Flecs documentation](https://github.com/SanderMertens/flecs/blob/v4/docs/FlecsScript.md) for more information.
-* Wasm unknown unknown. The project is currently in the process of supporting wasm32-unknown-unknown target. This is expected to land in some shape or form by the end of August.
-* API refinements, resolving safety issues & documentation.
+* Wasm unknown unknown. The project is currently in the process of supporting wasm32-unknown-unknown target. This is expected to land by the end of 2025 in December.
 * C# scripting support. Integration with [Flecs.Net](https://github.com/BeanCheeseBurrito/Flecs.NET) to work seamlessly with Flecs Rust API.
 * More demos and examples.
 
@@ -223,17 +232,8 @@ Some of the features that make Flecs stand out are:
 * a language agnostic core
 * etc 
 
-## Projects using Flecs Rust API
-
-This list contains projects that are not under NDA. 
-
-If you want to showcase your project, feel free to open a PR to add it to the list.
-
-* [Hyperion]: It switched from using Envio ECS to Flecs, with great performance improvements. It's quest is to break the world record minecraft event of 10000 players.
-    <img src="https://github.com/Indra-db/Flecs-Rust/blob/main/assets/hyperion.png" alt="hyperion" width="600"/>
-
 ## Acknowledgements
 
-A big shoutout to [Sander Mertens](https://github.com/SanderMertens) for creating such a wonderful library and the pre-alpha testers who contributed to Flecs Rust API, especially [James](https://github.com/james-j-obrien), [Bruce](https://github.com/waywardmonkeys), and [Andrew](https://github.com/andrewgazelka).
+A big shoutout to [Sander Mertens](https://github.com/SanderMertens) for creating such a wonderful library and the pre-alpha testers who contributed to Flecs Rust API, especially [James](https://github.com/james-j-obrien), [Yoge](https://github.com/iiYese) and [Andrew](https://github.com/andrewgazelka).
 
 
