@@ -19,7 +19,7 @@ libc.workspace = true
 
 [build-dependencies]
 bindgen = "0.72.1"
-cc = "1.2.43"
+cc = "1.2.45"
 regex = "1.12.2"
 
 [features]
