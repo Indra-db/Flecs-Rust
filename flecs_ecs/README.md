@@ -36,7 +36,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-flecs_ecs = "0.2.0" 
+flecs_ecs = "0.2.1" 
 
 ```
 

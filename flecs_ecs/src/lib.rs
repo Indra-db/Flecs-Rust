@@ -84,10 +84,10 @@ pub mod prelude;
 mod tests {
     mod crash_handler {
         /// Use the crash handler for unit tests
-        //#[cfg(feature = "test-with-crash-handler")]
+        #[cfg(feature = "test-with-crash-handler")]
         #[ctor::ctor]
         fn register_test_crash_handler() {
-            //test_crash_handler::register();
+            test_crash_handler::register();
         }
     }
 }

@@ -20,7 +20,7 @@ quote = "1.0.42"
 proc-macro2 = "1.0.103"
 
 [dev-dependencies]
-flecs_ecs = { version = "0.2.0", path = "../flecs_ecs" }
+flecs_ecs = { version = "0.2.1", path = "../flecs_ecs" }
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "-Zunstable-options", "--generate-link-to-definition"]
