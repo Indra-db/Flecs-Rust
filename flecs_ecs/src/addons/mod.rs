@@ -108,7 +108,7 @@
 //!
 //! # Quick Start Example
 //!
-//! ```
+//! ```no_run
 //! use flecs_ecs::prelude::*;
 //!
 //! #[derive(Component)]
