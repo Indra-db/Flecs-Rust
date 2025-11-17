@@ -42,9 +42,9 @@ alloc_instead_of_core = "warn"
 rust.unused_lifetimes = "warn"
 
 [workspace.dependencies]
-flecs_ecs = { version = "0.2.1", path = "flecs_ecs" }
+flecs_ecs = { version = "0.2.2", path = "flecs_ecs" }
 flecs_ecs_derive = { version = "0.2.0", path = "flecs_ecs_derive" }
-flecs_ecs_sys = { version = "0.2.0", path = "flecs_ecs_sys", default-features = false, features = ["flecs_meta_c"] }
+flecs_ecs_sys = { version = "0.2.1", path = "flecs_ecs_sys", default-features = false, features = ["flecs_meta_c"] }
 libc = "0.2.175"
 
 [profile.release]
