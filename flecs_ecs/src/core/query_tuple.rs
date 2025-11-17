@@ -479,7 +479,6 @@ where
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
 
     ) {
-        ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { table_records.get_unchecked_mut(0) };
@@ -684,7 +683,6 @@ macro_rules! impl_iterable {
                 #[cfg(feature = "flecs_safety_locks")]
                 let mut index_optional_mutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE + Self::COUNT_OPTIONAL_IMMUTABLE };
                 $(
-                    ecs_assert!(unsafe { *it.sources.add(index ) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index] =
                         flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                     #[cfg(feature = "flecs_safety_locks")]

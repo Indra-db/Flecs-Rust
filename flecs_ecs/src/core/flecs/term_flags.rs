@@ -12,7 +12,6 @@ create_pre_registered_component!(IsCacheable, IS_CACHEABLE);
 create_pre_registered_component!(IsScope, IS_SCOPE);
 create_pre_registered_component!(IsMember, IS_MEMBER);
 create_pre_registered_component!(IsToggle, IS_TOGGLE);
-create_pre_registered_component!(KeepAlive, KEEP_ALIVE);
 create_pre_registered_component!(IsSparse, IS_SPARSE);
 create_pre_registered_component!(IsOr, IS_OR);
 create_pre_registered_component!(IsDontFragment, IS_DONT_FRAGMENT);

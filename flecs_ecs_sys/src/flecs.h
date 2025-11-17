@@ -431,14 +431,14 @@ extern "C" {
 #define EcsIdWith                      (1u << 12)
 #define EcsIdCanToggle                 (1u << 13)
 #define EcsIdIsTransitive              (1u << 14)
-#define EcsIdInheritable             (1u << 15)
+#define EcsIdInheritable               (1u << 15)
 
 #define EcsIdHasOnAdd                  (1u << 16) /* Same values as table flags */
 #define EcsIdHasOnRemove               (1u << 17) 
 #define EcsIdHasOnSet                  (1u << 18)
 #define EcsIdHasOnTableCreate          (1u << 19)
 #define EcsIdHasOnTableDelete          (1u << 20)
-#define EcsIdSparse                  (1u << 21)
+#define EcsIdSparse                    (1u << 21)
 #define EcsIdDontFragment              (1u << 22)
 #define EcsIdMatchDontFragment         (1u << 23) /* For (*, T) wildcards */
 #define EcsIdOrderedChildren           (1u << 24)
@@ -532,6 +532,7 @@ extern "C" {
 #define EcsQueryCacheYieldEmptyTables (1u << 27u) /* Does query cache empty tables */
 #define EcsQueryTrivialCache          (1u << 28u) /* Trivial cache (no wildcards, traversal, order_by, group_by, change detection) */
 #define EcsQueryNested                (1u << 29u) /* Query created by a query (for observer, cache) */
+#define EcsQueryValid                 (1u << 30u)
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Term flags (used by ecs_term_t::flags_)
@@ -547,7 +548,6 @@ extern "C" {
 #define EcsTermIsScope                (1u << 8)
 #define EcsTermIsMember               (1u << 9)
 #define EcsTermIsToggle               (1u << 10)
-#define EcsTermKeepAlive              (1u << 11)
 #define EcsTermIsSparse               (1u << 12)
 #define EcsTermIsOr                   (1u << 13)
 #define EcsTermDontFragment           (1u << 14)
@@ -2038,10 +2038,6 @@ typedef struct ecs_map_iter_t {
     ecs_map_data_t *res;
 } ecs_map_iter_t;
 
-typedef struct ecs_map_params_t {
-    struct ecs_allocator_t *allocator;
-} ecs_map_params_t;
-
 /* Function/macro postfixes meaning:
  *   _ptr:    access ecs_map_val_t as void*
  *   _ref:    access ecs_map_val_t* as T**
@@ -2050,22 +2046,11 @@ typedef struct ecs_map_params_t {
  *   _free:   if _ptr is not NULL, free
  */
 
-FLECS_API
-void ecs_map_params_init(
-    ecs_map_params_t *params,
-    struct ecs_allocator_t *allocator);
-
 /** Initialize new map. */
 FLECS_API
 void ecs_map_init(
     ecs_map_t *map,
     struct ecs_allocator_t *allocator);
-
-/** Initialize new map. */
-FLECS_API
-void ecs_map_init_w_params(
-    ecs_map_t *map,
-    ecs_map_params_t *params);
 
 /** Initialize new map if uninitialized, leave as is otherwise */
 FLECS_API
@@ -2073,10 +2058,10 @@ void ecs_map_init_if(
     ecs_map_t *map,
     struct ecs_allocator_t *allocator);
 
+/** Reclaim map memory.  */
 FLECS_API
-void ecs_map_init_w_params_if(
-    ecs_map_t *result,
-    ecs_map_params_t *params);
+void ecs_map_reclaim(
+    ecs_map_t *map);
 
 /** Deinitialize map. */
 FLECS_API
@@ -4441,7 +4426,6 @@ extern "C" {
 
 /** Record for entity index. */
 struct ecs_record_t {
-    ecs_component_record_t *cr;               /**< component record to (*, entity) for target entities */
     ecs_table_t *table;                        /**< Identifies a type (and table) in world */
     uint32_t row;                              /**< Table row of the entity */
     int32_t dense;                             /**< Index in dense array of entity index */    
@@ -4730,6 +4714,16 @@ FLECS_ALWAYS_INLINE ecs_component_record_t* flecs_components_get(
 FLECS_API
 ecs_id_t flecs_component_get_id(
     const ecs_component_record_t *cr);
+
+/** Get component flags for component.
+ * 
+ * @param id The component id.
+ * @return The flags for the component id.
+ */
+FLECS_API
+ecs_flags32_t flecs_component_get_flags(
+    const ecs_world_t *world,
+    ecs_id_t id);
 
 /** Find table record for component record.
  * This operation returns the table record for the table/component record if it
@@ -9913,6 +9907,23 @@ bool ecs_table_has_id(
     const ecs_table_t *table,
     ecs_id_t component);
 
+/** Get relationship target for table.
+ * 
+ * @param world The world.
+ * @param table The table.
+ * @param relationship The relationship for which to obtain the target.
+ * @param index The index, in case the table has multiple instances of the relationship.
+ * @return The requested relationship target.
+ * 
+ * @see ecs_get_target()
+ */
+FLECS_API
+ecs_entity_t ecs_table_get_target(
+    const ecs_world_t *world,
+    const ecs_table_t *table,
+    ecs_entity_t relationship,
+    int32_t index);
+
 /** Return depth for table in tree for relationship rel.
  * Depth is determined by counting the number of targets encountered while
  * traversing up the relationship tree for rel. Only acyclic relationships are
@@ -13933,6 +13944,7 @@ typedef struct {
     ecs_size_t bytes_pipelines;         /** Memory used by pipelines (excluding pipeline queries). */
     ecs_size_t bytes_table_lookup;      /** Bytes used for table lookup data structures. */
     ecs_size_t bytes_component_record_lookup; /** Bytes used for component record lookup data structures. */
+    ecs_size_t bytes_locked_components; /** Locked component map. */
     ecs_size_t bytes_type_info;         /** Bytes used for storing type information. */
     ecs_size_t bytes_commands;          /** Command queue */
     ecs_size_t bytes_rematch_monitor;   /** Memory used by monitor used to track rematches */
@@ -28877,7 +28889,6 @@ private:
         fields_[index].ptr = ecs_field_w_size(iter, sizeof(A), 
             static_cast<int8_t>(index));
         fields_[index].is_ref = false;
-        ecs_assert(iter->sources[index] == 0, ECS_INTERNAL_ERROR, NULL);
         populate_self(iter, index + 1, comps ...);
     }
 

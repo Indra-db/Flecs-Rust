@@ -244,6 +244,7 @@ pub const EcsQueryHasTableThisVar: u32 = 67108864;
 pub const EcsQueryCacheYieldEmptyTables: u32 = 134217728;
 pub const EcsQueryTrivialCache: u32 = 268435456;
 pub const EcsQueryNested: u32 = 536870912;
+pub const EcsQueryValid: u32 = 1073741824;
 pub const EcsTermMatchAny: u32 = 1;
 pub const EcsTermMatchAnySrc: u32 = 2;
 pub const EcsTermTransitive: u32 = 4;
@@ -254,7 +255,6 @@ pub const EcsTermIsCacheable: u32 = 128;
 pub const EcsTermIsScope: u32 = 256;
 pub const EcsTermIsMember: u32 = 512;
 pub const EcsTermIsToggle: u32 = 1024;
-pub const EcsTermKeepAlive: u32 = 2048;
 pub const EcsTermIsSparse: u32 = 4096;
 pub const EcsTermIsOr: u32 = 8192;
 pub const EcsTermDontFragment: u32 = 16384;
@@ -1027,29 +1027,17 @@ pub struct ecs_map_iter_t {
     pub entry: *mut ecs_bucket_entry_t,
     pub res: *mut ecs_map_data_t,
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ecs_map_params_t {
-    pub allocator: *mut ecs_allocator_t,
-}
-unsafe extern "C-unwind" {
-    #[doc = "Function/macro postfixes meaning:\n   _ptr:    access ecs_map_val_t as void*\n   _ref:    access ecs_map_val_t* as T**\n   _deref:  dereferences a _ref\n   _alloc:  if _ptr is NULL, alloc\n   _free:   if _ptr is not NULL, free"]
-    pub fn ecs_map_params_init(params: *mut ecs_map_params_t, allocator: *mut ecs_allocator_t);
-}
 unsafe extern "C-unwind" {
     #[doc = "Initialize new map."]
     pub fn ecs_map_init(map: *mut ecs_map_t, allocator: *mut ecs_allocator_t);
-}
-unsafe extern "C-unwind" {
-    #[doc = "Initialize new map."]
-    pub fn ecs_map_init_w_params(map: *mut ecs_map_t, params: *mut ecs_map_params_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "Initialize new map if uninitialized, leave as is otherwise"]
     pub fn ecs_map_init_if(map: *mut ecs_map_t, allocator: *mut ecs_allocator_t);
 }
 unsafe extern "C-unwind" {
-    pub fn ecs_map_init_w_params_if(result: *mut ecs_map_t, params: *mut ecs_map_params_t);
+    #[doc = "Reclaim map memory."]
+    pub fn ecs_map_reclaim(map: *mut ecs_map_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "Deinitialize map."]
@@ -2427,8 +2415,6 @@ unsafe extern "C-unwind" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ecs_record_t {
-    #[doc = "< component record to (*, entity) for target entities"]
-    pub cr: *mut ecs_component_record_t,
     #[doc = "< Identifies a type (and table) in world"]
     pub table: *mut ecs_table_t,
     #[doc = "< Table row of the entity"]
@@ -2571,6 +2557,10 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Get component id from component record.\n\n @param cr The component record.\n @return The component id."]
     pub fn flecs_component_get_id(cr: *const ecs_component_record_t) -> ecs_id_t;
+}
+unsafe extern "C-unwind" {
+    #[doc = "Get component flags for component.\n\n @param id The component id.\n @return The flags for the component id."]
+    pub fn flecs_component_get_flags(world: *const ecs_world_t, id: ecs_id_t) -> ecs_flags32_t;
 }
 unsafe extern "C-unwind" {
     #[doc = "Find table record for component record.\n This operation returns the table record for the table/component record if it\n exists. If the record exists, it means the table has the component.\n\n @param cr The component record.\n @param table The table.\n @return The table record if the table has the component, or NULL if not."]
@@ -4659,6 +4649,15 @@ unsafe extern "C-unwind" {
     ) -> bool;
 }
 unsafe extern "C-unwind" {
+    #[doc = "Get relationship target for table.\n\n @param world The world.\n @param table The table.\n @param relationship The relationship for which to obtain the target.\n @param index The index, in case the table has multiple instances of the relationship.\n @return The requested relationship target.\n\n @see ecs_get_target()"]
+    pub fn ecs_table_get_target(
+        world: *const ecs_world_t,
+        table: *const ecs_table_t,
+        relationship: ecs_entity_t,
+        index: i32,
+    ) -> ecs_entity_t;
+}
+unsafe extern "C-unwind" {
     #[doc = "Return depth for table in tree for relationship rel.\n Depth is determined by counting the number of targets encountered while\n traversing up the relationship tree for rel. Only acyclic relationships are\n supported.\n\n @param world The world.\n @param table The table.\n @param rel The relationship.\n @return The depth of the table in the tree."]
     pub fn ecs_table_get_depth(
         world: *const ecs_world_t,
@@ -6166,6 +6165,8 @@ pub struct ecs_misc_memory_t {
     #[doc = "Bytes used for table lookup data structures."]
     pub bytes_component_record_lookup: ecs_size_t,
     #[doc = "Bytes used for component record lookup data structures."]
+    pub bytes_locked_components: ecs_size_t,
+    #[doc = "Locked component map."]
     pub bytes_type_info: ecs_size_t,
     #[doc = "Bytes used for storing type information."]
     pub bytes_commands: ecs_size_t,

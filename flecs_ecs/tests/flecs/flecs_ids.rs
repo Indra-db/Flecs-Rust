@@ -105,11 +105,6 @@ fn test_c_vs_rust_ids() {
             "EcsTermIsToggle (C) != IsToggle (Rust)"
         );
         assert_eq!(
-            flecs::term_flags::KeepAlive,
-            sys::EcsTermKeepAlive as u64,
-            "EcsTermKeepAlive (C) != KeepAlive (Rust)"
-        );
-        assert_eq!(
             flecs::term_flags::IsSparse,
             sys::EcsTermIsSparse as u64,
             "EcsTermIsSparse (C) != IsSparse (Rust)"
