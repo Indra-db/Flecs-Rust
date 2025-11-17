@@ -1,6 +1,6 @@
 [package]
 name = "flecs_ecs_sys"
-version = "0.2.0"
+version = "0.2.1"
 edition.workspace = true
 license = "MIT"
 repository.workspace = true
@@ -136,4 +136,5 @@ flecs_base = [
 # Default features
 default = [
     "flecs_meta_c",
+    "regenerate_binding",
 ]
