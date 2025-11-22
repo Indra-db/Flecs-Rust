@@ -439,6 +439,7 @@ pub(crate) const ECS_MONITOR: u64 = FLECS_HI_COMPONENT_ID + 66;
 pub(crate) const ECS_EMPTY: u64 = FLECS_HI_COMPONENT_ID + 67;
 pub(crate) const ECS_PIPELINE: u64 = FLECS_HI_COMPONENT_ID + 68;
 pub(crate) const ECS_ON_START: u64 = FLECS_HI_COMPONENT_ID + 69;
+#[expect(dead_code, reason = "not meant to be public API")]
 pub(crate) const ECS_PRE_FRAME: u64 = FLECS_HI_COMPONENT_ID + 70;
 pub(crate) const ECS_ON_LOAD: u64 = FLECS_HI_COMPONENT_ID + 71;
 pub(crate) const ECS_POST_LOAD: u64 = FLECS_HI_COMPONENT_ID + 72;
@@ -448,6 +449,7 @@ pub(crate) const ECS_ON_VALIDATE: u64 = FLECS_HI_COMPONENT_ID + 75;
 pub(crate) const ECS_POST_UPDATE: u64 = FLECS_HI_COMPONENT_ID + 76;
 pub(crate) const ECS_PRE_STORE: u64 = FLECS_HI_COMPONENT_ID + 77;
 pub(crate) const ECS_ON_STORE: u64 = FLECS_HI_COMPONENT_ID + 78;
+#[expect(dead_code, reason = "not meant to be public API")]
 pub(crate) const ECS_POST_FRAME: u64 = FLECS_HI_COMPONENT_ID + 79;
 pub(crate) const ECS_PHASE: u64 = FLECS_HI_COMPONENT_ID + 80;
 
@@ -482,44 +484,47 @@ pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 101;
 pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 102;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 103;
+#[expect(dead_code, reason = "not meant to be public API")]
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 104;
+pub(crate) const ECS_CONSTANTS: u64 = FLECS_HI_COMPONENT_ID + 104;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 105;
+pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 105;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 106;
+pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 106;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 107;
+pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 107;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 108;
+pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 108;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 109;
+pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 109;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 110;
+pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 110;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 111;
+pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 111;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 112;
+pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 112;
+#[cfg(feature = "flecs_meta")]
+pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 113;
 
-pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 113;
+pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 114;
 
 // Doc module components
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 114;
+pub(crate) const ECS_DOC_DESCRIPTION: u64 = FLECS_HI_COMPONENT_ID + 115;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 115;
+pub(crate) const ECS_DOC_BRIEF: u64 = FLECS_HI_COMPONENT_ID + 116;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 116;
+pub(crate) const ECS_DOC_DETAIL: u64 = FLECS_HI_COMPONENT_ID + 117;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 117;
+pub(crate) const ECS_DOC_LINK: u64 = FLECS_HI_COMPONENT_ID + 118;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 118;
+pub(crate) const ECS_DOC_COLOR: u64 = FLECS_HI_COMPONENT_ID + 119;
 #[cfg(feature = "flecs_doc")]
-pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 119;
+pub(crate) const ECS_DOC_UUID: u64 = FLECS_HI_COMPONENT_ID + 120;
 
 // REST module components
 #[cfg(feature = "flecs_rest")]
-pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 120;
+pub(crate) const ECS_REST: u64 = FLECS_HI_COMPONENT_ID + 121;
 
 macro_rules! impl_component_traits_binding_type_w_id {
     ($name:ident, $id:ident) => {

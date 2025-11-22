@@ -21,7 +21,7 @@ fn main() {
     // set value of position using reflection API
     let ptr = e.get_untyped_mut(position);
 
-    let mut cur = world.cursor_id(position, ptr);
+    let mut cur = unsafe { world.cursor_id(position, ptr) };
     cur.push();
     cur.set_float(10.0);
     cur.next();
@@ -29,7 +29,7 @@ fn main() {
     cur.pop();
 
     // Convert component to string
-    println!("{:?}", world.to_expr_id(position, ptr));
+    println!("{:?}", unsafe { world.to_expr_id(position, ptr) });
 
     // Output
     //  {x: 10, y: 20}

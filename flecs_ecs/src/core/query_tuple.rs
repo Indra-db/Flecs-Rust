@@ -368,7 +368,7 @@ pub trait QueryTuple: Sized {
     ) -> Self::TupleType<'a>;
 
     fn create_tuple_with_row<'a>(
-        iter: *const sys::ecs_iter_t,
+        iter: &sys::ecs_iter_t,
         array_components: &'a mut [*mut u8],
         is_ref_array_components: &[bool],
         is_row_array_components: &[bool],
@@ -415,7 +415,10 @@ where
 
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(
+        clippy::not_unsafe_ptr_arg_deref,
+        reason = "x"
+    )]
     #[inline(always)]
     fn register_ids_descriptor_at(
         world: *mut sys::ecs_world_t,
@@ -476,7 +479,6 @@ where
         #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
 
     ) {
-        ecs_assert!(unsafe { *it.sources.add(0) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { table_records.get_unchecked_mut(0) };
@@ -501,10 +503,9 @@ where
         A::create_tuple_with_ref_data(array_components[0], is_ref_array_components[0], index)
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn create_tuple_with_row<'a>(
-            iter: *const sys::ecs_iter_t,
+            iter: &sys::ecs_iter_t,
             array_components: &'a mut [*mut u8],
             is_ref_array_components: &[bool],
             is_row_array_components: &[bool],
@@ -522,73 +523,6 @@ where
             is_ref_array_components[0],
             index_row_entity,
         )
-    }
-}
-
-pub struct Wrapper<T>(T);
-
-pub trait TupleForm<'a, T, U> {
-    type Tuple;
-    type TupleSlice;
-    const IS_OPTION: bool;
-
-    fn return_type_for_tuple(array: *mut U, index: usize) -> Self::Tuple;
-    fn return_type_for_tuple_with_ref(array: *mut U, is_ref: bool, index: usize) -> Self::Tuple;
-}
-
-impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
-    type Tuple = &'a mut T;
-    type TupleSlice = &'a mut [T];
-    const IS_OPTION: bool = false;
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    #[inline(always)]
-    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
-        unsafe { &mut (*array.add(index)) }
-    }
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    #[inline(always)]
-    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
-        unsafe {
-            if is_ref {
-                &mut (*array.add(0))
-            } else {
-                &mut (*array.add(index))
-            }
-        }
-    }
-}
-
-impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
-    type Tuple = Option<&'a mut T>;
-    type TupleSlice = Option<&'a mut [T]>;
-    const IS_OPTION: bool = true;
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    #[inline(always)]
-    fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
-        unsafe {
-            if array.is_null() {
-                None
-            } else {
-                Some(&mut (*array.add(index)))
-            }
-        }
-    }
-
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    #[inline(always)]
-    fn return_type_for_tuple_with_ref(array: *mut T, is_ref: bool, index: usize) -> Self::Tuple {
-        unsafe {
-            if array.is_null() {
-                None
-            } else if is_ref {
-                Some(&mut (*array.add(0)))
-            } else {
-                Some(&mut (*array.add(index)))
-            }
-        }
     }
 }
 
@@ -749,7 +683,6 @@ macro_rules! impl_iterable {
                 #[cfg(feature = "flecs_safety_locks")]
                 let mut index_optional_mutable : usize = const { Self::COUNT_IMMUTABLE + Self::COUNT_MUTABLE + Self::COUNT_OPTIONAL_IMMUTABLE };
                 $(
-                    ecs_assert!(unsafe { *it.sources.add(index ) == 0 }, FlecsErrorCode::InternalError, "unexpected source");
                     components[index] =
                         flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
                     #[cfg(feature = "flecs_safety_locks")]
@@ -795,10 +728,9 @@ macro_rules! impl_iterable {
             }
 
             #[allow(unused, clippy::unused_unit)]
-            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             #[inline(always)]
             fn create_tuple_with_row<'a>(
-                iter: *const sys::ecs_iter_t,
+                iter: &sys::ecs_iter_t,
                 array_components: &'a mut [*mut u8],
                 is_ref_array_components: &[bool],
                 is_row_array_components: &[bool],

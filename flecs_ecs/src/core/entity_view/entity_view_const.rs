@@ -180,7 +180,6 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::new_named()`] - Create a named entity
     /// * [`EntityView::new_from()`] - Create from existing ID
     /// * [`World::entity()`] - Preferred way to create entities
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let world_ptr = world.world_ptr_mut();
         let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {
@@ -229,12 +228,6 @@ impl<'a> EntityView<'a> {
             world: *world,
             id: Entity(id),
         }
-    }
-
-    #[inline(always)]
-    pub(crate) fn replace_id(&mut self, id: u64) -> &mut Self {
-        self.id = Entity(id);
-        self
     }
 
     /// Create a named entity.
@@ -408,8 +401,8 @@ impl<'a> EntityView<'a> {
     /// Check if entity is valid.
     ///
     /// Entities are valid if :
-    /// - they are not 0
-    /// - if they are alive
+    /// - its id is not 0
+    /// - if they are alive (see [`EntityView::is_alive()`])
     /// - the id contains a valid bit pattern for an entity
     ///
     ///
@@ -1119,29 +1112,15 @@ impl<'a> EntityView<'a> {
 
         let relationship = relationship.into_entity(self.world);
 
-        if relationship == ECS_CHILD_OF {
-            let mut it: sys::ecs_iter_t = unsafe { sys::ecs_children(self.world_ptr(), *self.id) };
-            while unsafe { sys::ecs_children_next(&mut it) } {
-                count += it.count;
-                for i in 0..it.count as usize {
-                    unsafe {
-                        let id = it.entities.add(i);
-                        let ent = EntityView::new_from(self.world, *id);
-                        func(ent);
-                    }
-                }
-            }
-        } else {
-            let mut it: sys::ecs_iter_t =
-                unsafe { sys::ecs_each_id(self.world_ptr(), ecs_pair(*relationship, *self.id)) };
-            while unsafe { sys::ecs_each_next(&mut it) } {
-                count += it.count;
-                for i in 0..it.count as usize {
-                    unsafe {
-                        let id = it.entities.add(i);
-                        let ent = EntityView::new_from(self.world, *id);
-                        func(ent);
-                    }
+        let mut it: sys::ecs_iter_t =
+            unsafe { sys::ecs_children_w_rel(self.world_ptr(), *relationship, *self.id) };
+        while unsafe { sys::ecs_children_next(&mut it) } {
+            count += it.count;
+            for i in 0..it.count as usize {
+                unsafe {
+                    let id = it.entities.add(i);
+                    let ent = EntityView::new_from(self.world, *id);
+                    func(ent);
                 }
             }
         }
@@ -1864,8 +1843,8 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::target_for()`]
-    pub fn target_for(
+    /// * [`EntityView::target_id_for()`]
+    pub fn target_id_for(
         &self,
         relationship: impl IntoEntity,
         component_id: impl IntoId,
@@ -1882,43 +1861,6 @@ impl<'a> EntityView<'a> {
             None
         } else {
             Some(EntityView::new_from(self.world, id))
-        }
-    }
-
-    // TODO this needs a better name and documentation, the rest of the cpp functions still have to be done as well
-    // TODO, I removed the second template parameter and changed the fn parameter second to entityT, check validity
-    /// Get the target for a given pair of components and a relationship.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `First` - The first component type to use for deriving the id.
-    ///
-    /// # Arguments
-    ///
-    /// * `second` - The second element of the pair.
-    ///
-    /// # Returns
-    ///
-    /// * The entity for which the target has been found.
-    ///
-    /// # See also
-    // TODO needs to be made safe
-    pub(crate) fn target_for_first<First: ComponentId + DataComponent>(
-        &self,
-        second: impl Into<Entity>,
-    ) -> *const First {
-        let comp_id = First::entity_id(self.world);
-        ecs_assert!(
-            core::mem::size_of::<First>() != 0,
-            FlecsErrorCode::InvalidParameter,
-            "First element is size 0"
-        );
-        unsafe {
-            sys::ecs_get_id(
-                self.world.world_ptr(),
-                comp_id,
-                ecs_pair(comp_id, *second.into()),
-            ) as *const First
         }
     }
 
@@ -2358,12 +2300,6 @@ impl<'a> EntityView<'a> {
         );
 
         EntityView::new_from(entity.world(), *self.id)
-    }
-
-    //might not be needed, in the original c++ impl it was used in the get_mut functions.
-    #[doc(hidden)]
-    fn set_stage(self, stage: impl WorldProvider<'a>) -> EntityView<'a> {
-        EntityView::new_from(stage, *self.id)
     }
 }
 

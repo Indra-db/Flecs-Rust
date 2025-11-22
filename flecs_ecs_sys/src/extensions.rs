@@ -98,7 +98,6 @@ impl Default for ecs_observer_desc_t {
             callback_ctx: core::ptr::null_mut(),
             ctx_free: Default::default(),
             callback_ctx_free: Default::default(),
-            observable: core::ptr::null_mut(),
             last_event_id: core::ptr::null_mut(),
             term_index_: Default::default(),
             query: Default::default(),
@@ -342,6 +341,7 @@ impl Default for EcsPoly {
 impl Default for crate::ecs_iter_to_json_desc_t {
     fn default() -> Self {
         Self {
+            component_filter: Default::default(),
             serialize_builtin: Default::default(),
             serialize_entity_ids: Default::default(),
             serialize_values: Default::default(),

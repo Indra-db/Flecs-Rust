@@ -15,6 +15,17 @@ pub type WorldSummary = sys::EcsWorldSummary;
 /// Component with system stats
 pub type SystemStats = sys::EcsSystemStats;
 
+/// Memory statistics components
+pub type EntitiesMemory = sys::ecs_entities_memory_t;
+pub type ComponentIndexMemory = sys::ecs_component_index_memory_t;
+pub type QueryMemory = sys::ecs_query_memory_t;
+pub type ComponentMemory = sys::ecs_component_memory_t;
+pub type TableMemory = sys::ecs_table_memory_t;
+pub type MiscMemory = sys::ecs_misc_memory_t;
+pub type TableHistogram = sys::ecs_table_histogram_t;
+pub type AllocatorMemory = sys::ecs_allocator_memory_t;
+pub type WorldMemory = sys::EcsWorldMemory;
+
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Stats;
 
@@ -35,246 +46,85 @@ impl Module for Stats {
 // trait implementations
 ///////////////////////////
 
-impl flecs_ecs::core::DataComponent for sys::EcsWorldStats {}
+macro_rules! impl_stats_component {
+    ($type:ty) => {
+        impl flecs_ecs::core::DataComponent for $type {}
 
-impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsWorldStats {}
+        impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for $type {}
 
-impl flecs_ecs::core::component_registration::ComponentInfo for sys::EcsWorldStats {
-    const IS_GENERIC: bool = false;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IMPLS_PARTIAL_ORD: bool = false;
-    const IMPLS_PARTIAL_EQ: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-}
-impl flecs_ecs::core::component_registration::ComponentId for sys::EcsWorldStats
-where
-    Self: 'static,
-{
-    type UnderlyingType = sys::EcsWorldStats;
-    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
-
-    #[inline(always)]
-    fn index() -> u32 {
-        static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
-    }
-    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsWorldStats>(
-            type_hooks,
-        );
-    }
-    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_DEFAULT: bool = sys::EcsWorldStats::IMPLS_DEFAULT;
-        if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsWorldStats>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
+        impl flecs_ecs::core::component_registration::ComponentInfo for $type {
+            const IS_GENERIC: bool = false;
+            const IS_ENUM: bool = false;
+            const IS_TAG: bool = false;
+            type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
+            const IMPLS_CLONE: bool = true;
+            const IMPLS_DEFAULT: bool = false;
+            const IMPLS_PARTIAL_ORD: bool = false;
+            const IMPLS_PARTIAL_EQ: bool = false;
+            const IS_REF: bool = false;
+            const IS_MUT: bool = false;
         }
-    }
-    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_CLONE: bool = sys::EcsWorldStats::IMPLS_CLONE;
-        if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,sys::EcsWorldStats>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
-        } else {
-            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
-                sys::EcsWorldStats,
-            >(type_hooks);
+
+        impl flecs_ecs::core::component_registration::ComponentId for $type
+        where
+            Self: 'static,
+        {
+            type UnderlyingType = $type;
+            type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
+            type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
+
+            #[inline(always)]
+            fn index() -> u32 {
+                static INDEX: core::sync::atomic::AtomicU32 =
+                    core::sync::atomic::AtomicU32::new(u32::MAX);
+                Self::get_or_init_index(&INDEX)
+            }
+
+            fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<$type>(type_hooks);
+            }
+
+            fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::ComponentInfo;
+                const IMPLS_DEFAULT: bool = <$type>::IMPLS_DEFAULT;
+                if IMPLS_DEFAULT {
+                    flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,$type>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
+                }
+            }
+
+            fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
+                use flecs_ecs::core::component_registration::ComponentInfo;
+                const IMPLS_CLONE: bool = <$type>::IMPLS_CLONE;
+                if IMPLS_CLONE {
+                    flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,$type>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
+                } else {
+                    flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
+                        $type,
+                    >(type_hooks);
+                }
+            }
         }
-    }
-}
 
-impl InternalComponentHooks for sys::EcsWorldStats {}
+        impl InternalComponentHooks for $type {}
 
-impl OnComponentRegistration for sys::EcsWorldStats {}
-
-///////////////////////////////////////////////
-///////////////////////////////////////////////
-
-impl flecs_ecs::core::DataComponent for sys::EcsPipelineStats {}
-
-impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsPipelineStats {}
-
-impl flecs_ecs::core::component_registration::ComponentInfo for sys::EcsPipelineStats {
-    const IS_GENERIC: bool = false;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IMPLS_PARTIAL_ORD: bool = false;
-    const IMPLS_PARTIAL_EQ: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-}
-impl flecs_ecs::core::component_registration::ComponentId for sys::EcsPipelineStats
-where
-    Self: 'static,
-{
-    type UnderlyingType = sys::EcsPipelineStats;
-    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
-
-    #[inline(always)]
-    fn index() -> u32 {
-        static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
-    }
-    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsPipelineStats>(
-            type_hooks,
-        );
-    }
-    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_DEFAULT: bool = sys::EcsPipelineStats::IMPLS_DEFAULT;
-        if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsPipelineStats>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
-        }
-    }
-    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_CLONE: bool = sys::EcsPipelineStats::IMPLS_CLONE;
-        if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,sys::EcsPipelineStats>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
-        } else {
-            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
-                sys::EcsPipelineStats,
-            >(type_hooks);
-        }
-    }
+        impl OnComponentRegistration for $type {}
+    };
 }
 
-impl InternalComponentHooks for sys::EcsPipelineStats {}
-
-impl OnComponentRegistration for sys::EcsPipelineStats {}
-
-///////////////////////////////////////////////
-///////////////////////////////////////////////
-
-impl flecs_ecs::core::DataComponent for sys::EcsWorldSummary {}
-
-impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsWorldSummary {}
-
-impl flecs_ecs::core::component_registration::ComponentInfo for sys::EcsWorldSummary {
-    const IS_GENERIC: bool = false;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IMPLS_PARTIAL_ORD: bool = false;
-    const IMPLS_PARTIAL_EQ: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-}
-impl flecs_ecs::core::component_registration::ComponentId for sys::EcsWorldSummary
-where
-    Self: 'static,
-{
-    type UnderlyingType = sys::EcsWorldSummary;
-    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
-
-    #[inline(always)]
-    fn index() -> u32 {
-        static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
-    }
-    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsWorldSummary>(
-            type_hooks,
-        );
-    }
-    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_DEFAULT: bool = sys::EcsWorldSummary::IMPLS_DEFAULT;
-        if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsWorldSummary>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
-        }
-    }
-    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_CLONE: bool = sys::EcsWorldSummary::IMPLS_CLONE;
-        if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,sys::EcsWorldSummary>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
-        } else {
-            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
-                sys::EcsWorldSummary,
-            >(type_hooks);
-        }
-    }
-}
-
-impl InternalComponentHooks for sys::EcsWorldSummary {}
-
-impl OnComponentRegistration for sys::EcsWorldSummary {}
-
-///////////////////////////////////////////////
-///////////////////////////////////////////////
-
-impl flecs_ecs::core::DataComponent for sys::EcsSystemStats {}
-
-impl flecs_ecs::core::ComponentType<flecs_ecs::core::Struct> for sys::EcsSystemStats {}
-
-impl flecs_ecs::core::component_registration::ComponentInfo for sys::EcsSystemStats {
-    const IS_GENERIC: bool = false;
-    const IS_ENUM: bool = false;
-    const IS_TAG: bool = false;
-    type TagType = flecs_ecs::core::component_registration::FlecsNotATag;
-    const IMPLS_CLONE: bool = true;
-    const IMPLS_DEFAULT: bool = false;
-    const IMPLS_PARTIAL_ORD: bool = false;
-    const IMPLS_PARTIAL_EQ: bool = false;
-    const IS_REF: bool = false;
-    const IS_MUT: bool = false;
-}
-impl flecs_ecs::core::component_registration::ComponentId for sys::EcsSystemStats
-where
-    Self: 'static,
-{
-    type UnderlyingType = sys::EcsSystemStats;
-    type UnderlyingEnumType = flecs_ecs::core::component_registration::NoneEnum;
-    type UnderlyingTypeOfEnum = flecs_ecs::core::component_registration::NoneEnum;
-
-    #[inline(always)]
-    fn index() -> u32 {
-        static INDEX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(u32::MAX);
-        Self::get_or_init_index(&INDEX)
-    }
-    fn __register_lifecycle_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        flecs_ecs::core::lifecycle_traits::register_lifecycle_actions::<sys::EcsSystemStats>(
-            type_hooks,
-        );
-    }
-    fn __register_default_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_DEFAULT: bool = sys::EcsSystemStats::IMPLS_DEFAULT;
-        if IMPLS_DEFAULT {
-            flecs_ecs::core::lifecycle_traits::register_ctor_lifecycle_actions:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_DEFAULT,sys::EcsSystemStats>as flecs_ecs::core::component_registration::FlecsDefaultType> ::Type, >(type_hooks);
-        }
-    }
-    fn __register_clone_hooks(type_hooks: &mut sys::ecs_type_hooks_t) {
-        use flecs_ecs::core::component_registration::ComponentInfo;
-        const IMPLS_CLONE: bool = sys::EcsSystemStats::IMPLS_CLONE;
-        if IMPLS_CLONE {
-            flecs_ecs::core::lifecycle_traits::register_copy_lifecycle_action:: <<flecs_ecs::core::component_registration::registration_types::ConditionalTypeSelector<IMPLS_CLONE,sys::EcsSystemStats>as flecs_ecs::core::component_registration::FlecsCloneType> ::Type, >(type_hooks);
-        } else {
-            flecs_ecs::core::lifecycle_traits::register_copy_panic_lifecycle_action::<
-                sys::EcsSystemStats,
-            >(type_hooks);
-        }
-    }
-}
-
-impl InternalComponentHooks for sys::EcsSystemStats {}
-
-impl OnComponentRegistration for sys::EcsSystemStats {}
+// Apply the macro to all stats component types
+impl_stats_component!(sys::EcsWorldStats);
+impl_stats_component!(sys::EcsPipelineStats);
+impl_stats_component!(sys::EcsWorldSummary);
+impl_stats_component!(sys::EcsSystemStats);
+impl_stats_component!(sys::ecs_entities_memory_t);
+impl_stats_component!(sys::ecs_component_index_memory_t);
+impl_stats_component!(sys::ecs_query_memory_t);
+impl_stats_component!(sys::ecs_component_memory_t);
+impl_stats_component!(sys::ecs_table_memory_t);
+impl_stats_component!(sys::ecs_misc_memory_t);
+impl_stats_component!(sys::ecs_table_histogram_t);
+impl_stats_component!(sys::ecs_allocator_memory_t);
+impl_stats_component!(sys::EcsWorldMemory);
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////

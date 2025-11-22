@@ -1,3 +1,147 @@
+//! Flecs addons extend the core ECS with additional functionality.
+//!
+//! This module provides access to all optional Flecs addons, which can be enabled
+//! through Cargo features. Each addon is designed to be modular and can be used
+//! independently or in combination with others.
+//!
+//! # Available Addons
+//!
+//! ## Application & Execution
+//!
+//! - **[`app`]** - Application main loop wrapper with hooks for modules
+//!   - Feature: `flecs_app`
+//!   - Used for: Managing application lifecycle, integration with emscripten/WebGL
+//!
+//! - **[`system`]** - Systems for automatic query iteration
+//!   - Feature: `flecs_system`
+//!   - Used for: Game logic, data processing, scheduled operations
+//!
+//! - **[`pipeline`]** - System ordering and scheduling
+//!   - Feature: `flecs_pipeline`
+//!   - Used for: Multi-phase execution, dependency management
+//!
+//! - **[`timer`]** - Periodic and one-shot timers
+//!   - Feature: `flecs_timer`
+//!   - Used for: Time-based triggers, cooldowns, scheduled events
+//!
+//! ## Organization & Structure
+//!
+//! - **[`module`]** - Reusable code units with automatic namespacing
+//!   - Feature: `flecs_module`
+//!   - Used for: Organizing code into reusable packages
+//!
+//! ## Reflection & Serialization
+//!
+//! - **[`meta`]** - Component reflection and introspection
+//!   - Feature: `flecs_meta`
+//!   - Used for: Runtime type information, generic serialization
+//!
+//! - **[`json`]** - JSON serialization/deserialization
+//!   - Feature: `flecs_json`
+//!   - Used for: Data exchange, persistence, REST API
+//!
+//! - **[`script`]** - Flecs script language support
+//!   - Feature: `flecs_script`
+//!   - Used for: Declarative entity/component definition, data-driven design
+//!
+//! ## Monitoring & Debugging
+//!
+//! - **[`doc`]** - Entity documentation with brief/detailed descriptions
+//!   - Feature: `flecs_doc`
+//!   - Used for: Documenting entities, tooling integration
+//!
+//! - **[`stats`]** - High-resolution performance statistics
+//!   - Feature: `flecs_stats`
+//!   - Used for: Profiling, performance monitoring, explorer integration
+//!
+//! - **[`metrics`]** - Extract and track component metrics
+//!   - Feature: `flecs_metrics`
+//!   - Used for: Monitoring component values, counters, gauges
+//!
+//! - **[`alerts`]** - Condition-based alerts
+//!   - Feature: `flecs_alerts`
+//!   - Used for: Detecting problematic states, validation
+//!
+//! ## Remote Access
+//!
+//! - **REST API** - HTTP server for remote data access
+//!   - Feature: `flecs_rest`
+//!   - Used for: Web-based UIs, remote inspection, Flecs Explorer
+//!
+//! ## Utilities
+//!
+//! - **[`units`]** - Standard measurement units (SI units, etc.)
+//!   - Feature: `flecs_units`
+//!   - Used for: Quantity types with proper units
+//!
+//! # Feature Flags
+//!
+//! Each addon is gated behind a Cargo feature flag. Enable the features you need
+//! in your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! flecs_ecs = { version = "0.1", features = [
+//!     "flecs_app",
+//!     "flecs_system",
+//!     "flecs_pipeline",
+//!     "flecs_timer",
+//!     "flecs_module",
+//!     "flecs_meta",
+//!     "flecs_json",
+//!     "flecs_doc",
+//!     "flecs_stats",
+//!     "flecs_metrics",
+//!     "flecs_alerts",
+//!     "flecs_rest",
+//!     "flecs_script",
+//!     "flecs_units",
+//! ] }
+//! ```
+//!
+//! Or use the `flecs_default` feature to enable commonly used addons:
+//!
+//! ```toml
+//! [dependencies]
+//! flecs_ecs = { version = "0.1", features = ["flecs_default"] }
+//! ```
+//!
+//! # Quick Start Example
+//!
+//! ```no_run
+//! use flecs_ecs::prelude::*;
+//!
+//! #[derive(Component)]
+//! struct Position { x: f32, y: f32 }
+//!
+//! #[derive(Component)]
+//! struct Velocity { x: f32, y: f32 }
+//!
+//! let world = World::new();
+//!
+//! // System addon: process entities each frame
+//! world.system::<(&Velocity, &mut Position)>()
+//!     .each(|(vel, pos)| {
+//!         pos.x += vel.x;
+//!         pos.y += vel.y;
+//!     });
+//!
+//! // Timer addon: run at intervals
+//! world.system::<()>()
+//!     .set_interval(1.0)
+//!     .run(|_it| println!("One second elapsed"));
+//!
+//! // App addon: run the main loop
+//! world.app()
+//!     .set_target_fps(60.0)
+//!     .run();
+//! ```
+//!
+//! # See also
+//!
+//! - [Flecs docs](https://www.flecs.dev/flecs/md_docs_2Quickstart.html)
+//! - [Examples](https://github.com/Indra-db/Flecs-Rust/tree/main/flecs_ecs/examples/flecs) - Code examples
+
 #[cfg(feature = "flecs_app")]
 pub mod app;
 #[cfg(feature = "flecs_app")]

@@ -160,15 +160,16 @@ macro_rules! meta_register_vector_func {
             |world: flecs_ecs::core::WorldRef| -> flecs_ecs::addons::meta::Opaque<Vec<$struct_type>, $struct_type> {
             let mut ts = flecs_ecs::addons::meta::Opaque::<Vec<$struct_type>, $struct_type>::new(world);
 
+            let id = id!(world, $struct_type);
             // Let reflection framework know what kind of struct_type this is
-            ts.as_type(world.vector::<$struct_type>());
+            ts.as_type(world.vector_id(id));
 
             // Forward core::vector value to (JSON/...) serializer
             ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {
                 let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
                 let id = id!(world, $struct_type);
                 for el in data.iter() {
-                    s.value_id(id, el as *const $struct_type as *const core::ffi::c_void);
+                    unsafe { s.value_id(id, el as *const $struct_type as *const core::ffi::c_void); }
                 }
                 0
             });
@@ -201,15 +202,16 @@ macro_rules! meta_register_vector_func {
             |world: flecs_ecs::core::WorldRef| -> flecs_ecs::addons::meta::Opaque<Vec<$struct_type>, $struct_type> {
                 let mut ts = flecs_ecs::addons::meta::Opaque::<Vec<$struct_type>, $struct_type>::new(world);
 
+                let id = id!(world, $struct_type);
                 // Let reflection framework know what kind of struct_type this is
-                ts.as_type(world.vector::<$struct_type>());
+                ts.as_type(world.vector_id(id));
 
                 // Forward core::vector value to (JSON/...) serializer
                 ts.serialize(|s: &flecs_ecs::addons::meta::Serializer, data: &Vec<$struct_type>| {
                     let world = unsafe { WorldRef::from_ptr(s.world as *mut flecs_ecs::sys::ecs_world_t) };
                     let id = id!(world, $struct_type);
                     for el in data.iter() {
-                        s.value_id(id, el as *const $struct_type as *const core::ffi::c_void);
+                        unsafe { s.value_id(id, el as *const $struct_type as *const core::ffi::c_void); }
                     }
                     0
                 });

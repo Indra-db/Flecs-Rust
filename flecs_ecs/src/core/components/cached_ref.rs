@@ -75,7 +75,7 @@ impl<'a, T> CachedRef<'a, T> {
     }
 
     /// Return component associated with reference.
-    fn component(&self) -> IdView<'a> {
+    pub fn component(&self) -> IdView<'a> {
         IdView::new_from_id(self.world, self.component_ref.id)
     }
 
@@ -88,6 +88,10 @@ impl<'a, T> CachedRef<'a, T> {
             )
         }
         .is_null()
+    }
+
+    pub fn world(&self) -> WorldRef<'a> {
+        self.world
     }
 }
 

@@ -413,7 +413,6 @@ pub trait ComponentId:
     }
 
     /// checks if the component is registered with a world.
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn is_registered_with_world<'a>(world: impl WorldProvider<'a>) -> bool {
         if !Self::IS_GENERIC {

@@ -42,12 +42,18 @@ pub struct Likes {
 #[derive(Component)]
 pub struct Bob;
 
+#[test]
 fn main() {
     let world = World::new();
 
     let e = world.entity_named("Bob");
     e.set(Position { x: 1.0, y: 2.0 });
     e.remove(Position::id());
+
+    // Output
+    // added Position to Bob
+    // set Position { x: 1.0, y: 2.0 } for Bob
+    // removed Position { x: 1.0, y: 2.0 } from Bob
 }
 
 #[cfg(feature = "flecs_nightly_tests")]

@@ -35,17 +35,24 @@ impl World {
 
     /// Return meta cursor to value
     pub fn cursor<T: ComponentId>(&self, data: &mut T) -> Cursor<'_> {
-        let type_id = T::get_id(self.world());
-        Cursor::new(self, type_id, data as *mut T as *mut c_void)
+        unsafe { Cursor::new(self, T::id(), data as *mut T) }
     }
 
     /// Return meta cursor to value
-    pub fn cursor_id(&self, type_id: impl IntoEntity, ptr: *mut c_void) -> Cursor<'_> {
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that `ptr` is a valid pointer to data of the type
+    /// represented by `type_id`. When the id is untyped, the ptr is `c_void`.
+    ///
+    /// # See Also
+    /// - [`World::cursor`]
+    pub unsafe fn cursor_id<T: IntoEntity>(&self, type_id: T, ptr: *mut T::CastType) -> Cursor<'_> {
         if ptr.is_null() {
             panic!("ptr is null");
         }
 
-        Cursor::new(self, type_id, ptr)
+        unsafe { Cursor::new(self, type_id, ptr) }
     }
 
     /// Create primitive type

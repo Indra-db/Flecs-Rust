@@ -499,6 +499,7 @@ where
     ///
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
+    #[allow(dead_code)] // this may be used in the future
     pub(crate) fn new_from_desc(
         world: impl WorldProvider<'a>,
         desc: &mut sys::ecs_query_desc_t,
@@ -518,6 +519,7 @@ where
     /// * `world` - The world to create the observer in
     /// * `desc` - The descriptor to create the observer from
     /// * `term_index` - The index of the term to create the observer from
+    #[expect(dead_code, reason = "possibly used in the future")]
     pub(crate) fn new_from_desc_term_index(
         world: &'a World,
         desc: &mut sys::ecs_query_desc_t,
@@ -605,18 +607,69 @@ where
     }
 }
 
-// Assuming some imports and definitions from your previous example, and adding the required ones for this example.
-#[cfg(not(target_family = "wasm"))]
-type GroupByFn = extern "C-unwind" fn(
-    *mut sys::ecs_world_t,
-    *mut sys::ecs_table_t,
-    sys::ecs_id_t,
-    *mut c_void,
-) -> u64;
+impl<'a, T: QueryTuple> QueryBuilder<'a, T> {
+    /// Attempts to build the query, returning `None` if the query is invalid.
+    ///
+    /// This is a fallible version of [`build()`](Builder::build) that returns `None`
+    /// instead of panicking when query creation fails. Query creation can fail for
+    /// several reasons, most commonly:
+    /// - Invalid query expression syntax (when using `expr()`)
+    /// - Malformed query terms
+    ///
+    /// # Returns
+    ///
+    /// * `Some(Query<T>)` - Successfully created query
+    /// * `None` - Query creation failed
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position { x: f32, y: f32 }
+    ///
+    /// let world = World::new();
+    ///
+    /// // Valid query
+    /// let valid_query = world.query::<&Position>()
+    ///     .try_build();
+    /// assert!(valid_query.is_some());
+    ///
+    /// // Invalid query expression
+    /// let invalid_query = world.query::<()>()
+    ///     .expr("invalid syntax!!!")
+    ///     .try_build();
+    /// assert!(invalid_query.is_none());
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`build()`](Builder::build) - Panicking version that fails fast on invalid queries
+    pub fn try_build(&mut self) -> Option<Query<T>> {
+        let world = self.world;
+        let query = Query::<T>::try_new_from_desc(world, &mut self.desc)?;
+        for s in self.term_builder.str_ptrs_to_free.iter_mut() {
+            unsafe { ManuallyDrop::drop(s) };
+        }
+        self.term_builder.str_ptrs_to_free.clear();
+        Some(query)
+    }
+}
 
-#[cfg(target_family = "wasm")]
-type GroupByFn =
-    extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
+//this doesn't work because world ptr gets misaligned
+// Assuming some imports and definitions from your previous example, and adding the required ones for this example.
+// #[cfg(not(target_family = "wasm"))]
+// type GroupByFn = extern "C-unwind" fn(
+//     *mut sys::ecs_world_t,
+//     *mut sys::ecs_table_t,
+//     sys::ecs_id_t,
+//     *mut c_void,
+// ) -> u64;
+
+// #[cfg(target_family = "wasm")]
+// type GroupByFn =
+//     extern "C" fn(*mut sys::ecs_world_t, *mut sys::ecs_table_t, sys::ecs_id_t, *mut c_void) -> u64;
 
 // Type definitions for OrderBy function pointers
 #[cfg(not(target_family = "wasm"))]
@@ -1019,6 +1072,13 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         T: ComponentId,
         Self: QueryBuilderImpl<'a>,
     {
+        const {
+            assert!(
+                !(T::IS_REF || T::IS_MUT),
+                "order_by<T> requires T to not be a reference"
+            );
+        }
+
         let cmp: sys::ecs_order_by_action_t = Some(unsafe {
             core::mem::transmute::<OrderByFnPtr<T>, OrderByFnPtrUnsafe>(compare.to_extern_fn())
         });

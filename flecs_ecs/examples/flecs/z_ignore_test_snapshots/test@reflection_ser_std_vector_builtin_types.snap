@@ -2,4 +2,4 @@
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
 expression: str_output
 ---
-"\"{\\\"ints\\\":[1, 2, 3], \\\"strings\\\":[\\\"foo\\\", \\\"bar\\\"]}\"\n\"{\\\"ints\\\":[4, 5, 3], \\\"strings\\\":[\\\"hello\\\", \\\"flecs\\\", \\\"reflection\\\", \\\"\\\"]}\"\n"
+"\"{\\\"ints\\\":[1, 2, 3], \\\"strings\\\":[\\\"foo\\\", \\\"bar\\\"]}\"\n\"{\\\"ints\\\":[4, 5], \\\"strings\\\":[\\\"hello\\\", \\\"flecs\\\", \\\"reflection\\\"]}\"\n"

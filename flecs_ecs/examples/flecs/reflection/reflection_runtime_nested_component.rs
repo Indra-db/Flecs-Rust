@@ -2,7 +2,6 @@ use crate::z_ignore_test_common::*;
 
 use flecs_ecs::prelude::*;
 
-#[test]
 fn main() {
     let world = World::new();
 
@@ -21,7 +20,7 @@ fn main() {
 
     let ptr = e.get_untyped_mut(line);
 
-    let mut cur = world.cursor_id(line, ptr);
+    let mut cur = unsafe { world.cursor_id(line, ptr) };
 
     #[rustfmt::skip]
     fn cursor(cur: &mut Cursor) {
@@ -45,7 +44,7 @@ fn main() {
     cursor(&mut cur);
 
     // Convert component to string
-    println!("{:?}", world.to_expr_id(line, ptr));
+    println!("{:?}", unsafe { world.to_expr_id(line, ptr) });
 
     // Output
     // {start: {x: 10.00, y: 20.00}, stop: {x: 30.00, y: 40.00}}

@@ -22,7 +22,8 @@
         "string": "c",
         "__locale": "c",
         "locale": "c",
-        "flecs.h": "c"
+        "flecs.h": "c",
+        "flecs_rust.h": "c"
     }
     // "rust-analyzer.linkedProjects": [
     //     "./flecs_ecs/Cargo.toml"

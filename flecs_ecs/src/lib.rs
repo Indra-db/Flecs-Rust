@@ -1,13 +1,27 @@
-//! [Flecs] is a fast and lightweight Entity Component System that lets you build games and simulations with millions of entities.
+//! Flecs is a fast and lightweight Entity Component System that lets you build games and simulations with millions of entities.
 //!
-//! This library provides a comprehensive and low-overhead Rust binding for [flecs].
+//! This library provides a comprehensive and low-overhead Rust binding for [Flecs](https://github.com/SanderMertens/flecs) an ECS written in C.
 //!
 //! ## Documentation
 //!
+//! - The **[flecs.dev](https://www.flecs.dev/)** website contains comprehensive documentation on Flecs on its features & how to use it for Rust and other languages.
 //! - **[Component Macro](component_macro/index.html)** - Complete guide to the `#[derive(Component)]` macro and all its attributes.
-//! - **[DSL Module](dsl/index.html)** - Query, system, and observer DSL documentation
+//! - **[DSL Macro](dsl/index.html)** - Query, system, and observer DSL documentation
 //!
-//! [Flecs]: https://www.flecs.dev/
+//! ## Safety
+//!
+//! This crate enables additional runtime checks by default to preserve Rust's
+//! borrowing and concurrency guarantees when calling into the underlying C
+//! Flecs library. Those checks are provided by the `flecs_safety_locks` feature
+//! (enabled by default) and help prevent unsafe aliasing and concurrent mutable
+//! access across Flecs callbacks, systems and queries.
+//!
+//! These safety checks imposes a runtime cost. If you fully understand the
+//! characteristics of your application and need maximum performance,
+//! you may disable `flecs_safety_locks` (e.g. for a Release). Disabling it will
+//! improve throughput but removes the runtime protections and may lead to
+//! undefined behavior if the API is used in an unsafe way. This might or might not matter
+//! depending on the application.
 
 //this is commented since `no_std` is not ready yet
 //#![cfg_attr(not(feature = "std"), no_std)] // Enable `no_std` if `std` feature is disabled

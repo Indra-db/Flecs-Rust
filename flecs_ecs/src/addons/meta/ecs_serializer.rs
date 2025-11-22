@@ -3,20 +3,19 @@ use crate::sys;
 use core::ffi::c_void;
 
 pub trait EcsSerializer {
-    fn value_id(&self, type_id: impl Into<Entity>, value: *const c_void) -> i32;
+    unsafe fn value_id<T: IntoEntity>(&self, type_id: T, value: *const T::CastType) -> i32;
     fn value<T: ComponentId>(&self, value: &T) -> i32;
     fn member(&self, name: &str) -> i32;
 }
 
 impl EcsSerializer for sys::ecs_serializer_t {
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn value_id(&self, type_id: impl IntoEntity, value: *const c_void) -> i32 {
+    unsafe fn value_id<T: IntoEntity>(&self, type_id: T, value: *const T::CastType) -> i32 {
         if let Some(value_func) = self.value {
             unsafe {
                 value_func(
                     self,
                     *type_id.into_entity(WorldRef::from_ptr(self.world as *mut _)),
-                    value,
+                    value as *const core::ffi::c_void,
                 )
             }
         } else {
@@ -25,10 +24,12 @@ impl EcsSerializer for sys::ecs_serializer_t {
     }
 
     fn value<T: ComponentId>(&self, value: &T) -> i32 {
-        self.value_id(
-            T::get_id(unsafe { WorldRef::from_ptr(self.world as *mut _) }),
-            value as *const T as *const c_void,
-        )
+        unsafe {
+            self.value_id(
+                T::get_id(WorldRef::from_ptr(self.world as *mut _)),
+                value as *const T as *const c_void,
+            )
+        }
     }
 
     fn member(&self, name: &str) -> i32 {

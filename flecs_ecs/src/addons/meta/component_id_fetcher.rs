@@ -100,13 +100,13 @@ mod tests {
     fn meta_id_macro_test() {
         #[derive(Component)]
         struct Position {
-            x: f32,
-            y: f32,
+            _x: f32,
+            _y: f32,
         }
 
         struct ExternalPosition {
-            x: f32,
-            y: f32,
+            _x: f32,
+            _y: f32,
         }
 
         let world = World::new();
@@ -134,13 +134,13 @@ mod tests {
     fn meta_id_macro_test_ref() {
         #[derive(Component)]
         struct Position {
-            x: f32,
-            y: f32,
+            _x: f32,
+            _y: f32,
         }
 
         struct ExternalPosition {
-            x: f32,
-            y: f32,
+            _x: f32,
+            _y: f32,
         }
 
         let world = World::new();

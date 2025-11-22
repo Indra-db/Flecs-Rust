@@ -1,6 +1,6 @@
 [package]
 name = "flecs_ecs_sys"
-version = "0.1.2"
+version = "0.2.1"
 edition.workspace = true
 license = "MIT"
 repository.workspace = true
@@ -18,9 +18,9 @@ workspace = true
 libc.workspace = true
 
 [build-dependencies]
-bindgen = "0.71.1"
-cc = "1.2.2"
-regex = "1.11.1"
+bindgen = "0.72.1"
+cc = "1.2.45"
+regex = "1.12.2"
 
 [features]
 # Regenerate the C binding for flecs C
@@ -136,4 +136,5 @@ flecs_base = [
 # Default features
 default = [
     "flecs_meta_c",
+    "regenerate_binding",
 ]

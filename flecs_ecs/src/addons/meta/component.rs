@@ -128,6 +128,10 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
             *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }
+
         self
+        //feature
+        //#[cfg(feature = "flecs_rust_no_enum_reflection")]
+        //TODO manual registration enum constant
     }
 }

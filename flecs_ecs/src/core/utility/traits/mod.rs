@@ -76,7 +76,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -107,7 +107,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each_entity<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -143,7 +143,7 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_each_iter<const CALLED_FROM_RUN: bool, Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -174,7 +174,7 @@ pub mod private {
         /// * `iter` - The iterator which gets passed in from `C`
         ///
         /// # See also
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run<Func>(iter: *mut sys::ecs_iter_t)
         where
@@ -182,7 +182,8 @@ pub mod private {
         {
             unsafe {
                 let iter = &mut *iter;
-                let run = &mut *(iter.run_ctx as *mut Func);
+                let run_ptr = iter.run_ctx.cast::<Func>();
+                let run = &mut *run_ptr;
                 let world = WorldRef::from_ptr(iter.world);
                 internal_run::<P>(iter, run, world);
             }
@@ -191,11 +192,12 @@ pub mod private {
         #[extern_abi]
         fn free_callback<Func>(ptr: *mut c_void) {
             unsafe {
-                drop(Box::from_raw(ptr as *mut Func));
+                let ptr = ptr.cast::<Func>();
+                drop(Box::from_raw(ptr));
             };
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run_each<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
@@ -205,7 +207,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each = &mut *(iter.run_ctx as *mut Func);
+                let each_ptr = iter.run_ctx.cast::<Func>();
+                let each = &mut *each_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
@@ -239,7 +242,7 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(clippy::not_unsafe_ptr_arg_deref, reason = "iter will always be valid")]
         #[extern_abi]
         fn execute_run_each_entity<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
@@ -249,7 +252,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each_entity = &mut *(iter.run_ctx as *mut Func);
+                let each_entity_ptr = iter.run_ctx.cast::<Func>();
+                let each_entity = &mut *each_entity_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
@@ -295,7 +299,10 @@ pub mod private {
             }
         }
 
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[expect(
+            clippy::not_unsafe_ptr_arg_deref,
+            reason = "this doesn't actually deref the pointer"
+        )]
         #[extern_abi]
         fn execute_run_each_iter<Func, const CHECKED: bool>(iter: *mut sys::ecs_iter_t)
         where
@@ -305,7 +312,8 @@ pub mod private {
                 let iter = &mut *iter;
                 iter.flags &= !sys::EcsIterIsValid;
                 let world = WorldRef::from_ptr(iter.world);
-                let each_iter = &mut *(iter.run_ctx as *mut Func);
+                let each_iter_ptr = iter.run_ctx.cast::<Func>();
+                let each_iter = &mut *each_iter_ptr;
                 let mut table_iter = TableIter::<true, ()>::new(iter, world);
 
                 #[cfg(feature = "flecs_safety_locks")]
@@ -518,7 +526,7 @@ pub(crate) fn internal_each_generic<
     iter: &mut sys::ecs_iter_t,
     extractor: E,
     mut func: F,
-    world: &WorldRef<'_>,
+    _world: &WorldRef<'_>,
 ) {
     const {
         assert!(
@@ -543,16 +551,26 @@ pub(crate) fn internal_each_generic<
     ecs_assert!(
         !(E::CONTAINS_ENTITY && iter.entities.is_null()),
         FlecsErrorCode::InvalidOperation,
-        "query/system does not return entities ($this variable is not populated).\nSystem: {:?}",
+        "query/system does not return entities ($this variable is not populated).\nQuery/System: {:?}",
         {
-            let e = world.entity_from_id(iter.system);
-            (e.id(), e.get_name())
+            if iter.system != 0 {
+                let e = _world.entity_from_id(iter.system);
+                (e.id(), e.get_name())
+            } else {
+                let e = unsafe { (*iter.query).entity };
+                if e == 0 {
+                    (crate::core::Entity(0), Some("<unnamed>".to_string()))
+                } else {
+                    let e = _world.entity_from_id(e);
+                    (e.id(), e.get_name())
+                }
+            }
         }
     );
 
     #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<INCREMENT, ANY_SPARSE_TERMS, T>(
-        world,
+        _world,
         components_data.safety_table_records(),
     );
 
@@ -578,7 +596,7 @@ pub(crate) fn internal_each_generic<
 
     #[cfg(feature = "flecs_safety_locks")]
     do_read_write_locks::<DECREMENT, ANY_SPARSE_TERMS, T>(
-        world,
+        _world,
         components_data.safety_table_records(),
     );
 }

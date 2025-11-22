@@ -12,15 +12,15 @@ use sys::ecs_record_t;
 #[derive(Debug, Copy, Clone)]
 #[doc(hidden)]
 pub enum SafetyInfo {
-    Read(sys::ecs_safety_info_t),
-    Write(sys::ecs_safety_info_t),
+    Read(sys::ecs_lock_target_t),
+    Write(sys::ecs_lock_target_t),
 }
 
 #[cfg(feature = "flecs_safety_locks")]
 impl Default for SafetyInfo {
     #[inline]
     fn default() -> Self {
-        SafetyInfo::Read(sys::ecs_safety_info_t::default())
+        SafetyInfo::Read(sys::ecs_lock_target_t::default())
     }
 }
 
@@ -60,7 +60,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
         #[cfg(feature = "flecs_safety_locks")]
-        let mut safety_info = [SafetyInfo::Read(sys::ecs_safety_info_t::default()); LEN];
+        let mut safety_info = [SafetyInfo::Read(sys::ecs_lock_target_t::default()); LEN];
 
         let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
             world,
@@ -84,7 +84,7 @@ impl<T: GetTuple, const LEN: usize> GetComponentPointers<T> for ComponentsData<T
         let mut array_components = [core::ptr::null::<c_void>() as *mut c_void; LEN];
 
         #[cfg(feature = "flecs_safety_locks")]
-        let mut safety_info = [SafetyInfo::Read(sys::ecs_safety_info_t::default()); LEN];
+        let mut safety_info = [SafetyInfo::Read(sys::ecs_lock_target_t::default()); LEN];
 
         let has_all_components = T::populate_array_ptrs_singleton::<SHOULD_PANIC>(
             world,
@@ -274,11 +274,10 @@ pub trait GetTuple: Sized {
                     let id_underlying_type = world.component_id::<i32>();
                     let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
                     let record = unsafe { sys::ecs_record_find(world_ptr, target) };
-                    let constant_value = unsafe {
-                        sys::flecs_get_id_from_record(world_ptr, target, record, pair_id)
-                    };
+                    let constant_value =
+                        unsafe { sys::flecs_record_get_id(world_ptr, target, record, pair_id) };
                     ecs_assert!(
-                        !constant_value.component_ptr.is_null(),
+                        !constant_value.ptr.is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -292,10 +291,10 @@ pub trait GetTuple: Sized {
                 {
                     // get constant value from constant entity
                     let constant_value =
-                        unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) };
+                        unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
 
                     ecs_assert!(
-                        !constant_value.component_ptr.is_null(),
+                        !constant_value.ptr.is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -305,15 +304,15 @@ pub trait GetTuple: Sized {
                 }
             } else {
                 // if there is no matching pair for (r,*), try just r
-                unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
+                unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
             }
         } else if T::IS_IMMUTABLE {
-            unsafe { sys::flecs_get_id_from_record(world_ptr, entity, record, id) }
+            unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         } else {
-            unsafe { sys::flecs_get_mut_id_from_record(world_ptr, record, id) }
+            unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
         };
 
-        let component_ptr = get_ptr.component_ptr;
+        let component_ptr = get_ptr.ptr;
 
         if component_ptr.is_null() {
             components[index] = core::ptr::null_mut();
@@ -347,9 +346,9 @@ or use `Option<{}> instead to handle individual cases.",
             #[cfg(feature = "flecs_safety_locks")]
             {
                 if T::IS_IMMUTABLE {
-                    safety_info[index] = SafetyInfo::Read(get_ptr.si);
+                    safety_info[index] = SafetyInfo::Read(get_ptr.lock_target);
                 } else {
-                    safety_info[index] = SafetyInfo::Write(get_ptr.si);
+                    safety_info[index] = SafetyInfo::Write(get_ptr.lock_target);
                 }
             }
         }
@@ -463,7 +462,6 @@ impl<'a, T: 'a> TupleForm<'a, T, T> for Wrapper<T> {
     type Tuple = &'a mut T;
     const IS_OPTION: bool = false;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe { &mut (*array.add(index)) }
@@ -474,7 +472,6 @@ impl<'a, T: 'a> TupleForm<'a, Option<T>, T> for Wrapper<T> {
     type Tuple = Option<&'a mut T>;
     const IS_OPTION: bool = true;
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     #[inline(always)]
     fn return_type_for_tuple(array: *mut T, index: usize) -> Self::Tuple {
         unsafe {

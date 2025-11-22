@@ -1,6 +1,6 @@
 [package]
 name = "flecs_ecs_derive"
-version = "0.1.0"
+version = "0.2.0"
 edition.workspace = true
 license = "MIT"
 repository.workspace = true
@@ -15,12 +15,12 @@ name = "flecs_ecs_derive"
 workspace = true
 
 [dependencies]
-syn = { version = "2.0.106", features = ["full"] }
-quote = "1.0.40"
-proc-macro2 = "1.0.101"
+syn = { version = "2.0.110", features = ["full"] }
+quote = "1.0.42"
+proc-macro2 = "1.0.103"
 
 [dev-dependencies]
-flecs_ecs = { version = "*", path = "../flecs_ecs" }
+flecs_ecs = { version = "0.2.1", path = "../flecs_ecs" }
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "-Zunstable-options", "--generate-link-to-definition"]

@@ -1,3 +1,14 @@
+// On Windows, prevent winsock.h from being included by windows.h
+// This must be defined before any Windows headers are included
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
+
 #include "flecs_rust.h"
 /* This uses internals from flecs which aren't in the header. */
 #include "flecs.c"

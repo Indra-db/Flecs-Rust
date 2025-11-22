@@ -48,6 +48,7 @@ impl WorldCtx {
         }
     }
 
+    #[allow(dead_code)] //used in tests
     pub(crate) fn query_ref_count(&self) -> i32 {
         self.query_ref_count
     }
@@ -66,6 +67,7 @@ impl WorldCtx {
 }
 
 impl World {
+    #[allow(dead_code)] //used in tests
     pub(crate) fn world_ctx(&self) -> &WorldCtx {
         unsafe { &*(sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) as *const WorldCtx) }
     }

@@ -447,7 +447,6 @@ impl Module for ItemModule {
 
 //MARK: Main
 
-#[test]
 fn main() {
     let mut world = World::new();
 
