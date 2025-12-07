@@ -72,7 +72,7 @@ impl Default for World {
             .with((flecs::With, flecs::Wildcard))
             .run(|mut it| {
                 if it.next() {
-                    // Known bug in flecs that allows operating on uninitialized data in safe code using flecs::With rather trivially when using ecs_emplace_id: https://discord.com/channels/633826290415435777/939683115109072926/1439766559781294201
+                    // Known bug in flecs that allows operating on uninitialized data in safe code using flecs::With rather trivially when using ecs_emplace_id.
                     panic!(
                         "flecs::with is inherently unsafe as the default constructor will not be called under certain circumstances. This is a known bug within flecs."
                     );
