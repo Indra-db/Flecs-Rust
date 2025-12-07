@@ -381,9 +381,6 @@ pub(crate) fn set_helper<T: ComponentId>(
             //
             // For that reason, we could use `ecs_emplace_id`, but then on_replace hooks would not
             // be registerable on any of our components.
-            //
-            // The set pipeline for default constructed components works like so if deferred:
-            // Default constructed -> Dropped -> Moved into from value 
             // This code could be significantly more simple if ecs_emplace_id worked with `on_replace`
             // hooks, but that will require modifications to flecs.c, so this will have to suffice for now.
             let res = sys::ecs_cpp_set(
@@ -395,18 +392,18 @@ pub(crate) fn set_helper<T: ComponentId>(
             );
 
             let comp = res.ptr as *mut T;
+            // The set pipeline for default constructed components works like so:
+            // Default constructed -> Dropped -> Moved into from value 
+            // Default construction happens in sys::ecs_cpp_set.
+            core::ptr::drop_in_place(comp);
             core::ptr::write(comp, value);
 
             if res.call_modified {
                 sys::ecs_modified_id(world, entity, id);
             }
         } else {
-            // If T does not impl default, we need to construct the data ourselves.
-            // The reason we don't do this with T::IMPLS_DEFAULT is because ecs_emplace_id
-            // does not work with on_replace hooks and will assert.
-            //
-            // This creates a requirement that any component that implements an on_replace hook
-            // must have a Default constructor.
+            // If T does not impl Default, we need to construct the data ourselves.
+            // so that uninitialized data is not dropped.
             let mut changed: bool = false;
 
             let comp = sys::ecs_emplace_id(

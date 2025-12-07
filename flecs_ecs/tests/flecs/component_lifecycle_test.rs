@@ -161,3 +161,22 @@ fn component_lifecycle_drop_on_world_delete() {
         init_boxes
     );
 }
+
+#[test]
+fn component_lifecycle_set_multiple_times() {
+    let world = World::new();
+
+    let ent = world
+        .entity_named("object 1")
+        .set(BoxedNumber::new("Object 1"));
+    ent.set(BoxedNumber::new("Object 2"));
+    ent.set(BoxedNumber::new("Object 3"));
+    ent.destruct();
+
+    let init_boxes = INITIALIZED_BOXES.lock().unwrap();
+    assert!(
+        init_boxes.is_empty(),
+        "Leaked memory, objects not properly deleted: {:?}",
+        init_boxes
+    );
+}
