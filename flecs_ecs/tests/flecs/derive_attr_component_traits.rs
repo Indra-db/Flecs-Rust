@@ -72,9 +72,9 @@ mod component_traits_attributes {
     struct TDontFragment;
 
     // Pair-trait components (relationship, target)
-    #[derive(Component)]
-    #[flecs(traits((With, _Y)))]
-    struct TWithY;
+    // #[derive(Component)]
+    // #[flecs(traits((With, _Y)))]
+    // struct TWithY;
 
     #[derive(Component)]
     #[flecs(traits((OneOf, Group)))]
@@ -133,8 +133,8 @@ mod component_traits_attributes {
         assert!(c.has(flecs::DontFragment));
 
         // Pairs
-        let c = world.component::<TWithY>();
-        assert!(c.has((flecs::With, _Y)));
+        // let c = world.component::<TWithY>();
+        // assert!(c.has((flecs::With, _Y)));
 
         let c = world.component::<TOneOfGroup>();
         assert!(c.has((flecs::OneOf, self::Group)));

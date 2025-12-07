@@ -89,6 +89,37 @@ impl<'a, T: ComponentId> Component<'a, T> {
             _marker: PhantomData,
         }
     }
+
+    /// Register on replace hook. Needs to implement the Default constructor.
+    /// This is because 
+    pub fn on_replace<Func>(self, func: Func) -> Self
+    where
+        Func: FnMut(EntityView, &mut T, &mut T) + 'static,
+    {
+        ecs_assert!(
+            T::IMPLS_DEFAULT,
+            FlecsErrorCode::InvalidOperation,
+            "setting on_replace hook on {} requires it to implement Default.",
+            core::any::type_name::<T>()
+        );
+
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
+        ecs_assert!(
+            type_hooks.on_replace.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_replace hook already set for component {}",
+            core::any::type_name::<T>()
+        );
+
+        let binding_ctx = Self::get_binding_context(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_replace = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_replace = Some(Self::on_replace_drop::<Func>);
+        type_hooks.on_replace = Some(Self::run_replace::<Func>);
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
+        self
+    }
 }
 impl<'a, T> Component<'a, T> {
     /// Create a new component that is not marked within Rust.
@@ -246,30 +277,6 @@ impl<'a, T> Component<'a, T> {
         binding_ctx.on_set = Some(static_ref as *mut _ as *mut c_void);
         binding_ctx.free_on_set = Some(Self::on_set_drop::<Func>);
         type_hooks.on_set = Some(Self::run_set::<Func>);
-        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
-        self
-    }
-
-    /// Register on replace hook.
-    pub fn on_replace<Func>(self, func: Func) -> Self
-    where
-        Func: FnMut(EntityView, &mut T, &mut T) + 'static,
-    {
-        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
-
-        ecs_assert!(
-            type_hooks.on_replace.is_none(),
-            FlecsErrorCode::InvalidOperation,
-            "on_replace hook already set for component {}",
-            core::any::type_name::<T>()
-        );
-
-        let binding_ctx = Self::get_binding_context(&mut type_hooks);
-        let boxed_func = Box::new(func);
-        let static_ref = Box::leak(boxed_func);
-        binding_ctx.on_replace = Some(static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_on_replace = Some(Self::on_replace_drop::<Func>);
-        type_hooks.on_replace = Some(Self::run_replace::<Func>);
         unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
         self
     }

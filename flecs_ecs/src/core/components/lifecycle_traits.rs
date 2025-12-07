@@ -259,7 +259,8 @@ fn panic_copy<T>(
 }
 
 /// This is the generic move for non-trivial types
-/// It will move the memory
+/// It will move the memory and deconstruct initialized memory
+/// at the location it is moving to.
 #[extern_abi]
 fn move_dtor<T>(
     dst_ptr: *mut c_void,
@@ -278,6 +279,8 @@ fn move_dtor<T>(
         unsafe {
             let src_value = src_arr.offset(i); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
+
+            core::ptr::drop_in_place(dst_value);
 
             //memcpy the bytes of src to dest
             //src value and dest value point to the same thing

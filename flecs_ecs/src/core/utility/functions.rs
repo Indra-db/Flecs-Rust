@@ -363,24 +363,65 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
+
     unsafe {
-        if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
-            assign_helper(world, entity, value, id);
-            return;
-        }
+        if T::IMPLS_DEFAULT {
+            if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
+                assign_helper(world, entity, value, id);
+                return;
+            }
 
-        let res = sys::ecs_cpp_set(
-            world,
-            entity,
-            id,
-            &value as *const _ as *const _,
-            const { core::mem::size_of::<T>() },
-        );
+            // The reason we can't use this on types that don't implement a default
+            // constructor is because ctor is called during `ecs_cpp_set` when deferred,
+            // before the new_ptr is moved into the value.
+            // 
+            // This creates the expectation that the data must be initialized and is therefore
+            // dtor'd when moved into. This is a UB in rust for components without a ctor since
+            // the data is freed while uninitialized.
+            //
+            // For that reason, we could use `ecs_emplace_id`, but then on_replace hooks would not
+            // be registerable on any of our components.
+            //
+            // The set pipeline for default constructed components works like so if deferred:
+            // Default constructed -> Dropped -> Moved into from value 
+            // This code could be significantly more simple if ecs_emplace_id worked with `on_replace`
+            // hooks, but that will require modifications to flecs.c, so this will have to suffice for now.
+            let res = sys::ecs_cpp_set(
+                world,
+                entity,
+                id,
+                &value as *const _ as *const _,
+                const { core::mem::size_of::<T>() },
+            );
 
-        let comp = res.ptr as *mut T;
-        core::ptr::write(comp, value);
+            let comp = res.ptr as *mut T;
+            core::ptr::write(comp, value);
 
-        if res.call_modified {
+            if res.call_modified {
+                sys::ecs_modified_id(world, entity, id);
+            }
+        } else {
+            // If T does not impl default, we need to construct the data ourselves.
+            // The reason we don't do this with T::IMPLS_DEFAULT is because ecs_emplace_id
+            // does not work with on_replace hooks and will assert.
+            //
+            // This creates a requirement that any component that implements an on_replace hook
+            // must have a Default constructor.
+            let mut changed: bool = false;
+
+            let comp = sys::ecs_emplace_id(
+                world,
+                entity,
+                id,
+                const { core::mem::size_of::<T>() },
+                &mut changed,
+            ) as *mut T;
+            
+
+            if !changed {
+                core::ptr::drop_in_place(comp);
+            }
+            core::ptr::write(comp, value);
             sys::ecs_modified_id(world, entity, id);
         }
     }

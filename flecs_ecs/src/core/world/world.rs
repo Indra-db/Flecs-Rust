@@ -3,8 +3,7 @@ use core::ptr::NonNull;
 use flecs_ecs_sys as sys;
 
 use crate::core::{
-    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, ecs_os_api, flecs,
-    has_default_hook,
+    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, ecs_os_api, flecs
 };
 
 /// The `World` is the container for all ECS data. It stores the entities and
@@ -72,21 +71,11 @@ impl Default for World {
             .observer::<flecs::OnAdd, ()>()
             .with((flecs::With, flecs::Wildcard))
             .run(|mut it| {
-                let world = it.world().ptr_mut();
-                while it.next() {
-                    for _ in it.iter() {
-                        let pair_id = it.pair(0);
-                        let second_id = pair_id.second_id();
-                        let raw_second_id = **second_id;
-                        let is_not_tag = unsafe { sys::ecs_get_typeid(world, raw_second_id) != 0 };
-
-                         if is_not_tag {
-                             assert!(
-                                 has_default_hook(world, raw_second_id),
-                                 "flecs::with requires a default-constructible target or be a ZST. Implement Default for {second_id}."
-                             );
-                         }
-                    }
+                if it.next() {
+                    // Known bug in flecs that allows operating on uninitialized data in safe code using flecs::With rather trivially when using ecs_emplace_id: https://discord.com/channels/633826290415435777/939683115109072926/1439766559781294201
+                    panic!(
+                        "flecs::with is inherently unsafe as the default constructor will not be called under certain circumstances. This is a known bug within flecs."
+                    );
                 }
             });
 
