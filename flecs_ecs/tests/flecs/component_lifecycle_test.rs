@@ -1,5 +1,8 @@
 #![allow(dead_code)]
-use std::{collections::HashSet, sync::{LazyLock, Mutex}};
+use std::{
+    collections::HashSet,
+    sync::{LazyLock, Mutex},
+};
 
 use crate::common_test::*;
 
@@ -55,7 +58,6 @@ fn component_lifecycle_count_in_remove_hook() {
     assert_eq!(world.cloned::<&Count>().0, 0);
 }
 
-
 static INITIALIZED_BOXES: LazyLock<Mutex<HashSet<String>>> =
     LazyLock::new(|| Mutex::new(HashSet::new()));
 
@@ -100,14 +102,11 @@ fn component_lifecycle_drop_on_remove() {
         .set(BoxedNumber::new("Object 3"));
 
     world.defer_begin();
-    world
-        .query::<&BoxedNumber>()
-        .build()
-        .each_entity(|ent, _| {
-            ent.each_component(|e| {
-                ent.remove(e);
-            });
+    world.query::<&BoxedNumber>().build().each_entity(|ent, _| {
+        ent.each_component(|e| {
+            ent.remove(e);
         });
+    });
     world.defer_end();
 
     let init_boxes = INITIALIZED_BOXES.lock().unwrap();
@@ -123,7 +122,9 @@ fn component_lifecycle_set_singleton() {
     {
         let world = World::new();
 
-        world.component::<BoxedNumber>().add_trait::<flecs::Singleton>();
+        world
+            .component::<BoxedNumber>()
+            .add_trait::<flecs::Singleton>();
 
         world.system::<()>().run(|it| {
             let world = it.world();

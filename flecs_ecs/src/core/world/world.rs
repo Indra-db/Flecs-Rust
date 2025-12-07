@@ -3,7 +3,7 @@ use core::ptr::NonNull;
 use flecs_ecs_sys as sys;
 
 use crate::core::{
-    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, ecs_os_api, flecs
+    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, ecs_os_api, flecs,
 };
 
 /// The `World` is the container for all ECS data. It stores the entities and

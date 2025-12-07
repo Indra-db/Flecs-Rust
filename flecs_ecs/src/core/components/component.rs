@@ -91,7 +91,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     /// Register on replace hook. Needs to implement the Default constructor.
-    /// This is because 
+    /// This is because
     pub fn on_replace<Func>(self, func: Func) -> Self
     where
         Func: FnMut(EntityView, &mut T, &mut T) + 'static,

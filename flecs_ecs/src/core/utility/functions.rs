@@ -363,7 +363,6 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
-
     unsafe {
         if T::IMPLS_DEFAULT {
             if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
@@ -374,7 +373,7 @@ pub(crate) fn set_helper<T: ComponentId>(
             // The reason we can't use this on types that don't implement a default
             // constructor is because ctor is called during `ecs_cpp_set` when deferred,
             // before the new_ptr is moved into the value.
-            // 
+            //
             // This creates the expectation that the data must be initialized and is therefore
             // dtor'd when moved into. This is a UB in rust for components without a ctor since
             // the data is freed while uninitialized.
@@ -393,7 +392,7 @@ pub(crate) fn set_helper<T: ComponentId>(
 
             let comp = res.ptr as *mut T;
             // The set pipeline for default constructed components works like so:
-            // Default constructed -> Dropped -> Moved into from value 
+            // Default constructed -> Dropped -> Moved into from value
             // Default construction happens in sys::ecs_cpp_set.
             core::ptr::drop_in_place(comp);
             core::ptr::write(comp, value);
@@ -413,7 +412,6 @@ pub(crate) fn set_helper<T: ComponentId>(
                 const { core::mem::size_of::<T>() },
                 &mut changed,
             ) as *mut T;
-            
 
             if !changed {
                 core::ptr::drop_in_place(comp);
