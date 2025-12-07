@@ -136,5 +136,4 @@ flecs_base = [
 # Default features
 default = [
     "flecs_meta_c",
-    "regenerate_binding",
 ]
