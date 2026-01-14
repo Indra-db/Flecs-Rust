@@ -39,7 +39,7 @@ impl World {
         let symbol_name = core::any::type_name::<T>();
         let symbol = compact_str::format_compact!("{}\0", symbol_name);
         let m =
-            unsafe { sys::ecs_lookup_symbol(raw_world, symbol.as_ptr() as *const i8, true, false) };
+            unsafe { sys::ecs_lookup_symbol(raw_world, symbol.as_ptr() as *const std::ffi::c_char, true, false) };
         let module = if T::is_registered_with_world(self) && m != 0 {
             self.component::<T>().entity
         } else {
