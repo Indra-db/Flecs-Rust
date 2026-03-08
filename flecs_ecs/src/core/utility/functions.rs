@@ -336,6 +336,186 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
     (row & sys::ECS_ROW_MASK) as i32
 }
 
+pub(crate) fn set_helper<T: ComponentId>(
+    world: *mut sys::ecs_world_t,
+    entity: u64,
+    value: T,
+    id: u64,
+) {
+    const {
+        assert!(
+            core::mem::size_of::<T>() != 0,
+            "cannot set zero-sized-type / tag components"
+        );
+    };
+
+    //let mut is_new = false;
+    unsafe {
+        if sys::ecs_is_deferred(world) {
+            if T::NEEDS_DROP {
+                //when it has the component, we know it won't panic using set and impl drop.
+                if sys::ecs_has_id(world, entity, id) {
+                    assign_helper(world, entity, value, id);
+                    return;
+                }
+
+                let res = sys::ecs_cpp_set(
+                    world,
+                    entity,
+                    id,
+                    &value as *const _ as *const _,
+                    const { core::mem::size_of::<T>() },
+                );
+
+                let comp = res.ptr as *mut T;
+
+                if T::IMPLS_DEFAULT {
+                    core::ptr::drop_in_place(comp);
+                }
+
+                core::ptr::write(comp, value);
+
+                if res.call_modified {
+                    sys::ecs_modified_id(world, entity, id);
+                }
+            } else {
+                let res = sys::ecs_cpp_set(
+                    world,
+                    entity,
+                    id,
+                    &value as *const _ as *const _,
+                    const { core::mem::size_of::<T>() },
+                );
+
+                let comp = res.ptr as *mut T;
+
+                if T::IMPLS_DEFAULT {
+                    core::ptr::drop_in_place(comp);
+                }
+
+                core::ptr::write(comp, value);
+
+                if res.call_modified {
+                    sys::ecs_modified_id(world, entity, id);
+                }
+            }
+        } else
+        /* not deferred */
+        {
+            if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
+                assign_helper(world, entity, value, id);
+                return;
+            }
+
+            let res = sys::ecs_cpp_set(
+                world,
+                entity,
+                id,
+                &value as *const _ as *const _,
+                const { core::mem::size_of::<T>() },
+            );
+
+            let comp = res.ptr as *mut T;
+            if T::IMPLS_DEFAULT {
+                core::ptr::drop_in_place(comp);
+            }
+            core::ptr::write(comp, value);
+
+            if res.call_modified {
+                sys::ecs_modified_id(world, entity, id);
+            }
+        }
+    }
+}
+
+pub(crate) fn set_helper3<T: ComponentId>(
+    world: *mut sys::ecs_world_t,
+    entity: u64,
+    value: T,
+    id: u64,
+) {
+    const {
+        assert!(
+            core::mem::size_of::<T>() != 0,
+            "cannot set zero-sized-type / tag components"
+        );
+    };
+
+    let mut is_new = false;
+    unsafe {
+        if sys::ecs_is_deferred(world) {
+            if T::NEEDS_DROP {
+                if T::IMPLS_DEFAULT {
+                    //use set batching //faster performance, no panic possible
+                    let comp =
+                        sys::ecs_ensure_id(world, entity, id, const { core::mem::size_of::<T>() })
+                            as *mut T;
+                    //SAFETY: ecs_ensure_modified_id will default initialize the component
+                    core::ptr::drop_in_place(comp);
+                    core::ptr::write(comp, value);
+                    sys::ecs_modified_id(world, entity, id);
+                } else {
+                    //when it has the component, we know it won't panic using set and impl drop.
+                    if sys::ecs_has_id(world, entity, id) {
+                        //use set batching //faster performance, no panic possible since it's already present
+                        let comp = sys::ecs_ensure_id(
+                            world,
+                            entity,
+                            id,
+                            const { core::mem::size_of::<T>() },
+                        ) as *mut T;
+                        //SAFETY: ecs_ensure_modified_id will default initialize the component
+                        core::ptr::drop_in_place(comp);
+                        core::ptr::write(comp, value);
+                        sys::ecs_modified_id(world, entity, id);
+                        return;
+                    }
+
+                    // if does not impl default or not have the id
+                    // use insert //slower performance
+                    let ptr = sys::ecs_emplace_id(
+                        world,
+                        entity,
+                        id,
+                        const { core::mem::size_of::<T>() },
+                        &mut is_new,
+                    ) as *mut T;
+
+                    if !is_new {
+                        core::ptr::drop_in_place(ptr);
+                    }
+                    core::ptr::write(ptr, value);
+                    sys::ecs_modified_id(world, entity, id);
+                }
+            } else {
+                //if not needs drop, use set batching, faster performance
+                let comp =
+                    sys::ecs_ensure_id(world, entity, id, const { core::mem::size_of::<T>() })
+                        as *mut T;
+                core::ptr::drop_in_place(comp);
+                core::ptr::write(comp, value);
+                sys::ecs_modified_id(world, entity, id);
+            }
+        } else
+        /* not deferred */
+        {
+            let ptr = sys::ecs_emplace_id(
+                world,
+                entity,
+                id,
+                const { core::mem::size_of::<T>() },
+                &mut is_new,
+            ) as *mut T;
+
+            if !is_new {
+                core::ptr::drop_in_place(ptr);
+            }
+            core::ptr::write(ptr, value);
+            sys::ecs_modified_id(world, entity, id);
+        }
+    }
+}
+
 /// Internal helper function to set a component for an entity.
 ///
 /// This function sets the given value for an entity in the ECS world, ensuring
@@ -350,7 +530,7 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
 /// * `entity`: The ID of the entity.
 /// * `value`: The value to set for the component.
 /// * `id`: The ID of the component type.
-pub(crate) fn set_helper<T: ComponentId>(
+pub(crate) fn set_helper2<T: ComponentId>(
     world: *mut sys::ecs_world_t,
     entity: u64,
     value: T,
