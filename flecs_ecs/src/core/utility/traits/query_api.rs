@@ -1767,7 +1767,7 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
     for (i, id) in ids.iter().enumerate().take(terms_count as usize) {
         let term = unsafe { &*terms.add(i) };
         if *id == 0 {
-            match term.inout as u32 {
+            match term.inout as sys::ecs_inout_kind_t {
                 sys::ecs_inout_kind_t_EcsIn => {
                     read_write.variable_reads.push(i as u8);
                 }
@@ -1780,7 +1780,7 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
             continue;
         }
 
-        match term.inout as u32 {
+        match term.inout as sys::ecs_inout_kind_t {
             sys::ecs_inout_kind_t_EcsIn => {
                 read_write.read_ids.push(term.id);
             }
