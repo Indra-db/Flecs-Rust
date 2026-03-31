@@ -132,24 +132,6 @@ pub fn register_partial_eq_panic_lifecycle_action<T>(type_hooks: &mut sys::ecs_t
 /// * `_type_info` - type info for the type to be initialized
 #[extern_abi]
 fn ctor<T: Default>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[CTOR] type: {}, count: {}, ptr: {:?}",
-        type_name, count, ptr
-    );
-
     // tags and types with size 0 don't need to be initialized
     let size = const { core::mem::size_of::<T>() };
     if size == 0 {
@@ -179,24 +161,6 @@ fn ctor<T: Default>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_ty
 /// * `_type_info` - type info for the type to be destructed
 #[extern_abi]
 fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[DTOR] type: {}, count: {}, ptr: {:?}",
-        type_name, count, ptr
-    );
-
     let size = const { core::mem::size_of::<T>() };
     if size == 0 {
         let arr = ptr as *mut u8; // tags with drop are (usually) modules with size 1 and alignment 1 
@@ -231,24 +195,6 @@ fn copy<T: Clone>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[COPY] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -275,24 +221,6 @@ fn copy_ctor<T: Clone>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[COPY_CTOR] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -339,24 +267,6 @@ fn move_dtor<T>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[MOVE_DTOR] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -366,14 +276,6 @@ fn move_dtor<T>(
     for i in 0..count as isize {
         //this is safe because C manages the memory and we are just moving the internal data around
         unsafe {
-            println!(
-                "Moving element {} of type {} from {:p} to {:p}",
-                i,
-                type_name,
-                src_arr.offset(i),
-                dst_arr.offset(i)
-            );
-
             let src_value = src_arr.offset(i); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
 
@@ -395,24 +297,6 @@ fn move_dtor_impls_default<T: Default>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[MOVE_DTOR_IMPLS_DEFAULT] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -442,24 +326,6 @@ fn move_ctor<T>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[MOVE_CTOR] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -485,24 +351,6 @@ fn ctor_move_dtor<T: 'static>(
     count: i32,
     _type_info: *const sys::ecs_type_info_t,
 ) {
-    let type_name = if !_type_info.is_null() {
-        unsafe {
-            let name_ptr = (*_type_info).name;
-            if !name_ptr.is_null() {
-                core::ffi::CStr::from_ptr(name_ptr).to_string_lossy()
-            } else {
-                core::any::type_name::<T>().into()
-            }
-        }
-    } else {
-        core::any::type_name::<T>().into()
-    };
-
-    println!(
-        "[CTOR_MOVE_DTOR] type: {}, count: {}, src: {:?}, dst: {:?}",
-        type_name, count, src_ptr, dst_ptr
-    );
-
     ecs_assert!(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
@@ -515,14 +363,6 @@ fn ctor_move_dtor<T: 'static>(
         //this is safe because src will not get dropped and dst will get dropped
 
         unsafe {
-            println!(
-                "   --> Moving element {} of type {} from {:p} to {:p}",
-                i,
-                type_name,
-                src_arr.offset(i),
-                dst_arr.offset(i)
-            );
-
             // memcpy the bytes from src to dst
             core::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);
         }

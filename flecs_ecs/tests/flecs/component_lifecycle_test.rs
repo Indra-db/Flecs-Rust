@@ -1,5 +1,6 @@
 //#![allow(dead_code)]
 #![deny(dead_code)]
+#![allow(clippy::std_instead_of_alloc)]
 use crate::common_test::*;
 
 #[test]
@@ -109,77 +110,77 @@ fn main_component_lifecycle() {
     set_multiple_hooks();
 }
 
-static POD_CTOR_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-static POD_CLONE_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-static POD_DROP_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+static POD_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static POD_CLONE_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static POD_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 
-static STRUCT_W_STRING_CTOR_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_STRING_CLONE_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_STRING_DROP_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_STRING_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_STRING_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_STRING_DROP_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
 
-static STRUCT_W_VECTOR_CTOR_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_VECTOR_CLONE_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_VECTOR_DROP_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_VECTOR_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_VECTOR_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static STRUCT_W_VECTOR_DROP_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
 
-static NO_COPY_CTOR_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-static NO_COPY_DROP_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+static NO_COPY_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static NO_COPY_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 
-static NO_DEFAULT_CTOR_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_CLONE_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_DROP_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 
-static NO_DEFAULT_INVOKED_CTOR_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_INVOKED_CLONE_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_INVOKED_DROP_INVOKED: std::sync::atomic::AtomicI32 =
-    std::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_INVOKED_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_INVOKED_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_INVOKED_DROP_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
 
 fn reset_pod_counters() {
-    POD_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    POD_CLONE_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    POD_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    POD_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    POD_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    POD_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 fn reset_struct_w_string_counters() {
-    STRUCT_W_STRING_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_STRING_CLONE_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_STRING_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_STRING_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_STRING_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_STRING_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 
 fn reset_struct_w_vector_counters() {
-    STRUCT_W_VECTOR_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_VECTOR_CLONE_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_VECTOR_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_VECTOR_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_VECTOR_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_VECTOR_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 
 fn reset_no_copy_counters() {
-    NO_COPY_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    NO_COPY_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    NO_COPY_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_COPY_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 
 fn reset_no_default_counters() {
-    NO_DEFAULT_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_CLONE_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 
 fn reset_count_no_default_counters() {
-    NO_DEFAULT_INVOKED_CTOR_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_INVOKED_CLONE_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_INVOKED_DROP_INVOKED.store(0, std::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_INVOKED_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_INVOKED_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_INVOKED_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
 }
 
 #[track_caller]
 fn test_pod_ctor(value: i32) {
     assert_eq!(
-        POD_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        POD_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "constructed count mismatch pod"
     );
@@ -188,7 +189,7 @@ fn test_pod_ctor(value: i32) {
 #[track_caller]
 fn test_pod_clone(value: i32) {
     assert_eq!(
-        POD_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        POD_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "cloned count mismatch pod"
     );
@@ -197,7 +198,7 @@ fn test_pod_clone(value: i32) {
 #[track_caller]
 fn test_pod_drop(value: i32) {
     assert_eq!(
-        POD_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        POD_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "dropped count mismatch pod"
     );
@@ -206,7 +207,7 @@ fn test_pod_drop(value: i32) {
 #[track_caller]
 fn test_string_ctor(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_STRING_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "constructed count mismatch struct w/ string"
     );
@@ -215,7 +216,7 @@ fn test_string_ctor(value: i32) {
 #[track_caller]
 fn test_string_clone(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_STRING_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "cloned count mismatch struct w/ string"
     );
@@ -224,7 +225,7 @@ fn test_string_clone(value: i32) {
 #[track_caller]
 fn test_string_drop(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_STRING_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "dropped count mismatch struct w/ string"
     );
@@ -233,7 +234,7 @@ fn test_string_drop(value: i32) {
 #[track_caller]
 fn test_vector_ctor(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_VECTOR_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "constructed count mismatch struct w/ vector"
     );
@@ -242,7 +243,7 @@ fn test_vector_ctor(value: i32) {
 #[track_caller]
 fn test_vector_clone(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_VECTOR_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "cloned count mismatch struct w/ vector"
     );
@@ -251,7 +252,7 @@ fn test_vector_clone(value: i32) {
 #[track_caller]
 fn test_vector_drop(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        STRUCT_W_VECTOR_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "dropped count mismatch struct w/ vector"
     );
@@ -260,7 +261,7 @@ fn test_vector_drop(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_ctor(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "constructed count mismatch no_default_invoked"
     );
@@ -269,7 +270,7 @@ fn test_no_default_invoked_ctor(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_clone(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "cloned count mismatch no_default_invoked"
     );
@@ -278,7 +279,7 @@ fn test_no_default_invoked_clone(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_drop(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_INVOKED_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "dropped count mismatch no_default_invoked"
     );
@@ -287,7 +288,7 @@ fn test_no_default_invoked_drop(value: i32) {
 #[track_caller]
 fn test_no_default_ctor(value: i32) {
     assert_eq!(
-        NO_DEFAULT_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "constructed count mismatch no_default"
     );
@@ -296,7 +297,7 @@ fn test_no_default_ctor(value: i32) {
 #[track_caller]
 fn test_no_default_clone(value: i32) {
     assert_eq!(
-        NO_DEFAULT_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "cloned count mismatch no_default"
     );
@@ -305,7 +306,7 @@ fn test_no_default_clone(value: i32) {
 #[track_caller]
 fn test_no_default_drop(value: i32) {
     assert_eq!(
-        NO_DEFAULT_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst),
+        NO_DEFAULT_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
         value,
         "dropped count mismatch no_default"
     );
@@ -317,9 +318,9 @@ struct WorldGuard {
 
 #[track_caller]
 fn assert_lifecycle_counts() {
-    let ctor_count = POD_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let clone_count = POD_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let drop_count = POD_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+    let ctor_count = POD_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let clone_count = POD_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let drop_count = POD_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
     assert_eq!(
         ctor_count + clone_count,
         drop_count,
@@ -329,9 +330,9 @@ fn assert_lifecycle_counts() {
         drop_count
     );
 
-    let str_ctor_count = STRUCT_W_STRING_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let str_clone_count = STRUCT_W_STRING_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let str_drop_count = STRUCT_W_STRING_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+    let str_ctor_count = STRUCT_W_STRING_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let str_clone_count = STRUCT_W_STRING_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let str_drop_count = STRUCT_W_STRING_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
     assert_eq!(
         str_ctor_count + str_clone_count,
         str_drop_count,
@@ -341,9 +342,9 @@ fn assert_lifecycle_counts() {
         str_drop_count
     );
 
-    let vec_ctor_count = STRUCT_W_VECTOR_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let vec_clone_count = STRUCT_W_VECTOR_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let vec_drop_count = STRUCT_W_VECTOR_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+    let vec_ctor_count = STRUCT_W_VECTOR_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let vec_clone_count = STRUCT_W_VECTOR_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let vec_drop_count = STRUCT_W_VECTOR_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
 
     assert_eq!(
         vec_ctor_count + vec_clone_count,
@@ -354,8 +355,8 @@ fn assert_lifecycle_counts() {
         vec_drop_count
     );
 
-    let no_copy_ctor_count = NO_COPY_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let no_copy_drop_count = NO_COPY_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+    let no_copy_ctor_count = NO_COPY_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let no_copy_drop_count = NO_COPY_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
 
     assert_eq!(
         no_copy_ctor_count, no_copy_drop_count,
@@ -363,9 +364,9 @@ fn assert_lifecycle_counts() {
         no_copy_ctor_count, no_copy_drop_count
     );
 
-    let no_default_ctor_count = NO_DEFAULT_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let no_default_clone_count = NO_DEFAULT_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
-    let no_default_drop_count = NO_DEFAULT_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+    let no_default_ctor_count = NO_DEFAULT_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let no_default_clone_count = NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let no_default_drop_count = NO_DEFAULT_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
 
     assert_eq!(
         no_default_ctor_count + no_default_clone_count,
@@ -377,11 +378,11 @@ fn assert_lifecycle_counts() {
     );
 
     let count_no_default_ctor_count =
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
     let count_no_default_clone_count =
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
     let count_no_default_drop_count =
-        NO_DEFAULT_INVOKED_DROP_INVOKED.load(std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
 
     assert_eq!(
         count_no_default_ctor_count + count_no_default_clone_count,
@@ -403,7 +404,7 @@ impl Drop for WorldGuard {
     }
 }
 
-impl std::ops::Deref for WorldGuard {
+impl core::ops::Deref for WorldGuard {
     type Target = World;
 
     fn deref(&self) -> &Self::Target {
@@ -430,7 +431,7 @@ pub struct PodDefaultCloneDrop {
 
 impl Default for PodDefaultCloneDrop {
     fn default() -> Self {
-        POD_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        POD_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         PodDefaultCloneDrop { value: 10 }
     }
 }
@@ -438,21 +439,21 @@ impl Default for PodDefaultCloneDrop {
 impl PodDefaultCloneDrop {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        POD_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        POD_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         PodDefaultCloneDrop { value }
     }
 }
 
 impl Clone for PodDefaultCloneDrop {
     fn clone(&self) -> Self {
-        POD_CLONE_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        POD_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         PodDefaultCloneDrop { value: self.value }
     }
 }
 
 impl Drop for PodDefaultCloneDrop {
     fn drop(&mut self) {
-        POD_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        POD_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -463,7 +464,7 @@ pub struct StructWithString {
 
 impl StructWithString {
     pub fn new(value: &str) -> Self {
-        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithString {
             value: value.to_string(),
         }
@@ -472,7 +473,7 @@ impl StructWithString {
 
 impl Default for StructWithString {
     fn default() -> Self {
-        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithString {
             value: String::new(),
         }
@@ -481,7 +482,7 @@ impl Default for StructWithString {
 
 impl Clone for StructWithString {
     fn clone(&self) -> Self {
-        STRUCT_W_STRING_CLONE_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_STRING_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithString {
             value: self.value.clone(),
         }
@@ -490,7 +491,7 @@ impl Clone for StructWithString {
 
 impl Drop for StructWithString {
     fn drop(&mut self) {
-        STRUCT_W_STRING_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_STRING_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -501,7 +502,7 @@ pub struct StructWithVector {
 
 impl StructWithVector {
     pub fn new(value: &[i32]) -> Self {
-        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithVector {
             value: value.to_vec(),
         }
@@ -510,7 +511,7 @@ impl StructWithVector {
 
 impl Default for StructWithVector {
     fn default() -> Self {
-        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithVector {
             value: Vec::default(),
         }
@@ -519,7 +520,7 @@ impl Default for StructWithVector {
 
 impl Clone for StructWithVector {
     fn clone(&self) -> Self {
-        STRUCT_W_VECTOR_CLONE_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_VECTOR_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         StructWithVector {
             value: self.value.clone(),
         }
@@ -528,7 +529,7 @@ impl Clone for StructWithVector {
 
 impl Drop for StructWithVector {
     fn drop(&mut self) {
-        STRUCT_W_VECTOR_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_VECTOR_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -540,7 +541,7 @@ pub struct NoCopy {
 
 impl Default for NoCopy {
     fn default() -> Self {
-        NO_COPY_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_COPY_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoCopy { value: 10 }
     }
 }
@@ -548,14 +549,14 @@ impl Default for NoCopy {
 impl NoCopy {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        NO_COPY_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_COPY_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoCopy { value }
     }
 }
 
 impl Drop for NoCopy {
     fn drop(&mut self) {
-        NO_COPY_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_COPY_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -568,25 +569,23 @@ pub struct NoDefault {
 impl NoDefault {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        println!("no default ctor invoked");
-        NO_DEFAULT_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoDefault { value }
     }
 }
 
 impl Clone for NoDefault {
     fn clone(&self) -> Self {
-        NO_DEFAULT_CLONE_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoDefault {
-            value: self.value.clone(),
+            value: self.value,
         }
     }
 }
 
 impl Drop for NoDefault {
     fn drop(&mut self) {
-        println!("no default drop invoked");
-        NO_DEFAULT_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -599,23 +598,23 @@ pub struct NoDefaultInvoked {
 impl NoDefaultInvoked {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoDefaultInvoked { value }
     }
 }
 
 impl Clone for NoDefaultInvoked {
     fn clone(&self) -> Self {
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
         NoDefaultInvoked {
-            value: self.value.clone(),
+            value: self.value,
         }
     }
 }
 
 impl Drop for NoDefaultInvoked {
     fn drop(&mut self) {
-        NO_DEFAULT_INVOKED_DROP_INVOKED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
     }
 }
 
@@ -806,8 +805,6 @@ fn copy_on_override() {
 }
 
 ///////
-///
-///
 fn drop_on_remove() {
     let world = world_new();
 
@@ -1429,14 +1426,12 @@ fn no_default_set_deferred() {
     test_no_default_ctor(1);
     test_no_default_clone(0);
     test_no_default_drop(0);
-    println!("defer ended");
     world.defer_end();
     world.entity().set(NoDefault::new(1));
     //try_set::<NoDefault>(&world, NoDefault::new(1));
     test_no_default_ctor(2);
     test_no_default_clone(0);
     test_no_default_drop(0);
-    println!("world end");
 }
 
 fn set_pod_singleton() {
@@ -1687,7 +1682,7 @@ fn on_add_hook_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().on_add(move |e, _| {
@@ -1717,7 +1712,7 @@ fn on_remove_hook_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().on_remove(move |e, _| {
@@ -1750,7 +1745,7 @@ fn on_set_hook_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().on_set(move |e, _| {
@@ -1860,7 +1855,7 @@ fn on_add_hook_sparse_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().add_trait::<flecs::Sparse>();
@@ -1891,7 +1886,7 @@ fn on_remove_hook_sparse_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().add_trait::<flecs::Sparse>();
@@ -1925,7 +1920,7 @@ fn on_set_hook_sparse_w_entity() {
 
     world.set(Count(0));
 
-    let e_arg = std::rc::Rc::new(std::cell::Cell::new(0u64));
+    let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
     world.component::<Position>().add_trait::<flecs::Sparse>();
@@ -1959,9 +1954,9 @@ fn on_set_hook_sparse_w_entity() {
 fn chained_hooks() {
     let world = World::new();
 
-    let add_count = std::rc::Rc::new(std::cell::Cell::new(0i32));
-    let remove_count = std::rc::Rc::new(std::cell::Cell::new(0i32));
-    let set_count = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let add_count = std::rc::Rc::new(core::cell::Cell::new(0i32));
+    let remove_count = std::rc::Rc::new(core::cell::Cell::new(0i32));
+    let set_count = std::rc::Rc::new(core::cell::Cell::new(0i32));
 
     let add_count_clone = add_count.clone();
     let remove_count_clone = remove_count.clone();
@@ -2077,7 +2072,7 @@ fn set_w_on_add() {
 
     let e1 = world.entity();
 
-    let on_add = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let on_add = std::rc::Rc::new(core::cell::Cell::new(0i32));
     let on_add_clone = on_add.clone();
     let e1_id = *e1.id();
 
@@ -2095,7 +2090,7 @@ fn set_w_on_add_existing() {
 
     let e1 = world.entity().add(Velocity::id());
 
-    let on_add = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let on_add = std::rc::Rc::new(core::cell::Cell::new(0i32));
     let on_add_clone = on_add.clone();
     let e1_id = *e1.id();
 
@@ -2115,7 +2110,7 @@ fn set_pair_no_copy() {
 
     e.get::<&(NoCopy, Tag)>(|no_copy| {
         assert_eq!(no_copy.value, 100);
-    })
+    });
 }
 
 fn set_pair_w_entity_no_copy() {
@@ -2317,11 +2312,11 @@ fn sparse_component() {
 fn count_in_add_hook() {
     let world = World::new();
 
-    let count = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let count = std::rc::Rc::new(core::cell::Cell::new(0i32));
     let count_clone = count.clone();
 
     world.component::<Position>().on_add(move |e, _| {
-        count_clone.set(e.world().count(Position::id()) as i32);
+        count_clone.set(e.world().count(Position::id()));
     });
 
     world.entity().set(Position { x: 1, y: 2 });
@@ -2338,11 +2333,11 @@ fn count_in_add_hook() {
 fn count_in_remove_hook() {
     let world = World::new();
 
-    let count = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let count = std::rc::Rc::new(core::cell::Cell::new(0i32));
     let count_clone = count.clone();
 
     world.component::<Position>().on_remove(move |e, _| {
-        count_clone.set(e.world().count(Position::id()) as i32);
+        count_clone.set(e.world().count(Position::id()));
     });
 
     let ent = world.entity().set(Position { x: 1, y: 2 });
@@ -2364,9 +2359,9 @@ fn set_multiple_hooks() {
 
     let pod = world.component::<PodDefaultCloneDrop>();
 
-    let adds = std::rc::Rc::new(std::cell::Cell::new(0i32));
-    let sets = std::rc::Rc::new(std::cell::Cell::new(0i32));
-    let removes = std::rc::Rc::new(std::cell::Cell::new(0i32));
+    let adds = std::rc::Rc::new(core::cell::Cell::new(0i32));
+    let sets = std::rc::Rc::new(core::cell::Cell::new(0i32));
+    let removes = std::rc::Rc::new(core::cell::Cell::new(0i32));
 
     let adds_clone = adds.clone();
     let sets_clone = sets.clone();
@@ -2400,13 +2395,7 @@ fn on_replace_hook() {
 
     world.set(Count(0));
 
-    world.component::<Position>().on_replace(|e, t1, t2| {
-        println!(
-            "on_replace called for entity {:?}, from {:?} to {:?}",
-            e.id(),
-            t1,
-            t2
-        );
+    world.component::<Position>().on_replace(|e, _t1, _t2| {
         e.world().get::<&mut Count>(|count| {
             count.0 += 1;
         });

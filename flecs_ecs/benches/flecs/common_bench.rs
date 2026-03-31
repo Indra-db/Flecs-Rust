@@ -450,7 +450,7 @@ macro_rules! bench_create_delete_entity {
                         }
                     }
                     let elapsed = start.elapsed();
-                    elapsed / (2 + (($end - $start + 1)) * $entity_count) //time average per entity operation
+                    elapsed / (2 + ($end - $start + 1) * $entity_count) //time average per entity operation
                 });
             });
         }};
@@ -480,7 +480,7 @@ macro_rules! bench_create_delete_entity_cmd {
                         world.defer_end();
                     }
                     let elapsed = start.elapsed();
-                    elapsed / (2 + (($end - $start + 1)) * $entity_count) //time average per entity operation
+                    elapsed / (2 + ($end - $start + 1) * $entity_count) //time average per entity operation
                 });
             });
         }};

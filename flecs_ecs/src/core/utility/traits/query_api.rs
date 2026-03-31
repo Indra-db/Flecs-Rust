@@ -671,9 +671,12 @@ where
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(__internal_query_execute_each_from_run::<T, FuncEach> as ExternIterFn);
-        internal_run::<P>(&mut iter, &mut func, self.world());
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        internal_run::<P>(&mut iter, &mut func, self.world()); 
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Run iterator with each entity forwarding.
@@ -763,8 +766,11 @@ where
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
@@ -822,8 +828,11 @@ where
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Get the entity of the current query
