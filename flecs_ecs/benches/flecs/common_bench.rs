@@ -271,7 +271,7 @@ macro_rules! set_components_inheritable {
     }};
 }
 
-macro_rules! set_components_togglable {
+macro_rules! set_components_toggleable {
     ($world:expr, $component:ty, $start:expr, $end:expr) => {{
         seq!(P in $start..=$end {
             $world.component::<$component~P>().add_trait::<flecs::CanToggle>();
@@ -450,7 +450,7 @@ macro_rules! bench_create_delete_entity {
                         }
                     }
                     let elapsed = start.elapsed();
-                    elapsed / (2 + (($end - $start + 1)) * $entity_count) //time average per entity operation
+                    elapsed / (2 + ($end - $start + 1) * $entity_count) //time average per entity operation
                 });
             });
         }};
@@ -480,7 +480,7 @@ macro_rules! bench_create_delete_entity_cmd {
                         world.defer_end();
                     }
                     let elapsed = start.elapsed();
-                    elapsed / (2 + (($end - $start + 1)) * $entity_count) //time average per entity operation
+                    elapsed / (2 + ($end - $start + 1) * $entity_count) //time average per entity operation
                 });
             });
         }};
@@ -601,5 +601,5 @@ pub(crate) use set_component_range_cmd;
 pub(crate) use set_components_dont_fragment;
 pub(crate) use set_components_inheritable;
 pub(crate) use set_components_sparse;
-pub(crate) use set_components_togglable;
+pub(crate) use set_components_toggleable;
 pub(crate) use vec_of_ids;

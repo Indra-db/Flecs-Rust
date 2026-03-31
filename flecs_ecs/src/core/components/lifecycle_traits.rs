@@ -70,10 +70,10 @@ pub(crate) unsafe fn register_panic_hooks_free_ctx(ctx: *mut c_void) {
     let _box = unsafe { Box::from_raw(ctx as *mut RegistersPanicHooks) };
 }
 
-pub fn register_lifecycle_actions<T>(type_hooks: &mut sys::ecs_type_hooks_t) {
+pub fn register_lifecycle_actions<T: 'static>(type_hooks: &mut sys::ecs_type_hooks_t) {
     //type_hooks.ctor = Some(ctor::<T>);
     type_hooks.dtor = Some(dtor::<T>);
-    type_hooks.move_dtor = Some(move_dtor::<T>); //same implementation as ctor_move_dtor
+    type_hooks.move_dtor = Some(move_dtor::<T>);
 
     //type_hooks.move_ctor = Some(move_ctor::<T>);
     type_hooks.ctor_move_dtor = Some(ctor_move_dtor::<T>);
@@ -279,6 +279,8 @@ fn move_dtor<T>(
             let src_value = src_arr.offset(i); //get value of src
             let dst_value = dst_arr.offset(i); // get ptr to dest
 
+            core::ptr::drop_in_place(dst_value); //calls destructor on dest
+
             //memcpy the bytes of src to dest
             //src value and dest value point to the same thing
             core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
@@ -338,9 +340,12 @@ fn move_ctor<T>(
         }
     }
 }
+pub static INITIALIZED_BOXES: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashSet<String>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashSet::new()));
 
 #[extern_abi]
-fn ctor_move_dtor<T>(
+fn ctor_move_dtor<T: 'static>(
     dst_ptr: *mut c_void,
     src_ptr: *mut c_void,
     count: i32,
@@ -350,10 +355,13 @@ fn ctor_move_dtor<T>(
         check_type_info::<T>(_type_info),
         FlecsErrorCode::InternalError
     );
+
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *mut T;
+
     for i in 0..count as isize {
         //this is safe because src will not get dropped and dst will get dropped
+
         unsafe {
             // memcpy the bytes from src to dst
             core::ptr::copy_nonoverlapping(src_arr.offset(i), dst_arr.offset(i), 1);

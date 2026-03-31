@@ -672,8 +672,11 @@ where
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(__internal_query_execute_each_from_run::<T, FuncEach> as ExternIterFn);
         internal_run::<P>(&mut iter, &mut func, self.world());
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Run iterator with each entity forwarding.
@@ -763,8 +766,11 @@ where
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Each iterator. This variant of `each` provides access to the [`TableIter`] object,
@@ -822,8 +828,11 @@ where
         let mut iter_t = unsafe { TableIter::new(&mut iter, world) };
         iter_t.iter_mut().flags &= !sys::EcsIterIsValid;
         func(iter_t);
-        iter.callback = None;
-        iter.callback_ctx = core::ptr::null_mut();
+        #[allow(unused_assignments)]
+        {
+            iter.callback = None;
+            iter.callback_ctx = core::ptr::null_mut();
+        }
     }
 
     /// Get the entity of the current query
@@ -1758,7 +1767,7 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
     for (i, id) in ids.iter().enumerate().take(terms_count as usize) {
         let term = unsafe { &*terms.add(i) };
         if *id == 0 {
-            match term.inout as u32 {
+            match term.inout as sys::ecs_inout_kind_t {
                 sys::ecs_inout_kind_t_EcsIn => {
                     read_write.variable_reads.push(i as u8);
                 }
@@ -1771,7 +1780,7 @@ fn _determine_ids_plus_indices_for_wildcard_terms(
             continue;
         }
 
-        match term.inout as u32 {
+        match term.inout as sys::ecs_inout_kind_t {
             sys::ecs_inout_kind_t_EcsIn => {
                 read_write.read_ids.push(term.id);
             }

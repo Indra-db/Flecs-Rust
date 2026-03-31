@@ -27,6 +27,7 @@ impl<'a> EntityView<'a> {
         let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
+        //TODO: seems like add(T::id(),e) is not triggering compiler error, but does runtime check
         const {
             if T::IS_PAIR
                 && T::IS_TYPED

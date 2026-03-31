@@ -336,20 +336,6 @@ pub fn ecs_record_to_row(row: u32) -> i32 {
     (row & sys::ECS_ROW_MASK) as i32
 }
 
-/// Internal helper function to set a component for an entity.
-///
-/// This function sets the given value for an entity in the ECS world, ensuring
-/// that the type of the component is valid.
-///
-/// # Type Parameters
-///
-/// * `T`: The type of the component data. Must implement `ComponentId`.
-///
-/// # Arguments
-///
-/// * `entity`: The ID of the entity.
-/// * `value`: The value to set for the component.
-/// * `id`: The ID of the component type.
 pub(crate) fn set_helper<T: ComponentId>(
     world: *mut sys::ecs_world_t,
     entity: u64,
@@ -364,20 +350,23 @@ pub(crate) fn set_helper<T: ComponentId>(
     };
 
     unsafe {
-        if T::NEEDS_DROP && sys::ecs_has_id(world, entity, id) {
-            assign_helper(world, entity, value, id);
-            return;
-        }
-
-        let res = sys::ecs_cpp_set(
+        let res = sys::ecs_rust_set(
             world,
             entity,
             id,
             &value as *const _ as *const _,
             const { core::mem::size_of::<T>() },
         );
-
         let comp = res.ptr as *mut T;
+
+        if T::NEEDS_DROP && !res.is_new {
+            // Existing component: valid T in table (or deferred buffer) → must drop
+            // before overwrite. New component (is_new=true): memory is either
+            // uninitialized (non-deferred, ctor skipped) or a fresh cmd buffer
+            // (deferred) → never drop on Rust side; flush handles the rest.
+            core::ptr::drop_in_place(comp);
+        }
+
         core::ptr::write(comp, value);
 
         if res.call_modified {

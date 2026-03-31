@@ -93,7 +93,7 @@ pub(crate) fn create_entity_desc(
     entity_desc
 }
 
-pub(crate) fn external_create_type_info<T>() -> flecs_ecs_sys::ecs_type_info_t {
+pub(crate) fn external_create_type_info<T: 'static>() -> flecs_ecs_sys::ecs_type_info_t {
     let size = core::mem::size_of::<T>();
     let alignment = if size != 0 {
         core::mem::align_of::<T>()

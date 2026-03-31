@@ -390,7 +390,7 @@ fn c_query_iter_read_4(
             let ids = create_ids(&world_ref, id_count, 4, true, false, true);
 
             let mut desc: sys::ecs_query_desc_t = sys::ecs_query_desc_t {
-                cache_kind: cache_kind as u32,
+                cache_kind: cache_kind as sys::ecs_query_cache_kind_t,
                 ..Default::default()
             };
 

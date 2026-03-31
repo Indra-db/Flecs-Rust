@@ -2,7 +2,7 @@ name: CI
 
 env:
   # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
-  RUST_MIN_VER: "1.88.0"
+  RUST_MIN_VER: "1.93.0"
 
 on:
   push:
@@ -16,9 +16,9 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
-    name: cargo fmt (1.88)
+    name: cargo fmt (1.93)
     steps: 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -31,17 +31,17 @@ jobs:
     runs-on: ubuntu-latest
     name: typos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: crate-ci/typos@master
 
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test (1.88)
+        os: [macos-14, macos-15, ubuntu-22.04, windows-2022]
+    name: cargo clippy + test (1.93)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     name: cargo make hack-each-feature
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -74,12 +74,12 @@ jobs:
 
   build-ios:
     runs-on: macos-latest
-    name: cargo build + clippy (iOS, 1.88)
+    name: cargo build + clippy (iOS, 1.93)
     env:
       RUSTFLAGS: -Dwarnings
       IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -93,11 +93,11 @@ jobs:
 
   build-musl:
     runs-on: ubuntu-latest
-    name: cargo build + test (musl, 1.88)
+    name: cargo build + test (musl, 1.93)
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -115,11 +115,11 @@ jobs:
 
   build-msrv:
     runs-on: ubuntu-latest
-    name: cargo build (MSRV 1.88)
+    name: cargo build (MSRV 1.93)
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -135,7 +135,7 @@ jobs:
     env:
       RUSTDOCFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
