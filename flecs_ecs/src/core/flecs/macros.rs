@@ -1,5 +1,3 @@
-use super::*;
-
 // Macro to implement all the necessary traits for a pre-registered component struct.
 // Use this when you want to define the struct with custom documentation separately.
 macro_rules! impl_pre_registered_component {

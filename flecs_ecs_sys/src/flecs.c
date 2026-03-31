@@ -41467,7 +41467,7 @@ void flecs_table_delete(
                  * type. In such cases, we set the move_dtor as ctor_move_dtor, 
                  * which indicates a destructive move operation. This adjustment 
                  * ensures compatibility with different language bindings. */
-                if (!ti->hooks.move_ctor && ti->hooks.ctor_move_dtor) {
+                if (!destruct && !ti->hooks.move_ctor && ti->hooks.ctor_move_dtor) {
                   move_dtor = ti->hooks.ctor_move_dtor;
                 }
 
@@ -41605,8 +41605,9 @@ void flecs_table_move(
                 flecs_table_invoke_add_hooks(world, dst_table,
                     i_new, &dst_entity, dst_index, 1, construct);
             } else {
+                bool dtor = use_move_dtor || (!src_column->ti->hooks.move_ctor && src_column->ti->hooks.ctor_move_dtor);
                 flecs_table_invoke_remove_hooks(world, src_table,
-                    src_column, &src_entity, src_index, 1, use_move_dtor);
+                    src_column, &src_entity, src_index, 1, dtor);
             }
         }
 
@@ -41620,8 +41621,10 @@ void flecs_table_move(
     }
 
     for (; (i_old < src_column_count); i_old ++) {
-        flecs_table_invoke_remove_hooks(world, src_table, &src_columns[i_old], 
-            &src_entity, src_index, 1, use_move_dtor);
+        ecs_column_t *src_column = &src_columns[i_old];
+        bool dtor = use_move_dtor || (!src_column->ti->hooks.move_ctor && src_column->ti->hooks.ctor_move_dtor);
+        flecs_table_invoke_remove_hooks(world, src_table, src_column, 
+            &src_entity, src_index, 1, dtor);
     }
 
     flecs_table_check_sanity(dst_table);

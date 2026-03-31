@@ -8883,6 +8883,13 @@ unsafe extern "C-unwind" {
         type_: ecs_entity_t,
     ) -> *const ecs_member_t;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ecs_rust_set_t {
+    pub ptr: *mut ::core::ffi::c_void,
+    pub call_modified: bool,
+    pub is_new: bool,
+}
 unsafe extern "C-unwind" {
     pub fn ecs_rust_rel_count(
         world: *const ecs_world_t,
@@ -8903,6 +8910,15 @@ unsafe extern "C-unwind" {
         id: ecs_id_t,
         idr: *const ecs_component_record_t,
     ) -> *const ecs_type_info_t;
+}
+unsafe extern "C-unwind" {
+    pub fn ecs_rust_set(
+        world: *mut ecs_world_t,
+        entity: ecs_entity_t,
+        id: ecs_id_t,
+        new_ptr: *const ::core::ffi::c_void,
+        size: usize,
+    ) -> ecs_rust_set_t;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

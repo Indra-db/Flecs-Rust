@@ -1,5 +1,11 @@
 #include "flecs.h"
 
+typedef struct ecs_rust_set_t {
+    void *ptr;
+    bool call_modified;
+    bool is_new;
+} ecs_rust_set_t;
+
 FLECS_API
     int32_t ecs_rust_rel_count(
     const ecs_world_t *world,
@@ -17,3 +23,11 @@ const ecs_type_info_t* ecs_rust_get_type_info_from_record(
     const ecs_world_t *world,
     ecs_id_t id,
     const ecs_component_record_t* idr);
+
+FLECS_API
+ecs_rust_set_t ecs_rust_set(
+    ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id,
+    const void *new_ptr,
+    size_t size);

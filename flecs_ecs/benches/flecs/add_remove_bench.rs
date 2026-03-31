@@ -209,7 +209,7 @@ pub fn toggle_component(criterion: &mut Criterion) {
         group,
         "toggle_tags_16",
         ENTITY_COUNT
-        ; (set_components_togglable, (T,1,16))
+        ; (set_components_toggleable, (T,1,16))
         ; (add_component_range, (T, 1, 16))
         ; (enable_disable_component_range, (T, 1, 16))
     );
@@ -218,7 +218,7 @@ pub fn toggle_component(criterion: &mut Criterion) {
         group,
         "toggle_tags_32",
         ENTITY_COUNT
-        ; (set_components_togglable, (T,1,32))
+        ; (set_components_toggleable, (T,1,32))
         ; (add_component_range, (T, 1, 32))
         ; (enable_disable_component_range, (T, 1, 32))
     );
@@ -227,7 +227,7 @@ pub fn toggle_component(criterion: &mut Criterion) {
         group,
         "toggle_component_16",
         ENTITY_COUNT
-        ; (set_components_togglable, (C,1,16))
+        ; (set_components_toggleable, (C,1,16))
         ; (set_component_range, (C, 1, 16))
         ; (enable_disable_component_range, (C, 1, 16))
     );
@@ -236,7 +236,7 @@ pub fn toggle_component(criterion: &mut Criterion) {
         group,
         "toggle_component_32",
         ENTITY_COUNT
-        ; (set_components_togglable, (C,1,32))
+        ; (set_components_toggleable, (C,1,32))
         ; (set_component_range, (C, 1, 32))
         ; (enable_disable_component_range, (C, 1, 32))
     );
