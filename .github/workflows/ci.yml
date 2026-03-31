@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     name: cargo fmt (1.93)
     steps: 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     name: typos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: crate-ci/typos@master
 
   build:
@@ -41,7 +41,7 @@ jobs:
         os: [macos-14, macos-15, ubuntu-22.04, windows-2022]
     name: cargo clippy + test (1.93)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     name: cargo make hack-each-feature
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -79,7 +79,7 @@ jobs:
       RUSTFLAGS: -Dwarnings
       IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -97,7 +97,7 @@ jobs:
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -119,7 +119,7 @@ jobs:
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -135,7 +135,7 @@ jobs:
     env:
       RUSTDOCFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
