@@ -131,10 +131,12 @@ static STRUCT_W_VECTOR_DROP_INVOKED: core::sync::atomic::AtomicI32 =
 static NO_COPY_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 static NO_COPY_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 
-static NO_DEFAULT_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
 static NO_DEFAULT_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
     core::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static NO_DEFAULT_DROP_INVOKED: core::sync::atomic::AtomicI32 =
+    core::sync::atomic::AtomicI32::new(0);
 
 static NO_DEFAULT_INVOKED_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
     core::sync::atomic::AtomicI32::new(0);
@@ -365,7 +367,8 @@ fn assert_lifecycle_counts() {
     );
 
     let no_default_ctor_count = NO_DEFAULT_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let no_default_clone_count = NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
+    let no_default_clone_count =
+        NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
     let no_default_drop_count = NO_DEFAULT_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
 
     assert_eq!(
@@ -577,9 +580,7 @@ impl NoDefault {
 impl Clone for NoDefault {
     fn clone(&self) -> Self {
         NO_DEFAULT_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        NoDefault {
-            value: self.value,
-        }
+        NoDefault { value: self.value }
     }
 }
 
@@ -606,9 +607,7 @@ impl NoDefaultInvoked {
 impl Clone for NoDefaultInvoked {
     fn clone(&self) -> Self {
         NO_DEFAULT_INVOKED_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        NoDefaultInvoked {
-            value: self.value,
-        }
+        NoDefaultInvoked { value: self.value }
     }
 }
 

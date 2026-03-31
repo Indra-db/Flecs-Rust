@@ -671,7 +671,7 @@ where
         let mut iter = self.retrieve_iter();
         iter.callback_ctx = &mut func_each as *mut _ as *mut core::ffi::c_void;
         iter.callback = Some(__internal_query_execute_each_from_run::<T, FuncEach> as ExternIterFn);
-        internal_run::<P>(&mut iter, &mut func, self.world()); 
+        internal_run::<P>(&mut iter, &mut func, self.world());
         #[allow(unused_assignments)]
         {
             iter.callback = None;
