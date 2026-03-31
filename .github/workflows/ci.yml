@@ -2,7 +2,7 @@ name: CI
 
 env:
   # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
-  RUST_MIN_VER: "1.88.0"
+  RUST_MIN_VER: "1.93.0"
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
-    name: cargo fmt (1.88)
+    name: cargo fmt (1.93)
     steps: 
       - uses: actions/checkout@v4
       - name: install MSRV toolchain
@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-13, macos-14, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test (1.88)
+    name: cargo clippy + test (1.93)
     steps:
       - uses: actions/checkout@v4
       - name: install MSRV toolchain
@@ -74,7 +74,7 @@ jobs:
 
   build-ios:
     runs-on: macos-latest
-    name: cargo build + clippy (iOS, 1.88)
+    name: cargo build + clippy (iOS, 1.93)
     env:
       RUSTFLAGS: -Dwarnings
       IPHONEOS_DEPLOYMENT_TARGET: "15.0"
@@ -93,7 +93,7 @@ jobs:
 
   build-musl:
     runs-on: ubuntu-latest
-    name: cargo build + test (musl, 1.88)
+    name: cargo build + test (musl, 1.93)
     env:
       RUSTFLAGS: -Dwarnings
     steps:
@@ -115,7 +115,7 @@ jobs:
 
   build-msrv:
     runs-on: ubuntu-latest
-    name: cargo build (MSRV 1.88)
+    name: cargo build (MSRV 1.93)
     env:
       RUSTFLAGS: -Dwarnings
     steps:
