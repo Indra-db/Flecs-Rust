@@ -920,6 +920,10 @@ where
     fn to_string(&self) -> String {
         let query = self.query_ptr();
         let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
+        if result.is_null() {
+            return String::new();
+        }
+
         let rust_string =
             String::from(unsafe { core::ffi::CStr::from_ptr(result).to_str().unwrap() });
         unsafe {
