@@ -92,7 +92,7 @@ where
     /// });
     /// ```
     #[inline(always)]
-    pub fn iter(&self) -> impl ExactSizeIterator<Item = FieldIndex> {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = FieldIndex> + use<IS_RUN, P> {
         // Range has no bounds checks, .map(FieldIndex) is inlined out to a single `add+load`
         (0..self.count).map(FieldIndex)
     }
