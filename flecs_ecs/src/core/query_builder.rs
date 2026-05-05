@@ -761,7 +761,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// # Arguments
     ///
     /// * `expr` - the expression to set
-    fn expr(&mut self, expr: &'a str) -> &mut Self {
+    fn expr(&mut self, expr: &str) -> &mut Self {
         let expr = ManuallyDrop::new(format!("{expr}\0"));
         ecs_assert!(
             *self.expr_count_mut() == 0,
