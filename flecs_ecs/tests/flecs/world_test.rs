@@ -255,13 +255,13 @@ fn test_world_get_alive() {
     let world = World::new();
 
     let e1 = world.entity();
-    let e_no_gen = unsafe { flecs_ecs::sys::ecs_strip_generation(e1.id()) };
-    assert_eq!(e1.id(), e_no_gen);
-    e1.delete();
+    let e_no_gen = unsafe { flecs_ecs::sys::ecs_strip_generation(*e1.id()) };
+    assert_eq!(*e1.id(), e_no_gen);
+    e1.destruct();
 
     let e2 = world.entity();
-    assert_ne!(e1.id(), e2.id());
-    assert_eq!(e_no_gen, unsafe { flecs_ecs::sys::ecs_strip_generation(e2.id()) });
+    assert_ne!(*e1.id(), *e2.id());
+    assert_eq!(e_no_gen, unsafe { flecs_ecs::sys::ecs_strip_generation(*e2.id()) });
 
     let alive = world.get_alive(e_no_gen);
     assert_eq!(alive, e2.id());
@@ -272,12 +272,12 @@ fn test_world_make_alive() {
     let world = World::new();
 
     let e1 = world.entity();
-    e1.delete();
+    e1.destruct();
     assert!(!e1.is_alive());
 
     let e2 = world.entity();
     assert_ne!(e1.id(), e2.id());
-    e2.delete();
+    e2.destruct();
     assert!(!e2.is_alive());
 
     let e3 = world.make_alive(e2.id());
@@ -296,11 +296,11 @@ fn test_world_component_w_low_id() {
 #[test]
 fn test_world_reset_world() {
     let world = World::new();
-    let e = world.entity();
+    let e = world.entity().id();
 
-    assert!(world.exists(e.id()));
-    world.reset();
-    assert!(!world.exists(e.id()));
+    assert!(world.exists(e));
+    let world = world.reset();
+    assert!(!world.exists(e));
 }
 
 #[test]
@@ -353,7 +353,7 @@ fn test_world_entity_as_component() {
 
     let e2 = world.entity().set(Position { x: 10, y: 20 });
 
-    assert!(e2.has::<Position>());
+    assert!(e2.has(Position::id()));
 
     assert_eq!(world.entity_named("Position").name(), "Position");
 }
@@ -389,7 +389,7 @@ fn test_world_exclusive_access_self_mutate() {
 
     let e = world.entity();
     e.add(Position::id());
-    assert!(e.has::<Position>());
+    assert!(e.has(Position::id()));
 
     world.exclusive_access_end(false);
 }
@@ -499,10 +499,11 @@ fn test_world_set_lookup_path() {
 
 #[test]
 fn test_world_atfini() {
-    static mut ATFINI_INVOKED: i32 = 0;
+    static ATFINI_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+    ATFINI_INVOKED.store(0, std::sync::atomic::Ordering::Relaxed);
 
     fn on_destroyed(_w: WorldRef) {
-        unsafe { ATFINI_INVOKED += 1; }
+        ATFINI_INVOKED.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     {
@@ -510,7 +511,7 @@ fn test_world_atfini() {
         world.on_destroyed(on_destroyed);
     }
 
-    unsafe { assert_eq!(ATFINI_INVOKED, 1) };
+    assert_eq!(ATFINI_INVOKED.load(std::sync::atomic::Ordering::Relaxed), 1);
 }
 
 #[test]
@@ -553,14 +554,14 @@ fn test_world_get_scope_type() {
 fn test_world_builtin_after_reset() {
     let world = World::new();
 
-    let c1 = world.component::<flecs::Component>();
-    assert_ne!(c1.id(), 0);
+    let c1 = world.component::<flecs::Component>().id();
+    assert_ne!(c1, 0);
 
-    world.reset();
+    let world = world.reset();
 
     let c2 = world.component::<flecs::Component>();
     assert_ne!(c2.id(), 0);
-    assert_eq!(c1.id(), c2.id());
+    assert_eq!(c1, c2.id());
 }
 
 #[test]
@@ -568,7 +569,7 @@ fn test_world_register_component_w_core_name() {
     #[derive(Component)]
     struct Module;
 
-    let world = World::new();
+    let world = World::new(); 
 
     let c = world.component::<Module>();
     assert_ne!(c.id(), 0);
@@ -600,7 +601,7 @@ fn test_world_reimport() {
 #[test]
 fn test_world_scope_nested() {
     let world = World::new();
-
+ 
     let parent = world.entity_named("P");
 
     {
@@ -738,7 +739,7 @@ fn test_world_modified() {
 
     let e = world.entity().set(Position { x: 5, y: 10 });
 
-    world.modified(Position::id());
+    world.modified(Position::entity_id(&world));
 
     assert!(e.is_alive());
 }
@@ -818,8 +819,8 @@ fn test_world_entity_with_component() {
 
     let e = world.entity().set(Position { x: 5, y: 10 }).set(Velocity { x: 1, y: 2 });
 
-    assert!(e.has::<Position>());
-    assert!(e.has::<Velocity>());
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 5);
@@ -853,7 +854,7 @@ fn test_world_entity_view_operations() {
     let id = e.id();
     assert_ne!(id, 0);
 
-    let e2 = world.lookup(world.entity_named("test").name());
+    let e2 = world.lookup(world.entity_named("test").name().as_str());
     assert!(e2.is_alive());
 }
 

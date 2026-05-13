@@ -2442,9 +2442,9 @@ fn system_ensure_instanced_w_each() {
 
     let _q = sys.query();
 
-    assert_eq!(*world.get::<&Count>(|c| c.0), 0);
+    assert_eq!(world.get::<&Count>(|c| c.0), 0);
     sys.run();
-    assert_eq!(*world.get::<&Count>(|c| c.0), 1);
+    assert_eq!(world.get::<&Count>(|c| c.0), 1);
 }
 
 #[test]
@@ -2779,7 +2779,7 @@ fn system_optional_pair_term() {
         .each_entity(|e, _| {
             e.world().get::<&mut Count>(|c| c.0 += 1);
         });
-    world.progress(1.0);
+    world.progress_time(1.0);
     world.get::<&Count>(|c| assert_eq!(c.0, 2));
 }
 
@@ -2793,7 +2793,7 @@ fn system_singleton_tick_source() {
 
     world
         .system::<()>()
-        .set_tick_source_id(TagA::id())
+        .set_tick_source(TagA::id())
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count>(|count| {
@@ -2802,13 +2802,13 @@ fn system_singleton_tick_source() {
             }
         });
 
-    world.progress(1.0);
+    world.progress_time(1.0);
     world.get::<&Count>(|c| assert_eq!(c.0, 0));
 
-    world.progress(1.0);
+    world.progress_time(1.0);
     world.get::<&Count>(|c| assert_eq!(c.0, 1));
 
-    world.progress(2.0);
+    world.progress_time(2.0);
     world.get::<&Count>(|c| assert_eq!(c.0, 1));
 }
 
@@ -2892,27 +2892,30 @@ fn system_set_group() {
     let e2_id = e2.id();
     let e4_id = e4.id();
     let e5_id = e5.id();
-    let tgt_b_id = GroupTgtB::id(&world).id();
+    let tgt_b_id = world.component::<GroupTgtB>().id();
 
     world.set(Count(0));
 
-    unsafe extern "C" fn group_by_grp_rel(
+    unsafe extern "C-unwind" fn group_by_grp_rel(
         world: *mut flecs_ecs::sys::ecs_world_t,
         table: *mut flecs_ecs::sys::ecs_table_t,
         id: flecs_ecs::sys::ecs_id_t,
         _ctx: *mut c_void,
     ) -> u64 {
         let mut match_id: flecs_ecs::sys::ecs_id_t = 0;
-        if flecs_ecs::sys::ecs_search(
-            world,
-            table,
-            flecs_ecs::sys::ecs_pair(id, flecs_ecs::sys::EcsWildcard),
-            &mut match_id,
-        ) != -1
-        {
-            flecs_ecs::sys::ECS_PAIR_SECOND(match_id) as u64
-        } else {
-            0
+        unsafe {
+            if flecs_ecs::sys::ecs_search(
+                world,
+                table,
+                flecs_ecs::sys::ecs_make_pair(id, flecs_ecs::sys::EcsWildcard),
+                &mut match_id,
+            ) != -1
+            {
+                // ECS_PAIR_SECOND: low 32 bits of the id hold the second element
+                (match_id & 0xFFFF_FFFF) as u64
+            } else {
+                0
+            }
         }
     }
 
@@ -2934,7 +2937,7 @@ fn system_set_group() {
         });
 
     // Run with TgtB group
-    sys.iterable().set_group(tgt_b_id).run(|mut it| {
+    sys.query().set_group(tgt_b_id).run(|mut it| {
         while it.next() {}
     });
 
@@ -3016,4 +3019,142 @@ fn system_test_auto_defer_iter() {
     e3.get::<&DeferValueB>(|v| assert_eq!(v.value, 31));
 }
 
+#[test] 
+fn default_ctor() {
+    let world = World::new();
+
+    world.set(Count(0));
+
+    let sys = world
+        .system::<&Position>()
+        .each_entity(|e, p| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            e.world().get::<&mut Count>(|c| {
+                c.0 += 1;
+            });
+        });
+
+    world.entity().set(Position { x: 10, y: 20 });
+
+    // Assign system to a second handle — equivalent to C++ default-constructed
+    // flecs::system var that is then copy-assigned from the live system.
+    let sys_var = world.system_from(sys.entity_view(&world));
+
+    sys_var.run();
+
+    world.get::<&Count>(|c| {
+        assert_eq!(c.0, 1);
+    });
+}
+
 #[test]
+fn register_twice_w_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.a += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.b += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn register_twice_w_run_each() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.a += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.b += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}
+
+#[test]
+fn register_twice_w_each_run() {
+    let world = World::new();
+
+    world.set(Count2 { a: 0, b: 0 });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.a += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.a, 1);
+    });
+
+    world
+        .system_named::<()>("Test")
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&mut Count2>(|count| {
+                    count.b += 1;
+                });
+            }
+        })
+        .run();
+
+    world.get::<&Count2>(|count| {
+        assert_eq!(count.b, 1);
+    });
+}

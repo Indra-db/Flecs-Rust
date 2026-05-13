@@ -20,7 +20,7 @@ fn ordered_children_iter_no_children() {
 #[test]
 fn ordered_children_children_1_table() {
     let world = World::new();
- 
+
     let parent = world.entity().add(flecs::OrderedChildren);
     let child_a = world
         .entity()
