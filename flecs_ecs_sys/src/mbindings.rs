@@ -96,6 +96,7 @@ unsafe extern "C" {
 }
 
 /// Type that contains information about the world.
+/// Must match `ecs_world_info_t` in flecs.h exactly.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WorldInfo {
@@ -121,16 +122,18 @@ pub struct WorldInfo {
     pub emit_time_total: f32,
     /// Total time spent in merges.
     pub merge_time_total: f32,
-    /// Time elapsed in simulation.
-    pub world_time_total: f32,
-    /// Time elapsed in simulation (no scaling).
-    pub world_time_total_raw: f32,
     /// Time spent on query rematching.
     pub rematch_time_total: f32,
+    /// Time elapsed in simulation (f64 — different from the f32 fields above).
+    pub world_time_total: f64,
+    /// Time elapsed in simulation (no scaling).
+    pub world_time_total_raw: f64,
     /// Total number of frames.
     pub frame_count_total: i64,
     /// Total number of merges.
     pub merge_count_total: i64,
+    /// Total number of monitor evaluations.
+    pub eval_comp_monitors_total: i64,
     /// Total number of rematches.
     pub rematch_count_total: i64,
     /// Total number of times a new id was created.
@@ -143,10 +146,12 @@ pub struct WorldInfo {
     pub table_delete_total: i64,
     /// Total number of pipeline builds.
     pub pipeline_build_count_total: i64,
-    /// Total number of systems ran in last frame.
-    pub systems_ran_frame: i64,
+    /// Total number of systems ran.
+    pub systems_ran_total: i64,
     /// Total number of times observer was invoked.
-    pub observers_ran_frame: i64,
+    pub observers_ran_total: i64,
+    /// Total number of times a query was evaluated.
+    pub queries_ran_total: i64,
     /// Number of tag (no data) ids in the world.
     pub tag_id_count: i32,
     /// Number of component (data) ids in the world.
@@ -155,8 +160,8 @@ pub struct WorldInfo {
     pub pair_id_count: i32,
     /// Number of tables.
     pub table_count: i32,
-    /// Number of tables without entities.
-    pub empty_table_count: i32,
+    /// Time when world was created.
+    pub creation_time: u32,
     pub cmd: WorldInfoCmd,
     /// Value set by `ecs_set_name_prefix()`. Used
     /// to remove library prefixes of symbol names (such as `Ecs`, `ecs_`) when
@@ -201,11 +206,9 @@ unsafe extern "C" {
 
 #[test]
 fn compile_test_check_if_any_ecs_world_info_fields_changed() {
-    let info = ecs_world_info_t {
-        creation_time: 0,
-        observers_ran_total: 0,
-        queries_ran_total: 0,
-        systems_ran_total: 0,
+    // This test ensures WorldInfo keeps in sync with ecs_world_info_t.
+    // It will fail to compile if the bindgen struct gains/loses fields.
+    let _info = ecs_world_info_t {
         last_component_id: 0,
         min_id: 0,
         max_id: 0,
@@ -217,22 +220,26 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
         system_time_total: 0.0,
         emit_time_total: 0.0,
         merge_time_total: 0.0,
+        rematch_time_total: 0.0,
         world_time_total: 0.0,
         world_time_total_raw: 0.0,
-        rematch_time_total: 0.0,
         frame_count_total: 0,
         merge_count_total: 0,
+        eval_comp_monitors_total: 0,
         rematch_count_total: 0,
         id_create_total: 0,
         id_delete_total: 0,
         table_create_total: 0,
         table_delete_total: 0,
         pipeline_build_count_total: 0,
+        systems_ran_total: 0,
+        observers_ran_total: 0,
+        queries_ran_total: 0,
         tag_id_count: 0,
         component_id_count: 0,
         pair_id_count: 0,
         table_count: 0,
-        eval_comp_monitors_total: 0,
+        creation_time: 0,
         cmd: ecs_world_info_t__bindgen_ty_1 {
             add_count: 0,
             remove_count: 0,

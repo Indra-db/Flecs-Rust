@@ -18,6 +18,82 @@ fn init() {
     #[cfg(feature = "test-with-crash-handler")]
     test_crash_handler::register();
 }
+
+/// RAII guard that temporarily replaces the Flecs `abort_` OS API callback
+/// with a Rust panic shim for the duration of its lifetime.
+///
+/// This lets tests use `catch_unwind` or `#[should_panic]` for code paths
+/// that would otherwise call `ecs_abort()` → SIGABRT.
+///
+/// The guard holds a mutex to prevent concurrent tests from racing on the
+/// global OS API state. Drop restores the original handler.
+///
+/// # Example
+/// ```ignore
+/// let _guard = FlecsPanicAbortGuard::install();
+/// let result = std::panic::catch_unwind(|| { /* code that calls ecs_abort */ });
+/// // guard dropped here, original abort_ restored
+/// assert!(result.is_err());
+/// ```
+pub struct FlecsPanicAbortGuard {
+    original: flecs_ecs::sys::ecs_os_api_abort_t,
+    _lock: std::sync::MutexGuard<'static, ()>,
+}
+
+impl FlecsPanicAbortGuard {
+    pub fn install() -> Self {
+        use std::sync::{Mutex, OnceLock};
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        let mutex = LOCK.get_or_init(|| Mutex::new(()));
+        let lock = mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+
+        unsafe extern "C-unwind" fn panic_shim() {
+            panic!("flecs abort (ecs_assert / ecs_abort fired)");
+        }
+
+        let original = unsafe {
+            let mut api = flecs_ecs::sys::ecs_os_get_api();
+            let orig = api.abort_;
+            api.abort_ = Some(panic_shim);
+            flecs_ecs::sys::ecs_os_set_api(&mut api);
+            orig
+        };
+
+        FlecsPanicAbortGuard { original, _lock: lock }
+    }
+}
+
+impl Drop for FlecsPanicAbortGuard {
+    fn drop(&mut self) {
+        unsafe {
+            let mut api = flecs_ecs::sys::ecs_os_get_api();
+            api.abort_ = self.original;
+            flecs_ecs::sys::ecs_os_set_api(&mut api);
+        }
+    }
+}
+
+/// When the guard is active this is set to true so the abort() override knows
+/// to suppress the call (the panic from ecs_os_abort() is already in flight).
+pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
+    core::sync::atomic::AtomicBool::new(false);
+
+// Override libc abort() for the test binary only. When FlecsPanicAbortGuard is
+// active, ecs_abort expands to: ecs_os_abort() [→ panic_shim → panic!()]
+// followed immediately by abort() as a "satisfy compiler" no-op hint.
+// Without this override, abort() kills the process before Rust unwind completes.
+// This override makes abort() a no-op when the guard is active so the panic
+// started by panic_shim can propagate normally.
+#[unsafe(no_mangle)]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe extern "C" fn abort() {
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) {
+        // Panic already in flight from panic_shim; suppress the redundant libc abort().
+        return;
+    }
+    // No guard active — real abort.
+    libc::raise(libc::SIGABRT);
+}
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Count(pub i32);
 
@@ -155,7 +231,7 @@ pub struct Alice {}
 #[derive(Component)]
 pub struct Bob {}
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Tag;
 
 #[derive(Component)]

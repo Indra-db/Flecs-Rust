@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use flecs_ecs::core::{ComponentInfo, EntityViewGet, World};
 use flecs_ecs_derive::Component;
+use crate::common_test::FlecsPanicAbortGuard;
+
 
 // normal structs
 #[derive(Component)]
@@ -58,15 +60,17 @@ fn copy_hook_implemented_for_drop_types() {
 
 #[test]
 #[should_panic(
-    expected = "DefaultNoClone does not implement Clone and with a duplicate operation it will panic"
+    expected = "Clone is not implemented for type"
 )]
-#[ignore = "C asserts that world didn't properly end deferring and aborts 
-the test & thus the test not registering the panic and does not get marked as passed"]
 fn copy_hook_not_implemented_for_drop_types() {
     let world = World::new();
+    // Guard installed AFTER World::new() so it survives the reset of abort_.
+    // The Rust panic from duplicate() fires first (caught by #[should_panic]).
+    // Any subsequent C abort during world cleanup is suppressed by our abort() override.
+    let _guard = FlecsPanicAbortGuard::install();
     let e_orig = world.entity().set(DefaultNoCloneDrop {
         _data: "data".to_string(),
     });
 
-    let _entity_cloned = e_orig.duplicate(true); // PANICS
+    let _entity_cloned = e_orig.duplicate(true); // PANICS via Rust
 }

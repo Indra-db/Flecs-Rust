@@ -616,29 +616,40 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
 
     fn iter() -> Self::VariantIterator;
 
-    /// # Note
-    /// it only means that the enum is registered with a particular world, not necessarily yours.
-    fn are_fields_registered_as_entities() -> bool {
-        let mut result = true;
-        let ptr = Self::__enum_data_mut();
-        for i in 0..Self::SIZE_ENUM_FIELDS {
-            unsafe {
-                if *ptr.add(i as usize) == 0 {
-                    result = false;
-                    break;
-                }
+    /// Looks up the cached entity ID for `variant_index` in this specific world's `components_array`.
+    /// Returns 0 if not registered with this world.
+    #[doc(hidden)]
+    fn __get_variant_id_from_world<'a>(variant_index: usize, world: impl WorldProvider<'a>) -> u64 {
+        let world = world.world();
+        let idx = Self::__enum_variant_index(variant_index) as usize;
+        let arr = world.components_array();
+        if idx < arr.len() { arr[idx] } else { 0 }
+    }
+
+    #[doc(hidden)]
+    #[doc(hidden)]
+    fn are_fields_registered_as_entities<'a>(world: impl WorldProvider<'a>) -> bool {
+        let world = world.world();
+        let arr = world.components_array();
+        for i in 0..Self::SIZE_ENUM_FIELDS as usize {
+            let idx = Self::__enum_variant_index(i) as usize;
+            if idx >= arr.len() || arr[idx] == 0 {
+                return false;
             }
         }
-        result
+        true
     }
 
-    fn is_field_registered_as_entity(&self) -> bool {
-        let index = self.enum_index();
-        unsafe { *Self::__enum_data_mut().add(index) != 0 }
+    #[doc(hidden)]
+    #[doc(hidden)]
+    fn is_field_registered_as_entity<'a>(&self, world: impl WorldProvider<'a>) -> bool {
+        Self::__get_variant_id_from_world(self.enum_index(), world) != 0
     }
 
-    fn is_index_registered_as_entity(index: usize) -> bool {
-        unsafe { *Self::__enum_data_mut().add(index) != 0 }
+    #[doc(hidden)]
+    #[doc(hidden)]
+    fn is_index_registered_as_entity<'a>(index: usize, world: impl WorldProvider<'a>) -> bool {
+        Self::__get_variant_id_from_world(index, world) != 0
     }
 
     /// get the entity id of the variant of the enum. This function will register the enum with the world if it's not registered.
@@ -650,7 +661,7 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
             registration::try_register_component::<COMPONENT_REGISTRATION, Self>(world);
         }
         let index = self.enum_index();
-        EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
+        EntityView::new_from(world, Self::__get_variant_id_from_world(index, world))
     }
 
     /// # Safety
@@ -659,27 +670,29 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     /// if uncertain, use `try_register_component::<T>` to try and register it
     unsafe fn id_variant_unchecked<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         let index = self.enum_index();
-        EntityView::new_from(world, unsafe { *Self::__enum_data_mut().add(index) })
+        EntityView::new_from(world.world(), Self::__get_variant_id_from_world(index, world))
     }
 
-    fn id_variant_of_index(index: usize) -> Option<u64> {
+    #[doc(hidden)]
+    #[doc(hidden)]
+    fn id_variant_of_index<'a>(index: usize, world: impl WorldProvider<'a>) -> Option<u64> {
         if index < Self::SIZE_ENUM_FIELDS as usize {
-            Some(unsafe { *Self::__enum_data_mut().add(index) })
+            Some(Self::__get_variant_id_from_world(index, world))
         } else {
             None
         }
     }
 
     /// # Safety
-    /// This function is unsafe because it dereferences a raw pointer and you must ensure that the
-    /// index is within the bounds of the number of variants in the enum.
-    /// if uncertain, use `SIZE_ENUM_FIELDS` to check the number of variants.
-    unsafe fn id_variant_of_index_unchecked(index: usize) -> u64 {
-        unsafe { *Self::__enum_data_mut().add(index) }
+    /// This function is unsafe because you must ensure that the index is within the bounds of
+    /// the number of variants in the enum. If uncertain, use `SIZE_ENUM_FIELDS` to check.
+    #[doc(hidden)]
+    unsafe fn id_variant_of_index_unchecked<'a>(index: usize, world: impl WorldProvider<'a>) -> u64 {
+        Self::__get_variant_id_from_world(index, world)
     }
 
     #[doc(hidden)]
-    fn __enum_data_mut() -> *mut u64;
+    fn __enum_variant_index(variant_index: usize) -> u32;
 }
 
 #[doc(hidden)]

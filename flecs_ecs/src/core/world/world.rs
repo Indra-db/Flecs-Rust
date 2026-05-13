@@ -136,6 +136,57 @@ impl World {
         Self::default()
     }
 
+    /// Creates a minimal world using `ecs_mini()` — no addons (system, pipeline,
+    /// timer, meta) are loaded. Equivalent to C++ `flecs::world(ecs_mini())` +
+    /// `world.make_owner()`.
+    ///
+    /// Use this when you need a lightweight world without any default addon
+    /// overhead, e.g. for testing core ECS functionality in isolation.
+    pub fn new_mini() -> Self {
+        ecs_os_api::ensure_initialized();
+
+        let raw_world = NonNull::new(unsafe { sys::ecs_mini() }).unwrap();
+        let ctx = Box::leak(Box::new(WorldCtx::new()));
+        let components = unsafe { NonNull::new_unchecked(&mut ctx.components) };
+        let components_array = unsafe { NonNull::new_unchecked(&mut ctx.components_array) };
+        let world = Self {
+            raw_world,
+            components,
+            components_array,
+        };
+        unsafe {
+            sys::ecs_set_binding_ctx(
+                world.raw_world.as_ptr(),
+                ctx as *mut WorldCtx as *mut c_void,
+                None,
+            );
+        }
+        world
+    }
+
+
+    /// Explicitly release this world handle, decrementing the ref count.
+    /// If this is the last handle, the world is finalized (`ecs_fini`).
+    ///
+    /// Equivalent to C++ `world.release()`. Taking `self` by value ensures the
+    /// caller cannot use the handle after release — the Rust equivalent of
+    /// setting `world_ = nullptr` after `flecs_poly_release`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use flecs_ecs::core::World;
+    /// let world_a = World::new();
+    /// let world_b = world_a.clone(); // both point to same world
+    /// world_a.release();             // decrements ref; world still alive in world_b
+    /// // world_a is consumed — cannot be used here
+    /// world_b.release();             // last handle → ecs_fini called
+    /// ```
+    ///
+    /// * C++ API: `world::release`
+    pub fn release(self) {
+        drop(self); // Drop impl handles flecs_poly_release / ecs_fini
+    }
+
     fn init_builtin_components(&self) {
         // used for event handling with no data
         self.component_named::<()>("flecs::rust::() - None");

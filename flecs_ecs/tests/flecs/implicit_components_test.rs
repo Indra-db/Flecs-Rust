@@ -1,176 +1,221 @@
 #![allow(dead_code)]
-#![allow(clippy::std_instead_of_alloc)]
 use flecs_ecs::prelude::*;
 
-// Module-level types for tests that verify lookup by qualified path.
-// core::any::type_name::<T>() for these gives "flecs::implicit_components_test::IcPosition" etc.
-// which Flecs uses as the entity path, so world.lookup("flecs::implicit_components_test::IcPosition")
-// must succeed.
-
-#[derive(Component, Default)]
-struct IcPosition {
-    pub x: f32,
-    pub y: f32,
-}
-
-#[derive(Component, Default)]
-struct IcVelocity {
-    pub x: f32,
-    pub y: f32,
-}
-
-#[derive(Component, Default)]
-struct IcPair {
-    pub value: i32,
-}
-
 // ----------------------------------------------------------------------------
-// ImplicitComponents — tests verify that first-use of a type auto-registers
-// the component (implicit registration). Tests that check lookup by qualified
-// path use module-level types (IcPosition etc.) whose Rust path matches the
-// expected Flecs entity path.
+// ImplicitComponents — each test defines its OWN local types to verify that
+// first-use of a type auto-registers the component (implicit registration).
 // ----------------------------------------------------------------------------
 
 #[test]
-fn add() {
+fn implicit_components_add() {
+    #[derive(Component, Default)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let e = world.entity().add(IcPosition::id());
+    let e = world.entity().add(Position::id());
 
+    // archetype string should contain the short name "Position"
     let arch_str = e.archetype().to_string().unwrap_or_default();
     assert!(
-        arch_str.contains("IcPosition"),
-        "expected 'IcPosition' in archetype, got '{arch_str}'"
+        arch_str.contains("Position"),
+        "expected 'Position' in archetype, got '{arch_str}'"
     );
-    assert!(e.has(IcPosition::id()));
+    assert!(e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn remove() {
+fn implicit_components_remove() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let e = world.entity().remove(IcPosition::id());
+    let e = world.entity().remove(Position::id());
 
-    assert!(!e.has(IcPosition::id()));
+    assert!(!e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn has() {
+fn implicit_components_has() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
     let e = world.entity();
-    assert!(!e.has(IcPosition::id()));
+    assert!(!e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn set() {
+fn implicit_components_set() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let e = world.entity().set(IcPosition { x: 10.0, y: 20.0 });
+    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
 
     let arch_str = e.archetype().to_string().unwrap_or_default();
     assert!(
-        arch_str.contains("IcPosition"),
-        "expected 'IcPosition' in archetype, got '{arch_str}'"
+        arch_str.contains("Position"),
+        "expected 'Position' in archetype, got '{arch_str}'"
     );
-    assert!(e.has(IcPosition::id()));
+    assert!(e.has(Position::id()));
 
-    e.get::<&IcPosition>(|p| {
-        assert!((p.x - 10.0).abs() < f32::EPSILON);
-        assert!((p.y - 20.0).abs() < f32::EPSILON);
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10.0);
+        assert_eq!(p.y, 20.0);
     });
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn get() {
+fn implicit_components_get() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
     let e = world.entity();
 
     // try_get returns None when component is absent
-    let found = e.try_get::<&IcPosition>(|_p| true);
+    let found = e.try_get::<&Position>(|_p| true);
     assert!(found.is_none());
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn add_pair() {
+fn implicit_components_add_pair() {
+    #[derive(Component, Default)]
+    struct Pair {
+        value: i32,
+    }
+    #[derive(Component, Default)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let e = world.entity().add((IcPair::id(), IcPosition::id()));
+    let e = world.entity().add((Pair::id(), Position::id()));
 
     let arch_str = e.archetype().to_string().unwrap_or_default();
     assert!(
-        arch_str.contains("IcPair") && arch_str.contains("IcPosition"),
-        "expected '(IcPair,IcPosition)' in archetype, got '{arch_str}'"
+        arch_str.contains("Pair") && arch_str.contains("Position"),
+        "expected '(Pair,Position)' in archetype, got '{arch_str}'"
     );
-    assert!(e.has((IcPair::id(), IcPosition::id())));
+    assert!(e.has((Pair::id(), Position::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::IcPair");
+    let pair = world.lookup("flecs::implicit_components_test::Pair");
     assert!(pair.id() != 0);
 }
 
 #[test]
-fn remove_pair() {
+fn implicit_components_remove_pair() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+    #[derive(Component)]
+    struct Pair {
+        value: i32,
+    }
+
     let world = World::new();
 
-    let e = world.entity().remove((IcPosition::id(), IcPair::id()));
+    let e = world.entity().remove((Position::id(), Pair::id()));
 
-    assert!(!e.has((IcPosition::id(), IcPair::id())));
+    assert!(!e.has((Position::id(), Pair::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::IcPair");
+    let pair = world.lookup("flecs::implicit_components_test::Pair");
     assert!(pair.id() != 0);
 }
 
 #[test]
-fn module() {
+fn implicit_components_module() {
     // In C++: world.module<Position>() — registers Position as a module component.
-    // Verifies the component can be found by its qualified Rust type path.
+    // In Rust, world.module::<T>(name) requires implementing the Module trait.
+    // Closest equivalent: just register the component and verify lookup.
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    world.component::<IcPosition>();
+    // Triggering implicit registration via component()
+    world.component::<Position>();
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 }
 
 #[test]
-fn system() {
+fn implicit_components_system() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+    #[derive(Component)]
+    struct Velocity {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
     world
-        .system::<(&mut IcPosition, &mut IcVelocity)>()
+        .system::<(&mut Position, &mut Velocity)>()
         .each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
     assert!(velocity.id() != 0);
 }
 
 #[test]
-fn system_optional() {
+fn implicit_components_system_optional() {
     #[derive(Component, Default)]
     struct Rotation {
         angle: f32,
@@ -182,8 +227,7 @@ fn system_optional() {
 
     let world = World::new();
 
-    use std::sync::Arc;
-    use core::sync::atomic::{AtomicI32, Ordering};
+    use std::sync::{Arc, atomic::{AtomicI32, Ordering}};
     let rotation_count = Arc::new(AtomicI32::new(0));
     let mass_count = Arc::new(AtomicI32::new(0));
     let rc = Arc::clone(&rotation_count);
@@ -207,10 +251,10 @@ fn system_optional() {
         .set(Rotation { angle: 30.0 })
         .set(Mass { value: 40.0 });
 
-    let rotation = world.lookup("flecs::implicit_components_test::system_optional::Rotation");
+    let rotation = world.lookup("flecs::implicit_components_test::Rotation");
     assert!(rotation.id() != 0);
 
-    let mass = world.lookup("flecs::implicit_components_test::system_optional::Mass");
+    let mass = world.lookup("flecs::implicit_components_test::Mass");
     assert!(mass.id() != 0);
 
     let rcomp = world.component::<Rotation>();
@@ -226,79 +270,105 @@ fn system_optional() {
 }
 
 #[test]
-fn system_const() {
+fn implicit_components_system_const() {
+    #[derive(Component, Default)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+    #[derive(Component, Default)]
+    struct Velocity {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    use std::sync::Arc;
-    use core::sync::atomic::{AtomicI32, Ordering};
+    use std::sync::{Arc, atomic::{AtomicI32, Ordering}};
     let count = Arc::new(AtomicI32::new(0));
     let count_c = Arc::clone(&count);
 
     world
-        .system::<(&mut IcPosition, &IcVelocity)>()
+        .system::<(&mut Position, &Velocity)>()
         .each_entity(move |_e, (p, v)| {
             p.x += v.x;
             p.y += v.y;
             count_c.fetch_add(1, Ordering::Relaxed);
         });
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
     assert!(velocity.id() != 0);
 
     let e = world
         .entity()
-        .set(IcPosition { x: 10.0, y: 20.0 })
-        .set(IcVelocity { x: 1.0, y: 2.0 });
+        .set(Position { x: 10.0, y: 20.0 })
+        .set(Velocity { x: 1.0, y: 2.0 });
 
-    let pcomp = world.component::<IcPosition>();
+    let pcomp = world.component::<Position>();
     assert_eq!(pcomp.id(), position.id());
 
-    let vcomp = world.component::<IcVelocity>();
+    let vcomp = world.component::<Velocity>();
     assert_eq!(vcomp.id(), velocity.id());
 
     world.progress();
 
     assert_eq!(count.load(Ordering::Relaxed), 1);
 
-    e.get::<&IcPosition>(|p| {
-        assert!((p.x - 11.0).abs() < f32::EPSILON);
-        assert!((p.y - 22.0).abs() < f32::EPSILON);
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 11.0);
+        assert_eq!(p.y, 22.0);
     });
 }
 
 #[test]
-fn query() {
+fn implicit_components_query() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+    #[derive(Component)]
+    struct Velocity {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let q = world.new_query::<(&mut IcPosition, &mut IcVelocity)>();
+    let q = world.new_query::<(&mut Position, &mut Velocity)>();
 
     q.each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
     assert!(velocity.id() != 0);
 }
 
 #[test]
-fn implicit_name() {
+fn implicit_components_implicit_name() {
+    #[derive(Component)]
+    struct Position {
+        x: f32,
+        y: f32,
+    }
+
     let world = World::new();
 
-    let pcomp = world.component::<IcPosition>();
+    let pcomp = world.component::<Position>();
 
-    // Verify the component can be found by its fully-qualified Rust type path
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("flecs::implicit_components_test::Position");
     assert!(position.id() != 0);
 
     assert_eq!(pcomp.id(), position.id());
 }
 
 #[test]
-fn reinit() {
+fn implicit_components_reinit() {
     // The C++ test calls flecs::_::type<Position>::reset() to simulate
     // registration across translation units (forcing a re-lookup on next use).
     // In Rust, #[derive(Component)] uses a thread-local static for the ID,
@@ -326,7 +396,7 @@ fn reinit() {
 }
 
 #[test]
-fn reinit_scoped() {
+fn implicit_components_reinit_scoped() {
     // Mirrors C++ ImplicitComponents_reinit_scoped with Foo::Position.
     // Rust modules are compile-time, not runtime scopes, so we simply verify
     // idempotent registration for a locally-scoped type.
@@ -353,7 +423,7 @@ fn reinit_scoped() {
 }
 
 #[test]
-fn reinit_w_lifecycle() {
+fn implicit_components_reinit_w_lifecycle() {
     // C++ version sets a custom ctor hook and verifies it fires on add.
     // Rust lifecycle hooks are registered via #[flecs(on_add=...)] or
     // component().on_add(...). We verify the component is stable across
@@ -382,7 +452,7 @@ fn reinit_w_lifecycle() {
 }
 
 #[test]
-fn first_use_in_system() {
+fn implicit_components_first_use_in_system() {
     #[derive(Component, Default)]
     struct Position {
         x: f32,
@@ -410,7 +480,7 @@ fn first_use_in_system() {
 }
 
 #[test]
-fn first_use_tag_in_system() {
+fn implicit_components_first_use_tag_in_system() {
     #[derive(Component, Default)]
     struct Position {
         x: f32,
@@ -435,7 +505,7 @@ fn first_use_tag_in_system() {
 }
 
 #[test]
-fn first_use_enum_in_system() {
+fn implicit_components_first_use_enum_in_system() {
     #[derive(Component, Default)]
     struct Position {
         x: f32,
@@ -477,7 +547,7 @@ fn first_use_enum_in_system() {
 }
 
 #[test]
-fn use_const() {
+fn implicit_components_use_const() {
     // C++: world.use<const Position>() — registers Position and marks it const.
     // Rust has no world.use<>() API. We verify normal registration + get still
     // works with a shared (&) reference (the Rust const-equivalent).
@@ -495,13 +565,13 @@ fn use_const() {
     assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
-        assert!((p.x - 10.0).abs() < f32::EPSILON);
-        assert!((p.y - 20.0).abs() < f32::EPSILON);
+        assert_eq!(p.x, 10.0);
+        assert_eq!(p.y, 20.0);
     });
 }
 
 #[test]
-fn use_const_w_stage() {
+fn implicit_components_use_const_w_stage() {
     // C++: world.use<const Velocity>() then progress.
     // Rust: verify component accessible as &Velocity after system runs.
     #[derive(Component, Default)]
@@ -528,13 +598,13 @@ fn use_const_w_stage() {
     assert!(e.has(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
-        assert!((v.x - 1.0).abs() < f32::EPSILON);
-        assert!((v.y - 2.0).abs() < f32::EPSILON);
+        assert_eq!(v.x, 1.0);
+        assert_eq!(v.y, 2.0);
     });
 }
 
 #[test]
-fn use_const_w_threads() {
+fn implicit_components_use_const_w_threads() {
     // C++: world.use<const Velocity>() + set_threads(2).
     // Rust: same pattern with multi-threading enabled.
     #[derive(Component, Default)]
@@ -562,13 +632,13 @@ fn use_const_w_threads() {
     assert!(e.has(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
-        assert!((v.x - 1.0).abs() < f32::EPSILON);
-        assert!((v.y - 2.0).abs() < f32::EPSILON);
+        assert_eq!(v.x, 1.0);
+        assert_eq!(v.y, 2.0);
     });
 }
 
 #[test]
-fn implicit_base() {
+fn implicit_components_implicit_base() {
     // C++: world.use<Position>(), then check id() == id<const Position>() == id<Position&>().
     // In Rust all reference variants map to the same underlying ComponentId.
     #[derive(Component)]
@@ -587,7 +657,7 @@ fn implicit_base() {
 }
 
 #[test]
-fn implicit_const() {
+fn implicit_components_implicit_const() {
     // C++: world.use<const Position>() — same id checks.
     #[derive(Component)]
     struct Position {
@@ -604,7 +674,7 @@ fn implicit_const() {
 }
 
 #[test]
-fn implicit_ref() {
+fn implicit_components_implicit_ref() {
     // C++: world.use<Position&>() — same id checks.
     #[derive(Component)]
     struct Position {
@@ -620,7 +690,7 @@ fn implicit_ref() {
 }
 
 #[test]
-fn implicit_const_ref() {
+fn implicit_components_implicit_const_ref() {
     // C++: world.use<const Position&>() — same id checks.
     #[derive(Component)]
     struct Position {
@@ -636,7 +706,7 @@ fn implicit_const_ref() {
 }
 
 #[test]
-fn vector_elem_type() {
+fn implicit_components_vector_elem_type() {
     // C++: world.vector<int>() — creates a meta vector type entity.
     // Rust: world.vector::<i32>() is available under the flecs_meta feature.
     let world = World::new();
@@ -653,7 +723,7 @@ fn vector_elem_type() {
 }
 
 #[test]
-fn tag_has_component() {
+fn implicit_components_tag_has_component() {
     // C++: flecs::id c = world.id<EmptyType>(); c.entity().has<flecs::Component>()
     // Empty types (tags) are still registered as Flecs components.
     #[derive(Component)]
@@ -666,7 +736,7 @@ fn tag_has_component() {
 }
 
 #[test]
-fn component_has_component() {
+fn implicit_components_component_has_component() {
     // C++: world.id<Position>().entity().has<flecs::Component>()
     #[derive(Component)]
     struct Position {

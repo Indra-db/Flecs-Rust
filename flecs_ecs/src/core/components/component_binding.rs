@@ -15,6 +15,9 @@ pub(crate) struct ComponentBindingCtx {
     pub(crate) free_on_remove: Option<EcsCtxFreeT>,
     pub(crate) free_on_set: Option<EcsCtxFreeT>,
     pub(crate) free_on_replace: Option<EcsCtxFreeT>,
+    // fn pointers need no heap allocation, so no free_on_compare/free_on_equals
+    pub(crate) on_compare: Option<*mut c_void>,
+    pub(crate) on_equals: Option<*mut c_void>,
 }
 
 impl Drop for ComponentBindingCtx {
@@ -58,6 +61,8 @@ impl Default for ComponentBindingCtx {
             free_on_remove: None,
             free_on_set: None,
             free_on_replace: None,
+            on_compare: None,
+            on_equals: None,
         }
     }
 }

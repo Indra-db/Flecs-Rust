@@ -14,3 +14,4 @@ flecs_ecs/doc/flecs/src/cheatsheet.md
 docreplace/
 test_projects/
 /docs/
+tmp/

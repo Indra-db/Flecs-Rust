@@ -47,6 +47,10 @@ where
     }
 
     T::__register_clone_hooks(&mut hooks);
+    T::__register_compare_hooks(&mut hooks);
+    T::__register_equals_hooks(&mut hooks);
+    T::__register_compare_hooks(&mut hooks);
+    T::__register_equals_hooks(&mut hooks);
 
     // if (!T::IMPLS_DEFAULT && !T::IS_ENUM) || !T::IMPLS_CLONE {
     //     let mut registered_hooks = RegistersPanicHooks::default();
@@ -83,7 +87,7 @@ pub(crate) fn create_entity_desc(
         parent: 0,
         name,
         sep: SEPARATOR.as_ptr(),
-        root_sep: core::ptr::null(),
+        root_sep: SEPARATOR.as_ptr(),
         symbol,
         use_low_id: true,
         add: core::ptr::null(),

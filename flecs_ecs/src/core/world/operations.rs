@@ -205,7 +205,7 @@ impl World {
     ///
     /// let world_info = world.info();
     ///
-    /// assert_eq!(world_info.systems_ran_frame, 0);
+    /// assert_eq!(world_info.systems_ran_total, 0);
     ///
     /// let dt = world.frame_begin(0.0);
     ///
