@@ -25,8 +25,7 @@ fn paths_path_depth_1() {
     assert_eq!(e.name(), "bar");
     assert_eq!(e.path().unwrap(), "::foo::bar");
 
-    let e_world = world.lookup("bar");
-    assert_eq!(e_world, 0u64);
+    assert!(world.try_lookup("bar").is_none());
 
     let e_world = world.lookup("foo::bar");
     assert_eq!(e.id(), e_world.id());
@@ -43,8 +42,7 @@ fn paths_path_depth_2() {
     assert_eq!(e.name(), "hello");
     assert_eq!(e.path().unwrap(), "::foo::bar::hello");
 
-    let e_world = world.lookup("hello");
-    assert_eq!(e_world, 0u64);
+    assert!(world.try_lookup("hello").is_none());
 
     let e_world = world.lookup("foo::bar::hello");
     assert_eq!(e.id(), e_world.id());
@@ -220,24 +218,20 @@ fn paths_alias_entity_empty() {
     let child = world.entity_named("child").child_of(parent);
 
     // "child" without qualifier - can't be looked up from root since it's a child
-    let e = world.lookup("child");
-    assert_eq!(e, 0u64);
+    assert!(world.try_lookup("child").is_none());
 
     // set alias with empty string = use entity's own short name
     world.set_alias_entity(child, "");
 
-    let e = world.lookup("child");
-    assert_ne!(e, 0u64);
+    assert!(world.try_lookup("child").is_some());
 
     // override with a different alias
     world.set_alias_entity(child, "FooAlias");
 
     // now "child" alias is gone (replaced by "FooAlias")
-    let e = world.lookup("child");
-    assert_eq!(e, 0u64);
+    assert!(world.try_lookup("child").is_none());
 
-    let e = world.lookup("FooAlias");
-    assert_ne!(e, 0u64);
+    assert!(world.try_lookup("FooAlias").is_some());
 }
 
 #[test]

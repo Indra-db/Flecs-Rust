@@ -2038,33 +2038,9 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity, or entity with id 0 if not found.
+    /// The entity. Panics if not found — use [`try_lookup`](Self::try_lookup) for fallible lookup.
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup(name)
-            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
-    }
-
-    /// Lookup an entity by name, only in the current scope of the entity.
-    /// Panics if entity not found.
-    ///
-    /// Lookup an entity in the scope of this entity. The provided path may
-    /// contain double colons as scope separators, for example: "`Foo::Bar`".
-    ///
-    /// # Panics
-    ///
-    /// Panics if the entity is not found.
-    /// Use [`EntityView::lookup()`] for non-panicking behavior.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the entity to lookup.
-    ///
-    /// # Returns
-    ///
-    /// The entity
-    #[inline(always)]
-    pub fn lookup_required(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }

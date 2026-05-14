@@ -48,14 +48,25 @@ impl FlecsPanicAbortGuard {
         let lock = mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
         unsafe extern "C-unwind" fn panic_shim() {
+            // Signal the abort() override to suppress the redundant libc abort()
+            // that Flecs calls immediately after ecs_os_abort().
+            ABORT_GUARD_ACTIVE.store(true, core::sync::atomic::Ordering::SeqCst);
+            // Guard against double-panic: if Rust is already unwinding (e.g. a
+            // Query drop fires another ecs_abort during catch_unwind unwinding),
+            // a second panic!() would cause an immediate SIGABRT. Instead, just
+            // return — ABORT_GUARD_ACTIVE=true ensures the C abort() call that
+            // follows is suppressed by our no_mangle override.
+            if std::thread::panicking() {
+                return;
+            }
             panic!("flecs abort (ecs_assert / ecs_abort fired)");
         }
 
+        // ecs_os_set_api() is guarded — it silently no-ops after World::new() has
+        // already called ecs_os_init(). Directly mutate ecs_os_api.abort_ instead.
         let original = unsafe {
-            let mut api = flecs_ecs::sys::ecs_os_get_api();
-            let orig = api.abort_;
-            api.abort_ = Some(panic_shim);
-            flecs_ecs::sys::ecs_os_set_api(&mut api);
+            let orig = flecs_ecs::sys::ecs_os_api.abort_;
+            flecs_ecs::sys::ecs_os_api.abort_ = Some(panic_shim);
             orig
         };
 
@@ -65,10 +76,11 @@ impl FlecsPanicAbortGuard {
 
 impl Drop for FlecsPanicAbortGuard {
     fn drop(&mut self) {
+        // Reset the flag so subsequent unguarded aborts still terminate.
+        ABORT_GUARD_ACTIVE.store(false, core::sync::atomic::Ordering::SeqCst);
+        // Directly restore ecs_os_api.abort_ (ecs_os_set_api is no-op after init).
         unsafe {
-            let mut api = flecs_ecs::sys::ecs_os_get_api();
-            api.abort_ = self.original;
-            flecs_ecs::sys::ecs_os_set_api(&mut api);
+            flecs_ecs::sys::ecs_os_api.abort_ = self.original;
         }
     }
 }

@@ -491,7 +491,7 @@ fn test_world_set_lookup_path() {
     world.set_scope(0); // Reset scope
 
     assert_eq!(world.lookup("Parent").id(), parent.id());
-    assert!(!world.lookup("Child").is_alive());
+    assert!(world.try_lookup("Child").is_none());
     assert_eq!(world.lookup("Parent::Child").id(), world.lookup_recursive("Child").id());
 }
 
@@ -735,9 +735,15 @@ fn test_world_stage_count() {
 fn test_world_modified() {
     let world = World::new();
 
+    let mut count = 0;
+
+    world.observer::<flecs::OnSet, &Position>()
+        .each(|_p| { /* triggered by modified */ });
+
     let e = world.entity().set(Position { x: 5, y: 10 });
 
-    world.modified(Position::entity_id(&world));
+    // modified must be called on the entity that owns the component
+    e.modified(Position::entity_id(&world));
 
     assert!(e.is_alive());
 }
