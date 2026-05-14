@@ -1766,7 +1766,7 @@ fn query_sort_by() {
 
     q.run(|mut it| {
         while it.next() {
-            let mut p = it.field_mut::<Position>(0);
+            let p = it.field::<Position>(0);
             assert_eq!(it.count(), 5);
             assert_eq!(p[0].x, 1);
             assert_eq!(p[1].x, 2);
