@@ -440,12 +440,14 @@ where
             FlecsErrorCode::InvalidParameter,
             _index
         );
-        ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, _index) != 0 },
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field_handle from .each, use .field_at instead",
-        );
+        if !IS_FIELD_AT {
+            ecs_assert!(
+                (self.iter.flags & sys::EcsIterCppEach == 0)
+                    || unsafe { sys::ecs_field_src(self.iter, _index) != 0 },
+                FlecsErrorCode::InvalidOperation,
+                "cannot .field_handle from .each, use .field_at instead",
+            );
+        }
 
         if !READONLY {
             ecs_assert!(
@@ -1023,8 +1025,7 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if the component at the specified field index is not sparse. Use this method
-    /// only for components marked with the `Sparse` trait.
+    /// Panics if the field is null or the row is out of bounds.
     ///
     /// # Example
     ///
@@ -1134,7 +1135,7 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if the component at the specified field index is not sparse.
+    /// Panics if the field is null or the row is out of bounds.
     ///
     /// # Example
     ///
@@ -1817,6 +1818,8 @@ where
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
         assert!(!array.is_null(), "field_at_dense: null array at index {index}");
         assert!(row < count, "field_at_dense: row {row} out of bounds (count={count})");
+        // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
+        // The pointer is valid for reads for the lifetime 'a which is bound to &'a self.
         unsafe { &*array.add(row) }
     }
 
@@ -1828,6 +1831,8 @@ where
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
         assert!(!array.is_null(), "field_at_dense_mut: null array at index {index}");
         assert!(row < count, "field_at_dense_mut: row {row} out of bounds (count={count})");
+        // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
+        // Aliasing is the caller's responsibility, matching the contract of field_internal_mut.
         unsafe { &mut *array.add(row) }
     }
 
