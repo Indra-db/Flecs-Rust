@@ -6,15 +6,17 @@ use crate::prelude::*;
 ///
 /// # Example
 /// ```ignore
-/// let world = World::new();
 /// #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
 /// enum Color { Red = 1, Green = 2, Blue = 3 }
 ///
+/// let world = World::new();
 /// let color_enum = world.enum_type::<Color>();
 /// assert_eq!(color_enum.first(), 0);
 /// assert_eq!(color_enum.last(), 2);
-/// assert_eq!(color_enum.index_by_value(Color::Red as i32), 0);
-/// assert!(color_enum.is_valid(Color::Green as i32));
+/// assert_eq!(color_enum.index_by_value(1), 0);  // Red's discriminant is 1
+/// assert_eq!(color_enum.index_by_value(2), 1);  // Green's discriminant is 2
+/// assert!(color_enum.is_valid(1));
+/// assert!(!color_enum.is_valid(99));
 /// ```
 pub struct EnumType<'a, T: ComponentId> {
     world: WorldRef<'a>,
@@ -32,7 +34,7 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
 
     /// Get the first constant index (0 if constants exist, -1 otherwise).
     pub fn first(&self) -> i32 {
-        if self.last() >= 0 {
+        if T::UnderlyingEnumType::iter().next().is_some() {
             0
         } else {
             -1
@@ -53,9 +55,17 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     /// Get the constant index for a given underlying value.
     /// Returns -1 if the value is not a valid constant.
     pub fn index_by_value(&self, value: i64) -> i32 {
+        let size = std::mem::size_of::<T::UnderlyingTypeOfEnum>();
         for (idx, constant) in T::UnderlyingEnumType::iter().enumerate() {
-            let const_val = constant.enum_index() as i64;
-            if const_val == value {
+            // Extract the discriminant value from the enum variant
+            let discriminant = match size {
+                1 => unsafe { *((&constant as *const _ as *const i8)) as i64 },
+                2 => unsafe { *((&constant as *const _ as *const i16)) as i64 },
+                4 => unsafe { *((&constant as *const _ as *const i32)) as i64 },
+                8 => unsafe { *((&constant as *const _ as *const i64)) },
+                _ => continue,
+            };
+            if discriminant == value {
                 return idx as i32;
             }
         }
@@ -70,28 +80,28 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     /// Get the entity ID for a given enum constant value.
     /// Returns 0 if the value is not a valid constant.
     pub fn entity_id(&self, value: i64) -> u64 {
-        let index = self.index_by_value(value);
-        if index < 0 {
-            return 0;
-        }
-
-        // Get the entity ID for the enum constant
-        T::UnderlyingEnumType::iter()
-            .nth(index as usize)
-            .and_then(|constant| {
+        let size = std::mem::size_of::<T::UnderlyingTypeOfEnum>();
+        for constant in T::UnderlyingEnumType::iter() {
+            // Extract the discriminant value from the enum variant
+            let discriminant = match size {
+                1 => unsafe { *((&constant as *const _ as *const i8)) as i64 },
+                2 => unsafe { *((&constant as *const _ as *const i16)) as i64 },
+                4 => unsafe { *((&constant as *const _ as *const i32)) as i64 },
+                8 => unsafe { *((&constant as *const _ as *const i64)) },
+                _ => continue,
+            };
+            if discriminant == value {
+                // Found matching constant, get its entity ID
                 let entity_id = unsafe {
                     T::UnderlyingEnumType::id_variant_of_index_unchecked(
                         constant.enum_index(),
                         self.world,
                     )
                 };
-                if entity_id != 0 {
-                    Some(entity_id)
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(0)
+                return entity_id;
+            }
+        }
+        0
     }
 
     /// Get the entity for the enum type itself.
@@ -100,7 +110,7 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     }
 }
 
-impl<'a> WorldRef<'a> {
+impl WorldRef<'_> {
     /// Get enum type reflection wrapper for a component type.
     ///
     /// # Example
