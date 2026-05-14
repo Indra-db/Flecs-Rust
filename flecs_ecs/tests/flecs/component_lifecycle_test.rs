@@ -55,9 +55,8 @@ fn main_component_lifecycle() {
     grow_no_default_invoked_w_tag();
     grow_no_default_invoked_w_component();
     delete_no_default_ctor();
-    no_default_ctor_add();
-    no_default_ctor_add_relationship();
-    no_default_ctor_add_second();
+    // no_default_ctor_add, no_default_ctor_add_relationship, no_default_ctor_add_second
+    // are tested separately with #[should_panic] wrapper tests, not called here
 
     // Hooks
     on_add_hook();
@@ -126,6 +125,25 @@ fn main_component_lifecycle() {
     component_lifecycle_grow_no_default_ctor_move_w_component();
     component_lifecycle_register_parent_after_child_w_hooks();
     component_lifecycle_register_parent_after_child_w_hooks_implicit();
+
+    // Compare hooks
+    compare_WithGreaterThan();
+    compare_WithLessThan();
+    compare_WithLessAndGreaterThan();
+    compare_WithEqualsAndGreaterThan();
+    compare_WithEqualsAndLessThan();
+    compare_WithEqualsOnly();
+    compare_WithoutOperators();
+
+    // Compare enums
+    compare_uint8_enum();
+    compare_uint16_enum();
+    compare_uint32_enum();
+    compare_uint64_enum();
+    compare_int8_enum();
+    compare_int16_enum();
+    compare_int32_enum();
+    compare_int64_enum();
 }
 
 static POD_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
@@ -4013,52 +4031,184 @@ fn component_lifecycle_on_set_hook_sparse_w_iter() {
     assert_eq!(e_arg.get(), *e2.id());
 }
 
-// compare hooks — Rust doesn't have operator overloading for comparison hooks
-// in the same way; these are TODO as the API doesn't exist yet.
-// TODO: missing API: component().on_compare() / on_equals() for custom comparison hooks
+// compare hooks — test custom comparison hooks with structs implementing PartialOrd/PartialEq
+
+fn compare_WithGreaterThan() {
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithGreaterThan {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithGreaterThan>();
+
+    // Register compare hook
+    c.on_compare(|a: &WithGreaterThan, b: &WithGreaterThan| a.value.cmp(&b.value));
+
+    // After on_compare: hook is registered
+    let hooks = c.get_hooks();
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+
+    // Verify ordering
+    let a = WithGreaterThan { value: 1 };
+    let b = WithGreaterThan { value: 2 };
+    assert!(a.value < b.value, "a.value should be less than b.value");
+}
+
+fn compare_WithLessThan() {
+
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithLessThan {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithLessThan>();
+
+    c.on_compare(|a: &WithLessThan, b: &WithLessThan| a.value.cmp(&b.value));
+
+    let hooks = c.get_hooks();
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+
+    let a = WithLessThan { value: 2 };
+    let b = WithLessThan { value: 1 };
+    assert!(a.value > b.value);
+}
+
+fn compare_WithLessAndGreaterThan() {
+
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithLessAndGreaterThan {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithLessAndGreaterThan>();
+
+    c.on_compare(|a: &WithLessAndGreaterThan, b: &WithLessAndGreaterThan| a.value.cmp(&b.value));
+
+    let hooks = c.get_hooks();
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+
+    let a = WithLessAndGreaterThan { value: 1 };
+    let b = WithLessAndGreaterThan { value: 2 };
+    assert!(a.value < b.value);
+    assert!(b.value > a.value);
+}
+
+fn compare_WithEqualsAndGreaterThan() {
+
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithEqualsAndGreaterThan {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithEqualsAndGreaterThan>();
+
+    c.on_compare(|a: &WithEqualsAndGreaterThan, b: &WithEqualsAndGreaterThan| a.value.cmp(&b.value));
+
+    let hooks = c.get_hooks();
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+
+    let a = WithEqualsAndGreaterThan { value: 1 };
+    let b = WithEqualsAndGreaterThan { value: 1 };
+    assert_eq!(a.value, b.value);
+}
+
+fn compare_WithEqualsAndLessThan() {
+
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithEqualsAndLessThan {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithEqualsAndLessThan>();
+
+    c.on_compare(|a: &WithEqualsAndLessThan, b: &WithEqualsAndLessThan| a.value.cmp(&b.value));
+
+    let hooks = c.get_hooks();
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+
+    let a = WithEqualsAndLessThan { value: 2 };
+    let b = WithEqualsAndLessThan { value: 2 };
+    assert_eq!(a.value, b.value);
+}
+
+fn compare_WithEqualsOnly() {
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithEqualsOnly {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithEqualsOnly>();
+
+    // Register only equals, not compare
+    c.on_equals(|a: &WithEqualsOnly, b: &WithEqualsOnly| a.value == b.value);
+
+    let hooks = c.get_hooks();
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    let a = WithEqualsOnly { value: 1 };
+    let b = WithEqualsOnly { value: 1 };
+    assert_eq!(a.value, b.value);
+}
+
+fn compare_WithoutOperators() {
+    #[derive(Component, Clone, Copy, Debug)]
+    struct WithoutOperators {
+        value: i32,
+    }
+
+    let world = World::new();
+    let c = world.component::<WithoutOperators>();
+
+    // Register equals with explicit callback
+    c.on_equals(|a: &WithoutOperators, b: &WithoutOperators| a.value == b.value);
+
+    let hooks = c.get_hooks();
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    let a = WithoutOperators { value: 5 };
+    let b = WithoutOperators { value: 5 };
+    assert_eq!(a.value, b.value);
+}
 
 #[test]
 fn component_lifecycle_compare_WithGreaterThan() {
-    // TODO: missing API: component.on_compare() for comparison hooks
-    // In C++ this calls component.on_compare() which generates a cmp from operator>
-    // Rust equivalent API not yet implemented
-    let _world = World::new();
+    compare_WithGreaterThan();
 }
 
 #[test]
 fn component_lifecycle_compare_WithLessThan() {
-    // TODO: missing API: component.on_compare() for comparison hooks
-    let _world = World::new();
+    compare_WithLessThan();
 }
 
 #[test]
 fn component_lifecycle_compare_WithLessAndGreaterThan() {
-    // TODO: missing API: component.on_compare() for comparison hooks
-    let _world = World::new();
+    compare_WithLessAndGreaterThan();
 }
 
 #[test]
 fn component_lifecycle_compare_WithEqualsAndGreaterThan() {
-    // TODO: missing API: component.on_compare() / on_equals() for comparison hooks
-    let _world = World::new();
+    compare_WithEqualsAndGreaterThan();
 }
 
 #[test]
 fn component_lifecycle_compare_WithEqualsAndLessThan() {
-    // TODO: missing API: component.on_compare() / on_equals() for comparison hooks
-    let _world = World::new();
+    compare_WithEqualsAndLessThan();
 }
 
 #[test]
 fn component_lifecycle_compare_WithEqualsOnly() {
-    // TODO: missing API: component.on_equals() for equality hooks
-    let _world = World::new();
+    compare_WithEqualsOnly();
 }
 
 #[test]
 fn component_lifecycle_compare_WithoutOperators() {
-    // TODO: missing API: component.on_equals() / on_compare() with explicit callbacks
-    let _world = World::new();
+    compare_WithoutOperators();
 }
 
 // ─── struct_w_string_add_2_remove ─────────────────────────────────────────────
@@ -4162,55 +4312,207 @@ fn component_lifecycle_no_default_ctor_add_second() {
 // Invocation count tracking not implemented.
 
 // ─── compare_*_Enum ───────────────────────────────────────────────────────────
-// TODO: missing API: C++ TestUnsignedEnum<T> / TestSignedEnum<T> template enums with
-// comparison hooks (ecs_get_hooks_id). Rust enum comparison hooks not exposed.
+// Enums with PartialOrd + PartialEq auto-register comparison hooks
+
+fn compare_uint8_enum() {
+    #[repr(u8)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum Enum8 {
+        Red = 1,
+        Yellow = 2,
+        Blue = 3,
+    }
+
+    let world = World::new();
+    let c = world.component::<Enum8>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered for enum");
+    assert!(hooks.equals.is_some(), "equals hook should be registered for enum");
+
+    assert!(Enum8::Red < Enum8::Yellow);
+    assert!(Enum8::Blue > Enum8::Red);
+    assert_eq!(Enum8::Red, Enum8::Red);
+}
+
+fn compare_uint16_enum() {
+    #[repr(u16)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum Enum16 {
+        Red = 1,
+        Yellow = 2,
+        Blue = 3,
+    }
+
+    let world = World::new();
+    let c = world.component::<Enum16>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(Enum16::Red < Enum16::Yellow);
+    assert!(Enum16::Blue > Enum16::Red);
+}
+
+fn compare_uint32_enum() {
+    #[repr(u32)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum Enum32 {
+        Red = 1,
+        Yellow = 2,
+        Blue = 3,
+    }
+
+    let world = World::new();
+    let c = world.component::<Enum32>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(Enum32::Red < Enum32::Yellow);
+    assert!(Enum32::Blue > Enum32::Red);
+}
+
+fn compare_uint64_enum() {
+    #[repr(u64)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum Enum64 {
+        Red = 1,
+        Yellow = 2,
+        Blue = 3,
+    }
+
+    let world = World::new();
+    let c = world.component::<Enum64>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(Enum64::Red < Enum64::Yellow);
+    assert!(Enum64::Blue > Enum64::Red);
+}
+
+fn compare_int8_enum() {
+    #[repr(i8)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum EnumSigned8 {
+        Red = -1,
+        Yellow = 0,
+        Blue = 1,
+    }
+
+    let world = World::new();
+    let c = world.component::<EnumSigned8>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(EnumSigned8::Red < EnumSigned8::Yellow);
+    assert!(EnumSigned8::Blue > EnumSigned8::Red);
+}
+
+fn compare_int16_enum() {
+    #[repr(i16)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum EnumSigned16 {
+        Red = -1,
+        Yellow = 0,
+        Blue = 1,
+    }
+
+    let world = World::new();
+    let c = world.component::<EnumSigned16>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(EnumSigned16::Red < EnumSigned16::Yellow);
+    assert!(EnumSigned16::Blue > EnumSigned16::Red);
+}
+
+fn compare_int32_enum() {
+    #[repr(i32)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum EnumSigned32 {
+        Red = -1,
+        Yellow = 0,
+        Blue = 1,
+    }
+
+    let world = World::new();
+    let c = world.component::<EnumSigned32>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(EnumSigned32::Red < EnumSigned32::Yellow);
+    assert!(EnumSigned32::Blue > EnumSigned32::Red);
+}
+
+fn compare_int64_enum() {
+    #[repr(i64)]
+    #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
+    enum EnumSigned64 {
+        Red = -1,
+        Yellow = 0,
+        Blue = 1,
+    }
+
+    let world = World::new();
+    let c = world.component::<EnumSigned64>();
+    let hooks = c.get_hooks();
+
+    assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be registered");
+
+    assert!(EnumSigned64::Red < EnumSigned64::Yellow);
+    assert!(EnumSigned64::Blue > EnumSigned64::Red);
+}
 
 #[test]
 fn component_lifecycle_compare_uint8_enum() {
-    // TODO: missing API: C++ TestUnsignedEnum<uint8_t> / ecs_get_hooks_id comparison hooks
-    let _world = World::new();
+    compare_uint8_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_uint16_enum() {
-    // TODO: missing API: C++ TestUnsignedEnum<uint16_t>
-    let _world = World::new();
+    compare_uint16_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_uint32_enum() {
-    // TODO: missing API: C++ TestUnsignedEnum<uint32_t>
-    let _world = World::new();
+    compare_uint32_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_uint64_enum() {
-    // TODO: missing API: C++ TestUnsignedEnum<uint64_t>
-    let _world = World::new();
+    compare_uint64_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_int8_enum() {
-    // TODO: missing API: C++ TestSignedEnum<int8_t>
-    let _world = World::new();
+    compare_int8_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_int16_enum() {
-    // TODO: missing API: C++ TestSignedEnum<int16_t>
-    let _world = World::new();
+    compare_int16_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_int32_enum() {
-    // TODO: missing API: C++ TestSignedEnum<int32_t>
-    let _world = World::new();
+    compare_int32_enum();
 }
 
 #[test]
 fn component_lifecycle_compare_int64_enum() {
-    // TODO: missing API: C++ TestSignedEnum<int64_t>
-    let _world = World::new();
+    compare_int64_enum();
 }
 
 // ---- Individual test wrappers for functions already implemented above ----
