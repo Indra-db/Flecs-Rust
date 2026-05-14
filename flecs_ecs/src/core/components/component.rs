@@ -1,6 +1,6 @@
 //! Registering and working with components
 
-use core::{ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr};
+use core::{cmp::Ordering, ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr};
 
 use crate::core::*;
 #[cfg(feature = "flecs_meta")]
@@ -504,6 +504,81 @@ impl<'a, T> Component<'a, T> {
         let func_ptr = unsafe { (*ctx).on_equals.unwrap() };
         let func: fn(&U, &U) -> bool = unsafe { core::mem::transmute(func_ptr) };
         func(unsafe { &*(a as *const U) }, unsafe { &*(b as *const U) })
+    }
+
+    /// Compare two values using the registered comparison hook.
+    ///
+    /// Returns `Some(Ordering)` if a comparison hook is registered, `None` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - First value to compare
+    /// * `b` - Second value to compare
+    ///
+    /// # Returns
+    ///
+    /// `Some(Ordering::Less)` if `a < b`, `Some(Ordering::Equal)` if `a == b`,
+    /// `Some(Ordering::Greater)` if `a > b`, or `None` if no hook is registered.
+    pub fn compare(&self, a: &T, b: &T) -> Option<Ordering> {
+        use crate::core::WorldProvider;
+
+        unsafe {
+            let ti_ptr = sys::ecs_get_type_info(
+                (&self.base.entity.world).world_ptr() as *mut _,
+                *self.id,
+            );
+            if ti_ptr.is_null() {
+                return None;
+            }
+            let ti = &*ti_ptr;
+
+            let cmp_fn = ti.hooks.cmp?;
+            let result = cmp_fn(
+                a as *const T as *const c_void,
+                b as *const T as *const c_void,
+                ti,
+            );
+            Some(match result {
+                r if r < 0 => Ordering::Less,
+                r if r > 0 => Ordering::Greater,
+                _ => Ordering::Equal,
+            })
+        }
+    }
+
+    /// Check equality using the registered equals hook.
+    ///
+    /// Returns `Some(bool)` if an equals hook is registered, `None` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - First value to compare
+    /// * `b` - Second value to compare
+    ///
+    /// # Returns
+    ///
+    /// `Some(true)` if `a == b`, `Some(false)` if `a != b`, or `None` if no hook is registered.
+    pub fn are_equal(&self, a: &T, b: &T) -> Option<bool> {
+        use crate::core::WorldProvider;
+
+        unsafe {
+            let ti_ptr = sys::ecs_get_type_info(
+                (&self.base.entity.world).world_ptr() as *mut _,
+                *self.id,
+            );
+            if ti_ptr.is_null() {
+                return None;
+            }
+            let ti = &*ti_ptr;
+
+            let eq_fn = ti.hooks.equals?;
+            let result = eq_fn(
+                a as *const T as *const c_void,
+                b as *const T as *const c_void,
+                ti,
+            );
+            Some(result)
+        }
     }
 }
 

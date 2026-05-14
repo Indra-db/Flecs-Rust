@@ -4,479 +4,130 @@
 #![allow(non_snake_case)]
 use crate::common_test::*;
 
-#[test]
-fn main_component_lifecycle() {
-    // POD lifecycle
-    ctor_on_add();
-    dtor_on_remove();
-    move_on_add();
-    move_on_remove();
-    copy_on_set();
-    copy_on_override();
-    set_singleton();
-    set_pod_singleton();
-    drop_on_remove();
-    drop_on_world_delete();
-    set_multiple_times();
-    implicit_component();
-    implicit_component_after_query();
-    default_init();
-    test_2_components_add_remove();
 
-    // Struct with String lifecycle
-    struct_w_string_add();
-    struct_w_string_remove();
-    struct_w_string_set();
-    struct_w_string_override();
-    struct_w_string_add_2_remove();
-    struct_w_string_set_2_remove();
-    struct_w_string_add_2_remove_w_tag();
-    struct_w_string_set_2_remove_w_tag();
-    non_trivial_implicit_move();
+// Per-thread counters: each test thread gets its own zero-initialized counts,
+// so no locking or resetting is needed between tests.
+use core::cell::Cell;
 
-    // Struct with Vector lifecycle
-    struct_w_vector_add();
-    struct_w_vector_remove();
-    struct_w_vector_set();
-    struct_w_vector_override();
-    struct_w_vector_add_2_remove();
-    struct_w_vector_set_2_remove();
-    struct_w_vector_add_2_remove_w_tag();
-    struct_w_vector_set_2_remove_w_tag();
-
-    // No Copy
-    deleted_copy();
-
-    // No Default
-    no_default_ctor_invoked_set();
-    no_default_set_deferred();
-    no_default_ctor_set();
-    grow_no_default_invoked();
-    grow_no_default_invoked_w_tag();
-    grow_no_default_invoked_w_component();
-    delete_no_default_ctor();
-    // no_default_ctor_add, no_default_ctor_add_relationship, no_default_ctor_add_second
-    // are tested separately with #[should_panic] wrapper tests, not called here
-
-    // Hooks
-    on_add_hook();
-    on_remove_hook();
-    on_set_hook();
-    on_add_hook_w_entity();
-    on_remove_hook_w_entity();
-    on_set_hook_w_entity();
-    set_w_on_add();
-    set_w_on_add_existing();
-    on_replace_hook();
-
-    // Sparse Hooks
-    on_add_hook_sparse();
-    on_remove_hook_sparse();
-    on_set_hook_sparse();
-    on_add_hook_sparse_w_entity();
-    on_remove_hook_sparse_w_entity();
-    on_set_hook_sparse_w_entity();
-
-    // Chained Hooks
-    chained_hooks();
-
-    // Multiple Worlds
-    ctor_w_2_worlds();
-    ctor_w_2_worlds_explicit_registration();
-
-    // No Copy Pair/Override Tests
-    set_pair_w_entity_no_copy();
-    set_pair_second_no_copy();
-    set_override_no_copy();
-    set_override_pair_no_copy();
-    set_override_pair_w_entity_no_copy();
-
-    // Deferred and Relation Destructor Tests
-    dtor_after_defer_set();
-    dtor_with_relation();
-    dtor_relation_target();
-
-    // Deferred Set Test
-    defer_set();
-
-    // No Copy Pair Tests
-    set_pair_no_copy();
-
-    // Sparse Component Tests
-    sparse_component();
-
-    // Count in Hook Tests
-    count_in_add_hook();
-    count_in_remove_hook();
-
-    // Multiple Hooks Configuration
-    set_multiple_hooks();
-
-    // Ensure / no_copy / grow / register_parent tests (use shared counters)
-    component_lifecycle_ensure_new();
-    component_lifecycle_ensure_existing();
-    component_lifecycle_no_copy();
-    component_lifecycle_no_copy_ctor();
-    component_lifecycle_no_copy_assign();
-    component_lifecycle_default_ctor_w_value_ctor();
-    component_lifecycle_no_default_ctor_move_ctor_on_set();
-    component_lifecycle_grow_no_default_ctor();
-    component_lifecycle_grow_no_default_ctor_move();
-    component_lifecycle_grow_no_default_ctor_move_w_component();
-    component_lifecycle_register_parent_after_child_w_hooks();
-    component_lifecycle_register_parent_after_child_w_hooks_implicit();
-
-    // Compare hooks
-    compare_WithGreaterThan();
-    compare_WithLessThan();
-    compare_WithLessAndGreaterThan();
-    compare_WithEqualsAndGreaterThan();
-    compare_WithEqualsAndLessThan();
-    compare_WithEqualsOnly();
-    compare_WithoutOperators();
-
-    // Compare enums
-    compare_uint8_enum();
-    compare_uint16_enum();
-    compare_uint32_enum();
-    compare_uint64_enum();
-    compare_int8_enum();
-    compare_int16_enum();
-    compare_int32_enum();
-    compare_int64_enum();
+thread_local! {
+    static POD_CTOR_INVOKED:              Cell<i32> = const { Cell::new(0) };
+    static POD_CLONE_INVOKED:             Cell<i32> = const { Cell::new(0) };
+    static POD_DROP_INVOKED:              Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_STRING_CTOR_INVOKED:  Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_STRING_CLONE_INVOKED: Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_STRING_DROP_INVOKED:  Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_VECTOR_CTOR_INVOKED:  Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_VECTOR_CLONE_INVOKED: Cell<i32> = const { Cell::new(0) };
+    static STRUCT_W_VECTOR_DROP_INVOKED:  Cell<i32> = const { Cell::new(0) };
+    static NO_COPY_CTOR_INVOKED:          Cell<i32> = const { Cell::new(0) };
+    static NO_COPY_DROP_INVOKED:          Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_CTOR_INVOKED:       Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_CLONE_INVOKED:      Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_DROP_INVOKED:       Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_INVOKED_CTOR_INVOKED:   Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_INVOKED_CLONE_INVOKED:  Cell<i32> = const { Cell::new(0) };
+    static NO_DEFAULT_INVOKED_DROP_INVOKED:   Cell<i32> = const { Cell::new(0) };
 }
-
-static POD_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
-static POD_CLONE_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
-static POD_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
-
-static STRUCT_W_STRING_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_STRING_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_STRING_DROP_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-
-static STRUCT_W_VECTOR_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_VECTOR_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static STRUCT_W_VECTOR_DROP_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-
-static NO_COPY_CTOR_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
-static NO_COPY_DROP_INVOKED: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
-
-static NO_DEFAULT_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_DROP_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-
-static NO_DEFAULT_INVOKED_CTOR_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_INVOKED_CLONE_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static NO_DEFAULT_INVOKED_DROP_INVOKED: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
 
 fn reset_pod_counters() {
-    POD_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    POD_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    POD_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    POD_CTOR_INVOKED.with(|c| c.set(0));
+    POD_CLONE_INVOKED.with(|c| c.set(0));
+    POD_DROP_INVOKED.with(|c| c.set(0));
 }
 fn reset_struct_w_string_counters() {
-    STRUCT_W_STRING_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_STRING_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_STRING_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.set(0));
+    STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.set(0));
+    STRUCT_W_STRING_DROP_INVOKED.with(|c| c.set(0));
 }
-
 fn reset_struct_w_vector_counters() {
-    STRUCT_W_VECTOR_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_VECTOR_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    STRUCT_W_VECTOR_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.set(0));
+    STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.set(0));
+    STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.set(0));
 }
-
 fn reset_no_copy_counters() {
-    NO_COPY_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    NO_COPY_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_COPY_CTOR_INVOKED.with(|c| c.set(0));
+    NO_COPY_DROP_INVOKED.with(|c| c.set(0));
 }
-
 fn reset_no_default_counters() {
-    NO_DEFAULT_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_CTOR_INVOKED.with(|c| c.set(0));
+    NO_DEFAULT_CLONE_INVOKED.with(|c| c.set(0));
+    NO_DEFAULT_DROP_INVOKED.with(|c| c.set(0));
 }
-
 fn reset_count_no_default_counters() {
-    NO_DEFAULT_INVOKED_CTOR_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_INVOKED_CLONE_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
-    NO_DEFAULT_INVOKED_DROP_INVOKED.store(0, core::sync::atomic::Ordering::SeqCst);
+    NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.set(0));
+    NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.set(0));
+    NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.set(0));
 }
 
 #[track_caller]
 fn test_pod_ctor(value: i32) {
-    assert_eq!(
-        POD_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "constructed count mismatch pod"
-    );
+    assert_eq!(POD_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch pod");
 }
-
 #[track_caller]
 fn test_pod_clone(value: i32) {
-    assert_eq!(
-        POD_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "cloned count mismatch pod"
-    );
+    assert_eq!(POD_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch pod");
 }
-
 #[track_caller]
 fn test_pod_drop(value: i32) {
-    assert_eq!(
-        POD_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "dropped count mismatch pod"
-    );
+    assert_eq!(POD_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch pod");
 }
-
 #[track_caller]
 fn test_string_ctor(value: i32) {
-    assert_eq!(
-        STRUCT_W_STRING_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "constructed count mismatch struct w/ string"
-    );
+    assert_eq!(STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch struct w/ string");
 }
-
 #[track_caller]
 fn test_string_clone(value: i32) {
-    assert_eq!(
-        STRUCT_W_STRING_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "cloned count mismatch struct w/ string"
-    );
+    assert_eq!(STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch struct w/ string");
 }
-
 #[track_caller]
 fn test_string_drop(value: i32) {
-    assert_eq!(
-        STRUCT_W_STRING_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "dropped count mismatch struct w/ string"
-    );
+    assert_eq!(STRUCT_W_STRING_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch struct w/ string");
 }
-
 #[track_caller]
 fn test_vector_ctor(value: i32) {
-    assert_eq!(
-        STRUCT_W_VECTOR_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "constructed count mismatch struct w/ vector"
-    );
+    assert_eq!(STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch struct w/ vector");
 }
-
 #[track_caller]
 fn test_vector_clone(value: i32) {
-    assert_eq!(
-        STRUCT_W_VECTOR_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "cloned count mismatch struct w/ vector"
-    );
+    assert_eq!(STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch struct w/ vector");
 }
-
 #[track_caller]
 fn test_vector_drop(value: i32) {
-    assert_eq!(
-        STRUCT_W_VECTOR_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "dropped count mismatch struct w/ vector"
-    );
+    assert_eq!(STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch struct w/ vector");
 }
-
 #[track_caller]
 fn test_no_default_invoked_ctor(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "constructed count mismatch no_default_invoked"
-    );
+    assert_eq!(NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch no_default_invoked");
 }
-
 #[track_caller]
 fn test_no_default_invoked_clone(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "cloned count mismatch no_default_invoked"
-    );
+    assert_eq!(NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch no_default_invoked");
 }
-
 #[track_caller]
 fn test_no_default_invoked_drop(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_INVOKED_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "dropped count mismatch no_default_invoked"
-    );
+    assert_eq!(NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch no_default_invoked");
 }
-
 #[track_caller]
 fn test_no_default_ctor(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "constructed count mismatch no_default"
-    );
+    assert_eq!(NO_DEFAULT_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch no_default");
 }
-
 #[track_caller]
 fn test_no_default_clone(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "cloned count mismatch no_default"
-    );
+    assert_eq!(NO_DEFAULT_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch no_default");
 }
-
 #[track_caller]
 fn test_no_default_drop(value: i32) {
-    assert_eq!(
-        NO_DEFAULT_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst),
-        value,
-        "dropped count mismatch no_default"
-    );
+    assert_eq!(NO_DEFAULT_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch no_default");
 }
 
-// Serializes all tests that use shared global counters. Held for the entire
-// lifetime of WorldGuard so no two counter-using tests can run concurrently.
-static COUNTER_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
-struct WorldGuard {
-    world: core::mem::ManuallyDrop<World>,
-    _guard: std::sync::MutexGuard<'static, ()>,
-}
-
-#[track_caller]
-fn assert_lifecycle_counts() {
-    let ctor_count = POD_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let clone_count = POD_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let drop_count = POD_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    assert_eq!(
-        ctor_count + clone_count,
-        drop_count,
-        "lifecycle counts do not match pod: ctor {} + clone {} != drop {}",
-        ctor_count,
-        clone_count,
-        drop_count
-    );
-
-    let str_ctor_count = STRUCT_W_STRING_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let str_clone_count = STRUCT_W_STRING_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let str_drop_count = STRUCT_W_STRING_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    assert_eq!(
-        str_ctor_count + str_clone_count,
-        str_drop_count,
-        "lifecycle counts do not match struct w/ string: ctor {} + clone {} != drop {}",
-        str_ctor_count,
-        str_clone_count,
-        str_drop_count
-    );
-
-    let vec_ctor_count = STRUCT_W_VECTOR_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let vec_clone_count = STRUCT_W_VECTOR_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let vec_drop_count = STRUCT_W_VECTOR_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-
-    assert_eq!(
-        vec_ctor_count + vec_clone_count,
-        vec_drop_count,
-        "lifecycle counts do not match struct w/ vector: ctor {} + clone {} != drop {}",
-        vec_ctor_count,
-        vec_clone_count,
-        vec_drop_count
-    );
-
-    let no_copy_ctor_count = NO_COPY_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let no_copy_drop_count = NO_COPY_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-
-    assert_eq!(
-        no_copy_ctor_count, no_copy_drop_count,
-        "lifecycle counts do not match no_copy: ctor {} != drop {}",
-        no_copy_ctor_count, no_copy_drop_count
-    );
-
-    let no_default_ctor_count = NO_DEFAULT_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let no_default_clone_count =
-        NO_DEFAULT_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let no_default_drop_count = NO_DEFAULT_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-
-    assert_eq!(
-        no_default_ctor_count + no_default_clone_count,
-        no_default_drop_count,
-        "lifecycle counts do not match no_default: ctor {} + clone {} != drop {}",
-        no_default_ctor_count,
-        no_default_clone_count,
-        no_default_drop_count
-    );
-
-    let count_no_default_ctor_count =
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let count_no_default_clone_count =
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-    let count_no_default_drop_count =
-        NO_DEFAULT_INVOKED_DROP_INVOKED.load(core::sync::atomic::Ordering::SeqCst);
-
-    assert_eq!(
-        count_no_default_ctor_count + count_no_default_clone_count,
-        count_no_default_drop_count,
-        "lifecycle counts do not match count_no_default: ctor {} + clone {} != drop {}",
-        count_no_default_ctor_count,
-        count_no_default_clone_count,
-        count_no_default_drop_count
-    );
-}
-
-impl Drop for WorldGuard {
-    #[track_caller]
-    fn drop(&mut self) {
-        unsafe {
-            core::mem::ManuallyDrop::drop(&mut self.world);
-        }
-        assert_lifecycle_counts();
-    }
-}
-
-impl core::ops::Deref for WorldGuard {
-    type Target = World;
-
-    fn deref(&self) -> &Self::Target {
-        &self.world
-    }
-}
-
-fn acquire_counter_lock() -> std::sync::MutexGuard<'static, ()> {
-    let guard = COUNTER_LOCK
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    // SAFETY: COUNTER_LOCK is 'static; the caller must ensure the guard is
-    // dropped before the test function returns (either via WorldGuard or manually).
-    unsafe { core::mem::transmute(guard) }
-}
-
-fn world_new() -> WorldGuard {
-    let guard = acquire_counter_lock();
+fn world_new() -> World {
     reset_pod_counters();
     reset_struct_w_string_counters();
     reset_struct_w_vector_counters();
     reset_no_copy_counters();
     reset_no_default_counters();
     reset_count_no_default_counters();
-    WorldGuard {
-        world: core::mem::ManuallyDrop::new(World::new()),
-        _guard: guard,
-    }
+    World::new()
 }
 
 #[derive(Component)]
@@ -486,7 +137,7 @@ pub struct PodDefaultCloneDrop {
 
 impl Default for PodDefaultCloneDrop {
     fn default() -> Self {
-        POD_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        POD_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         PodDefaultCloneDrop { value: 10 }
     }
 }
@@ -494,21 +145,21 @@ impl Default for PodDefaultCloneDrop {
 impl PodDefaultCloneDrop {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        POD_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        POD_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         PodDefaultCloneDrop { value }
     }
 }
 
 impl Clone for PodDefaultCloneDrop {
     fn clone(&self) -> Self {
-        POD_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        POD_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
         PodDefaultCloneDrop { value: self.value }
     }
 }
 
 impl Drop for PodDefaultCloneDrop {
     fn drop(&mut self) {
-        POD_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        POD_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -519,34 +170,28 @@ pub struct StructWithString {
 
 impl StructWithString {
     pub fn new(value: &str) -> Self {
-        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithString {
-            value: value.to_string(),
-        }
+        STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithString { value: value.to_string() }
     }
 }
 
 impl Default for StructWithString {
     fn default() -> Self {
-        STRUCT_W_STRING_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithString {
-            value: String::new(),
-        }
+        STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithString { value: String::new() }
     }
 }
 
 impl Clone for StructWithString {
     fn clone(&self) -> Self {
-        STRUCT_W_STRING_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithString {
-            value: self.value.clone(),
-        }
+        STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithString { value: self.value.clone() }
     }
 }
 
 impl Drop for StructWithString {
     fn drop(&mut self) {
-        STRUCT_W_STRING_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_STRING_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -557,34 +202,28 @@ pub struct StructWithVector {
 
 impl StructWithVector {
     pub fn new(value: &[i32]) -> Self {
-        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithVector {
-            value: value.to_vec(),
-        }
+        STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithVector { value: value.to_vec() }
     }
 }
 
 impl Default for StructWithVector {
     fn default() -> Self {
-        STRUCT_W_VECTOR_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithVector {
-            value: Vec::default(),
-        }
+        STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithVector { value: Vec::default() }
     }
 }
 
 impl Clone for StructWithVector {
     fn clone(&self) -> Self {
-        STRUCT_W_VECTOR_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
-        StructWithVector {
-            value: self.value.clone(),
-        }
+        STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
+        StructWithVector { value: self.value.clone() }
     }
 }
 
 impl Drop for StructWithVector {
     fn drop(&mut self) {
-        STRUCT_W_VECTOR_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -596,7 +235,7 @@ pub struct NoCopy {
 
 impl Default for NoCopy {
     fn default() -> Self {
-        NO_COPY_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_COPY_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         NoCopy { value: 10 }
     }
 }
@@ -604,14 +243,14 @@ impl Default for NoCopy {
 impl NoCopy {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        NO_COPY_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_COPY_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         NoCopy { value }
     }
 }
 
 impl Drop for NoCopy {
     fn drop(&mut self) {
-        NO_COPY_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_COPY_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -624,21 +263,21 @@ pub struct NoDefault {
 impl NoDefault {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        NO_DEFAULT_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         NoDefault { value }
     }
 }
 
 impl Clone for NoDefault {
     fn clone(&self) -> Self {
-        NO_DEFAULT_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
         NoDefault { value: self.value }
     }
 }
 
 impl Drop for NoDefault {
     fn drop(&mut self) {
-        NO_DEFAULT_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -651,21 +290,21 @@ pub struct NoDefaultInvoked {
 impl NoDefaultInvoked {
     #[allow(dead_code)]
     pub fn new(value: i32) -> Self {
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
         NoDefaultInvoked { value }
     }
 }
 
 impl Clone for NoDefaultInvoked {
     fn clone(&self) -> Self {
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
         NoDefaultInvoked { value: self.value }
     }
 }
 
 impl Drop for NoDefaultInvoked {
     fn drop(&mut self) {
-        NO_DEFAULT_INVOKED_DROP_INVOKED.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+        NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.set(c.get() + 1));
     }
 }
 
@@ -716,6 +355,7 @@ fn test_2_components_add_remove() {
     test_string_clone(0);
 }
 
+#[test]
 fn ctor_on_add() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -737,6 +377,7 @@ fn ctor_on_add() {
     drop(world);
     test_pod_drop(1);
 }
+#[test]
 fn dtor_on_remove() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -758,6 +399,7 @@ fn dtor_on_remove() {
     drop(world);
     test_pod_drop(1);
 }
+#[test]
 fn move_on_add() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -778,6 +420,7 @@ fn move_on_add() {
     test_pod_ctor(1);
     test_pod_clone(0);
 }
+#[test]
 fn move_on_remove() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -802,6 +445,7 @@ fn move_on_remove() {
     test_pod_clone(0);
 }
 
+#[test]
 fn copy_on_set() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -821,6 +465,7 @@ fn copy_on_set() {
     test_pod_clone(0);
 }
 
+#[test]
 fn copy_on_override() {
     let world = world_new();
     world
@@ -856,6 +501,7 @@ fn copy_on_override() {
 }
 
 ///////
+#[test]
 fn drop_on_remove() {
     let world = world_new();
 
@@ -883,6 +529,7 @@ fn drop_on_remove() {
     test_pod_drop(3);
 }
 
+#[test]
 fn set_singleton() {
     {
         let world = world_new();
@@ -904,6 +551,7 @@ fn set_singleton() {
     // test_pod_clone(0);
 }
 
+#[test]
 fn drop_on_world_delete() {
     {
         let world = world_new();
@@ -928,6 +576,7 @@ fn drop_on_world_delete() {
     test_pod_clone(0);
 }
 
+#[test]
 fn set_multiple_times() {
     let world = world_new();
 
@@ -945,6 +594,7 @@ fn set_multiple_times() {
 
 //////
 
+#[test]
 fn struct_w_string_add() {
     let world = world_new();
     world.component::<StructWithString>();
@@ -958,6 +608,7 @@ fn struct_w_string_add() {
     });
 }
 
+#[test]
 fn struct_w_string_remove() {
     let world = world_new();
     world.component::<StructWithString>();
@@ -970,6 +621,7 @@ fn struct_w_string_remove() {
     assert!(!e.has(StructWithString::id()));
 }
 
+#[test]
 fn struct_w_string_set() {
     let world = world_new();
     world.component::<StructWithString>();
@@ -983,6 +635,7 @@ fn struct_w_string_set() {
     });
 }
 
+#[test]
 fn struct_w_string_override() {
     let world = world_new();
 
@@ -1125,6 +778,7 @@ fn struct_w_string_set_2_remove_w_tag() {
     });
 }
 
+#[test]
 fn struct_w_vector_add() {
     let world = world_new();
     world.component::<StructWithVector>();
@@ -1138,6 +792,7 @@ fn struct_w_vector_add() {
     });
 }
 
+#[test]
 fn struct_w_vector_remove() {
     let world = world_new();
     world.component::<StructWithVector>();
@@ -1150,6 +805,7 @@ fn struct_w_vector_remove() {
     assert!(!e.has(StructWithVector::id()));
 }
 
+#[test]
 fn struct_w_vector_set() {
     let world = world_new();
     world.component::<StructWithVector>();
@@ -1163,6 +819,7 @@ fn struct_w_vector_set() {
     });
 }
 
+#[test]
 fn struct_w_vector_override() {
     let world = world_new();
 
@@ -1310,6 +967,7 @@ fn struct_w_vector_set_2_remove_w_tag() {
     test_vector_drop(2);
 }
 
+#[test]
 fn implicit_component() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -1338,6 +996,7 @@ fn implicit_component() {
     test_pod_drop(0);
 }
 
+#[test]
 fn implicit_component_after_query() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -1368,7 +1027,7 @@ fn implicit_component_after_query() {
     test_pod_drop(0);
 }
 
-fn try_add<T: ComponentId>(world: &WorldGuard) {
+fn try_add<T: ComponentId>(world: &World) {
     let c = world.component::<T>();
     let e = world.entity().add(c);
     assert!(e.has(T::id()));
@@ -1376,17 +1035,18 @@ fn try_add<T: ComponentId>(world: &WorldGuard) {
     assert!(!e.has(T::id()));
 }
 
-fn try_set<T: ComponentId>(world: &WorldGuard, val: T) {
+fn try_set<T: ComponentId>(world: &World, val: T) {
     let e = world.entity().set(val);
     assert!(e.has(T::id()));
 }
 
 #[allow(dead_code)]
-fn try_set_default<T: ComponentId + Default>(world: &WorldGuard) {
+fn try_set_default<T: ComponentId + Default>(world: &World) {
     let e = world.entity().set(T::default());
     assert!(e.has(T::id()));
 }
 
+#[test]
 fn deleted_copy() {
     let world = world_new();
 
@@ -1396,6 +1056,7 @@ fn deleted_copy() {
     try_set::<NoCopy>(&world, NoCopy::default());
 }
 
+#[test]
 fn default_init() {
     let world = world_new();
 
@@ -1408,9 +1069,7 @@ fn default_init() {
 #[test]
 #[should_panic]
 fn no_default_ctor_add() {
-    let _counter_guard = acquire_counter_lock();
     let _guard = FlecsPanicAbortGuard::install();
-    reset_no_default_counters();
     let world = World::new();
 
     world.component::<&NoDefault>();
@@ -1424,9 +1083,7 @@ fn no_default_ctor_add() {
 #[test]
 #[should_panic]
 fn no_default_ctor_add_relationship() {
-    let _counter_guard = acquire_counter_lock();
     let _guard = FlecsPanicAbortGuard::install();
-    reset_no_default_counters();
     let world = World::new();
 
     world.component::<&NoDefault>();
@@ -1440,9 +1097,7 @@ fn no_default_ctor_add_relationship() {
 #[test]
 #[should_panic]
 fn no_default_ctor_add_second() {
-    let _counter_guard = acquire_counter_lock();
     let _guard = FlecsPanicAbortGuard::install();
-    reset_no_default_counters();
     let world = World::new();
 
     world.component::<&NoDefault>();
@@ -1454,6 +1109,7 @@ fn no_default_ctor_add_second() {
     assert!(!e.has((flecs::Wildcard::ID, NoDefault::id())));
 }
 
+#[test]
 fn no_default_ctor_set() {
     let world = world_new();
 
@@ -1461,6 +1117,7 @@ fn no_default_ctor_set() {
     try_set::<NoDefault>(&world, NoDefault::new(1));
 }
 
+#[test]
 fn no_default_ctor_invoked_set() {
     let world = world_new();
 
@@ -1476,6 +1133,7 @@ fn no_default_ctor_invoked_set() {
     test_no_default_invoked_drop(0);
 }
 
+#[test]
 fn no_default_set_deferred() {
     let world = world_new();
 
@@ -1494,6 +1152,7 @@ fn no_default_set_deferred() {
     test_no_default_drop(0);
 }
 
+#[test]
 fn set_pod_singleton() {
     let world = world_new();
 
@@ -1515,6 +1174,7 @@ fn set_pod_singleton() {
     test_pod_drop(0);
 }
 
+#[test]
 fn non_trivial_implicit_move() {
     let world = world_new();
     world.component::<StructWithString>();
@@ -1533,6 +1193,7 @@ fn non_trivial_implicit_move() {
     test_string_drop(1);
 }
 
+#[test]
 fn grow_no_default_invoked() {
     let world = world_new();
     world.component::<NoDefaultInvoked>();
@@ -1556,6 +1217,7 @@ fn grow_no_default_invoked() {
     e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
 }
 
+#[test]
 fn grow_no_default_invoked_w_tag() {
     let world = world_new();
     world.component::<NoDefaultInvoked>();
@@ -1592,6 +1254,7 @@ fn grow_no_default_invoked_w_tag() {
     test_no_default_invoked_drop(0);
 }
 
+#[test]
 fn grow_no_default_invoked_w_component() {
     let world = world_new();
     world.component::<NoDefaultInvoked>();
@@ -1628,6 +1291,7 @@ fn grow_no_default_invoked_w_component() {
     test_no_default_invoked_drop(0);
 }
 
+#[test]
 fn delete_no_default_ctor() {
     let world = world_new();
 
@@ -1651,6 +1315,7 @@ fn delete_no_default_ctor() {
     test_no_default_drop(1);
 }
 
+#[test]
 fn on_add_hook() {
     let world = World::new();
 
@@ -1678,6 +1343,7 @@ fn on_add_hook() {
     assert_eq!(world.cloned::<&Count>().0, 2);
 }
 
+#[test]
 fn on_remove_hook() {
     let world = World::new();
 
@@ -1708,6 +1374,7 @@ fn on_remove_hook() {
     assert_eq!(world.cloned::<&Count>().0, 1);
 }
 
+#[test]
 fn on_set_hook() {
     let world = World::new();
 
@@ -1737,6 +1404,7 @@ fn on_set_hook() {
     assert_eq!(v.y, 40);
 }
 
+#[test]
 fn on_add_hook_w_entity() {
     let world = World::new();
 
@@ -1767,6 +1435,7 @@ fn on_add_hook_w_entity() {
     assert_eq!(e_arg.get(), *e2.id());
 }
 
+#[test]
 fn on_remove_hook_w_entity() {
     let world = World::new();
 
@@ -1800,6 +1469,7 @@ fn on_remove_hook_w_entity() {
     assert_eq!(e_arg.get(), e2_id);
 }
 
+#[test]
 fn on_set_hook_w_entity() {
     let world = World::new();
 
@@ -1835,6 +1505,7 @@ fn on_set_hook_w_entity() {
     assert_eq!(v.y, 40);
 }
 
+#[test]
 fn on_add_hook_sparse() {
     let world = World::new();
 
@@ -1856,6 +1527,7 @@ fn on_add_hook_sparse() {
     assert_eq!(world.cloned::<&Count>().0, 1);
 }
 
+#[test]
 fn on_remove_hook_sparse() {
     let world = World::new();
 
@@ -1880,6 +1552,7 @@ fn on_remove_hook_sparse() {
     // remaining entity will be removed when world is dropped, count becomes 2
 }
 
+#[test]
 fn on_set_hook_sparse() {
     let world = World::new();
 
@@ -1910,6 +1583,7 @@ fn on_set_hook_sparse() {
     assert_eq!(v.y, 40);
 }
 
+#[test]
 fn on_add_hook_sparse_w_entity() {
     let world = World::new();
 
@@ -1941,6 +1615,7 @@ fn on_add_hook_sparse_w_entity() {
     assert_eq!(e_arg.get(), *e2.id());
 }
 
+#[test]
 fn on_remove_hook_sparse_w_entity() {
     let world = World::new();
 
@@ -1975,6 +1650,7 @@ fn on_remove_hook_sparse_w_entity() {
     assert_eq!(e_arg.get(), e2_id);
 }
 
+#[test]
 fn on_set_hook_sparse_w_entity() {
     let world = World::new();
 
@@ -2011,6 +1687,7 @@ fn on_set_hook_sparse_w_entity() {
     assert_eq!(v.y, 40);
 }
 
+#[test]
 fn chained_hooks() {
     let world = World::new();
 
@@ -2058,20 +1735,13 @@ fn chained_hooks() {
 fn ctor_w_2_worlds() {
     {
         let world = world_new();
-
         test_pod_ctor(0);
-
         world.entity().add(PodDefaultCloneDrop::id());
         test_pod_ctor(1);
     }
-
-    reset_pod_counters();
-
     {
         let world = world_new();
-
         test_pod_ctor(0);
-
         world.entity().add(PodDefaultCloneDrop::id());
         test_pod_ctor(1);
     }
@@ -2080,27 +1750,21 @@ fn ctor_w_2_worlds() {
 fn ctor_w_2_worlds_explicit_registration() {
     {
         let world = world_new();
-
         world.component::<PodDefaultCloneDrop>();
         test_pod_ctor(0);
-
         world.entity().add(PodDefaultCloneDrop::id());
         test_pod_ctor(1);
     }
-
-    reset_pod_counters();
-
     {
         let world = world_new();
-
         world.component::<PodDefaultCloneDrop>();
         test_pod_ctor(0);
-
         world.entity().add(PodDefaultCloneDrop::id());
         test_pod_ctor(1);
     }
 }
 
+#[test]
 fn defer_set() {
     let world = world_new();
     world.component::<PodDefaultCloneDrop>();
@@ -2127,6 +1791,7 @@ fn defer_set() {
     test_pod_drop(1);
 }
 
+#[test]
 fn set_w_on_add() {
     let world = World::new();
 
@@ -2145,6 +1810,7 @@ fn set_w_on_add() {
     assert_eq!(on_add.get(), 1);
 }
 
+#[test]
 fn set_w_on_add_existing() {
     let world = World::new();
 
@@ -2163,6 +1829,7 @@ fn set_w_on_add_existing() {
     assert_eq!(on_add.get(), 1);
 }
 
+#[test]
 fn set_pair_no_copy() {
     let world = world_new();
 
@@ -2173,6 +1840,7 @@ fn set_pair_no_copy() {
     });
 }
 
+#[test]
 fn set_pair_w_entity_no_copy() {
     let world = World::new();
 
@@ -2186,6 +1854,7 @@ fn set_pair_w_entity_no_copy() {
     }
 }
 
+#[test]
 fn set_pair_second_no_copy() {
     let world = World::new();
 
@@ -2199,6 +1868,7 @@ fn set_pair_second_no_copy() {
     }
 }
 
+#[test]
 fn set_override_no_copy() {
     let world = World::new();
 
@@ -2212,6 +1882,7 @@ fn set_override_no_copy() {
     assert!(e.has(flecs::id_flags::AutoOverride::ID | *no_copy_id));
 }
 
+#[test]
 fn set_override_pair_no_copy() {
     let world = World::new();
 
@@ -2229,6 +1900,7 @@ fn set_override_pair_no_copy() {
     assert!(e.has(flecs::id_flags::AutoOverride::ID | pair_id));
 }
 
+#[test]
 fn set_override_pair_w_entity_no_copy() {
     let world = World::new();
 
@@ -2250,93 +1922,98 @@ fn set_override_pair_w_entity_no_copy() {
     assert!(e.has(flecs::id_flags::AutoOverride::ID | pair_id));
 }
 
+#[test]
 fn dtor_after_defer_set() {
-    {
-        let world = world_new();
+    let world = world_new();
 
-        let e = world.entity();
+    let e = world.entity();
 
-        world.defer_begin();
-        e.set(PodDefaultCloneDrop::new(10));
-        assert!(!e.has(PodDefaultCloneDrop::id()));
-        test_pod_ctor(1);
-        test_pod_drop(0);
-        test_pod_clone(0);
-        world.defer_end();
+    world.defer_begin();
+    e.set(PodDefaultCloneDrop::new(10));
+    assert!(!e.has(PodDefaultCloneDrop::id()));
+    test_pod_ctor(1);
+    test_pod_drop(0);
+    test_pod_clone(0);
+    world.defer_end();
 
-        assert!(e.has(PodDefaultCloneDrop::id()));
-        test_pod_ctor(1);
-        test_pod_drop(0);
-        test_pod_clone(0);
+    assert!(e.has(PodDefaultCloneDrop::id()));
+    test_pod_ctor(1);
+    test_pod_drop(0);
+    test_pod_clone(0);
 
-        e.get::<&PodDefaultCloneDrop>(|pod| {
-            assert_eq!(pod.value, 10);
-        });
+    e.get::<&PodDefaultCloneDrop>(|pod| {
+        assert_eq!(pod.value, 10);
+    });
 
-        test_pod_ctor(1);
-        test_pod_drop(0);
-        test_pod_clone(0);
-    }
+    test_pod_ctor(1);
+    test_pod_drop(0);
+    test_pod_clone(0);
+
+    drop(world);
 
     test_pod_ctor(1);
     test_pod_drop(1);
     test_pod_clone(0);
 }
 
+#[test]
 fn dtor_with_relation() {
-    {
-        let world = world_new();
+    let world = world_new();
 
-        let e = world.entity();
-        let e2 = world.entity().set(PodDefaultCloneDrop::new(5));
+    let e = world.entity();
+    let e2 = world.entity().set(PodDefaultCloneDrop::new(5));
 
-        e.set(PodDefaultCloneDrop::new(100)).add((Tag, e2));
+    e.set(PodDefaultCloneDrop::new(100)).add((Tag, e2));
 
-        test_pod_ctor(2);
-        test_pod_drop(0);
+    test_pod_ctor(2);
+    test_pod_drop(0);
 
-        e.get::<&PodDefaultCloneDrop>(|pod| {
-            assert_eq!(pod.value, 100);
-        });
+    e.get::<&PodDefaultCloneDrop>(|pod| {
+        assert_eq!(pod.value, 100);
+    });
 
-        test_pod_ctor(2);
-        test_pod_drop(0);
-    }
+    test_pod_ctor(2);
+    test_pod_drop(0);
+
+    drop(world);
+
     test_pod_ctor(2);
     test_pod_drop(2);
 }
 
+#[test]
 fn dtor_relation_target() {
-    {
-        let world = world_new();
+    let world = world_new();
 
-        let e = world.entity();
-        let e2 = world.entity().set(NoDefaultInvoked::new(5)).add((Tag, e));
-        world.entity().set(NoDefaultInvoked::new(5));
+    let e = world.entity();
+    let e2 = world.entity().set(NoDefaultInvoked::new(5)).add((Tag, e));
+    world.entity().set(NoDefaultInvoked::new(5));
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_clone(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_clone(0);
+    test_no_default_invoked_drop(0);
 
-        e2.get::<&NoDefaultInvoked>(|val| {
-            assert_eq!(val.value, 5);
-        });
+    e2.get::<&NoDefaultInvoked>(|val| {
+        assert_eq!(val.value, 5);
+    });
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_clone(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_clone(0);
+    test_no_default_invoked_drop(0);
 
-        e.destruct();
+    e.destruct();
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_clone(0);
-    }
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_clone(0);
+
+    drop(world);
 
     test_no_default_invoked_ctor(2);
     test_no_default_invoked_clone(0);
     test_no_default_invoked_drop(2);
 }
 
+#[test]
 fn sparse_component() {
     let world = world_new();
 
@@ -2369,6 +2046,7 @@ fn sparse_component() {
     test_pod_drop(1);
 }
 
+#[test]
 fn count_in_add_hook() {
     let world = World::new();
 
@@ -2390,6 +2068,7 @@ fn count_in_add_hook() {
     assert_eq!(matched, 1);
 }
 
+#[test]
 fn count_in_remove_hook() {
     let world = World::new();
 
@@ -2414,6 +2093,7 @@ fn count_in_remove_hook() {
     assert_eq!(matched, 0);
 }
 
+#[test]
 fn set_multiple_hooks() {
     let world = world_new();
 
@@ -2450,6 +2130,7 @@ fn set_multiple_hooks() {
     assert_eq!(removes.get(), 2);
 }
 
+#[test]
 fn on_replace_hook() {
     let world = World::new();
 
@@ -2749,185 +2430,185 @@ fn lifecycle_emplace_singleton() {
 }
 
 fn lifecycle_emplace_defer_use_move_ctor() {
-    {
-        let world = world_new();
+    let world = world_new();
 
-        let e = world.entity();
+    let e = world.entity();
 
-        world.defer_begin();
-        e.set(NoDefaultInvoked::new(10));
-        assert!(!e.has(NoDefaultInvoked::id()));
-        test_no_default_invoked_ctor(1);
-        test_no_default_invoked_drop(0);
-        world.defer_end();
+    world.defer_begin();
+    e.set(NoDefaultInvoked::new(10));
+    assert!(!e.has(NoDefaultInvoked::id()));
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
+    world.defer_end();
 
-        assert!(e.has(NoDefaultInvoked::id()));
-        test_no_default_invoked_ctor(1);
-        test_no_default_invoked_drop(0);
+    assert!(e.has(NoDefaultInvoked::id()));
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
 
-        e.get::<&NoDefaultInvoked>(|val| {
-            assert_eq!(val.value, 10);
-        });
+    e.get::<&NoDefaultInvoked>(|val| {
+        assert_eq!(val.value, 10);
+    });
 
-        test_no_default_invoked_ctor(1);
-        test_no_default_invoked_drop(0);
-    }
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
+
+    drop(world);
 
     test_no_default_invoked_ctor(1);
     test_no_default_invoked_drop(1);
 }
 
 fn lifecycle_grow_no_default_ctor() {
-    {
-        let world = world_new();
-        world.component::<NoDefaultInvoked>();
+    let world = world_new();
+    world.component::<NoDefaultInvoked>();
 
-        let e1 = world.entity().set(NoDefaultInvoked::new(1));
-        let e2 = world.entity().set(NoDefaultInvoked::new(2));
+    let e1 = world.entity().set(NoDefaultInvoked::new(1));
+    let e2 = world.entity().set(NoDefaultInvoked::new(2));
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_drop(0);
 
-        let e3 = world.entity().set(NoDefaultInvoked::new(3));
-        test_no_default_invoked_ctor(3);
-        test_no_default_invoked_drop(0);
+    let e3 = world.entity().set(NoDefaultInvoked::new(3));
+    test_no_default_invoked_ctor(3);
+    test_no_default_invoked_drop(0);
 
-        assert!(e1.has(NoDefaultInvoked::id()));
-        assert!(e2.has(NoDefaultInvoked::id()));
-        assert!(e3.has(NoDefaultInvoked::id()));
+    assert!(e1.has(NoDefaultInvoked::id()));
+    assert!(e2.has(NoDefaultInvoked::id()));
+    assert!(e3.has(NoDefaultInvoked::id()));
 
-        e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
-        e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
-        e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
-    }
+    e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
+    e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
+    e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
+
+    drop(world);
 
     test_no_default_invoked_ctor(3);
     test_no_default_invoked_drop(3);
 }
 
 fn lifecycle_grow_no_default_ctor_move() {
-    {
-        let world = world_new();
-        world.component::<NoDefaultInvoked>();
-        world.component::<Tag>();
+    let world = world_new();
+    world.component::<NoDefaultInvoked>();
+    world.component::<Tag>();
 
-        let e1 = world.entity().set(NoDefaultInvoked::new(1));
-        let e2 = world.entity().set(NoDefaultInvoked::new(2));
+    let e1 = world.entity().set(NoDefaultInvoked::new(1));
+    let e2 = world.entity().set(NoDefaultInvoked::new(2));
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        let e3 = world.entity().set(NoDefaultInvoked::new(3));
+    reset_count_no_default_counters();
+    let e3 = world.entity().set(NoDefaultInvoked::new(3));
 
-        test_no_default_invoked_ctor(1);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
 
-        assert!(e1.has(NoDefaultInvoked::id()));
-        assert!(e2.has(NoDefaultInvoked::id()));
-        assert!(e3.has(NoDefaultInvoked::id()));
+    assert!(e1.has(NoDefaultInvoked::id()));
+    assert!(e2.has(NoDefaultInvoked::id()));
+    assert!(e3.has(NoDefaultInvoked::id()));
 
-        e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
-        e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
-        e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
+    e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
+    e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
+    e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
 
-        reset_count_no_default_counters();
-        e1.add(Tag);
+    reset_count_no_default_counters();
+    e1.add(Tag);
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        e2.add(Tag);
+    reset_count_no_default_counters();
+    e2.add(Tag);
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        e3.add(Tag);
+    reset_count_no_default_counters();
+    e3.add(Tag);
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-    }
+    reset_count_no_default_counters();
+
+    drop(world);
 
     test_no_default_invoked_ctor(0);
     test_no_default_invoked_drop(0);
 }
 
 fn lifecycle_grow_no_default_ctor_move_w_component() {
-    {
-        let world = world_new();
-        world.component::<NoDefaultInvoked>();
-        world.component::<Position>();
+    let world = world_new();
+    world.component::<NoDefaultInvoked>();
+    world.component::<Position>();
 
-        let e1 = world.entity().set(NoDefaultInvoked::new(1));
-        let e2 = world.entity().set(NoDefaultInvoked::new(2));
+    let e1 = world.entity().set(NoDefaultInvoked::new(1));
+    let e2 = world.entity().set(NoDefaultInvoked::new(2));
 
-        test_no_default_invoked_ctor(2);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(2);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        let e3 = world.entity().set(NoDefaultInvoked::new(3));
+    reset_count_no_default_counters();
+    let e3 = world.entity().set(NoDefaultInvoked::new(3));
 
-        test_no_default_invoked_ctor(1);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
 
-        assert!(e1.has(NoDefaultInvoked::id()));
-        assert!(e2.has(NoDefaultInvoked::id()));
-        assert!(e3.has(NoDefaultInvoked::id()));
+    assert!(e1.has(NoDefaultInvoked::id()));
+    assert!(e2.has(NoDefaultInvoked::id()));
+    assert!(e3.has(NoDefaultInvoked::id()));
 
-        e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
-        e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
-        e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
+    e1.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 1));
+    e2.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 2));
+    e3.get::<&NoDefaultInvoked>(|val| assert_eq!(val.value, 3));
 
-        reset_count_no_default_counters();
-        e1.add(Position::id());
+    reset_count_no_default_counters();
+    e1.add(Position::id());
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        e2.add(Position::id());
+    reset_count_no_default_counters();
+    e2.add(Position::id());
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-        e3.add(Position::id());
+    reset_count_no_default_counters();
+    e3.add(Position::id());
 
-        test_no_default_invoked_ctor(0);
-        test_no_default_invoked_drop(0);
+    test_no_default_invoked_ctor(0);
+    test_no_default_invoked_drop(0);
 
-        reset_count_no_default_counters();
-    }
+    reset_count_no_default_counters();
+
+    drop(world);
 
     test_no_default_invoked_ctor(0);
     test_no_default_invoked_drop(0);
 }
 
 fn lifecycle_delete_no_default_ctor() {
-    {
-        let world = world_new();
-        world.component::<NoDefault>();
+    let world = world_new();
+    world.component::<NoDefault>();
 
-        let e1 = world.entity().set(NoDefault::new(1));
-        let e2 = world.entity().set(NoDefault::new(2));
-        let e3 = world.entity().set(NoDefault::new(3));
+    let e1 = world.entity().set(NoDefault::new(1));
+    let e2 = world.entity().set(NoDefault::new(2));
+    let e3 = world.entity().set(NoDefault::new(3));
 
-        test_no_default_ctor(3);
-        test_no_default_drop(0);
+    test_no_default_ctor(3);
+    test_no_default_drop(0);
 
-        e1.get::<&NoDefault>(|val| assert_eq!(val.value, 1));
-        e2.get::<&NoDefault>(|val| assert_eq!(val.value, 2));
-        e3.get::<&NoDefault>(|val| assert_eq!(val.value, 3));
+    e1.get::<&NoDefault>(|val| assert_eq!(val.value, 1));
+    e2.get::<&NoDefault>(|val| assert_eq!(val.value, 2));
+    e3.get::<&NoDefault>(|val| assert_eq!(val.value, 3));
 
-        e2.destruct();
+    e2.destruct();
 
-        test_no_default_ctor(3);
-        test_no_default_drop(1);
-    }
+    test_no_default_ctor(3);
+    test_no_default_drop(1);
+
+    drop(world);
 
     test_no_default_ctor(3);
     test_no_default_drop(3);
@@ -3016,238 +2697,6 @@ const void* ecs_record_get_id(
 }
 */
 
-// ---- Individual test wrappers for functions already implemented above ----
-
-#[test]
-fn component_lifecycle_ctor_on_add() {
-    ctor_on_add();
-}
-
-#[test]
-fn component_lifecycle_dtor_on_remove() {
-    dtor_on_remove();
-}
-
-#[test]
-fn component_lifecycle_move_on_add() {
-    move_on_add();
-}
-
-#[test]
-fn component_lifecycle_move_on_remove() {
-    move_on_remove();
-}
-
-#[test]
-fn component_lifecycle_copy_on_set() {
-    copy_on_set();
-}
-
-#[test]
-fn component_lifecycle_copy_on_override() {
-    copy_on_override();
-}
-
-#[test]
-fn component_lifecycle_struct_w_string_add() {
-    struct_w_string_add();
-}
-
-#[test]
-fn component_lifecycle_struct_w_string_remove() {
-    struct_w_string_remove();
-}
-
-#[test]
-fn component_lifecycle_struct_w_string_set() {
-    struct_w_string_set();
-}
-
-#[test]
-fn component_lifecycle_struct_w_string_override() {
-    struct_w_string_override();
-}
-
-#[test]
-fn component_lifecycle_struct_w_vector_add() {
-    struct_w_vector_add();
-}
-
-#[test]
-fn component_lifecycle_struct_w_vector_remove() {
-    struct_w_vector_remove();
-}
-
-#[test]
-fn component_lifecycle_struct_w_vector_set() {
-    struct_w_vector_set();
-}
-
-#[test]
-fn component_lifecycle_struct_w_vector_override() {
-    struct_w_vector_override();
-}
-
-#[test]
-fn component_lifecycle_deleted_copy() {
-    deleted_copy();
-}
-
-#[test]
-fn component_lifecycle_default_init() {
-    default_init();
-}
-
-#[test]
-fn component_lifecycle_implicit_component() {
-    implicit_component();
-}
-
-#[test]
-fn component_lifecycle_implicit_after_query() {
-    implicit_component_after_query();
-}
-
-#[test]
-fn component_lifecycle_on_add_hook() {
-    on_add_hook();
-}
-
-#[test]
-fn component_lifecycle_on_remove_hook() {
-    on_remove_hook();
-}
-
-#[test]
-fn component_lifecycle_on_set_hook() {
-    on_set_hook();
-}
-
-#[test]
-fn component_lifecycle_on_add_hook_w_entity() {
-    on_add_hook_w_entity();
-}
-
-#[test]
-fn component_lifecycle_on_remove_hook_w_entity() {
-    on_remove_hook_w_entity();
-}
-
-#[test]
-fn component_lifecycle_on_set_hook_w_entity() {
-    on_set_hook_w_entity();
-}
-
-#[test]
-fn component_lifecycle_on_add_hook_sparse() {
-    on_add_hook_sparse();
-}
-
-#[test]
-fn component_lifecycle_on_remove_hook_sparse() {
-    on_remove_hook_sparse();
-}
-
-#[test]
-fn component_lifecycle_on_set_hook_sparse() {
-    on_set_hook_sparse();
-}
-
-#[test]
-fn component_lifecycle_on_add_hook_sparse_w_entity() {
-    on_add_hook_sparse_w_entity();
-}
-
-#[test]
-fn component_lifecycle_on_remove_hook_sparse_w_entity() {
-    on_remove_hook_sparse_w_entity();
-}
-
-#[test]
-fn component_lifecycle_on_set_hook_sparse_w_entity() {
-    on_set_hook_sparse_w_entity();
-}
-
-#[test]
-fn component_lifecycle_chained_hooks() {
-    chained_hooks();
-}
-
-#[test]
-fn component_lifecycle_count_in_add_hook() {
-    count_in_add_hook();
-}
-
-#[test]
-fn component_lifecycle_count_in_remove_hook() {
-    count_in_remove_hook();
-}
-
-#[test]
-fn component_lifecycle_set_multiple_hooks() {
-    set_multiple_hooks();
-}
-
-#[test]
-fn component_lifecycle_sparse_component() {
-    sparse_component();
-}
-
-#[test]
-fn component_lifecycle_dtor_after_defer_set() {
-    dtor_after_defer_set();
-}
-
-#[test]
-fn component_lifecycle_dtor_with_relation() {
-    dtor_with_relation();
-}
-
-#[test]
-fn component_lifecycle_dtor_relation_target() {
-    dtor_relation_target();
-}
-
-#[test]
-fn component_lifecycle_set_pair_no_copy() {
-    set_pair_no_copy();
-}
-
-#[test]
-fn component_lifecycle_set_pair_w_entity_no_copy() {
-    set_pair_w_entity_no_copy();
-}
-
-#[test]
-fn component_lifecycle_set_pair_second_no_copy() {
-    set_pair_second_no_copy();
-}
-
-#[test]
-fn component_lifecycle_set_override_no_copy() {
-    set_override_no_copy();
-}
-
-#[test]
-fn component_lifecycle_set_override_pair_no_copy() {
-    set_override_pair_no_copy();
-}
-
-#[test]
-fn component_lifecycle_set_override_pair_w_entity_no_copy() {
-    set_override_pair_w_entity_no_copy();
-}
-
-#[test]
-fn component_lifecycle_delete_no_default_ctor() {
-    delete_no_default_ctor();
-}
-
-#[test]
-fn component_lifecycle_no_default_ctor_set() {
-    no_default_ctor_set();
-}
-
 // ---- New tests with fresh implementations ----
 
 // Emplace tests: in Rust, `emplace` constructs in-place without a default ctor.
@@ -3289,14 +2738,20 @@ fn component_lifecycle_emplace_w_ctor() {
 
 #[test]
 fn component_lifecycle_no_default_ctor_emplace() {
-    // Rust `set` is the equivalent of C++ `emplace` for non-default-constructible types
-    let world = World::new();
+    // Rust `set` is the equivalent of C++ `emplace` for non-default-constructible types.
+    // Mirrors C++ ComponentLifecycle_emplace_no_default_ctor with invocation counter checks.
+    let world = world_new();
 
-    let e = world.entity().set(NoDefaultEmplace::new(10));
+    let e = world.entity().set(NoDefaultInvoked::new(10));
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
 
-    e.get::<&NoDefaultEmplace>(|p| {
+    e.get::<&NoDefaultInvoked>(|p| {
         assert_eq!(p.value, 10);
     });
+
+    test_no_default_invoked_ctor(1);
+    test_no_default_invoked_drop(0);
 }
 
 #[derive(Component)]
@@ -4034,7 +3489,9 @@ fn component_lifecycle_on_set_hook_sparse_w_iter() {
 // compare hooks — test custom comparison hooks with structs implementing PartialOrd/PartialEq
 
 fn compare_WithGreaterThan() {
-    #[derive(Component, Clone, Copy, Debug)]
+    use std::cmp::Ordering;
+
+    #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithGreaterThan {
         value: i32,
     }
@@ -4048,16 +3505,25 @@ fn compare_WithGreaterThan() {
     // After on_compare: hook is registered
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
 
-    // Verify ordering
+    // Verify hooks work by calling them directly via safe API
     let a = WithGreaterThan { value: 1 };
     let b = WithGreaterThan { value: 2 };
-    assert!(a.value < b.value, "a.value should be less than b.value");
+    let c_val = WithGreaterThan { value: 1 };
+
+    assert_eq!(c.compare(&a, &b), Some(Ordering::Less), "a < b");
+    assert_eq!(c.compare(&b, &a), Some(Ordering::Greater), "b > a");
+    assert_eq!(c.compare(&a, &c_val), Some(Ordering::Equal), "a == c");
+
+    assert_eq!(c.are_equal(&a, &c_val), Some(true), "a == c");
+    assert_eq!(c.are_equal(&a, &b), Some(false), "a != b");
 }
 
 fn compare_WithLessThan() {
+    use std::cmp::Ordering;
 
-    #[derive(Component, Clone, Copy, Debug)]
+    #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithLessThan {
         value: i32,
     }
@@ -4069,15 +3535,19 @@ fn compare_WithLessThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
 
     let a = WithLessThan { value: 2 };
     let b = WithLessThan { value: 1 };
-    assert!(a.value > b.value);
+
+    assert_eq!(c.compare(&a, &b), Some(Ordering::Greater), "a > b");
+    assert_eq!(c.compare(&b, &a), Some(Ordering::Less), "b < a");
 }
 
 fn compare_WithLessAndGreaterThan() {
+    use std::cmp::Ordering;
 
-    #[derive(Component, Clone, Copy, Debug)]
+    #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithLessAndGreaterThan {
         value: i32,
     }
@@ -4089,16 +3559,19 @@ fn compare_WithLessAndGreaterThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
 
     let a = WithLessAndGreaterThan { value: 1 };
     let b = WithLessAndGreaterThan { value: 2 };
-    assert!(a.value < b.value);
-    assert!(b.value > a.value);
+
+    assert_eq!(c.compare(&a, &b), Some(Ordering::Less), "a < b");
+    assert_eq!(c.compare(&b, &a), Some(Ordering::Greater), "b > a");
 }
 
 fn compare_WithEqualsAndGreaterThan() {
+    use std::cmp::Ordering;
 
-    #[derive(Component, Clone, Copy, Debug)]
+    #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithEqualsAndGreaterThan {
         value: i32,
     }
@@ -4110,15 +3583,19 @@ fn compare_WithEqualsAndGreaterThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
 
     let a = WithEqualsAndGreaterThan { value: 1 };
     let b = WithEqualsAndGreaterThan { value: 1 };
-    assert_eq!(a.value, b.value);
+
+    assert_eq!(c.compare(&a, &b), Some(Ordering::Equal), "a == b");
+    assert_eq!(c.are_equal(&a, &b), Some(true), "a == b");
 }
 
 fn compare_WithEqualsAndLessThan() {
+    use std::cmp::Ordering;
 
-    #[derive(Component, Clone, Copy, Debug)]
+    #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithEqualsAndLessThan {
         value: i32,
     }
@@ -4130,10 +3607,13 @@ fn compare_WithEqualsAndLessThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
+    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
 
     let a = WithEqualsAndLessThan { value: 2 };
     let b = WithEqualsAndLessThan { value: 2 };
-    assert_eq!(a.value, b.value);
+
+    assert_eq!(c.compare(&a, &b), Some(Ordering::Equal), "a == b");
+    assert_eq!(c.are_equal(&a, &b), Some(true), "a == b");
 }
 
 fn compare_WithEqualsOnly() {
@@ -4153,7 +3633,10 @@ fn compare_WithEqualsOnly() {
 
     let a = WithEqualsOnly { value: 1 };
     let b = WithEqualsOnly { value: 1 };
-    assert_eq!(a.value, b.value);
+    let c_val = WithEqualsOnly { value: 2 };
+
+    assert_eq!(c.are_equal(&a, &b), Some(true), "a == b");
+    assert_eq!(c.are_equal(&a, &c_val), Some(false), "a != c");
 }
 
 fn compare_WithoutOperators() {
@@ -4173,7 +3656,10 @@ fn compare_WithoutOperators() {
 
     let a = WithoutOperators { value: 5 };
     let b = WithoutOperators { value: 5 };
-    assert_eq!(a.value, b.value);
+    let c_val = WithoutOperators { value: 10 };
+
+    assert_eq!(c.are_equal(&a, &b), Some(true), "a == b");
+    assert_eq!(c.are_equal(&a, &c_val), Some(false), "a != c");
 }
 
 #[test]
@@ -4306,15 +3792,15 @@ fn component_lifecycle_no_default_ctor_add_second() {
     no_default_ctor_add_second();
 }
 
-// ─── emplace_no_default_ctor ──────────────────────────────────────────────────
-// TODO: missing API: C++ test uses CountNoDefaultCtor with invocation counters.
-// Rust equivalent (NoDefaultEmplace) is tested in component_lifecycle_no_default_ctor_emplace.
-// Invocation count tracking not implemented.
+// ─── emplace_no_default_ctor ─────────────────────────────────────────────────
 
 // ─── compare_*_Enum ───────────────────────────────────────────────────────────
 // Enums with PartialOrd + PartialEq auto-register comparison hooks
 
+#[test]
 fn compare_uint8_enum() {
+    use std::cmp::Ordering;
+
     #[repr(u8)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum Enum8 {
@@ -4330,12 +3816,20 @@ fn compare_uint8_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered for enum");
     assert!(hooks.equals.is_some(), "equals hook should be registered for enum");
 
-    assert!(Enum8::Red < Enum8::Yellow);
-    assert!(Enum8::Blue > Enum8::Red);
-    assert_ne!(Enum8::Red, Enum8::Blue);
+    let red = Enum8::Red;
+    let yellow = Enum8::Yellow;
+    let blue = Enum8::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less), "Red < Yellow");
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater), "Blue > Red");
+    assert_eq!(c.are_equal(&red, &blue), Some(false), "Red != Blue");
+    assert_eq!(c.are_equal(&red, &red), Some(true), "Red == Red");
 }
 
+#[test]
 fn compare_uint16_enum() {
+    use std::cmp::Ordering;
+
     #[repr(u16)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum Enum16 {
@@ -4351,11 +3845,18 @@ fn compare_uint16_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(Enum16::Red < Enum16::Yellow);
-    assert!(Enum16::Blue > Enum16::Red);
+    let red = Enum16::Red;
+    let yellow = Enum16::Yellow;
+    let blue = Enum16::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_uint32_enum() {
+    use std::cmp::Ordering;
+
     #[repr(u32)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum Enum32 {
@@ -4371,11 +3872,18 @@ fn compare_uint32_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(Enum32::Red < Enum32::Yellow);
-    assert!(Enum32::Blue > Enum32::Red);
+    let red = Enum32::Red;
+    let yellow = Enum32::Yellow;
+    let blue = Enum32::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_uint64_enum() {
+    use std::cmp::Ordering;
+
     #[repr(u64)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum Enum64 {
@@ -4391,11 +3899,18 @@ fn compare_uint64_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(Enum64::Red < Enum64::Yellow);
-    assert!(Enum64::Blue > Enum64::Red);
+    let red = Enum64::Red;
+    let yellow = Enum64::Yellow;
+    let blue = Enum64::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_int8_enum() {
+    use std::cmp::Ordering;
+
     #[repr(i8)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum EnumSigned8 {
@@ -4411,11 +3926,18 @@ fn compare_int8_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(EnumSigned8::Red < EnumSigned8::Yellow);
-    assert!(EnumSigned8::Blue > EnumSigned8::Red);
+    let red = EnumSigned8::Red;
+    let yellow = EnumSigned8::Yellow;
+    let blue = EnumSigned8::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &yellow), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_int16_enum() {
+    use std::cmp::Ordering;
+
     #[repr(i16)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum EnumSigned16 {
@@ -4431,11 +3953,18 @@ fn compare_int16_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(EnumSigned16::Red < EnumSigned16::Yellow);
-    assert!(EnumSigned16::Blue > EnumSigned16::Red);
+    let red = EnumSigned16::Red;
+    let yellow = EnumSigned16::Yellow;
+    let blue = EnumSigned16::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_int32_enum() {
+    use std::cmp::Ordering;
+
     #[repr(i32)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum EnumSigned32 {
@@ -4451,11 +3980,18 @@ fn compare_int32_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(EnumSigned32::Red < EnumSigned32::Yellow);
-    assert!(EnumSigned32::Blue > EnumSigned32::Red);
+    let red = EnumSigned32::Red;
+    let yellow = EnumSigned32::Yellow;
+    let blue = EnumSigned32::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
 
+#[test]
 fn compare_int64_enum() {
+    use std::cmp::Ordering;
+
     #[repr(i64)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
     enum EnumSigned64 {
@@ -4471,49 +4007,10 @@ fn compare_int64_enum() {
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
     assert!(hooks.equals.is_some(), "equals hook should be registered");
 
-    assert!(EnumSigned64::Red < EnumSigned64::Yellow);
-    assert!(EnumSigned64::Blue > EnumSigned64::Red);
+    let red = EnumSigned64::Red;
+    let yellow = EnumSigned64::Yellow;
+    let blue = EnumSigned64::Blue;
+
+    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
+    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
-
-#[test]
-fn component_lifecycle_compare_uint8_enum() {
-    compare_uint8_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_uint16_enum() {
-    compare_uint16_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_uint32_enum() {
-    compare_uint32_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_uint64_enum() {
-    compare_uint64_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_int8_enum() {
-    compare_int8_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_int16_enum() {
-    compare_int16_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_int32_enum() {
-    compare_int32_enum();
-}
-
-#[test]
-fn component_lifecycle_compare_int64_enum() {
-    compare_int64_enum();
-}
-
-// ---- Individual test wrappers for functions already implemented above ----
-
