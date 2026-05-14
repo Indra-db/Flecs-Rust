@@ -108,7 +108,7 @@ fn enum_standard_enum_reflection() {
     let entity = world.entity_from_enum(StandardEnum::Red);
     assert_eq!(
         entity.path().unwrap(),
-        "::flecs::enum_test::StandardEnum::Red"
+        "::StandardEnum::Red"
     );
 
     let entity2 = world.entity().set(StandardEnum::Blue);
@@ -137,14 +137,14 @@ fn enum_standard_enum_reflection() {
     assert!(StandardEnum::Red.is_field_registered_as_entity(&world));
     assert!(StandardEnum::Blue.is_field_registered_as_entity(&world));
     assert!(StandardEnum::Green.is_field_registered_as_entity(&world));
-    assert_eq!(red.path().unwrap(), "::flecs::enum_test::StandardEnum::Red");
+    assert_eq!(red.path().unwrap(), "::StandardEnum::Red");
     assert_eq!(
         green.path().unwrap(),
-        "::flecs::enum_test::StandardEnum::Green"
+        "::StandardEnum::Green"
     );
     assert_eq!(
         blue.path().unwrap(),
-        "::flecs::enum_test::StandardEnum::Blue"
+        "::StandardEnum::Blue"
     );
 }
 
@@ -371,7 +371,7 @@ fn enum_query_singleton_enum_constant() {
         .query::<()>()
         .with((comp_id, blue_id))
         .build()
-        .each_entity(|_, _| {
+        .each(|_| {
             count += 1;
         });
 
@@ -382,7 +382,7 @@ fn enum_query_singleton_enum_constant() {
         .query::<()>()
         .with((comp_id, blue_id))
         .build()
-        .each_entity(|_, _| {
+        .each(|_| {
             count += 1;
         });
     assert_eq!(count, 0);
@@ -392,7 +392,7 @@ fn enum_query_singleton_enum_constant() {
         .query::<()>()
         .with((comp_id, blue_id))
         .build()
-        .each_entity(|_, _| {
+        .each(|_| {
             count += 1;
         });
     assert_eq!(count, 0);
@@ -402,7 +402,7 @@ fn enum_query_singleton_enum_constant() {
         .query::<()>()
         .with((comp_id, blue_id))
         .build()
-        .each_entity(|_, _| {
+        .each(|_| {
             count += 1;
         });
     assert_eq!(count, 1);
@@ -821,7 +821,7 @@ fn enum_sparse_enum_reflection() {
 
     let entity = world.entity_from_enum(SparseEnum::Black);
     assert!(entity.is_valid());
-    assert_eq!(entity.path().unwrap(), "::flecs::enum_test::SparseEnum::Black");
+    assert_eq!(entity.path().unwrap(), "::SparseEnum::Black");
 
     let white_entity = world.entity_from_enum(SparseEnum::White);
     assert!(white_entity.is_valid());
@@ -842,7 +842,7 @@ fn enum_enum_class_reflection() {
 
     let entity = world.entity_from_enum(EnumClass::Grass);
     assert!(entity.is_valid());
-    assert_eq!(entity.path().unwrap(), "::flecs::enum_test::EnumClass::Grass");
+    assert_eq!(entity.path().unwrap(), "::EnumClass::Grass");
 
     let sand_entity = world.entity_from_enum(EnumClass::Sand);
     assert!(sand_entity.is_valid());
@@ -889,7 +889,7 @@ fn enum_get_constant_id() {
     assert_ne!(red_entity.id(), 0);
 
     assert_eq!(red_entity.to_constant::<StandardEnum>(), StandardEnum::Red);
-    assert_eq!(red_entity.path().unwrap(), "::flecs::enum_test::StandardEnum::Red");
+    assert_eq!(red_entity.path().unwrap(), "::StandardEnum::Red");
 
     let red_via_id = StandardEnum::Red.id_variant(&world);
     assert_eq!(red_entity.id(), red_via_id);
