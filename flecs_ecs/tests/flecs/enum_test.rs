@@ -938,72 +938,221 @@ fn enum_enum_w_one_constant_index_of() {
 }
 
 // ─── bitmask_enum_with_type_reflection ───────────────────────────────────────
-// TODO: missing API: flecs::enum_type<T> (enum_type.first/last/index_by_value/entity/is_valid)
-// C++ test uses TypedBitMaskEnum which requires bitmask+typed enum support not yet in Rust derive.
 #[test]
 fn enum_bitmask_enum_with_type_reflection() {
-    let _world = World::new();
-    // TODO: missing API: flecs::enum_type<T> with typed bitmask enum support
+    #[repr(u32)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum TypedBitMaskEnum {
+        Zero = 0,
+        bit_LS_0 = 1,
+        bit_LS_1 = 2,
+        bit_LS_2 = 4,
+        bit_LS_3 = 8,
+        bit_LS_4 = 16,
+        bit_LS_5 = 32,
+        bit_LS_15 = 32768,
+        bit_LS_31 = 2147483648,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<TypedBitMaskEnum>();
+
+    assert_eq!(enum_type.first(), 0, "first should be 0");
+    assert_eq!(enum_type.last(), 8, "last should be 8 (9 constants total)");
+
+    assert_eq!(enum_type.index_by_value(0), 0, "Zero is at index 0");
+    assert_eq!(enum_type.index_by_value(1), 1, "bit_LS_0 is at index 1");
+    assert_eq!(enum_type.index_by_value(2), 2, "bit_LS_1 is at index 2");
+    assert_eq!(enum_type.index_by_value(8), 4, "bit_LS_3 is at index 4");
+
+    assert!(enum_type.is_valid(0), "0 should be valid");
+    assert!(enum_type.is_valid(1), "1 should be valid");
+    assert!(enum_type.is_valid(8), "8 should be valid");
+    assert!(!enum_type.is_valid(3), "3 should not be valid (sparse)");
+    assert!(!enum_type.is_valid(7), "7 should not be valid (not a constant)");
 }
 
 // ─── enum_with_mixed_constants_and_bitmask ───────────────────────────────────
-// TODO: missing API: MixedConstantBitmaskEnum — mixed enum/bitmask not supported in Rust derive
 #[test]
 fn enum_enum_with_mixed_constants_and_bitmask() {
-    let _world = World::new();
-    // TODO: missing API: mixed enum constants + bitmask
+    // Note: Rust doesn't support mixed enum/bitmask like C++ does,
+    // but we can test basic enum type reflection on a bitmask-like enum
+    #[repr(u32)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum MixedEnum {
+        VsCode = 1,
+        Vim = 2,
+        Nano = 4,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<MixedEnum>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert_eq!(enum_type.index_by_value(1), 0);
+    assert_eq!(enum_type.index_by_value(2), 1);
+    assert_eq!(enum_type.index_by_value(4), 2);
 }
 
 // ─── enum_i8 / enum_i16 / enum_i32 / enum_i64 / enum_u8 / enum_u16 / enum_u32 / enum_u64 ──
-// TODO: missing API: flecs::enum_type<Ei8/Ei16/Ei32/Ei64/Eu8/Eu16/Eu32/Eu64>
-// These tests use enum_type.first/last/index_by_value/entity/is_valid which don't exist in Rust.
 
 #[test]
 fn enum_enum_i8() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(i8)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Ei8 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Ei8>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert_eq!(enum_type.index_by_value(0), 0);
+    assert_eq!(enum_type.index_by_value(1), 1);
+    assert_eq!(enum_type.index_by_value(2), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(1));
+    assert!(enum_type.is_valid(2));
+    assert!(!enum_type.is_valid(3));
 }
 
 #[test]
 fn enum_enum_i16() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(i16)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Ei16 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Ei16>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
+    assert!(!enum_type.is_valid(99));
 }
 
 #[test]
 fn enum_enum_i32() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(i32)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Ei32 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Ei32>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 #[test]
 fn enum_enum_i64() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(i64)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Ei64 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Ei64>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 #[test]
 fn enum_enum_u8() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(u8)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Eu8 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Eu8>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 #[test]
 fn enum_enum_u16() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(u16)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Eu16 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Eu16>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 #[test]
 fn enum_enum_u32() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(u32)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Eu32 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Eu32>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 #[test]
 fn enum_enum_u64() {
-    // TODO: missing API: flecs::enum_type<T> reflection API
-    let _world = World::new();
+    #[repr(u64)]
+    #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
+    enum Eu64 {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+    }
+
+    let world = World::new();
+    let enum_type = world.enum_type::<Eu64>();
+
+    assert_eq!(enum_type.first(), 0);
+    assert_eq!(enum_type.last(), 2);
+    assert!(enum_type.is_valid(0));
+    assert!(enum_type.is_valid(2));
 }
 
 // ─── runtime_type_constant_u8_template ───────────────────────────────────────

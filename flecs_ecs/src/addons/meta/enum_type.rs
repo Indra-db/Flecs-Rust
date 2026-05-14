@@ -126,3 +126,28 @@ impl WorldRef<'_> {
         EnumType::new(*self)
     }
 }
+
+impl crate::prelude::World {
+    /// Get enum type reflection wrapper for a component type.
+    ///
+    /// Provides runtime reflection for enum constants, including:
+    /// - `.first()` / `.last()` for constant index boundaries
+    /// - `.index_by_value(value)` to lookup constant by discriminant
+    /// - `.is_valid(value)` to check if a value is a valid constant
+    /// - `.entity_id(value)` to get the ECS entity for a constant
+    ///
+    /// # Example
+    /// ```ignore
+    /// #[derive(Component, PartialOrd, PartialEq)]
+    /// enum Color { Red = 1, Green = 2, Blue = 3 }
+    ///
+    /// let world = World::new();
+    /// let color_enum = world.enum_type::<Color>();
+    /// assert_eq!(color_enum.first(), 0);
+    /// assert_eq!(color_enum.last(), 2);
+    /// assert!(color_enum.is_valid(1)); // Red
+    /// ```
+    pub fn enum_type<T: ComponentId>(&self) -> EnumType<T> {
+        EnumType::new(self.into())
+    }
+}
