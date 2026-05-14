@@ -28,7 +28,7 @@ impl<T: ComponentId> IntoEntity for Id<T> {
     const IF_ID_IS_DEFAULT: bool = T::IMPLS_DEFAULT;
     const IS_TYPED_SECOND: bool = true;
     const IF_ID_IS_DEFAULT_SECOND: bool = false;
-    const IS_ENUM: bool = T::IS_ENUM;
+    const IS_ENUM: bool = false;
     const IS_TYPE_TAG: bool = T::IS_TAG;
     const IS_TYPED_REF: bool = <T as ComponentInfo>::IS_REF;
     const IS_TYPED_MUT_REF: bool = <T as ComponentInfo>::IS_MUT;
