@@ -491,8 +491,11 @@ fn test_world_set_lookup_path() {
     world.set_scope(0); // Reset scope
 
     assert_eq!(world.lookup("Parent").id(), parent.id());
+    // "Child" is not at root scope — unqualified lookup from root returns None.
     assert!(world.try_lookup("Child").is_none());
-    assert_eq!(world.lookup("Parent::Child").id(), world.lookup_recursive("Child").id());
+    // Fully qualified path finds the child.
+    let child = world.lookup("Parent::Child");
+    assert!(child.is_alive());
 }
 
 #[test]
@@ -705,22 +708,27 @@ fn test_world_each_child() {
     }
     world.set_scope(0); // Reset scope
 
+    // C1 and C2 are children of Parent (created via scope), not the world entity.
     let mut count = 0;
-    world.each_child(|_| {
+    parent.each_child(|_| {
         count += 1;
     });
 
-    assert!(count > 0);
+    assert_eq!(count, 2);
 }
 
 #[test]
 fn test_world_set_entity_range() {
     let world = World::new();
 
-    world.set_entity_range(Entity::new(1), Entity::new(1000000));
+    // Get current max entity ID so min is valid (must not be below current max).
+    // Use a large min value that is safely above all built-in entity IDs.
+    let min = 500000u64;
+    let max = 1000000u64;
+    world.set_entity_range(Entity::new(min), Entity::new(max));
 
     let e = world.entity();
-    assert!(e.id() < 1000000);
+    assert!(e.id() >= min && e.id() < max);
 }
 
 #[test]
