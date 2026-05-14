@@ -4332,7 +4332,7 @@ fn compare_uint8_enum() {
 
     assert!(Enum8::Red < Enum8::Yellow);
     assert!(Enum8::Blue > Enum8::Red);
-    assert_eq!(Enum8::Red, Enum8::Red);
+    assert_ne!(Enum8::Red, Enum8::Blue);
 }
 
 fn compare_uint16_enum() {

@@ -20,7 +20,7 @@ use crate::prelude::*;
 /// ```
 pub struct EnumType<'a, T: ComponentId> {
     world: WorldRef<'a>,
-    _phantom: std::marker::PhantomData<T>,
+    _phantom: core::marker::PhantomData<T>,
 }
 
 impl<'a, T: ComponentId> EnumType<'a, T> {
@@ -28,7 +28,7 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     pub(crate) fn new(world: WorldRef<'a>) -> Self {
         EnumType {
             world,
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 
@@ -55,14 +55,14 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     /// Get the constant index for a given underlying value.
     /// Returns -1 if the value is not a valid constant.
     pub fn index_by_value(&self, value: i64) -> i32 {
-        let size = std::mem::size_of::<T::UnderlyingTypeOfEnum>();
+        let size = core::mem::size_of::<T::UnderlyingTypeOfEnum>();
         for (idx, constant) in T::UnderlyingEnumType::iter().enumerate() {
             // Extract the discriminant value from the enum variant
             let discriminant = match size {
-                1 => unsafe { *((&constant as *const _ as *const i8)) as i64 },
-                2 => unsafe { *((&constant as *const _ as *const i16)) as i64 },
-                4 => unsafe { *((&constant as *const _ as *const i32)) as i64 },
-                8 => unsafe { *((&constant as *const _ as *const i64)) },
+                1 => unsafe { *(&constant as *const _ as *const i8) as i64 },
+                2 => unsafe { *(&constant as *const _ as *const i16) as i64 },
+                4 => unsafe { *(&constant as *const _ as *const i32) as i64 },
+                8 => unsafe { *(&constant as *const _ as *const i64) },
                 _ => continue,
             };
             if discriminant == value {
@@ -80,14 +80,14 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     /// Get the entity ID for a given enum constant value.
     /// Returns 0 if the value is not a valid constant.
     pub fn entity_id(&self, value: i64) -> u64 {
-        let size = std::mem::size_of::<T::UnderlyingTypeOfEnum>();
+        let size = core::mem::size_of::<T::UnderlyingTypeOfEnum>();
         for constant in T::UnderlyingEnumType::iter() {
             // Extract the discriminant value from the enum variant
             let discriminant = match size {
-                1 => unsafe { *((&constant as *const _ as *const i8)) as i64 },
-                2 => unsafe { *((&constant as *const _ as *const i16)) as i64 },
-                4 => unsafe { *((&constant as *const _ as *const i32)) as i64 },
-                8 => unsafe { *((&constant as *const _ as *const i64)) },
+                1 => unsafe { *(&constant as *const _ as *const i8) as i64 },
+                2 => unsafe { *(&constant as *const _ as *const i16) as i64 },
+                4 => unsafe { *(&constant as *const _ as *const i32) as i64 },
+                8 => unsafe { *(&constant as *const _ as *const i64) },
                 _ => continue,
             };
             if discriminant == value {
@@ -122,7 +122,7 @@ impl WorldRef<'_> {
     /// let color_enum = world.enum_type::<Color>();
     /// println!("First constant: {}", color_enum.first());
     /// ```
-    pub fn enum_type<T: ComponentId>(&self) -> EnumType<T> {
+    pub fn enum_type<T: ComponentId>(&self) -> EnumType<'_, T> {
         EnumType::new(*self)
     }
 }
@@ -147,7 +147,7 @@ impl crate::prelude::World {
     /// assert_eq!(color_enum.last(), 2);
     /// assert!(color_enum.is_valid(1)); // Red
     /// ```
-    pub fn enum_type<T: ComponentId>(&self) -> EnumType<T> {
+    pub fn enum_type<T: ComponentId>(&self) -> EnumType<'_, T> {
         EnumType::new(self.into())
     }
 }
