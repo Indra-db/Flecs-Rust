@@ -2070,8 +2070,8 @@ fn query_each_pair_type() {
 
     let world = World::new();
 
-    let e1 = world.entity().set_pair::<ApplesTag, EatsData>(EatsData { amount: 10 });
-    world.entity().set_pair::<PearsTag, EatsData>(EatsData { amount: 20 });
+    let e1 = world.entity().set_pair::<EatsData, ApplesTag>(EatsData { amount: 10 });
+    world.entity().set_pair::<EatsData, PearsTag>(EatsData { amount: 20 });
 
     let q = world.new_query::<&(EatsData, ApplesTag)>();
 
@@ -2102,10 +2102,10 @@ fn query_iter_pair_type() {
 
     let e1 = world
         .entity()
-        .set_pair::<ApplesTag2, EatsData2>(EatsData2 { amount: 10 });
+        .set_pair::<EatsData2, ApplesTag2>(EatsData2 { amount: 10 });
     world
         .entity()
-        .set_pair::<PearsTag2, EatsData2>(EatsData2 { amount: 20 });
+        .set_pair::<EatsData2, PearsTag2>(EatsData2 { amount: 20 });
 
     let q = world.new_query::<&(EatsData2, ApplesTag2)>();
 
@@ -2163,8 +2163,8 @@ fn query_each_pair_object() {
 
     let e1 = world
         .entity()
-        .set_pair::<Begin, Event>(Event { value: "Big Bang" })
-        .set_pair::<End, Event>(Event { value: "Heat Death" });
+        .set_pair::<Event, Begin>(Event { value: "Big Bang" })
+        .set_pair::<Event, End>(Event { value: "Heat Death" });
 
     let q = world.new_query::<(&(Event, Begin), &(Event, End))>();
 
@@ -2196,8 +2196,8 @@ fn query_iter_pair_object() {
 
     let e1 = world
         .entity()
-        .set_pair::<BeginEvt, EventVal>(EventVal { value: "Big Bang" })
-        .set_pair::<EndEvt, EventVal>(EventVal { value: "Heat Death" });
+        .set_pair::<EventVal, BeginEvt>(EventVal { value: "Big Bang" })
+        .set_pair::<EventVal, EndEvt>(EventVal { value: "Heat Death" });
 
     let q = world.new_query::<(&(EventVal, BeginEvt), &(EventVal, EndEvt))>();
 
@@ -3355,7 +3355,7 @@ fn query_optional_pair_term() {
     world
         .entity()
         .add(Tag0::id())
-        .set_pair::<PairTag2, PairPos>(PairPos { x: 1.0, y: 2.0 });
+        .set_pair::<PairPos, PairTag2>(PairPos { x: 1.0, y: 2.0 });
     world.entity().add(Tag0::id());
 
     let mut with_pair = 0;
