@@ -1978,16 +1978,12 @@ impl<'a> EntityView<'a> {
     }
 
     /// Lookup an entity by name.
-    /// The entity is searched recursively recursively traversing
-    /// up the tree until found.
+    /// The entity is searched recursively traversing up the tree until found.
     ///
     /// The provided path may contain double colons as scope separators,
     /// for example: "`Foo::Bar`".
     ///
-    /// # Safety
-    ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
     /// # Arguments
     ///
@@ -1995,9 +1991,35 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity, entity id will be 0 if not found.
+    /// The entity, or entity with id 0 if not found.
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
+        self.try_lookup_recursive(name).unwrap_or_else(|| {
+            EntityView::new_from(self.world, Entity(0))
+        })
+    }
+
+    /// Lookup an entity by name.
+    /// The entity is searched recursively traversing up the tree until found.
+    /// Panics if entity not found.
+    ///
+    /// The provided path may contain double colons as scope separators,
+    /// for example: "`Foo::Bar`".
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not found.
+    /// Use [`EntityView::lookup_recursive()`] for non-panicking behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity
+    #[inline(always)]
+    pub fn lookup_recursive_required(&self, name: &str) -> EntityView<'_> {
         self.try_lookup_recursive(name).unwrap_or_else(|| {
             panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
         })
@@ -2008,10 +2030,7 @@ impl<'a> EntityView<'a> {
     /// Lookup an entity in the scope of this entity. The provided path may
     /// contain double colons as scope separators, for example: "`Foo::Bar`".
     ///
-    /// # Safety
-    ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
     /// # Arguments
     ///
@@ -2019,9 +2038,33 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity, entity id will be 0 if not found.
+    /// The entity, or entity with id 0 if not found.
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
+        self.try_lookup(name)
+            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
+    }
+
+    /// Lookup an entity by name, only in the current scope of the entity.
+    /// Panics if entity not found.
+    ///
+    /// Lookup an entity in the scope of this entity. The provided path may
+    /// contain double colons as scope separators, for example: "`Foo::Bar`".
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not found.
+    /// Use [`EntityView::lookup()`] for non-panicking behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity
+    #[inline(always)]
+    pub fn lookup_required(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }

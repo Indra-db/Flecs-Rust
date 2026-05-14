@@ -1309,17 +1309,17 @@ impl World {
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
-        })
+        self.try_lookup_recursive(name)
+            .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
-    /// Lookup entity by name, only the current scope is searched
+    /// Lookup entity by name recursively.
+    /// Panics if entity not found.
     ///
     /// # Panics
     ///
-    /// Ensure that the entity exists before using it.
-    /// Use the [`World::try_lookup()`] variant otherwise.
+    /// Panics if the entity is not found.
+    /// Use [`World::lookup_recursive()`] for non-panicking behavior.
     ///
     /// # Arguments
     ///
@@ -1331,12 +1331,64 @@ impl World {
     ///
     /// # See also
     ///
+    /// * [`World::lookup_required()`]
+    /// * [`World::lookup_recursive()`] - Non-panicking version
+    /// * [`World::try_lookup_recursive()`]
+    #[inline(always)]
+    pub fn lookup_recursive_required(&self, name: &str) -> EntityView<'_> {
+        self.try_lookup_recursive(name).unwrap_or_else(|| {
+            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
+        })
+    }
+
+    /// Lookup entity by name, only the current scope is searched
+    ///
+    /// Matches C++ semantics: returns entity with id 0 if not found.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity, or entity with id 0 if not found.
+    ///
+    /// # See also
+    ///
     /// * [`World::lookup_recursive()`]
+    /// * [`World::lookup_required()`] - Panics if not found
     /// * [`World::set_lookup_path()`]
     /// * [`World::try_lookup()`]
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
+        self.try_lookup(name)
+            .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
+    }
+
+    /// Lookup entity by name, only the current scope is searched.
+    /// Panics if entity not found.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not found.
+    /// Use [`World::lookup()`] for non-panicking behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the entity to lookup.
+    ///
+    /// # Returns
+    ///
+    /// The entity
+    ///
+    /// # See also
+    ///
+    /// * [`World::lookup_recursive_required()`]
+    /// * [`World::lookup()`] - Non-panicking version
+    /// * [`World::try_lookup()`]
+    #[inline(always)]
+    pub fn lookup_required(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
             .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
     }
