@@ -26,7 +26,7 @@ fn implicit_components_add() {
     );
     assert!(e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -44,7 +44,7 @@ fn implicit_components_remove() {
 
     assert!(!e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -61,7 +61,7 @@ fn implicit_components_has() {
     let e = world.entity();
     assert!(!e.has(Position::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -89,7 +89,7 @@ fn implicit_components_set() {
         assert_eq!(p.y, 20.0);
     });
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -109,7 +109,7 @@ fn implicit_components_get() {
     let found = e.try_get::<&Position>(|_p| true);
     assert!(found.is_none());
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -136,10 +136,10 @@ fn implicit_components_add_pair() {
     );
     assert!(e.has((Pair::id(), Position::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::Pair");
+    let pair = world.lookup("Pair");
     assert!(pair.id() != 0);
 }
 
@@ -161,10 +161,10 @@ fn implicit_components_remove_pair() {
 
     assert!(!e.has((Position::id(), Pair::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::Pair");
+    let pair = world.lookup("Pair");
     assert!(pair.id() != 0);
 }
 
@@ -184,7 +184,7 @@ fn implicit_components_module() {
     // Triggering implicit registration via component()
     world.component::<Position>();
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 }
 
@@ -207,10 +207,10 @@ fn implicit_components_system() {
         .system::<(&mut Position, &mut Velocity)>()
         .each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
+    let velocity = world.lookup("Velocity");
     assert!(velocity.id() != 0);
 }
 
@@ -251,10 +251,10 @@ fn implicit_components_system_optional() {
         .set(Rotation { angle: 30.0 })
         .set(Mass { value: 40.0 });
 
-    let rotation = world.lookup("flecs::implicit_components_test::Rotation");
+    let rotation = world.lookup("Rotation");
     assert!(rotation.id() != 0);
 
-    let mass = world.lookup("flecs::implicit_components_test::Mass");
+    let mass = world.lookup("Mass");
     assert!(mass.id() != 0);
 
     let rcomp = world.component::<Rotation>();
@@ -296,10 +296,10 @@ fn implicit_components_system_const() {
             count_c.fetch_add(1, Ordering::Relaxed);
         });
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
+    let velocity = world.lookup("Velocity");
     assert!(velocity.id() != 0);
 
     let e = world
@@ -342,10 +342,10 @@ fn implicit_components_query() {
 
     q.each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::Velocity");
+    let velocity = world.lookup("Velocity");
     assert!(velocity.id() != 0);
 }
 
@@ -361,7 +361,7 @@ fn implicit_components_implicit_name() {
 
     let pcomp = world.component::<Position>();
 
-    let position = world.lookup("flecs::implicit_components_test::Position");
+    let position = world.lookup("Position");
     assert!(position.id() != 0);
 
     assert_eq!(pcomp.id(), position.id());

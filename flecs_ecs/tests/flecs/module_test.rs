@@ -2,10 +2,9 @@
 #![allow(clippy::std_instead_of_alloc)]
 use flecs_ecs::prelude::*;
 
-// Module-level types for tests that verify lookup by qualified path.
-// core::any::type_name::<T>() for these gives "flecs::implicit_components_test::IcPosition" etc.
-// which Flecs uses as the entity path, so world.lookup("flecs::implicit_components_test::IcPosition")
-// must succeed.
+// Module-level types for tests that verify lookup by short name.
+// Components are registered with their short name (type_name_without_scope),
+// so world.lookup("IcPosition") finds IcPosition regardless of Rust module path.
 
 #[derive(Component, Default)]
 struct IcPosition {
@@ -44,7 +43,7 @@ fn add() {
     );
     assert!(e.has(IcPosition::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -56,7 +55,7 @@ fn remove() {
 
     assert!(!e.has(IcPosition::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -67,7 +66,7 @@ fn has() {
     let e = world.entity();
     assert!(!e.has(IcPosition::id()));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -89,7 +88,7 @@ fn set() {
         assert!((p.y - 20.0).abs() < f32::EPSILON);
     });
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -103,7 +102,7 @@ fn get() {
     let found = e.try_get::<&IcPosition>(|_p| true);
     assert!(found.is_none());
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -120,10 +119,10 @@ fn add_pair() {
     );
     assert!(e.has((IcPair::id(), IcPosition::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::IcPair");
+    let pair = world.lookup("IcPair");
     assert!(pair.id() != 0);
 }
 
@@ -135,10 +134,10 @@ fn remove_pair() {
 
     assert!(!e.has((IcPosition::id(), IcPair::id())));
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
-    let pair = world.lookup("flecs::implicit_components_test::IcPair");
+    let pair = world.lookup("IcPair");
     assert!(pair.id() != 0);
 }
 
@@ -150,7 +149,7 @@ fn module() {
 
     world.component::<IcPosition>();
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 }
 
@@ -162,10 +161,10 @@ fn system() {
         .system::<(&mut IcPosition, &mut IcVelocity)>()
         .each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("IcVelocity");
     assert!(velocity.id() != 0);
 }
 
@@ -207,10 +206,10 @@ fn system_optional() {
         .set(Rotation { angle: 30.0 })
         .set(Mass { value: 40.0 });
 
-    let rotation = world.lookup("flecs::implicit_components_test::system_optional::Rotation");
+    let rotation = world.lookup("Rotation");
     assert!(rotation.id() != 0);
 
-    let mass = world.lookup("flecs::implicit_components_test::system_optional::Mass");
+    let mass = world.lookup("Mass");
     assert!(mass.id() != 0);
 
     let rcomp = world.component::<Rotation>();
@@ -242,10 +241,10 @@ fn system_const() {
             count_c.fetch_add(1, Ordering::Relaxed);
         });
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("IcVelocity");
     assert!(velocity.id() != 0);
 
     let e = world
@@ -277,10 +276,10 @@ fn query() {
 
     q.each_entity(|_e, (_p, _v)| {});
 
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
-    let velocity = world.lookup("flecs::implicit_components_test::IcVelocity");
+    let velocity = world.lookup("IcVelocity");
     assert!(velocity.id() != 0);
 }
 
@@ -291,7 +290,7 @@ fn implicit_name() {
     let pcomp = world.component::<IcPosition>();
 
     // Verify the component can be found by its fully-qualified Rust type path
-    let position = world.lookup("flecs::implicit_components_test::IcPosition");
+    let position = world.lookup("IcPosition");
     assert!(position.id() != 0);
 
     assert_eq!(pcomp.id(), position.id());
