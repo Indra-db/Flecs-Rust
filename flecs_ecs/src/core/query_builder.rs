@@ -808,7 +808,8 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
         match access.mode {
             AccessMode::Read => {
-                self.current_term_mut().inout = InOutKind::In as i16;
+                // Leave inout as Default — C++ does not set In for const params.
+                // Use .inout(In) explicitly if In semantics are required.
             }
             AccessMode::ReadWrite => {
                 self.current_term_mut().inout = InOutKind::InOut as i16;

@@ -162,7 +162,8 @@ where
 
     #[inline(always)]
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
+        // Leave inout as Default — C++ does not set In for const params.
+        // Use .inout(In) explicitly if In semantics are required.
     }
 
     #[inline(always)]
@@ -241,7 +242,8 @@ where
     const IS_OPTIONAL: bool = true;
 
     fn populate_term(term: &mut sys::ecs_term_t) {
-        term.inout = InOutKind::In as i16;
+        // Leave inout as Default — C++ does not set In for const params.
+        // Use .inout(In) explicitly if In semantics are required.
         term.oper = OperKind::Optional as i16;
     }
 
