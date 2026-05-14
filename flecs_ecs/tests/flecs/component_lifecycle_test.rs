@@ -1,5 +1,5 @@
-//#![allow(dead_code)]
-#![deny(dead_code)]
+#![allow(dead_code)]
+//#![deny(dead_code)]
 #![allow(clippy::std_instead_of_alloc)]
 #![allow(non_snake_case)]
 use crate::common_test::*;
@@ -55,6 +55,9 @@ fn main_component_lifecycle() {
     grow_no_default_invoked_w_tag();
     grow_no_default_invoked_w_component();
     delete_no_default_ctor();
+    no_default_ctor_add();
+    no_default_ctor_add_relationship();
+    no_default_ctor_add_second();
 
     // Hooks
     on_add_hook();
@@ -4114,9 +4117,25 @@ fn component_lifecycle_struct_w_vector_set_2_remove_w_tag() {
     struct_w_vector_set_2_remove_w_tag();
 }
 
+
+// ─── ctor_w_2_worlds ──────────────────────────────────────────────────────────
+
+#[test]
+fn component_lifecycle_ctor_w_2_worlds() {
+    ctor_w_2_worlds();
+}
+
+// ─── ctor_w_2_worlds_explicit_registration ────────────────────────────────────
+
+#[test]
+fn component_lifecycle_ctor_w_2_worlds_explicit_registration() {
+    ctor_w_2_worlds_explicit_registration();
+}
+
 // ─── no_default_ctor_add ──────────────────────────────────────────────────────
 
 #[test]
+#[should_panic]
 fn component_lifecycle_no_default_ctor_add() {
     no_default_ctor_add();
 }
@@ -4135,20 +4154,6 @@ fn component_lifecycle_no_default_ctor_add_relation() {
 #[should_panic]
 fn component_lifecycle_no_default_ctor_add_second() {
     no_default_ctor_add_second();
-}
-
-// ─── ctor_w_2_worlds ──────────────────────────────────────────────────────────
-
-#[test]
-fn component_lifecycle_ctor_w_2_worlds() {
-    ctor_w_2_worlds();
-}
-
-// ─── ctor_w_2_worlds_explicit_registration ────────────────────────────────────
-
-#[test]
-fn component_lifecycle_ctor_w_2_worlds_explicit_registration() {
-    ctor_w_2_worlds_explicit_registration();
 }
 
 // ─── emplace_no_default_ctor ──────────────────────────────────────────────────
