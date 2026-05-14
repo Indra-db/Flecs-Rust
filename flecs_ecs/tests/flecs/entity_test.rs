@@ -1470,7 +1470,7 @@ fn path_from_type_custom_sep() {
 
     assert_eq!(
         &grandchild.path_w_sep("_", "?").unwrap(),
-        "?flecs_common\\_test_Parent_child_grandchild"
+        "?Parent_child_grandchild"
     );
     assert_eq!(
         &grandchild.path_from_w_sep(parent, "_", "::").unwrap(),
@@ -3288,7 +3288,7 @@ fn entity_w_type() {
     let e = world.entity_from::<EntityType>();
 
     assert_eq!(e.name(), "EntityType");
-    assert_eq!(e.path().unwrap(), "::flecs::common_test::EntityType");
+    assert_eq!(e.path().unwrap(), "::EntityType");
     //assert!(!e.has(id::<flecs::Component>()));
     //TODO this assert should work, but we register it a bit different than cpp, no problem though.
     let e_2 = world.entity_from::<EntityType>();
@@ -3302,7 +3302,7 @@ fn prefab_w_type() {
     let e = world.prefab_type::<EntityType>();
 
     assert_eq!(e.name(), "EntityType");
-    assert_eq!(e.path().unwrap(), "::flecs::common_test::EntityType");
+    assert_eq!(e.path().unwrap(), "::EntityType");
     //assert!(!e.has(id::<flecs::Component>()));
     //TODO this assert should work, but we register it a bit different than cpp, no problem though.
     assert!(e.has(id::<flecs::Prefab>()));
@@ -3325,10 +3325,10 @@ fn prefab_hierarchy_w_types() {
     assert!(turret_base.is_valid());
     assert!(turret_base.has((*flecs::ChildOf, turret)));
 
-    assert_eq!(turret.path().unwrap(), "::flecs::common_test::Turret");
+    assert_eq!(turret.path().unwrap(), "::Turret");
     assert_eq!(
         turret_base.path().unwrap(),
-        "::flecs::common_test::Turret::Base"
+        "::Turret::Base"
     );
 
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
@@ -3353,18 +3353,18 @@ fn prefab_hierarchy_w_types() {
     assert!(railgun_head.has((*flecs::ChildOf, railgun)));
     assert!(railgun_beam.has((*flecs::ChildOf, railgun)));
 
-    assert_eq!(railgun.path().unwrap(), "::flecs::common_test::Railgun");
+    assert_eq!(railgun.path().unwrap(), "::Railgun");
     assert_eq!(
         railgun_base.path().unwrap(),
-        "::flecs::common_test::Railgun::Base"
+        "::Railgun::Base"
     );
     assert_eq!(
         railgun_head.path().unwrap(),
-        "::flecs::common_test::Railgun::Head"
+        "::Railgun::Head"
     );
     assert_eq!(
         railgun_beam.path().unwrap(),
-        "::flecs::common_test::Railgun::Beam"
+        "::Railgun::Beam"
     );
 
     assert_eq!(railgun.symbol(), "flecs::common_test::Railgun");
@@ -3386,10 +3386,10 @@ fn prefab_hierarchy_w_root_types() {
     assert!(turret_base.is_valid());
     assert!(turret_base.has((*flecs::ChildOf, turret)));
 
-    assert_eq!(turret.path().unwrap(), "::flecs::common_test::Turret");
+    assert_eq!(turret.path().unwrap(), "::Turret");
     assert_eq!(
         turret_base.path().unwrap(),
-        "::flecs::common_test::Turret::Base"
+        "::Turret::Base"
     );
 
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
