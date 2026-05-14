@@ -630,7 +630,8 @@ fn system_builder_write_annotation() {
     let b_count2 = b_count.clone();
 
     world
-        .system::<&LocalTagA>()
+        .system::<()>()
+        .with(&LocalTagA::id())
         .with(&LocalTagB::id())
         .write(world.id_view_from(LocalTagB::id()))
         .each_entity(move |e, _| {
@@ -639,7 +640,7 @@ fn system_builder_write_annotation() {
             e.add(LocalTagB::id());
         });
 
-    world.system::<&LocalTagB>().each_entity(move |e, _| {
+    world.system::<()>().with(&LocalTagB::id()).each_entity(move |e, _| {
         b_count2.set(b_count2.get() + 1);
         assert_eq!(e.id(), e1);
         assert!(e.has(LocalTagB::id()));

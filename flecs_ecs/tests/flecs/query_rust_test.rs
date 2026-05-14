@@ -18,7 +18,7 @@ fn query_uncached_destruction_no_panic() {
 #[should_panic]
 fn query_cached_destruction_lingering_references_panic() {
     let world = World::new();
-    let query = world.query::<&Tag>().set_cached().build();
+    let query = world.query::<()>().with(&Tag::id()).set_cached().build();
     let query2 = query.clone();
     query.destruct();
     query2.run(|_| {});
@@ -50,7 +50,7 @@ fn query_iter_stage() {
 #[should_panic]
 fn query_panic_inside() {
     let world = World::new();
-    let query = world.query::<&Tag>().build();
+    let query = world.query::<()>().with(&Tag::id()).build();
     query.run(|_| {
         panic!();
     });

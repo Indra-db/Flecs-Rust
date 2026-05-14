@@ -640,7 +640,7 @@ fn iter_tag() {
 
     world.set(Count(0));
 
-    world.system::<&TagA>().run(|mut it| {
+    world.system::<()>().with(&TagA::id()).run(|mut it| {
         let world = it.world();
         while it.next() {
             world.get::<&mut Count>(|c| {
@@ -664,7 +664,7 @@ fn each_tag() {
 
     world.set(Count(0));
 
-    world.system::<&TagA>().run(|mut it| {
+    world.system::<()>().with(&TagA::id()).run(|mut it| {
         while it.next() {
             for _ in it.iter() {
                 let world = it.world();
@@ -1675,7 +1675,8 @@ fn system_w_type_kind_type_pipeline() {
     world.set(Count2 { a: 0, b: 0 });
 
     world
-        .system::<&Tag>()
+        .system::<()>()
+        .with(&Tag::id())
         .kind(Second::id())
         .run(move |mut it| {
             while it.next() {
@@ -1692,7 +1693,7 @@ fn system_w_type_kind_type_pipeline() {
             }
         });
 
-    world.system::<&Tag>().kind(First::id()).run(move |mut it| {
+    world.system::<()>().with(&Tag::id()).kind(First::id()).run(move |mut it| {
         while it.next() {
             for i in it.iter() {
                 let world = it.world();

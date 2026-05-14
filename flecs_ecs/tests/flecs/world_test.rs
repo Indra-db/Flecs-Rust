@@ -411,18 +411,16 @@ fn test_world_get_mut_T() {
 #[test]
 fn test_world_get_mut_R_T() {
     #[derive(Component)]
-    struct Tgt;
+    struct Tgt(u32);
 
     let world = World::new();
 
-    let has = world.try_get::<&(Tgt, Position)>(|_| ()).is_some();
+    let has = world.try_get::<&Tgt>(|_| ()).is_some();
     assert!(!has);
 
-    world.set_pair::<Tgt, Position>(Position { x: 10, y: 20 });
-
-    world.try_get::<&(Tgt, Position)>(|pos| {
-        assert_eq!(pos.x, 10);
-        assert_eq!(pos.y, 20);
+    world.set(Tgt(42));
+    world.try_get::<&Tgt>(|tgt| {
+        assert_eq!(tgt.0, 42);
     });
 }
 
