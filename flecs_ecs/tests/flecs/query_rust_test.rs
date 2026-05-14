@@ -3417,9 +3417,15 @@ fn query_pair_with_variable_src() {
         .build();
 
     let mut is_present: u32 = 0;
-    q.each(|(_, this, other_comp)| {
-        is_present |= 1 << this.x;
-        assert_eq!(other_comp.x, 10);
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let this = it.get_field::<ThisComp>(1).unwrap();
+                let other_comp = it.get_field::<OtherComp>(2).unwrap();
+                is_present |= 1 << this[i].x;
+                assert_eq!(other_comp[i].x, 10);
+            }
+        }
     });
 
     assert_eq!(is_present, 7);

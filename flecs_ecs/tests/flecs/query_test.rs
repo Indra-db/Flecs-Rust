@@ -1267,8 +1267,12 @@ fn test_query_pair_with_variable_src() {
         .build();
 
     let mut count = 0;
-    q.each(|(_rel, _this, _other)| {
-        count += 1;
+    q.run(|mut it| {
+        while it.next() {
+            for _ in it.iter() {
+                count += 1;
+            }
+        }
     });
 
     assert_eq!(count, 3);
