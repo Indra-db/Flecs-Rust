@@ -1919,12 +1919,14 @@ fn query_inspect_terms() {
     let t = q.term(0);
     assert_eq!(*t.id().entity_view(&world).id(), Position::entity_id(&world));
     assert_eq!(t.oper(), OperKind::And);
-    assert_eq!(t.inout(), InOutKind::Default);
+    // &Position = read-only ref → In inout (Rust &T maps to EcsIn, matching with<const T>())
+    assert_eq!(t.inout(), InOutKind::In);
 
     let t = q.term(1);
     assert_eq!(*t.id().entity_view(&world).id(), Velocity::entity_id(&world));
     assert_eq!(t.oper(), OperKind::And);
-    assert_eq!(t.inout(), InOutKind::Default);
+    // &Velocity::id() = explicit read ref → In inout
+    assert_eq!(t.inout(), InOutKind::In);
 
     let t = q.term(2);
     assert_eq!(t.oper(), OperKind::And);
@@ -1952,10 +1954,12 @@ fn query_inspect_terms_w_each() {
     q.each_term(|t| {
         if count == 0 {
             assert_eq!(*t.id().entity_view(&world).id(), Position::entity_id(&world));
-            assert_eq!(t.inout(), InOutKind::Default);
+            // &Position = read-only ref → In inout
+            assert_eq!(t.inout(), InOutKind::In);
         } else if count == 1 {
             assert_eq!(*t.id().entity_view(&world).id(), Velocity::entity_id(&world));
-            assert_eq!(t.inout(), InOutKind::Default);
+            // &Velocity::id() = explicit read ref → In inout
+            assert_eq!(t.inout(), InOutKind::In);
         } else if count == 2 {
             assert_eq!(t.inout(), InOutKind::Default);
             assert_eq!(t.second_id(), p_entity.id());
@@ -3079,7 +3083,7 @@ fn query_query_from_entity() {
     let qe = world.entity();
     let q1 = world
         .query::<(&Position, &Velocity)>()
-        .entity(qe)
+        .entity_set(qe)
         .build();
 
     world.entity().add(Position::id());
@@ -3406,14 +3410,15 @@ fn query_pair_with_variable_src() {
             .add((RelVar2::id(), other));
     }
 
+    // Use explicit with() terms so term_at can access them without hitting
+    // the generic-term protection in check_term_access_validity.
     let q = world
-        .query::<(&RelVar2, &ThisComp, &OtherComp)>()
-        .term_at(0)
-        .second()
-        .set_var("other")
-        .term_at(2)
-        .src()
-        .set_var("other")
+        .query::<()>()
+        .with(RelVar2::id())
+        .set_second("$other")
+        .with(ThisComp::id())
+        .with(OtherComp::id())
+        .set_src("$other")
         .build();
 
     let mut is_present: u32 = 0;
@@ -3421,9 +3426,10 @@ fn query_pair_with_variable_src() {
         while it.next() {
             for i in it.iter() {
                 let this = it.get_field::<ThisComp>(1).unwrap();
+                // OtherComp is a shared field (from $other entity), only index 0
                 let other_comp = it.get_field::<OtherComp>(2).unwrap();
                 is_present |= 1 << this[i].x;
-                assert_eq!(other_comp[i].x, 10);
+                assert_eq!(other_comp[0].x, 10);
             }
         }
     });

@@ -110,8 +110,9 @@ fn singleton_add_singleton() {
     world.set(Count(0));
 
     world
-        .observer::<flecs::OnAdd, &Position>()
-        .each_entity(|e, _p| {
+        .observer::<flecs::OnAdd, ()>()
+        .with(Position::id())
+        .each_entity(|e, _| {
             e.world().get::<&mut Count>(|c| c.0 += 1);
         });
 

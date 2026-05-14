@@ -917,7 +917,7 @@ fn string_term() {
 
     let q = world
         .query::<()>()
-        .expr("flecs.common_test.Position")
+        .expr("Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -3738,7 +3738,7 @@ fn with_name() {
     let q = world
         .query::<()>()
         .with(&Position::id())
-        .with("flecs.common_test.Velocity")
+        .with("Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4047,7 +4047,7 @@ fn without_name() {
     let q = world
         .query::<()>()
         .with(world.id_view_from(Position::id()))
-        .without("flecs.common_test.Velocity")
+        .without("Velocity")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4346,7 +4346,7 @@ fn write_name() {
     let q = world
         .query::<()>()
         .with(&Position::id())
-        .write("flecs.common_test.Position")
+        .write("Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -4518,7 +4518,7 @@ fn read_name() {
     let q = world
         .query::<()>()
         .with(&Position::id())
-        .read("flecs.common_test.Position")
+        .read("Position")
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
@@ -5631,9 +5631,11 @@ fn query_builder_pred_eq() {
 
     let foo = world.entity_named("Foo");
 
+    // Use string-based second arg like C++ .with(flecs::PredEq, "Foo")
     let q = world
         .query::<()>()
-        .with((*flecs::PredEq, foo))
+        .with(*flecs::PredEq)
+        .set_second("Foo")
         .build();
 
     let mut count = 0;
@@ -5653,6 +5655,7 @@ fn query_builder_pred_eq_name() {
         .query::<()>()
         .with(*flecs::PredEq)
         .set_second("Foo")
+        .second()  // re-enter second ref mode before setting flags
         .flags(flecs::term_flags::IsName::ID)
         .build();
 
@@ -5675,6 +5678,7 @@ fn query_builder_pred_match() {
         .query::<()>()
         .with(*flecs::PredMatch)
         .set_second("FooB")
+        .second()  // re-enter second ref mode before setting flags
         .flags(flecs::term_flags::IsName::ID)
         .build();
 
@@ -6377,9 +6381,11 @@ fn query_builder_query_w_this_second() {
 
     let rel = world.entity();
 
+    // Use $this variable via set_second to match entities where (rel, entity_itself)
     let q = world
         .query::<()>()
-        .with((rel, *flecs::This_))
+        .with(rel)
+        .set_second("$this")
         .build();
 
     let e1 = world.entity();

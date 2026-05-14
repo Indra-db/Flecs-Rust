@@ -644,6 +644,8 @@ fn test_query_each_no_entity_2_comps() {
 fn test_query_instanced_query_w_singleton_each() {
     let world = World::new();
 
+    // Mark Velocity as singleton so it's found by the query (C++: component.add(flecs::Singleton))
+    world.component::<Velocity>().add_trait::<flecs::Singleton>();
     world.set(Velocity { x: 1, y: 2 });
 
     let e1 = world
@@ -893,6 +895,9 @@ fn test_query_copy_operators() {
 fn test_query_optional_singleton() {
     let world = World::new();
 
+    // Mark Mass as Singleton so optional query yields exactly 1 result (C++: component.add(flecs::Singleton))
+    world.component::<Mass>().add_trait::<flecs::Singleton>();
+
     let mut invoked = 0;
 
     world.new_query::<Option<&Mass>>().each(|_m| {
@@ -1101,7 +1106,8 @@ fn test_query_run_w_iter_fini() {
     let q = world.new_query::<&Position>();
 
     let mut count = 0;
-    q.run(|mut _it| {
+    q.run(|it| {
+        it.fini();  // explicit fini when not consuming via it.next() (C++: it.fini())
         count += 1;
     });
 
@@ -1127,6 +1133,7 @@ fn test_query_run_w_iter_fini_interrupt() {
         if it.next() {
             count += 1;
         }
+        it.fini();
     });
 
     assert_eq!(count, 1);
@@ -1140,7 +1147,8 @@ fn test_query_run_w_iter_fini_empty() {
     let q = world.new_query::<&Position>();
 
     let mut count = 0;
-    q.run(|_it| {
+    q.run(|it| {
+        it.fini();
         count += 1;
     });
 
@@ -1155,7 +1163,8 @@ fn test_query_run_w_iter_fini_no_query() {
     let q = world.query::<()>().build();
 
     let mut count = 0;
-    q.run(|_it| {
+    q.run(|it| {
+        it.fini();
         count += 1;
     });
 
@@ -1167,13 +1176,25 @@ fn test_query_run_w_iter_fini_no_query() {
 fn test_query_add_to_match_from_staged_query() {
     let world = World::new();
 
+    world.component::<Position>();
+    world.component::<Velocity>();
+
     let e = world.entity().add(Position::id());
 
+    let stage = world.stage(0);
+
+    world.readonly_begin(false);
+
     world.new_query::<&Position>().each_entity(|entity, _pos| {
+        let entity = entity.mut_current_stage(&stage);
         entity.add(Velocity::id());
+        assert!(!entity.has(Velocity::id()));
     });
 
+    world.readonly_end();
+
     assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
 }
 
 // Test 53: Query_each_optional
@@ -1256,14 +1277,14 @@ fn test_query_pair_with_variable_src() {
             .add((Rel::id(), other));
     }
 
+    // Use explicit with() terms to avoid check_term_access_validity blocking term_at on generic terms
     let q = world
-        .query::<(&Rel, &ThisComp, &OtherComp)>()
-        .term_at(0)
-        .second()
-        .set_var("other")
-        .term_at(2)
-        .src()
-        .set_var("other")
+        .query::<()>()
+        .with(Rel::id())
+        .set_second("$other")
+        .with(ThisComp::id())
+        .with(OtherComp::id())
+        .set_src("$other")
         .build();
 
     let mut count = 0;
@@ -1443,8 +1464,8 @@ fn test_query_first_empty() {
 
     let q = world.new_query::<&Position>();
 
-    // first_entity() returns an entity with id 0 when no results
-    assert_eq!(*q.first_entity().id(), 0u64);
+    // try_first_entity() returns None when no results
+    assert!(q.try_first_entity().is_none());
 }
 
 // Test 68: Query changed() detection

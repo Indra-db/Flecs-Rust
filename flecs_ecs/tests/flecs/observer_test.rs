@@ -627,7 +627,7 @@ fn on_add_expr() {
     world.component::<Tag>();
     world
         .observer::<flecs::OnAdd, ()>()
-        .expr("flecs.common_test.Tag")
+        .expr("Tag")
         .each_entity(|e, _| {
             e.world().get::<&mut Count>(|count| {
                 count.0 += 1;
