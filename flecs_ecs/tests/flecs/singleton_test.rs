@@ -166,7 +166,7 @@ fn singleton_singleton_system() {
 
     world
         .system::<()>()
-        .expr("[inout] flecs.common_test.Position")
+        .expr("[inout] Position")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -421,7 +421,8 @@ enum SColor {
 fn singleton_singleton_enum() {
     let world = World::new();
 
-    world.add_enum(SColor::Blue);
+    // Use set() to store enum as component value (like C++ world.set<Color>(Blue))
+    world.set(SColor::Blue);
     assert!(world.has(SColor::entity_id(&world)));
 
     {
@@ -431,7 +432,7 @@ fn singleton_singleton_enum() {
     }
 
     // Replace with Green
-    world.add_enum(SColor::Green);
+    world.set(SColor::Green);
     assert!(world.has(SColor::entity_id(&world)));
 
     {

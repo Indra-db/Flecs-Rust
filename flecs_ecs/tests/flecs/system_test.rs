@@ -131,7 +131,7 @@ fn iter_shared() {
 
     world
         .system::<&mut Position>()
-        .expr("flecs.common_test.Velocity(self|up IsA)")
+        .expr("Velocity(self|up IsA)")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -387,7 +387,7 @@ fn signature() {
 
     world
         .system::<()>()
-        .expr("flecs.common_test.Position, flecs.common_test.Velocity")
+        .expr("Position, Velocity")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -424,7 +424,7 @@ fn signature_const() {
 
     world
         .system::<()>()
-        .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity")
+        .expr("Position, [in] Velocity")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -475,7 +475,7 @@ fn signature_shared() {
 
     world
         .system::<()>()
-        .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity(self|up IsA)")
+        .expr("Position, [in] Velocity(self|up IsA)")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -531,7 +531,7 @@ fn signature_optional() {
 
     world
         .system::<()>()
-        .expr("flecs.common_test.Position, ?flecs.common_test.Velocity, ?Mass")
+        .expr("Position, ?Velocity, ?Mass")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);

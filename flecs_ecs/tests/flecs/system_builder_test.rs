@@ -629,10 +629,11 @@ fn system_builder_write_annotation() {
     let b_count = Rc::new(Cell::new(0i32));
     let b_count2 = b_count.clone();
 
+    // System matches LocalTagA, declares write to LocalTagB (not a filter, just a dependency).
+    // Matches C++: ecs.system<Tag0>().with<Tag1>().write().each(...)
     world
         .system::<()>()
         .with(&LocalTagA::id())
-        .with(&LocalTagB::id())
         .write(world.id_view_from(LocalTagB::id()))
         .each_entity(move |e, _| {
             a_count2.set(a_count2.get() + 1);

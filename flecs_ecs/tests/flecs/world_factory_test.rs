@@ -109,7 +109,7 @@ fn world_factory_system_w_expr() {
 
     let s = world
         .system_named::<()>("MySystem")
-        .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity")
+        .expr("Position, [in] Velocity")
         .run(|mut it| {
             while it.next() {
                 let mut p = it.field_mut::<Position>(0);
@@ -168,7 +168,7 @@ fn world_factory_query_w_expr() {
 
     let q = world
         .query::<()>()
-        .expr("flecs.common_test.Position, [in] flecs.common_test.Velocity")
+        .expr("Position, [in] Velocity")
         .build();
 
     let e = world
