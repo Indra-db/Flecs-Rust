@@ -197,7 +197,9 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
     fn drop(&mut self) {
-        if LOCK {
+        if LOCK && !self.slice_components.is_empty() {
+            // Only release lock if we actually acquired one (non-empty slice).
+            // Empty slices are returned for optional unset fields without lock acquisition.
             unsafe {
                 if let Some(stage_id) = self.stage_id {
                     table_column_lock_read_end::<true>(
@@ -253,6 +255,22 @@ impl<'a, T> Field<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
+    /// Create an empty Field for optional unset fields — no lock acquired regardless of LOCK.
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_empty(is_shared: bool) -> Self {
+        // SAFETY: Drop checks slice_components.is_empty() and skips unlock for empty fields.
+        // table is dangling but never accessed when slice is empty.
+        Self {
+            slice_components: &[],
+            is_shared,
+            table: NonNull::dangling(),
+            field_index: 0,
+            stage_id: None,
+            column_index: 0,
+        }
+    }
+
     #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
@@ -504,7 +522,7 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
     fn drop(&mut self) {
-        if LOCK {
+        if LOCK && !self.slice_components.is_empty() {
             if let Some(stage_id) = self.stage_id {
                 unsafe {
                     table_column_lock_write_end::<true>(
@@ -562,6 +580,20 @@ impl<'a, T> FieldMut<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
+    /// Create an empty FieldMut for optional unset fields — no lock acquired regardless of LOCK.
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_empty(is_shared: bool) -> Self {
+        Self {
+            slice_components: &mut [],
+            is_shared,
+            table: NonNull::dangling(),
+            field_index: 0,
+            stage_id: None,
+            column_index: 0,
+        }
+    }
+
     /// Create a new column from component array.
     ///
     /// # Arguments

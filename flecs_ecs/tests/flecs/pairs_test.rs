@@ -197,7 +197,7 @@ fn pairs_system_1_pair_instance() {
 
     world
         .system::<()>()
-        .expr("(flecs.tests.pairs_test.PairData, *)")
+        .expr("(PairData, *)")
         .run(move |mut it| {
             while it.next() {
                 let tr = it.field::<PairData>(0);
@@ -236,7 +236,7 @@ fn pairs_system_2_pair_instances() {
 
     world
         .system::<()>()
-        .expr("(flecs.tests.pairs_test.PairData, *)")
+        .expr("(PairData, *)")
         .run(move |mut it| {
             while it.next() {
                 let tr = it.field::<PairData>(0);

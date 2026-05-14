@@ -271,7 +271,12 @@ where
      * the scope of the module. */
     let module = unsafe { sys::ecs_get_scope(world) };
 
-    if module != 0 && implicit_name {
+    if implicit_name {
+        // Use only the short name (last segment of the Rust path).
+        // Inside a module scope this registers the component relative to the module.
+        // At root scope this matches C++ behavior: ecs_cpp_component_register uses
+        // ecs_cpp_trim_module which strips the namespace when no scope is active,
+        // effectively registering just "Position" not "myns::Position".
         user_name = type_name_without_scope.as_ptr() as *const c_char;
     }
 

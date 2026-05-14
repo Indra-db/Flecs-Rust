@@ -1575,14 +1575,15 @@ where
     #[inline(always)]
     pub(crate) fn field_internal<T, const LOCK: bool>(&self, index: i8) -> Field<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 || array.is_null() {
-            panic!(
-                "field_internal: no values at index {index} — ensure the field exists and has entries"
-            );
-        }
-
-        // SAFETY: we already validated index/type before calling
-        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
+        // Optional fields that are not set have null array / count=0.
+        // Return empty slice — caller must use it.is_set(index) before indexing.
+        // This matches C++ where it.field<Optional>() returns null for unset optionals.
+        let slice = if count == 0 || array.is_null() {
+            &[]
+        } else {
+            // SAFETY: array is non-null, count > 0, pointer is valid for 'a
+            unsafe { core::slice::from_raw_parts(array as *const T, count) }
+        };
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
@@ -1592,6 +1593,10 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
+            // Optional unset fields have empty slice — return without acquiring lock.
+            if slice.is_empty() {
+                return Field::<T, LOCK>::new_empty(is_shared);
+            }
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
             let world_ref = &self.world;
@@ -1713,13 +1718,13 @@ where
         index: i8,
     ) -> FieldMut<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 || array.is_null() {
-            panic!(
-                "field_internal: no values at index {index} — ensure the field exists and has entries"
-            );
-        }
-
-        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
+        // Optional unset fields have null array / count=0 — return empty slice.
+        let slice = if count == 0 || array.is_null() {
+            &mut []
+        } else {
+            // SAFETY: array is non-null, count > 0, pointer is valid for 'a
+            unsafe { core::slice::from_raw_parts_mut(array, count) }
+        };
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
@@ -1728,6 +1733,9 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
+            if slice.is_empty() {
+                return FieldMut::<T, LOCK>::new_empty(is_shared);
+            }
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
             let world_ref = &self.world;
