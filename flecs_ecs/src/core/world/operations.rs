@@ -1705,10 +1705,9 @@ impl World {
     /// * `alias` - The alias to create.
     #[inline(always)]
     pub fn set_alias_entity(&self, entity: impl Into<Entity>, alias: &str) {
-        let alias = compact_str::format_compact!("{}\0", alias);
-
         let entity = *entity.into();
         if alias.is_empty() {
+            // Empty alias = use the entity's own short name (matches C++ ecs.use(entity) with no alias)
             unsafe {
                 sys::ecs_set_alias(
                     self.raw_world.as_ptr(),
@@ -1717,6 +1716,7 @@ impl World {
                 );
             };
         } else {
+            let alias = compact_str::format_compact!("{}\0", alias);
             unsafe {
                 sys::ecs_set_alias(self.raw_world.as_ptr(), entity, alias.as_ptr() as *const _);
             };
