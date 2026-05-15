@@ -19,9 +19,9 @@ fn builtin_components() {
     assert_ne!(world.component::<flecs::Query>().id(), 0);
     assert_ne!(world.component::<flecs::Observer>().id(), 0);
     // Addon: system/timer builtins
-    assert_ne!(flecs::System::ID, 0);
-    assert_ne!(flecs::TickSource::ID, 0);
-    assert_ne!(flecs::RateFilter::ID, 0);
+    assert_ne!(world.component::<flecs::System>().id(), 0);
+    assert_ne!(world.component::<flecs::TickSource>().id(), 0);
+    assert_ne!(world.component::<flecs::RateFilter>().id(), 0);
 }
 
 #[test]
@@ -487,7 +487,7 @@ fn type_w_tag_name() {
     assert_ne!(c.id(), 0);
     // path() returns the full scoped path; Tag is at root so it starts with "::"
     let path = c.entity().path().unwrap();
-    assert!(path.ends_with("Tag"), "unexpected path: {}", path);
+    assert_eq!(path, "::Tag", "Tag component should be registered at root");
 }
 
 #[test]
@@ -1628,6 +1628,8 @@ fn atfini_w_ctx() {
 
     {
         let world = World::new();
+        // C++ API passes context through callback pointer, but Rust API only provides
+        // fn(WorldRef). This test verifies callback invocation only.
         world.on_destroyed(fini_cb);
         // drops here, triggering the callback
     }
