@@ -2,13 +2,13 @@
 use crate::common_test::*;
 
 #[test]
-fn test_world_multi_world_empty() {
+fn multi_world_empty() {
     let _w1 = World::new();
     let _w2 = World::new();
 }
 
 #[test]
-fn test_world_builtin_components() {
+fn builtin_components() {
     let world = World::new();
 
     // Verify builtin components are registered
@@ -17,7 +17,7 @@ fn test_world_builtin_components() {
 }
 
 #[test]
-fn test_world_multi_world_component() {
+fn multi_world_component() {
     let w1 = World::new();
     let w2 = World::new();
 
@@ -50,7 +50,7 @@ fn test_world_multi_world_component() {
 }
 
 #[test]
-fn test_world_type_id() {
+fn type_id() {
     let world = World::new();
 
     let p = world.component::<Position>();
@@ -58,7 +58,7 @@ fn test_world_type_id() {
 }
 
 #[test]
-fn test_world_reregister_namespace() {
+fn reregister_namespace() {
     let world = World::new();
 
     let p_id_1 = world.component::<Position>().id();
@@ -68,7 +68,7 @@ fn test_world_reregister_namespace() {
 }
 
 #[test]
-fn test_world_reregister_after_delete() {
+fn reregister_after_delete() {
     let world = World::new();
 
     let c = world.component::<Position>();
@@ -82,7 +82,7 @@ fn test_world_reregister_after_delete() {
 }
 
 #[test]
-fn test_world_count() {
+fn count() {
     let world = World::new();
 
     assert_eq!(world.count(Position::id()), 0);
@@ -98,7 +98,7 @@ fn test_world_count() {
 }
 
 #[test]
-fn test_world_count_id() {
+fn count_id() {
     let world = World::new();
 
     let ent = world.entity();
@@ -116,7 +116,62 @@ fn test_world_count_id() {
 }
 
 #[test]
-fn test_world_delete_with_id() {
+fn count_pair() {
+    let world = World::new();
+
+    let parent = world.entity();
+
+    assert_eq!(world.count((flecs::ChildOf::ID, parent.id())), 0);
+
+    world.entity().child_of(parent);
+    world.entity().child_of(parent);
+    world.entity().child_of(parent);
+    world.entity().child_of(parent);
+    world.entity().child_of(parent);
+    world.entity().child_of(parent);
+
+    assert_eq!(world.count((flecs::ChildOf::ID, parent.id())), 6);
+}
+
+#[test]
+fn count_pair_type_id() {
+    let world = World::new();
+
+    let target = world.entity();
+
+    assert_eq!(world.count((Rel::id(), target.id())), 0);
+
+    world.entity().add((Rel::id(), target.id()));
+    world.entity().add((Rel::id(), target.id()));
+    world.entity().add((Rel::id(), target.id()));
+    world.entity().add((Rel::id(), target.id()));
+    world.entity().add((Rel::id(), target.id()));
+    world.entity().add((Rel::id(), target.id()));
+
+    assert_eq!(world.count((Rel::id(), target.id())), 6);
+}
+
+#[test]
+fn count_pair_id() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let target = world.entity();
+
+    assert_eq!(world.count((rel.id(), target.id())), 0);
+
+    world.entity().add((rel.id(), target.id()));
+    world.entity().add((rel.id(), target.id()));
+    world.entity().add((rel.id(), target.id()));
+    world.entity().add((rel.id(), target.id()));
+    world.entity().add((rel.id(), target.id()));
+    world.entity().add((rel.id(), target.id()));
+
+    assert_eq!(world.count((rel.id(), target.id())), 6);
+}
+
+#[test]
+fn delete_with_id() {
     let world = World::new();
 
     let tag = world.entity();
@@ -132,7 +187,7 @@ fn test_world_delete_with_id() {
 }
 
 #[test]
-fn test_world_delete_with_type() {
+fn delete_with_type() {
     let world = World::new();
 
     let e1 = world.entity().add(Tag::id());
@@ -147,7 +202,7 @@ fn test_world_delete_with_type() {
 }
 
 #[test]
-fn test_world_remove_all_id() {
+fn remove_all_id() {
     let world = World::new();
 
     let tag_a = world.entity();
@@ -169,7 +224,7 @@ fn test_world_remove_all_id() {
 }
 
 #[test]
-fn test_world_remove_all_type() {
+fn remove_all_type() {
     let world = World::new();
 
     let e1 = world.entity().add(Position::id());
@@ -189,13 +244,13 @@ fn test_world_remove_all_type() {
 }
 
 #[test]
-fn test_world_remove_all_implicit() {
+fn remove_all_implicit() {
     let world = World::new();
     world.remove_all(Tag::id());
 }
 
 #[test]
-fn test_world_get_scope() {
+fn get_scope() {
     let world = World::new();
 
     let e = world.entity_named("scope");
@@ -210,7 +265,7 @@ fn test_world_get_scope() {
 }
 
 #[test]
-fn test_world_is_alive() {
+fn is_alive() {
     let world = World::new();
 
     let e = world.entity();
@@ -224,7 +279,7 @@ fn test_world_is_alive() {
 }
 
 #[test]
-fn test_world_is_valid() {
+fn is_valid() {
     let world = World::new();
 
     let e = world.entity();
@@ -241,7 +296,7 @@ fn test_world_is_valid() {
 }
 
 #[test]
-fn test_world_exists() {
+fn exists() {
     let world = World::new();
 
     let e = world.entity();
@@ -251,7 +306,7 @@ fn test_world_exists() {
 }
 
 #[test]
-fn test_world_get_alive() {
+fn get_alive() {
     let world = World::new();
 
     let e1 = world.entity();
@@ -268,7 +323,7 @@ fn test_world_get_alive() {
 }
 
 #[test]
-fn test_world_make_alive() {
+fn make_alive() {
     let world = World::new();
 
     let e1 = world.entity();
@@ -286,7 +341,7 @@ fn test_world_make_alive() {
 }
 
 #[test]
-fn test_world_component_w_low_id() {
+fn component_w_low_id() {
     let world = World::new();
 
     let p = world.component::<Position>();
@@ -294,7 +349,7 @@ fn test_world_component_w_low_id() {
 }
 
 #[test]
-fn test_world_reset_world() {
+fn reset_world() {
     let world = World::new();
     let e = world.entity().id();
 
@@ -304,7 +359,7 @@ fn test_world_reset_world() {
 }
 
 #[test]
-fn test_world_scope_w_name() {
+fn scope_w_name() {
     let world = World::new();
 
     let parent = world.entity_named("parent");
@@ -316,7 +371,7 @@ fn test_world_scope_w_name() {
 }
 
 #[test]
-fn test_world_type_w_tag_name() {
+fn type_w_tag_name() {
     let world = World::new();
 
     let c = world.component::<Tag>();
@@ -324,7 +379,7 @@ fn test_world_type_w_tag_name() {
 }
 
 #[test]
-fn test_world_entity_w_tag_name() {
+fn entity_w_tag_name() {
     let world = World::new();
 
     let c = world.entity_named("Tag");
@@ -332,7 +387,7 @@ fn test_world_entity_w_tag_name() {
 }
 
 #[test]
-fn test_world_entity_as_tag() {
+fn entity_as_tag() {
     let world = World::new();
 
     let e = world.entity_named("MyTag");
@@ -345,7 +400,7 @@ fn test_world_entity_as_tag() {
 }
 
 #[test]
-fn test_world_entity_as_component() {
+fn entity_as_component() {
     let world = World::new();
 
     let e = world.entity_named("MyComponent");
@@ -359,7 +414,7 @@ fn test_world_entity_as_component() {
 }
 
 #[test]
-fn test_world_entity_as_component_2_worlds() {
+fn entity_as_component_2_worlds() {
     let ecs1 = World::new();
     let e1 = ecs1.component::<Position>();
     assert_ne!(e1.id(), 0);
@@ -374,7 +429,7 @@ fn test_world_entity_as_component_2_worlds() {
 }
 
 #[test]
-fn test_world_copy_world() {
+fn copy_world() {
     let world1 = World::new();
     let world2 = world1.clone();
 
@@ -382,7 +437,7 @@ fn test_world_copy_world() {
 }
 
 #[test]
-fn test_world_exclusive_access_self_mutate() {
+fn exclusive_access_self_mutate() {
     let world = World::new();
 
     world.exclusive_access_begin(None);
@@ -395,7 +450,7 @@ fn test_world_exclusive_access_self_mutate() {
 }
 
 #[test]
-fn test_world_get_mut_T() {
+fn get_mut_type() {
     let world = World::new();
 
     let has = world.try_get::<&Position>(|_| ()).is_some();
@@ -409,23 +464,24 @@ fn test_world_get_mut_T() {
 }
 
 #[test]
-fn test_world_get_mut_R_T() {
+fn get_mut_rel_type() {
     #[derive(Component)]
-    struct Tgt(u32);
+    struct Tgt();
 
     let world = World::new();
 
-    let has = world.try_get::<&Tgt>(|_| ()).is_some();
+    let has = world.try_get::<&(Position,Tgt)>(|_| ()).is_some();
     assert!(!has);
 
-    world.set(Tgt(42));
-    world.try_get::<&Tgt>(|tgt| {
-        assert_eq!(tgt.0, 42);
+    world.set_pair::<Position, Tgt>(Position { x: 10, y: 20 });
+    world.try_get::<&(Position, Tgt)>(|pos_tgt| {
+        assert_eq!(pos_tgt.x, 10);
+        assert_eq!(pos_tgt.y, 20);
     });
 }
 
 #[test]
-fn test_world_with_scope() {
+fn with_scope() {
     let world = World::new();
 
     let parent = world.entity_named("P");
@@ -442,7 +498,7 @@ fn test_world_with_scope() {
 }
 
 #[test]
-fn test_world_recursive_lookup() {
+fn recursive_lookup() {
     let world = World::new();
 
     let a = world.entity_named("A");
@@ -470,7 +526,7 @@ fn test_world_recursive_lookup() {
 }
 
 #[test]
-fn test_world_template_component_name() {
+fn template_component_name() {
     let world = World::new();
 
     let c = world.component::<Position>();
@@ -479,7 +535,7 @@ fn test_world_template_component_name() {
 }
 
 #[test]
-fn test_world_set_lookup_path() {
+fn set_lookup_path() {
     let world = World::new();
 
     let parent = world.entity_named("Parent");
@@ -499,7 +555,7 @@ fn test_world_set_lookup_path() {
 }
 
 #[test]
-fn test_world_atfini() {
+fn atfini() {
     static ATFINI_INVOKED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
     ATFINI_INVOKED.store(0, std::sync::atomic::Ordering::Relaxed);
 
@@ -516,7 +572,7 @@ fn test_world_atfini() {
 }
 
 #[test]
-fn test_world_register_from_scope() {
+fn register_from_scope() {
     #[derive(Component)]
     struct ScopeTest;
 
@@ -536,7 +592,7 @@ fn test_world_register_from_scope() {
 }
 
 #[test]
-fn test_world_get_scope_type() {
+fn get_scope_type() {
     #[derive(Component)]
     struct ScopeTest;
 
@@ -552,7 +608,7 @@ fn test_world_get_scope_type() {
 }
 
 #[test]
-fn test_world_builtin_after_reset() {
+fn builtin_after_reset() {
     let world = World::new();
 
     let c1 = world.component::<flecs::Component>().id();
@@ -566,7 +622,7 @@ fn test_world_builtin_after_reset() {
 }
 
 #[test]
-fn test_world_register_component_w_core_name() {
+fn register_component_w_core_name() {
     #[derive(Component)]
     struct Module;
 
@@ -577,7 +633,7 @@ fn test_world_register_component_w_core_name() {
 }
 
 #[test]
-fn test_world_multi_world_component_namespace() {
+fn multi_world_component_namespace() {
     let w = World::new();
     let c = w.component::<Position>();
     let id_1 = c.id();
@@ -590,7 +646,7 @@ fn test_world_multi_world_component_namespace() {
 }
 
 #[test]
-fn test_world_reimport() {
+fn reimport() {
     let world = World::new();
 
     let p1 = world.component::<Position>();
@@ -600,7 +656,7 @@ fn test_world_reimport() {
 }
 
 #[test]
-fn test_world_scope_nested() {
+fn scope_nested() {
     let world = World::new();
  
     let parent = world.entity_named("P");
@@ -620,7 +676,7 @@ fn test_world_scope_nested() {
 }
 
 #[test]
-fn test_world_with_tag() {
+fn with_tag() {
     let world = World::new();
 
     let tag = world.entity();
@@ -635,7 +691,7 @@ fn test_world_with_tag() {
 }
 
 #[test]
-fn test_world_with_scope_no_lambda() {
+fn with_scope_no_lambda() {
     let world = World::new();
 
     let parent = world.entity_named("Parent");
@@ -648,7 +704,7 @@ fn test_world_with_scope_no_lambda() {
 }
 
 #[test]
-fn test_world_readonly_begin_end() {
+fn readonly_begin_end() {
     let world = World::new();
 
     world.entity().set(Position { x: 0, y: 0 });
@@ -661,7 +717,7 @@ fn test_world_readonly_begin_end() {
 }
 
 #[test]
-fn test_world_defer_begin_end() {
+fn defer_begin_end() {
     let world = World::new();
 
     world.defer_begin();
@@ -672,7 +728,7 @@ fn test_world_defer_begin_end() {
 }
 
 #[test]
-fn test_world_frame_begin_end() {
+fn frame_begin_end() {
     let world = World::new();
 
     let dt = world.frame_begin(1.0);
@@ -681,7 +737,7 @@ fn test_world_frame_begin_end() {
 }
 
 #[test]
-fn test_world_on_destroyed() {
+fn on_destroyed() {
     static mut CALLED: bool = false;
 
     fn on_destroyed(_w: WorldRef) {
@@ -697,7 +753,7 @@ fn test_world_on_destroyed() {
 }
 
 #[test]
-fn test_world_each_child() {
+fn each_child() {
     let world = World::new();
 
     let parent = world.entity_named("Parent");
@@ -718,7 +774,7 @@ fn test_world_each_child() {
 }
 
 #[test]
-fn test_world_set_entity_range() {
+fn set_entity_range() {
     let world = World::new();
 
     // Get current max entity ID so min is valid (must not be below current max).
@@ -732,7 +788,7 @@ fn test_world_set_entity_range() {
 }
 
 #[test]
-fn test_world_stage_count() {
+fn stage_count() {
     let world = World::new();
 
     world.set_stage_count(4);
@@ -740,7 +796,7 @@ fn test_world_stage_count() {
 }
 
 #[test]
-fn test_world_modified() {
+fn modified() {
     let world = World::new();
 
     let mut count = 0;
@@ -757,7 +813,7 @@ fn test_world_modified() {
 }
 
 #[test]
-fn test_world_preallocate_entity_count() {
+fn preallocate_entity_count() {
     let world = World::new();
 
     world.preallocate_entity_count(100);
@@ -770,7 +826,7 @@ fn test_world_preallocate_entity_count() {
 }
 
 #[test]
-fn test_world_get_info() {
+fn get_info() {
     let world = World::new();
 
     let info = world.info();
@@ -779,14 +835,14 @@ fn test_world_get_info() {
 }
 
 #[test]
-fn test_world_should_quit() {
+fn should_quit() {
     let world = World::new();
 
     assert!(!world.should_quit());
 }
 
 #[test]
-fn test_world_is_deferred() {
+fn is_deferred() {
     let world = World::new();
 
     assert!(!world.is_deferred());
@@ -797,14 +853,14 @@ fn test_world_is_deferred() {
 }
 
 #[test]
-fn test_world_is_readonly() {
+fn is_readonly() {
     let world = World::new();
 
     assert!(!world.is_readonly());
 }
 
 #[test]
-fn test_world_check_components_consistency() {
+fn check_components_consistency() {
     let world = World::new();
 
     let pos1 = world.component::<Position>();
@@ -814,7 +870,7 @@ fn test_world_check_components_consistency() {
 }
 
 #[test]
-fn test_world_register_after_delete() {
+fn register_after_delete() {
     let world = World::new();
 
     let e1 = world.component::<Position>();
@@ -826,7 +882,7 @@ fn test_world_register_after_delete() {
 }
 
 #[test]
-fn test_world_entity_with_component() {
+fn entity_with_component() {
     let world = World::new();
 
     let e = world.entity().set(Position { x: 5, y: 10 }).set(Velocity { x: 1, y: 2 });
@@ -846,7 +902,7 @@ fn test_world_entity_with_component() {
 }
 
 #[test]
-fn test_world_query_count_consistency() {
+fn query_count_consistency() {
     let world = World::new();
 
     for _ in 0..5 {
@@ -857,7 +913,7 @@ fn test_world_query_count_consistency() {
 }
 
 #[test]
-fn test_world_entity_view_operations() {
+fn entity_view_operations() {
     let world = World::new();
 
     let e = world.entity();
@@ -871,7 +927,7 @@ fn test_world_entity_view_operations() {
 }
 
 #[test]
-fn test_world_context_operations() {
+fn context_operations() {
     let world = World::new();
 
     let mut ctx_val: i32 = 42;
