@@ -598,19 +598,10 @@ fn system_builder_create_w_no_template_args() {
     assert_eq!(count.get(), 1);
 }
 
-// TODO: missing API: deduce_terms_from_each_callback — Rust system builder does not deduce
-// query terms from the types of the each closure; types must be specified in system::<T>().
-// The C++ `ecs.system().each([](Position& p, const Velocity& v){})` has no Rust equivalent.
-
-// TODO: missing API: deduce_optional_terms_from_each_callback — same reason as above
-
-// TODO: missing API: deduce_pair_term_from_each_callback — same reason as above
-
-// TODO: missing API: deduce_singleton_term_from_each_callback — same reason as above
-
-// TODO: missing API: deduce_singleton_and_component_terms_from_each_callback — same reason as above
-
-// TODO: missing API: with_terms_after_deduced_terms — depends on deduction mechanism above
+// deduce_terms_from_each_callback, deduce_optional_terms_from_each_callback,
+// deduce_pair_term_from_each_callback, deduce_singleton_term_from_each_callback,
+// deduce_singleton_and_component_terms_from_each_callback, with_terms_after_deduced_terms:
+// not portable — C++ deduces query terms from lambda parameter types; Rust has no equivalent.
 
 #[test]
 fn system_builder_write_annotation() {

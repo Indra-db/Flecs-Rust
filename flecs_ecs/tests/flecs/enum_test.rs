@@ -941,6 +941,7 @@ fn enum_enum_w_one_constant_index_of() {
 #[test]
 fn enum_bitmask_enum_with_type_reflection() {
     #[repr(u32)]
+    #[allow(non_camel_case_types)]
     #[derive(Component, PartialOrd, PartialEq, Clone, Copy, Debug)]
     enum TypedBitMaskEnum {
         Zero = 0,

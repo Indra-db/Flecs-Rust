@@ -267,10 +267,6 @@ where
         implicit_name = true;
     }
 
-    /* If component is registered by module, ensure it's registered in
-     * the scope of the module. */
-    let module = unsafe { sys::ecs_get_scope(world) };
-
     if implicit_name {
         // Use only the short name (last segment of the Rust path).
         // Inside a module scope this registers the component relative to the module.
@@ -300,16 +296,17 @@ where
     // TODO if it's valid. When two components with the same name, but different module get registered
     // this still gives id 0, so what's the point of this check?
 
-    // If no name was provided first check if a type with the provided
-    // symbol was already registered.
-    let id = if name.is_null() {
-        let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-        let id = unsafe { sys::ecs_lookup_symbol(world, type_name_ptr as *const _, false, false) };
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
-        id
-    } else {
-        0
-    };
+    // Always check if this type was already registered by looking up its symbol.
+    // The symbol is the full Rust type_name (unique per type), so this lookup only ever
+    // finds the same type's entity — safe to reuse unconditionally.
+    // This covers both the implicit-name path AND the explicit-name path
+    // (#[flecs(name = "...")] or module-qualified names). Without this, calling
+    // component::<T>() a second time from inside a hook/observer would skip the cache
+    // (arr[index] == 0 because finalize_component_registration doesn't write it back),
+    // attempt to create a duplicate entity with the same name, and SIGABRT.
+    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+    let id = unsafe { sys::ecs_lookup_symbol(world, type_name_ptr as *const _, false, false) };
+    unsafe { sys::ecs_set_scope(world, prev_scope) };
     if id != 0 {
         return id;
     }

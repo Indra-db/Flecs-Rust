@@ -489,7 +489,7 @@ fn event_entity_emit_event_id() {
     let evt = world.entity();
 
     let e = world.entity().add(Tag);
-    let e_id = e.id();
+    let _e_id = e.id();
 
     let count = std::cell::Cell::new(0i32);
 

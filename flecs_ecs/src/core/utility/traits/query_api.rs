@@ -972,6 +972,30 @@ where
         QueryIter::new(self.retrieve_iter_stage(stage), self.iter_next_func())
     }
 
+    /// Return a paged iterator.
+    ///
+    /// Paged iterators limit the results to those starting at `offset`, returning at most `limit` results.
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - Number of entities to skip.
+    /// * `limit`  - Maximum number of entities to return.
+    fn page(&'a self, offset: i32, limit: i32) -> ChainedIter<'a, P, T> {
+        self.iterable().page(offset, limit)
+    }
+
+    /// Return a worker iterator.
+    ///
+    /// Worker iterators evenly distribute matched entities across N workers.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - Zero-based index of this worker (0..count-1).
+    /// * `count` - Total number of workers.
+    fn worker(&'a self, index: i32, count: i32) -> ChainedIter<'a, P, T> {
+        self.iterable().worker(index, count)
+    }
+
     /// Return first matching entity.
     ///
     /// # Returns

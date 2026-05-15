@@ -194,7 +194,7 @@ fn singleton_get_singleton() {
 
     let s = world.singleton::<Position>();
     assert!(s.has(Position::id()));
-    assert_eq!(*s.id(), Position::entity_id(&world));
+    assert_eq!(*s.id(), *world.component_id::<Position>());
 
     s.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -208,12 +208,12 @@ fn singleton_type_id_from_world() {
 
     world.set(Position { x: 10, y: 20 });
 
-    let id = Position::entity_id(&world);
-    assert_eq!(id, Position::entity_id(&world));
+    let id = world.component_id::<Position>();
+    assert_eq!(id, world.component_id::<Position>());
 
     let s = world.singleton::<Position>();
-    assert_eq!(*s.id(), Position::entity_id(&world));
-    assert_eq!(*s.id(), Position::entity_id(&world));
+    assert_eq!(*s.id(), *world.component_id::<Position>());
+    assert_eq!(*s.id(), *world.component_id::<Position>());
 }
 
 #[test]
@@ -305,7 +305,7 @@ fn singleton_get_set_singleton_pair_r_entity() {
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
 
     // Retrieve via the singleton entity for Position using untyped pointer.
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -423,7 +423,7 @@ fn singleton_singleton_enum() {
 
     // Use set() to store enum as component value (like C++ world.set<Color>(Blue))
     world.set(SColor::Blue);
-    assert!(world.has(SColor::entity_id(&world)));
+    assert!(world.has(SColor::id()));
 
     {
         let result = world.try_get::<&SColor>(|c| *c);
@@ -433,7 +433,7 @@ fn singleton_singleton_enum() {
 
     // Replace with Green
     world.set(SColor::Green);
-    assert!(world.has(SColor::entity_id(&world)));
+    assert!(world.has(SColor::id()));
 
     {
         let result = world.try_get::<&SColor>(|c| *c);
@@ -441,8 +441,8 @@ fn singleton_singleton_enum() {
         assert_eq!(result.unwrap(), SColor::Green);
     }
 
-    world.remove(SColor::entity_id(&world));
-    assert!(!world.has(SColor::entity_id(&world)));
+    world.remove(SColor::id());
+    assert!(!world.has(SColor::id()));
 }
 
 #[test]
@@ -482,7 +482,7 @@ fn singleton_get_r_t() {
     let tgt = world.entity();
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -500,7 +500,7 @@ fn singleton_get_r_t_typed() {
     let tgt = world.entity();
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -562,6 +562,16 @@ fn singleton_get_r_t_pair_types_not_found() {
     world.get::<&(Position, Tgt3)>(|_p| {});
 }
 
+#[test]
+#[should_panic]
+fn singleton_get_r_t_both_typed_not_found() {
+    #[derive(Component)]
+    struct TgtBoth;
+
+    let world = World::new();
+    world.get::<&(Position, TgtBoth)>(|_p| {});
+}
+
 // ── try_get variants (return None when not found) ────────────────────────────
 
 #[test]
@@ -608,7 +618,7 @@ fn singleton_try_get_r_entity() {
     let tgt = world.entity();
 
     // Before set: pair does not exist
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr_before = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(ptr_before.is_null());
 
@@ -629,7 +639,7 @@ fn singleton_try_get_r_t_typed() {
 
     let tgt = world.entity();
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
 
     // Before set: null
     let ptr_before = pos_entity.get_first_untyped::<Position>(tgt);
@@ -703,7 +713,7 @@ fn singleton_get_mut_r_entity() {
     let tgt = world.entity();
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -720,7 +730,7 @@ fn singleton_get_mut_r_t_typed() {
     let tgt = world.entity();
     world.set_first::<Position>(tgt, Position { x: 10, y: 20 });
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
     let ptr = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -833,7 +843,7 @@ fn singleton_try_get_mut_r_entity() {
 
     let tgt = world.entity();
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
 
     let ptr_before = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(ptr_before.is_null());
@@ -855,7 +865,7 @@ fn singleton_try_get_mut_r_t_typed() {
 
     let tgt = world.entity();
 
-    let pos_entity = EntityView::new_from(&world, Position::entity_id(&world));
+    let pos_entity = EntityView::new_from(&world, *world.component_id::<Position>());
 
     let ptr_before = pos_entity.get_first_untyped::<Position>(tgt);
     assert!(ptr_before.is_null());

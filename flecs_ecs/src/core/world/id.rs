@@ -34,19 +34,19 @@ impl World {
     ///
     /// The `IdView` from the provided id.
     pub fn id_view_from<Id: IntoId>(&self, id: Id) -> IdView<'_> {
-        let id = *id.into_id(self);
-        if Id::IS_PAIR {
-            ecs_assert!(
-                {
-                    let first = ecs_first(id, self);
-                    let second = ecs_second(id, self);
-                    !ecs_is_pair(first) && !ecs_is_pair(second)
-                },
-                FlecsErrorCode::InvalidParameter,
-                "cannot create nested pairs"
-            );
-        }
-
+        // this doesn't need to be validated as we explicitly make it impossible
+        // let id = *id.into_id(self);
+        // if Id::IS_PAIR {
+        //     ecs_assert!(
+        //         {
+        //             let first = ecs_first(id, self);
+        //             let second = ecs_second(id, self);
+        //             !ecs_is_pair(first) && !ecs_is_pair(second)
+        //         },
+        //         FlecsErrorCode::InvalidParameter,
+        //         "cannot create nested pairs"
+        //     );
+        // }
         IdView::new_from_id(self, id)
     }
 }

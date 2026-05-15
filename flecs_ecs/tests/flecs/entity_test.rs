@@ -5780,6 +5780,35 @@ fn assign_w_on_set_hook() {
     });
 }
 
+// assign_w_on_set_hook_explicit_name — same test but with an explicit flecs name.
+// This exercises the named registration path (try_register_component_named) which
+// previously skipped symbol lookup and caused ALREADY_DEFINED abort on the second
+// component::<T>() call from inside the hook.
+#[test]
+fn assign_w_on_set_hook_explicit_name() {
+    #[derive(Component, Default)]
+    #[flecs(name = "my_ns::InvokedCountNamed")]
+    struct InvokedCountNamed(i32);
+    let world = create_world_with_flags::<InvokedCountNamed>();
+
+    world.component::<Position>().on_set(|e, p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        e.world().get::<&mut InvokedCountNamed>(|c| c.0 += 1);
+    });
+
+    let e = world.entity().add(Position::id());
+    world.get::<&InvokedCountNamed>(|c| assert_eq!(c.0, 0));
+
+    e.assign(Position { x: 10, y: 20 });
+    world.get::<&InvokedCountNamed>(|c| assert_eq!(c.0, 1));
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+    });
+}
+
 // assign_w_on_set_observer
 #[test]
 fn assign_w_on_set_observer() {

@@ -54,6 +54,11 @@ fn pairs_add_component_pair() {
     assert!(entity.id() != 0);
     assert!(entity.has((PairData::id(), Position::id())));
     assert!(!entity.has((Position::id(), PairData::id())));
+
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(PairData,Position)".to_string())
+    );
 }
 
 #[test]
@@ -63,16 +68,15 @@ fn pairs_add_tag_pair() {
     world.component::<Position>();
     let pair_e = world.entity_named("Pair");
 
-    // add_second: first is entity `pair_e`, second is typed `Position`
-    let entity = world
-        .entity()
-        .set_second(pair_e, Position { x: 0, y: 0 });
+    let entity = world.entity().add((pair_e, Position::id()));
 
     assert!(entity.id() != 0);
-    // (pair_e, Position) is the pair
     assert!(entity.has((pair_e, Position::id())));
-    // (Position, pair_e) is NOT the same pair
     assert!(!entity.has((Position::id(), pair_e)));
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(Pair,Position)".to_string())
+    );
 }
 
 #[test]
@@ -86,6 +90,10 @@ fn pairs_add_tag_pair_to_tag() {
 
     assert!(entity.id() != 0);
     assert!(entity.has((pair_e, tag_e)));
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(Pair,Tag)".to_string())
+    );
 }
 
 #[test]
@@ -101,6 +109,11 @@ fn pairs_remove_component_pair() {
     assert!(entity.has((PairData::id(), Position::id())));
     assert!(!entity.has((Position::id(), PairData::id())));
 
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(PairData,Position)".to_string())
+    );
+
     entity.remove((Position::id(), PairData::id()));
     assert!(!entity.has((Position::id(), PairData::id())));
 }
@@ -112,13 +125,15 @@ fn pairs_remove_tag_pair() {
     world.component::<Position>();
     let pair_e = world.entity_named("Pair");
 
-    let entity = world
-        .entity()
-        .set_second(pair_e, Position { x: 10, y: 20 });
+    let entity = world.entity().add((pair_e, Position::id()));
 
     assert!(entity.id() != 0);
     assert!(entity.has((pair_e, Position::id())));
     assert!(!entity.has((Position::id(), pair_e)));
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(Pair,Position)".to_string())
+    );
 
     entity.remove((pair_e, Position::id()));
     assert!(!entity.has((pair_e, Position::id())));
@@ -135,6 +150,10 @@ fn pairs_remove_tag_pair_to_tag() {
 
     assert!(entity.id() != 0);
     assert!(entity.has((pair_e, tag_e)));
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(Pair,Tag)".to_string())
+    );
 
     entity.remove((tag_e, pair_e));
     assert!(!entity.has((tag_e, pair_e)));
@@ -151,6 +170,11 @@ fn pairs_set_component_pair() {
     assert!(entity.id() != 0);
     assert!(entity.has((PairData::id(), Position::id())));
     assert!(!entity.has((Position::id(), PairData::id())));
+
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(PairData,Position)".to_string())
+    );
 
     entity.get::<&(PairData, Position)>(|t| {
         assert_eq!(t.value as i32, 10);
@@ -169,6 +193,10 @@ fn pairs_set_tag_pair() {
 
     assert!(entity.id() != 0);
     assert!(entity.has((pair_e, Position::id())));
+    assert_eq!(
+        entity.archetype().to_string(),
+        Some("(Pair,Position)".to_string())
+    );
 
     let ptr = entity.get_second_untyped::<Position>(pair_e) as *const Position;
     assert!(!ptr.is_null());
@@ -1063,9 +1091,15 @@ fn pairs_set_pair_type() {
         .set_pair::<LocalEats, LocalApples>(LocalEats { amount: 10 });
     assert!(e.has((LocalEats::id(), LocalApples::id())));
 
-    e.get::<&(LocalEats, LocalApples)>(|ptr| {
-        assert_eq!(ptr.amount, 10);
-    });
+    let apples_id = world.component_id::<LocalApples>();
+    let ptr = e.get_first_untyped::<LocalEats>(apples_id) as *const LocalEats;
+    unsafe {
+        assert_eq!((*ptr).amount, 10);
+    }
+
+    // C++: ptr == e.try_get<Eats, Apples>() — both accesses yield same address
+    let ptr2 = e.get_first_untyped::<LocalEats>(apples_id) as *const LocalEats;
+    assert_eq!(ptr, ptr2);
 }
 
 #[test]

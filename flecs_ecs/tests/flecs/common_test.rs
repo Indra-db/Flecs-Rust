@@ -99,11 +99,31 @@ pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
 #[unsafe(no_mangle)]
 #[allow(unsafe_op_in_unsafe_fn)]
 unsafe extern "C" fn abort() {
-    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) {
-        // Panic already in flight from panic_shim; suppress the redundant libc abort().
+    // Suppress if guard is active OR if a Rust panic is already unwinding (secondary abort).
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst)
+        || std::thread::panicking()
+    {
         return;
     }
-    // No guard active — real abort.
+    libc::raise(libc::SIGABRT);
+}
+
+// macOS: C assert(e) calls __assert_rtn, not abort() directly.
+// Override it so ecs_assert()'s trailing `assert(condition)` is suppressed when guard is active.
+#[cfg(target_os = "macos")]
+#[unsafe(no_mangle)]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe extern "C" fn __assert_rtn(
+    _func: *const core::ffi::c_char,
+    _file: *const core::ffi::c_char,
+    _line: core::ffi::c_int,
+    _expr: *const core::ffi::c_char,
+) {
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst)
+        || std::thread::panicking()
+    {
+        return;
+    }
     libc::raise(libc::SIGABRT);
 }
 #[derive(Debug, Component, Clone, Copy)]
@@ -402,6 +422,69 @@ pub struct Template<T: Send + Sync + 'static> {
 #[derive(Component, Default)]
 pub struct Templatex {
     pub value: String,
+}
+
+#[derive(Component)]
+pub struct CompA {}
+
+pub mod a {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component)]
+    pub struct Comp {}
+}
+
+pub mod ns {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component)]
+    pub struct FooComp;
+
+    thread_local! {
+        pub static SYSTEM_INVOKE_COUNT: std::cell::RefCell<u32> = std::cell::RefCell::new(0);
+    }
+
+    pub fn increment_invoke_count() {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow_mut() += 1);
+    }
+
+    pub fn get_invoke_count() -> u32 {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow())
+    }
+
+    pub fn reset_invoke_count() {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow_mut() = 0);
+    }
+
+    thread_local! {
+        pub static IMPORT_COUNT: std::cell::RefCell<i32> = std::cell::RefCell::new(0);
+    }
+
+    pub fn get_import_count() -> i32 {
+        IMPORT_COUNT.with(|c| *c.borrow())
+    }
+
+    pub fn reset_import_count() {
+        IMPORT_COUNT.with(|c| *c.borrow_mut() = 0);
+    }
+
+    #[derive(Component)]
+    pub struct NamespaceModule;
+
+    impl Module for NamespaceModule {
+        fn module(world: &World) {
+            IMPORT_COUNT.with(|c| *c.borrow_mut() += 1);
+            world.module::<NamespaceModule>("NamespaceModule");
+            world.component::<FooComp>();
+
+            world.system::<&FooComp>()
+                .run(|mut it| {
+                    while it.next() {
+                        increment_invoke_count();
+                    }
+                });
+        }
+    }
 }
 
 pub fn create_world_with_flags<T: ComponentId + Default + DataComponent + ComponentType<Struct>>()

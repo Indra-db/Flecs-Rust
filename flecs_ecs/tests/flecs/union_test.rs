@@ -117,10 +117,49 @@ fn union_add_remove_switch_w_type() {
     assert_eq!(e.table(), table);
 }
 
-// TODO: missing API: union_switch_enum_type — requires remove_enum_wildcard and
-// has_enum_wildcard methods which don't exist in the Rust API.
-// C++ test: world.component<Color>().add(flecs::DontFragment).add(flecs::Exclusive),
-// then e.add(Red), e.has(Red), e.remove<Color>(flecs::Wildcard), etc.
-// The Rust equivalent APIs (add_enum, has_enum) exist but wildcard removal is missing.
-// #[test]
-// fn union_switch_enum_type() { ... }
+#[derive(Component, PartialEq, Debug)]
+#[repr(C)]
+enum Color {
+    Red,
+    Green,
+    Blue,
+}
+
+#[test]
+fn union_switch_enum_type() {
+    let world = World::new();
+
+    world
+        .component::<Color>()
+        .add_trait::<flecs::DontFragment>()
+        .add_trait::<flecs::Exclusive>();
+
+    let e = world.entity().add_enum(Color::Red);
+    assert!(e.has_enum(Color::Red));
+    assert!(!e.has_enum(Color::Green));
+    assert!(!e.has_enum(Color::Blue));
+    assert!(e.has((world.component_id::<Color>(), *flecs::Wildcard)));
+
+    let table = e.table();
+
+    e.add_enum(Color::Green);
+    assert!(!e.has_enum(Color::Red));
+    assert!(e.has_enum(Color::Green));
+    assert!(!e.has_enum(Color::Blue));
+    assert!(e.has((world.component_id::<Color>(), *flecs::Wildcard)));
+    assert_eq!(e.table(), table);
+
+    e.add_enum(Color::Blue);
+    assert!(!e.has_enum(Color::Red));
+    assert!(!e.has_enum(Color::Green));
+    assert!(e.has_enum(Color::Blue));
+    assert!(e.has((world.component_id::<Color>(), *flecs::Wildcard)));
+    assert_eq!(e.table(), table);
+
+    e.remove((world.component_id::<Color>(), *flecs::Wildcard));
+    assert!(!e.has_enum(Color::Red));
+    assert!(!e.has_enum(Color::Green));
+    assert!(!e.has_enum(Color::Blue));
+    assert!(!e.has((world.component_id::<Color>(), *flecs::Wildcard)));
+    assert_eq!(e.table(), table);
+}

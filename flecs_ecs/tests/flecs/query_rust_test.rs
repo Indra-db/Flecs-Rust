@@ -524,6 +524,7 @@ fn query_default_ctor() {
     let world = World::new();
 
     // Test that a query can be assigned and used (Rust Option models default-ctor semantics)
+    #[allow(unused_assignments)]
     let mut q_var: Option<Query<&Position>> = None;
 
     let q = world.query::<&Position>().build();
@@ -2630,7 +2631,7 @@ fn query_field_at_from_each_w_iter() {
 // ─── field_at_T_from_each_w_iter ──────────────────────────────────────────────
 
 #[test]
-fn query_field_at_T_from_each_w_iter() {
+fn query_field_at_type_from_each_w_iter() {
     let world = World::new();
 
     let e1 = world
@@ -2667,7 +2668,7 @@ fn query_field_at_T_from_each_w_iter() {
 // ─── field_at_const_T_from_each_w_iter ───────────────────────────────────────
 
 #[test]
-fn query_field_at_const_T_from_each_w_iter() {
+fn query_field_at_const_type_from_each_w_iter() {
     let world = World::new();
 
     let e1 = world
@@ -3142,7 +3143,7 @@ fn query_run_w_iter_fini() {
     let q = world.new_query::<&Position>();
 
     let mut count = 0;
-    q.run(|mut it| {
+    q.run(|it| {
         it.fini();
         count += 1;
     });
@@ -3192,7 +3193,7 @@ fn query_run_w_iter_fini_empty() {
     let q = world.new_query::<&Position>();
 
     let mut count = 0;
-    q.run(|mut it| {
+    q.run(|it| {
         count += 1;
         it.fini();
     });
@@ -3209,7 +3210,7 @@ fn query_run_w_iter_fini_no_query() {
     let q = world.query::<()>().build();
 
     let mut count = 0;
-    q.run(|mut it| {
+    q.run(|it| {
         count += 1;
         it.fini();
     });
@@ -3286,6 +3287,7 @@ fn query_copy_operators() {
     let q = world.query::<()>().with(&Position::id()).build();
 
     let q_copy_ctor = q.clone();
+    #[allow(unused_assignments)]
     let mut q_copy_assign = world.query::<()>().build();
     q_copy_assign = q.clone();
 

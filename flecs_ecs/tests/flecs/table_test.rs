@@ -412,9 +412,8 @@ fn table_get_id() {
 
     let table = e.table().unwrap();
 
-    // Mirror C++ `void* ptr = table.get(id)` via untyped accessor + cast.
     let p_ptr = table
-        .get_mut_untyped(Position::entity_id(&world))
+        .get_mut_untyped(*world.component_id::<Position>())
         .unwrap() as *mut Position;
     unsafe {
         assert_eq!((*p_ptr.add(0)).x, 10);
@@ -426,7 +425,7 @@ fn table_get_id() {
     }
 
     let v_ptr = table
-        .get_mut_untyped(Velocity::entity_id(&world))
+        .get_mut_untyped(*world.component_id::<Velocity>())
         .unwrap() as *mut Velocity;
     unsafe {
         assert_eq!((*v_ptr.add(0)).x, 1);
@@ -458,32 +457,23 @@ fn table_get_t() {
         .set(Position { x: 30, y: 40 })
         .set(Velocity { x: 3, y: 4 });
 
-    let table = e.table().unwrap();
+    let mut table = e.table().unwrap();
 
-    // get_mut borrows table mutably; use untyped + cast to read multiple columns.
-    let p_ptr = table
-        .get_mut_untyped(Position::entity_id(&world))
-        .unwrap() as *mut Position;
-    unsafe {
-        assert_eq!((*p_ptr.add(0)).x, 10);
-        assert_eq!((*p_ptr.add(0)).y, 20);
-        assert_eq!((*p_ptr.add(1)).x, 20);
-        assert_eq!((*p_ptr.add(1)).y, 30);
-        assert_eq!((*p_ptr.add(2)).x, 30);
-        assert_eq!((*p_ptr.add(2)).y, 40);
-    }
+    let p = table.get_mut::<Position>().unwrap();
+    assert_eq!(p[0].x, 10);
+    assert_eq!(p[0].y, 20);
+    assert_eq!(p[1].x, 20);
+    assert_eq!(p[1].y, 30);
+    assert_eq!(p[2].x, 30);
+    assert_eq!(p[2].y, 40);
 
-    let v_ptr = table
-        .get_mut_untyped(Velocity::entity_id(&world))
-        .unwrap() as *mut Velocity;
-    unsafe {
-        assert_eq!((*v_ptr.add(0)).x, 1);
-        assert_eq!((*v_ptr.add(0)).y, 2);
-        assert_eq!((*v_ptr.add(1)).x, 2);
-        assert_eq!((*v_ptr.add(1)).y, 3);
-        assert_eq!((*v_ptr.add(2)).x, 3);
-        assert_eq!((*v_ptr.add(2)).y, 4);
-    }
+    let v = table.get_mut::<Velocity>().unwrap();
+    assert_eq!(v[0].x, 1);
+    assert_eq!(v[0].y, 2);
+    assert_eq!(v[1].x, 2);
+    assert_eq!(v[1].y, 3);
+    assert_eq!(v[2].x, 3);
+    assert_eq!(v[2].y, 4);
 }
 
 // -- Table_get_pair_r_t ----------------------------------------------------
@@ -508,7 +498,7 @@ fn table_get_pair_r_t() {
 
     let table = e.table().unwrap();
 
-    let p = table.get_pair_mut_untyped::<Position, Tgt>();
+    let p = table.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -520,7 +510,7 @@ fn table_get_pair_r_t() {
         assert_eq!((*p_ptr.add(2)).y, 40);
     }
 
-    let v = table.get_pair_mut_untyped::<Velocity, Tgt>();
+    let v = table.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -555,7 +545,7 @@ fn table_get_pair_r_t_typed_first() {
 
     let table = e.table().unwrap();
 
-    let p = table.get_pair_ids_mut_untyped(Position::entity_id(&world), Tgt::entity_id(&world));
+    let p = table.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -567,7 +557,7 @@ fn table_get_pair_r_t_typed_first() {
         assert_eq!((*p_ptr.add(2)).y, 40);
     }
 
-    let v = table.get_pair_ids_mut_untyped(Velocity::entity_id(&world), Tgt::entity_id(&world));
+    let v = table.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -650,7 +640,7 @@ fn table_range_get_id() {
     let range = e.range().unwrap();
 
     let p_ptr = range
-        .get_mut_untyped(Position::entity_id(&world))
+        .get_mut_untyped(*world.component_id::<Position>())
         .unwrap() as *mut Position;
     unsafe {
         assert_eq!((*p_ptr).x, 20);
@@ -658,7 +648,7 @@ fn table_range_get_id() {
     }
 
     let v_ptr = range
-        .get_mut_untyped(Velocity::entity_id(&world))
+        .get_mut_untyped(*world.component_id::<Velocity>())
         .unwrap() as *mut Velocity;
     unsafe {
         assert_eq!((*v_ptr).x, 2);
@@ -686,23 +676,15 @@ fn table_range_get_t() {
         .set(Position { x: 30, y: 40 })
         .set(Velocity { x: 3, y: 4 });
 
-    let range = e.range().unwrap();
+    let mut range = e.range().unwrap();
 
-    let p_ptr = range
-        .get_mut_untyped(Position::entity_id(&world))
-        .unwrap() as *mut Position;
-    unsafe {
-        assert_eq!((*p_ptr).x, 20);
-        assert_eq!((*p_ptr).y, 30);
-    }
+    let p = range.get_mut::<Position>().unwrap();
+    assert_eq!(p[0].x, 20);
+    assert_eq!(p[0].y, 30);
 
-    let v_ptr = range
-        .get_mut_untyped(Velocity::entity_id(&world))
-        .unwrap() as *mut Velocity;
-    unsafe {
-        assert_eq!((*v_ptr).x, 2);
-        assert_eq!((*v_ptr).y, 3);
-    }
+    let v = range.get_mut::<Velocity>().unwrap();
+    assert_eq!(v[0].x, 2);
+    assert_eq!(v[0].y, 3);
 }
 
 // -- Table_range_get_pair_r_t ----------------------------------------------
@@ -726,7 +708,7 @@ fn table_range_get_pair_r_t() {
 
     let range = e.range().unwrap();
 
-    let p = range.get_pair_ids_mut_untyped(Position::entity_id(&world), Tgt::entity_id(&world));
+    let p = range.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -734,7 +716,7 @@ fn table_range_get_pair_r_t() {
         assert_eq!((*p_ptr).y, 30);
     }
 
-    let v = range.get_pair_ids_mut_untyped(Velocity::entity_id(&world), Tgt::entity_id(&world));
+    let v = range.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -764,7 +746,7 @@ fn table_range_get_pair_r_t_typed_first() {
 
     let range = e.range().unwrap();
 
-    let p = range.get_pair_ids_mut_untyped(Position::entity_id(&world), Tgt::entity_id(&world));
+    let p = range.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -772,7 +754,7 @@ fn table_range_get_pair_r_t_typed_first() {
         assert_eq!((*p_ptr).y, 30);
     }
 
-    let v = range.get_pair_ids_mut_untyped(Velocity::entity_id(&world), Tgt::entity_id(&world));
+    let v = range.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -873,7 +855,7 @@ fn table_iter_type() {
     let mut count = 0;
     for &id in ids {
         count += 1;
-        assert!(id == Position::entity_id(&world) || id == Velocity::entity_id(&world));
+        assert!(id == *world.component_id::<Position>() || id == *world.component_id::<Velocity>());
     }
     assert_eq!(count, 2);
 }
@@ -931,26 +913,18 @@ fn table_get_entities() {
 
 // -- Table_get_records -----------------------------------------------------
 
-// TODO: missing API: flecs_table_record_get_component / component_record_t public accessor
-// The C++ test uses internal flecs C functions (flecs_table_record_get_component,
-// flecs_component_get_id) that are not wrapped by the public Rust Table API.
 #[test]
 fn table_get_records() {
-    // TODO: missing API: flecs_table_record_get_component — no public Rust equivalent
-    // The table.records() method returns &[sys::ecs_table_record_t] but the
-    // ecs_component_record_t accessor (flecs_table_record_get_component) and
-    // flecs_component_get_id are not exposed through the safe public API.
     let world = World::new();
-    let _parent = world.entity();
-    let _e = world
+    let parent = world.entity();
+    let e = world
         .entity()
-        .child_of(_parent)
+        .child_of(parent)
         .set(Position { x: 10, y: 20 });
-    // Basic compile / no-crash smoke test only; detailed record inspection requires
-    // unsafe sys calls not covered by the public Table API.
-    let table = _e.table().unwrap();
+
+    let table = e.table().unwrap();
     let records = table.records();
-    assert!(!records.is_empty());
+    assert_eq!(records.len(), 6);
 }
 
 // -- Table_lock ------------------------------------------------------------
