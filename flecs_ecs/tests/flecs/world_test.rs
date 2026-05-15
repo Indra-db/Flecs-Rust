@@ -706,6 +706,31 @@ fn get_scope_type() {
 }
 
 #[test]
+fn make_pair() {
+    let world = World::new();
+
+    let r = world.entity();
+    let t = world.entity();
+    let id = world.id_view_from((r, t));
+
+    assert!(id.is_pair());
+    assert_eq!(id.first_id().id(), r.id());
+    assert_eq!(id.second_id().id(), t.id());
+}
+
+#[test]
+fn make_pair_of_pair_type() {
+    let world = World::new();
+
+    let t = world.entity();
+    let id = world.id_view_from((Position::entity_id(&world), t.id()));
+
+    assert!(id.is_pair());
+    assert_eq!(id.first_id().id(), Position::entity_id(&world));
+    assert_eq!(id.second_id().id(), t.id());
+}
+
+#[test]
 fn builtin_after_reset() {
     let world = World::new();
 
@@ -891,6 +916,64 @@ fn with_scope_no_lambda() {
         assert!(child.has((flecs::ChildOf::ID, parent.id())));
     }
     world.set_scope(0); // Reset scope
+}
+
+#[test]
+fn with_scope_type() {
+    #[derive(Component)]
+    struct ParentScope;
+
+    let world = World::new();
+
+    world.scope(ParentScope::entity_id(&world), |_| {
+        world.entity_named("Child");
+    });
+
+    let parent = world.lookup("ParentScope");
+    assert!(parent.is_alive());
+
+    let child = world.lookup("ParentScope::Child");
+    assert!(child.is_alive());
+    assert_eq!(child.id(), parent.lookup("Child").id());
+}
+
+#[test]
+fn with_scope_type_staged() {
+    #[derive(Component)]
+    struct ParentScope;
+
+    let world = World::new();
+    let stage = world.stage(0);
+
+    world.readonly_begin(false);
+    stage.set_scope(ParentScope::entity_id(&world));
+    let e = stage.entity_named("Child");
+    stage.set_scope(0);
+    world.readonly_end();
+
+    assert!(e.has((flecs::ChildOf::ID, ParentScope::entity_id(&world))));
+
+    let parent = world.lookup("ParentScope");
+    assert!(parent.is_alive());
+
+    let child = world.lookup("ParentScope::Child");
+    assert!(child.is_alive());
+    assert_eq!(child.id(), parent.lookup("Child").id());
+}
+
+#[test]
+fn with_scope_type_no_lambda() {
+    #[derive(Component)]
+    struct ParentScope;
+
+    let world = World::new();
+
+    world.set_scope(ParentScope::entity_id(&world));
+    let child = world.entity_named("Child");
+    world.set_scope(0); // Reset scope
+
+    assert!(child.has((flecs::ChildOf::ID, ParentScope::entity_id(&world))));
+    assert!(world.get_scope().is_none());
 }
 
 #[test]
