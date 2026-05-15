@@ -740,6 +740,7 @@ fn staged_count() {
 #[test]
 fn async_stage_add() {
     let world = World::new();
+    world.component::<Position>();
 
     let e = world.entity();
     let async_stage = world.create_async_stage();
