@@ -202,6 +202,53 @@ fn delete_with_type() {
 }
 
 #[test]
+fn delete_with_pair() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let obj = world.entity();
+
+    let e1 = world.entity().add((rel.id(), obj.id()));
+    let e2 = world.entity().add((rel.id(), obj.id()));
+    let e3 = world.entity().add((rel.id(), obj.id()));
+
+    world.delete_entities_with((rel.id(), obj.id()));
+
+    assert!(!e1.is_alive());
+    assert!(!e2.is_alive());
+    assert!(!e3.is_alive());
+}
+
+#[test]
+fn delete_with_pair_type() {
+    let world = World::new();
+
+    let e1 = world.entity().add((Rel::id(), Obj::id()));
+    let e2 = world.entity().add((Rel::id(), Obj::id()));
+    let e3 = world.entity().add((Rel::id(), Obj::id()));
+
+    world.delete_entities_with((Rel::entity_id(&world), Obj::entity_id(&world)));
+
+    assert!(!e1.is_alive());
+    assert!(!e2.is_alive());
+    assert!(!e3.is_alive());
+}
+
+#[test]
+fn delete_with_implicit() {
+    // No entities have Tag — must not crash
+    let world = World::new();
+    world.delete_entities_with(Tag::id());
+}
+
+#[test]
+fn delete_with_pair_implicit() {
+    // No entities have (Rel, Obj) — must not crash
+    let world = World::new();
+    world.delete_entities_with((Rel::entity_id(&world), Obj::entity_id(&world)));
+}
+
+#[test]
 fn remove_all_id() {
     let world = World::new();
 
@@ -247,6 +294,57 @@ fn remove_all_type() {
 fn remove_all_implicit() {
     let world = World::new();
     world.remove_all(Tag::id());
+}
+
+#[test]
+fn remove_all_pair() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let obj_a = world.entity();
+    let obj_b = world.entity();
+
+    let e1 = world.entity().add((rel.id(), obj_a.id()));
+    let e2 = world.entity().add((rel.id(), obj_a.id()));
+    let e3 = world.entity().add((rel.id(), obj_a.id())).add((rel.id(), obj_b.id()));
+
+    world.remove_all((rel.id(), obj_a.id()));
+
+    assert!(e1.is_alive());
+    assert!(e2.is_alive());
+    assert!(e3.is_alive());
+
+    assert!(!e1.has((rel.id(), obj_a.id())));
+    assert!(!e2.has((rel.id(), obj_a.id())));
+    assert!(!e3.has((rel.id(), obj_a.id())));
+    assert!(e3.has((rel.id(), obj_b.id())));
+}
+
+#[test]
+fn remove_all_pair_type() {
+    let world = World::new();
+
+    let e1 = world.entity().add((Rel::id(), Obj::id()));
+    let e2 = world.entity().add((Rel::id(), Obj::id()));
+    let e3 = world.entity().add((Rel::id(), Obj::id())).add((Rel::id(), Obj2::id()));
+
+    world.remove_all((Rel::entity_id(&world), Obj::entity_id(&world)));
+
+    assert!(e1.is_alive());
+    assert!(e2.is_alive());
+    assert!(e3.is_alive());
+
+    assert!(!e1.has((Rel::id(), Obj::id())));
+    assert!(!e2.has((Rel::id(), Obj::id())));
+    assert!(!e3.has((Rel::id(), Obj::id())));
+    assert!(e3.has((Rel::id(), Obj2::id())));
+}
+
+#[test]
+fn remove_all_pair_implicit() {
+    // No entities have (Rel, Obj) — must not crash
+    let world = World::new();
+    world.remove_all((Rel::entity_id(&world), Obj::entity_id(&world)));
 }
 
 #[test]
