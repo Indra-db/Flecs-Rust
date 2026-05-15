@@ -1249,3 +1249,101 @@ fn context_operations() {
     let ctx = world.context();
     assert_eq!(ctx as *const i32 as *const i32, &ctx_val as *const i32);
 }
+
+// get_type_info tests (C++ World_get_type_info_t through World_get_type_info_R_T_tag)
+
+#[test]
+fn get_type_info_t() {
+    let world = World::new();
+    let c = world.component::<Position>();
+    let ti = world.type_info_from(c.id());
+    assert!(ti.is_some());
+    let ti = unsafe { &*ti.unwrap() };
+    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.component, Position::entity_id(&world));
+}
+
+#[test]
+fn get_type_info_T() {
+    let world = World::new();
+    let ti = world.type_info_from(Position::entity_id(&world));
+    assert!(ti.is_some());
+    let ti = unsafe { &*ti.unwrap() };
+    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.component, Position::entity_id(&world));
+}
+
+#[test]
+fn get_type_info_r_t() {
+    let world = World::new();
+    let tgt = world.entity();
+    let ti = world.type_info_from((Position::entity_id(&world), tgt.id()));
+    assert!(ti.is_some());
+    let ti = unsafe { &*ti.unwrap() };
+    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.component, Position::entity_id(&world));
+}
+
+#[test]
+fn get_type_info_R_t() {
+    let world = World::new();
+    let tgt = world.entity();
+    let ti = world.type_info_from((Position::entity_id(&world), tgt.id()));
+    assert!(ti.is_some());
+    let ti = unsafe { &*ti.unwrap() };
+    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.component, Position::entity_id(&world));
+}
+
+#[test]
+fn get_type_info_R_T() {
+    let world = World::new();
+    let ti = world.type_info_from((Position::entity_id(&world), Velocity::entity_id(&world)));
+    assert!(ti.is_some());
+    let ti = unsafe { &*ti.unwrap() };
+    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.component, Position::entity_id(&world));
+}
+
+#[test]
+fn get_type_info_t_tag() {
+    let world = World::new();
+    let c = world.component::<Tag>();
+    let ti = world.type_info_from(c.id());
+    assert!(ti.is_none());
+}
+
+#[test]
+fn get_type_info_T_tag() {
+    let world = World::new();
+    let ti = world.type_info_from(Tag::entity_id(&world));
+    assert!(ti.is_none());
+}
+
+#[test]
+fn get_type_info_r_t_tag() {
+    let world = World::new();
+    let tgt = world.entity();
+    let ti = world.type_info_from((Tag::entity_id(&world), tgt.id()));
+    assert!(ti.is_none());
+}
+
+#[test]
+fn get_type_info_R_t_tag() {
+    let world = World::new();
+    let tgt = world.entity();
+    let ti = world.type_info_from((Tag::entity_id(&world), tgt.id()));
+    assert!(ti.is_none());
+}
+
+#[test]
+fn get_type_info_R_T_tag() {
+    let world = World::new();
+    let ti = world.type_info_from((Tag::entity_id(&world), Rel::entity_id(&world)));
+    assert!(ti.is_none());
+}
