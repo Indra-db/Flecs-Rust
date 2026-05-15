@@ -717,6 +717,45 @@ fn readonly_begin_end() {
 }
 
 #[test]
+fn staged_count() {
+    let world = World::new();
+
+    // Enter readonly mode — entities created via stage are deferred.
+    world.readonly_begin(false);
+
+    let stage = world.stage(0);
+    for _ in 0..6 {
+        stage.entity().add(Position::id());
+    }
+
+    // Deferred commands not yet merged; count must be 0.
+    assert_eq!(world.count(Position::id()), 0);
+
+    // readonly_end flushes the deferred commands.
+    world.readonly_end();
+
+    assert_eq!(world.count(Position::id()), 6);
+}
+
+#[test]
+fn async_stage_add() {
+    let world = World::new();
+
+    let e = world.entity();
+    let async_stage = world.create_async_stage();
+
+    // Queue an Add<Position> command on the async stage — not merged yet.
+    e.mut_current_stage(&async_stage).add(Position::id());
+
+    assert!(!e.has(Position::id()));
+
+    // Explicit merge flushes the async stage's command queue.
+    async_stage.merge();
+
+    assert!(e.has(Position::id()));
+}
+
+#[test]
 fn defer_begin_end() {
     let world = World::new();
 
