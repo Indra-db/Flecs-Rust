@@ -789,6 +789,98 @@ fn with_tag() {
 }
 
 #[test]
+fn with_tag_type() {
+    // world.with(Tag, closure) auto-adds Tag to every entity created inside
+    let world = World::new();
+
+    world.with(Tag::id(), || {
+        world.entity();
+        world.entity();
+        world.entity();
+    });
+
+    assert_eq!(world.count(Tag::id()), 3);
+}
+
+#[test]
+fn with_relation() {
+    // world.with((rel, obj), closure) auto-adds pair (rel, obj) to entities
+    let world = World::new();
+
+    let likes = world.entity();
+    let bob = world.entity();
+
+    world.with((likes.id(), bob.id()), || {
+        world.entity();
+        world.entity();
+        world.entity();
+    });
+
+    assert_eq!(world.count((likes.id(), bob.id())), 3);
+}
+
+#[test]
+fn with_relation_type() {
+    // typed first, raw entity second: (Likes::id(), bob)
+    let world = World::new();
+
+    let bob = world.entity();
+
+    world.with((Likes::entity_id(&world), bob.id()), || {
+        world.entity();
+        world.entity();
+        world.entity();
+    });
+
+    assert_eq!(world.count((Likes::entity_id(&world), bob.id())), 3);
+}
+
+#[test]
+fn with_relation_object_type() {
+    // fully typed pair (Likes, Bob)
+    let world = World::new();
+
+    world.with((Likes::entity_id(&world), Bob::entity_id(&world)), || {
+        world.entity();
+        world.entity();
+        world.entity();
+    });
+
+    assert_eq!(
+        world.count((Likes::entity_id(&world), Bob::entity_id(&world))),
+        3
+    );
+}
+
+#[test]
+fn with_tag_nested() {
+    // ecs_set_with is a single value — inner with() replaces outer.
+    // Entity created in inner with gets the innermost tag only.
+    // Entity created at outer with level gets the outer tag.
+    let world = World::new();
+
+    let tier1 = world.entity();
+    let tier2 = world.entity();
+    let mut inner = world.entity_null();
+    let mut outer_entity = world.entity_null();
+
+    world.with(tier1.id(), || {
+        outer_entity = world.entity();
+        world.with(tier2.id(), || {
+            inner = world.entity();
+        });
+    });
+
+    // outer_entity was created when tier1 was active
+    assert!(outer_entity.has(tier1));
+    assert!(!outer_entity.has(tier2));
+
+    // inner was created when tier2 replaced tier1
+    assert!(inner.has(tier2));
+    assert!(!inner.has(tier1));
+}
+
+#[test]
 fn with_scope_no_lambda() {
     let world = World::new();
 
