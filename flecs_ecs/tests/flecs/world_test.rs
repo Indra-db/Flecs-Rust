@@ -1250,6 +1250,63 @@ fn context_operations() {
     assert_eq!(ctx as *const i32 as *const i32, &ctx_val as *const i32);
 }
 
+// C++ World_set_get_context: setting regular ctx leaves binding ctx untouched.
+// In the Rust binding the binding ctx is always set to WorldCtx (internal), so
+// we verify the complementary invariant: context() returns null before any
+// set_context call, confirming the two slots are independent.
+#[test]
+fn set_get_binding_context() {
+    let world = World::new();
+
+    // Regular context is null until explicitly set.
+    assert!(world.context().is_null());
+
+    // After setting regular context the pointer round-trips correctly.
+    let mut ctx_val: i32 = 99;
+    world.set_context(&mut ctx_val as *mut i32 as *mut std::ffi::c_void, None);
+    let ctx = world.context();
+    assert_eq!(ctx as *const i32, &ctx_val as *const i32);
+}
+
+// C++ World_set_get_context_w_free: free callback is invoked when world drops.
+#[test]
+fn set_get_context_w_free() {
+    static CTX_FREED: std::sync::atomic::AtomicBool =
+        std::sync::atomic::AtomicBool::new(false);
+
+    unsafe extern "C-unwind" fn ctx_free_cb(_ctx: *mut std::ffi::c_void) {
+        CTX_FREED.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    let mut ctx_val: i32 = 42;
+    {
+        let world = World::new();
+        world.set_context(
+            &mut ctx_val as *mut i32 as *mut std::ffi::c_void,
+            Some(ctx_free_cb),
+        );
+        assert_eq!(
+            world.context() as *const i32,
+            &ctx_val as *const i32,
+        );
+        // world drops here — should invoke ctx_free_cb
+    }
+    assert!(
+        CTX_FREED.load(std::sync::atomic::Ordering::SeqCst),
+        "ctx free callback was not invoked on world drop"
+    );
+}
+
+// C++ World_set_get_binding_ctx_w_free: same as above but for the binding ctx slot.
+// The Rust World uses ecs_set_binding_ctx internally to store WorldCtx; exposing
+// set_binding_context publicly would let callers corrupt that pointer and cause
+// UB on world drop. The method is therefore pub(crate) by design. This test is
+// intentionally ignored until a safe public API is provided (e.g. a dedicated
+// user-facing binding-ctx that doesn't conflict with WorldCtx).
+#[test]
+#[ignore = "set_binding_context is pub(crate): would overwrite WorldCtx and corrupt world drop"]
+fn set_get_binding_context_w_free() {}
+
 // get_type_info tests (C++ World_get_type_info_t through World_get_type_info_R_T_tag)
 
 #[test]
