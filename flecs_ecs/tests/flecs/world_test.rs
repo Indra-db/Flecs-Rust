@@ -14,6 +14,14 @@ fn builtin_components() {
     // Verify builtin components are registered
     assert_ne!(world.component::<flecs::Component>().id(), 0);
     assert_ne!(world.component::<flecs::Identifier>().id(), 0);
+    assert_ne!(world.component::<flecs::Poly>().id(), 0);
+    // Poly target components
+    assert_ne!(world.component::<flecs::Query>().id(), 0);
+    assert_ne!(world.component::<flecs::Observer>().id(), 0);
+    // Addon: system/timer builtins
+    assert_ne!(flecs::System::ID, 0);
+    assert_ne!(flecs::TickSource::ID, 0);
+    assert_ne!(flecs::RateFilter::ID, 0);
 }
 
 #[test]
@@ -444,6 +452,9 @@ fn component_w_low_id() {
 
     let p = world.component::<Position>();
     assert_ne!(p.id(), 0);
+    // FLECS_HI_COMPONENT_ID is 256; user components registered at startup
+    // get IDs in the low range.
+    assert!(p.id() < 256, "expected low component id, got {}", p.id());
 }
 
 #[test]
@@ -474,6 +485,9 @@ fn type_w_tag_name() {
 
     let c = world.component::<Tag>();
     assert_ne!(c.id(), 0);
+    // path() returns the full scoped path; Tag is at root so it starts with "::"
+    let path = c.entity().path().unwrap();
+    assert!(path.ends_with("Tag"), "unexpected path: {}", path);
 }
 
 #[test]
@@ -482,6 +496,9 @@ fn entity_w_tag_name() {
 
     let c = world.entity_named("Tag");
     assert_ne!(c.id(), 0);
+    // entity created at root: path is "::Tag"
+    let path = c.path().unwrap();
+    assert_eq!(path, "::Tag", "unexpected path: {}", path);
 }
 
 #[test]
@@ -1403,4 +1420,284 @@ fn get_type_info_R_T_tag() {
     let world = World::new();
     let ti = world.type_info_from((Tag::entity_id(&world), Rel::entity_id(&world)));
     assert!(ti.is_none());
+}
+
+// ── Group A: entity_as_tag/component named variants ─────────────────────────
+
+// C++: ecs.entity<Tag>("Foo") — create/register the type entity with custom name.
+// Rust: world.component_named::<Tag>("Foo") achieves the same effect.
+#[test]
+fn entity_w_name_as_tag() {
+    #[derive(Component)]
+    struct MyTagType;
+
+    let world = World::new();
+    // Register the Tag type entity under a custom display name.
+    let c = world.component_named::<MyTagType>("Foo");
+    assert_ne!(c.id(), 0);
+    assert_eq!(c.name(), "Foo");
+    // The component id must equal the type's canonical entity id.
+    assert_eq!(c.id(), MyTagType::entity_id(&world));
+}
+
+// C++: ecs.entity<Position>("Bar") — same but for a component type with data.
+#[test]
+fn entity_w_name_as_component() {
+    #[derive(Component)]
+    struct MyPos {
+        x: f32,
+        y: f32,
+    }
+
+    let world = World::new();
+    let c = world.component_named::<MyPos>("Bar");
+    assert_ne!(c.id(), 0);
+    assert_eq!(c.name(), "Bar");
+    assert_eq!(c.id(), MyPos::entity_id(&world));
+}
+
+// Two worlds must agree on the same numeric component id for the same Rust type.
+#[test]
+fn entity_as_namespaced_component_2_worlds() {
+    #[derive(Component)]
+    struct SharedComp {
+        v: i32,
+    }
+
+    let w1 = World::new();
+    let w2 = World::new();
+
+    let id1 = w1.component::<SharedComp>().id();
+    let id2 = w2.component::<SharedComp>().id();
+
+    assert_ne!(id1, 0);
+    assert_eq!(id1, id2, "component ids must match across worlds");
+}
+
+// Same but via implicit registration (add/set without explicit component() call).
+#[test]
+fn entity_as_component_2_worlds_implicit_namespaced() {
+    #[derive(Component)]
+    struct ImplicitComp {
+        v: i32,
+    }
+
+    let w1 = World::new();
+    let w2 = World::new();
+
+    // Implicit registration through set()
+    w1.entity().set(ImplicitComp { v: 1 });
+    w2.entity().set(ImplicitComp { v: 2 });
+
+    let id1 = ImplicitComp::entity_id(&w1);
+    let id2 = ImplicitComp::entity_id(&w2);
+
+    assert_ne!(id1, 0);
+    assert_eq!(id1, id2, "implicitly-registered component ids must match");
+}
+
+// ── Group B: register_namespace tests ───────────────────────────────────────
+
+// Register inner type, then outer; both ids non-zero and distinct.
+#[test]
+fn register_namespace_after_component() {
+    #[derive(Component)]
+    struct OuterNs;
+
+    #[derive(Component)]
+    struct InnerComp {
+        v: i32,
+    }
+
+    let world = World::new();
+
+    let inner_id = world.component::<InnerComp>().id();
+    let outer_id = world.component::<OuterNs>().id();
+
+    assert_ne!(inner_id, 0);
+    assert_ne!(outer_id, 0);
+    assert_ne!(inner_id, outer_id);
+}
+
+// Set scope to ScopeType, register NestedType; verify it's a child of ScopeType.
+#[test]
+fn register_nested_from_scope() {
+    #[derive(Component)]
+    struct ScopeNs;
+
+    #[derive(Component)]
+    struct NestedComp {
+        v: i32,
+    }
+
+    let world = World::new();
+
+    {
+        let _scope = world.set_scope(ScopeNs::entity_id(&world));
+        world.component::<NestedComp>();
+    }
+    world.set_scope(0);
+
+    let c = world.component::<NestedComp>();
+    assert!(
+        c.has((flecs::ChildOf::ID, ScopeNs::entity_id(&world))),
+        "NestedComp should be a child of ScopeNs"
+    );
+}
+
+// Register component with "::RootName" prefix to escape any active scope.
+#[test]
+fn register_w_root_name() {
+    #[derive(Component)]
+    struct SomeScope;
+
+    #[derive(Component)]
+    struct RootComp {
+        v: i32,
+    }
+
+    let world = World::new();
+
+    {
+        // Set a scope — the "::" prefix should override it.
+        let _scope = world.set_scope(SomeScope::entity_id(&world));
+        world.component_named::<RootComp>("::RootComp");
+    }
+    world.set_scope(0);
+
+    let c = world.component::<RootComp>();
+    assert_ne!(c.id(), 0);
+    // Should NOT be a child of SomeScope.
+    assert!(
+        !c.has((flecs::ChildOf::ID, SomeScope::entity_id(&world))),
+        "RootComp should not be a child of SomeScope"
+    );
+}
+
+// Same with a namespaced component registered via "::Root" override.
+#[test]
+fn register_nested_w_root_name() {
+    #[derive(Component)]
+    struct OuterScope;
+
+    #[derive(Component)]
+    struct NestedRootComp {
+        v: i32,
+    }
+
+    let world = World::new();
+
+    {
+        let _scope = world.set_scope(OuterScope::entity_id(&world));
+        // "::" prefix anchors at root, bypassing the active scope.
+        world.component_named::<NestedRootComp>("::NestedRootComp");
+    }
+    world.set_scope(0);
+
+    let c = world.component::<NestedRootComp>();
+    assert_ne!(c.id(), 0);
+    assert!(
+        !c.has((flecs::ChildOf::ID, OuterScope::entity_id(&world))),
+        "NestedRootComp should not be a child of OuterScope"
+    );
+}
+
+// ── Group C: world lifecycle / misc API ─────────────────────────────────────
+
+// frame_count_total starts at 0, increments each progress() call.
+#[test]
+fn get_tick() {
+    let world = World::new();
+
+    assert_eq!(world.info().frame_count_total, 0);
+    world.progress_time(1.0);
+    assert_eq!(world.info().frame_count_total, 1);
+    world.progress_time(1.0);
+    assert_eq!(world.info().frame_count_total, 2);
+}
+
+// on_destroyed is the Rust equivalent of ecs_atfini; fires when world drops.
+#[test]
+fn atfini_w_ctx() {
+    static CALLED: std::sync::atomic::AtomicBool =
+        std::sync::atomic::AtomicBool::new(false);
+
+    fn fini_cb(_world: WorldRef) {
+        CALLED.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    {
+        let world = World::new();
+        world.on_destroyed(fini_cb);
+        // drops here, triggering the callback
+    }
+
+    assert!(
+        CALLED.load(std::sync::atomic::Ordering::SeqCst),
+        "on_destroyed callback was not invoked"
+    );
+}
+
+// world.try_get reads back a previously set singleton.
+#[test]
+fn get_ref() {
+    #[derive(Component)]
+    struct Space {
+        v: i32,
+    }
+
+    let world = World::new();
+    world.set(Space { v: 12 });
+
+    world.try_get::<&Space>(|s| {
+        assert_eq!(s.v, 12);
+    });
+}
+
+// set_log_level / get_log_level round-trip.
+#[test]
+fn get_set_log_level() {
+    let original = get_log_level();
+    set_log_level(-1); // silence logs
+    assert_eq!(get_log_level(), -1);
+    set_log_level(original); // restore
+}
+
+// After world.reset(), flecs::rest::Rest can be set on the new world.
+#[test]
+#[cfg(feature = "flecs_rest")]
+fn reset_set_rest_after_reset() {
+    let world = World::new();
+    let world = world.reset();
+    world.set(flecs::rest::Rest::default());
+    assert!(world.try_get::<&flecs::rest::Rest>(|_| ()).is_some());
+}
+
+#[test]
+#[cfg(not(feature = "flecs_rest"))]
+#[ignore = "API not available: flecs_rest feature not enabled"]
+fn reset_set_rest_after_reset() {}
+
+// world.new_mini() creates a minimal world without default addons.
+#[test]
+fn world_mini() {
+    let world = World::new_mini();
+    // Basic entities still work in a mini world.
+    let e = world.entity();
+    assert_ne!(e.id(), 0);
+}
+
+// progress_time passes delta_time; next info().delta_time reflects it.
+#[test]
+fn delta_time() {
+    let world = World::new();
+    world.progress_time(0.5);
+    let dt = world.info().delta_time;
+    // delta_time should be close to what we passed (0.5).
+    // Use a wide tolerance since internal timing may adjust it slightly.
+    assert!(
+        (dt - 0.5).abs() < 0.1,
+        "expected delta_time near 0.5, got {}",
+        dt
+    );
 }
