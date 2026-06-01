@@ -41,6 +41,7 @@ pub use entity_view::EntityView;
 pub use entity_view::EntityViewGet;
 pub use event::EventBuilder;
 pub(crate) use get_tuple::*;
+pub use get_tuple::GetTuple;
 pub use id::Id;
 pub use id_view::IdView;
 pub use observer::Observer;
