@@ -5143,7 +5143,8 @@ fn named_scoped_rule() {
 
 #[test]
 #[should_panic]
-fn is_valid() {    let _guard = FlecsPanicAbortGuard::install();
+fn is_valid() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     let _q_1 = world.query::<&Position>();
@@ -5530,7 +5531,10 @@ fn query_builder_ptr_type() {
         .entity()
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 });
-    world.entity().set(Velocity { x: 0, y: 0 }).set(Mass { value: 0 });
+    world
+        .entity()
+        .set(Velocity { x: 0, y: 0 })
+        .set(Mass { value: 0 });
 
     let mut count = 0;
     q.each_entity(|e, (_p, _v)| {
@@ -5655,7 +5659,7 @@ fn query_builder_pred_eq_name() {
         .query::<()>()
         .with(*flecs::PredEq)
         .set_second("Foo")
-        .second()  // re-enter second ref mode before setting flags
+        .second() // re-enter second ref mode before setting flags
         .flags(flecs::term_flags::IsName::ID)
         .build();
 
@@ -5678,7 +5682,7 @@ fn query_builder_pred_match() {
         .query::<()>()
         .with(*flecs::PredMatch)
         .set_second("FooB")
-        .second()  // re-enter second ref mode before setting flags
+        .second() // re-enter second ref mode before setting flags
         .flags(flecs::term_flags::IsName::ID)
         .build();
 
@@ -5775,10 +5779,7 @@ fn query_builder_builder_build_to_auto() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world
-        .entity()
-        .add(Position::id())
-        .add(Velocity::id());
+    let e1 = world.entity().add(Position::id()).add(Velocity::id());
     world.entity().add(Position::id());
 
     let mut count = 0;
@@ -5794,65 +5795,145 @@ fn query_builder_builder_build_to_auto() {
 
 #[test]
 fn query_builder_32_terms() {
-    #[derive(Component)] struct T00;
-    #[derive(Component)] struct T01;
-    #[derive(Component)] struct T02;
-    #[derive(Component)] struct T03;
-    #[derive(Component)] struct T04;
-    #[derive(Component)] struct T05;
-    #[derive(Component)] struct T06;
-    #[derive(Component)] struct T07;
-    #[derive(Component)] struct T08;
-    #[derive(Component)] struct T09;
-    #[derive(Component)] struct T10;
-    #[derive(Component)] struct T11;
-    #[derive(Component)] struct T12;
-    #[derive(Component)] struct T13;
-    #[derive(Component)] struct T14;
-    #[derive(Component)] struct T15;
-    #[derive(Component)] struct T16;
-    #[derive(Component)] struct T17;
-    #[derive(Component)] struct T18;
-    #[derive(Component)] struct T19;
-    #[derive(Component)] struct T20;
-    #[derive(Component)] struct T21;
-    #[derive(Component)] struct T22;
-    #[derive(Component)] struct T23;
-    #[derive(Component)] struct T24;
-    #[derive(Component)] struct T25;
-    #[derive(Component)] struct T26;
-    #[derive(Component)] struct T27;
-    #[derive(Component)] struct T28;
-    #[derive(Component)] struct T29;
-    #[derive(Component)] struct T30;
-    #[derive(Component)] struct T31;
+    #[derive(Component)]
+    struct T00;
+    #[derive(Component)]
+    struct T01;
+    #[derive(Component)]
+    struct T02;
+    #[derive(Component)]
+    struct T03;
+    #[derive(Component)]
+    struct T04;
+    #[derive(Component)]
+    struct T05;
+    #[derive(Component)]
+    struct T06;
+    #[derive(Component)]
+    struct T07;
+    #[derive(Component)]
+    struct T08;
+    #[derive(Component)]
+    struct T09;
+    #[derive(Component)]
+    struct T10;
+    #[derive(Component)]
+    struct T11;
+    #[derive(Component)]
+    struct T12;
+    #[derive(Component)]
+    struct T13;
+    #[derive(Component)]
+    struct T14;
+    #[derive(Component)]
+    struct T15;
+    #[derive(Component)]
+    struct T16;
+    #[derive(Component)]
+    struct T17;
+    #[derive(Component)]
+    struct T18;
+    #[derive(Component)]
+    struct T19;
+    #[derive(Component)]
+    struct T20;
+    #[derive(Component)]
+    struct T21;
+    #[derive(Component)]
+    struct T22;
+    #[derive(Component)]
+    struct T23;
+    #[derive(Component)]
+    struct T24;
+    #[derive(Component)]
+    struct T25;
+    #[derive(Component)]
+    struct T26;
+    #[derive(Component)]
+    struct T27;
+    #[derive(Component)]
+    struct T28;
+    #[derive(Component)]
+    struct T29;
+    #[derive(Component)]
+    struct T30;
+    #[derive(Component)]
+    struct T31;
 
     let world = World::new();
 
     let f = world
         .query::<()>()
-        .with(T00::id()).with(T01::id()).with(T02::id()).with(T03::id())
-        .with(T04::id()).with(T05::id()).with(T06::id()).with(T07::id())
-        .with(T08::id()).with(T09::id()).with(T10::id()).with(T11::id())
-        .with(T12::id()).with(T13::id()).with(T14::id()).with(T15::id())
-        .with(T16::id()).with(T17::id()).with(T18::id()).with(T19::id())
-        .with(T20::id()).with(T21::id()).with(T22::id()).with(T23::id())
-        .with(T24::id()).with(T25::id()).with(T26::id()).with(T27::id())
-        .with(T28::id()).with(T29::id()).with(T30::id()).with(T31::id())
+        .with(T00::id())
+        .with(T01::id())
+        .with(T02::id())
+        .with(T03::id())
+        .with(T04::id())
+        .with(T05::id())
+        .with(T06::id())
+        .with(T07::id())
+        .with(T08::id())
+        .with(T09::id())
+        .with(T10::id())
+        .with(T11::id())
+        .with(T12::id())
+        .with(T13::id())
+        .with(T14::id())
+        .with(T15::id())
+        .with(T16::id())
+        .with(T17::id())
+        .with(T18::id())
+        .with(T19::id())
+        .with(T20::id())
+        .with(T21::id())
+        .with(T22::id())
+        .with(T23::id())
+        .with(T24::id())
+        .with(T25::id())
+        .with(T26::id())
+        .with(T27::id())
+        .with(T28::id())
+        .with(T29::id())
+        .with(T30::id())
+        .with(T31::id())
         .build();
 
     assert_eq!(f.field_count(), 32);
 
     let e = world
         .entity()
-        .add(T00::id()).add(T01::id()).add(T02::id()).add(T03::id())
-        .add(T04::id()).add(T05::id()).add(T06::id()).add(T07::id())
-        .add(T08::id()).add(T09::id()).add(T10::id()).add(T11::id())
-        .add(T12::id()).add(T13::id()).add(T14::id()).add(T15::id())
-        .add(T16::id()).add(T17::id()).add(T18::id()).add(T19::id())
-        .add(T20::id()).add(T21::id()).add(T22::id()).add(T23::id())
-        .add(T24::id()).add(T25::id()).add(T26::id()).add(T27::id())
-        .add(T28::id()).add(T29::id()).add(T30::id()).add(T31::id());
+        .add(T00::id())
+        .add(T01::id())
+        .add(T02::id())
+        .add(T03::id())
+        .add(T04::id())
+        .add(T05::id())
+        .add(T06::id())
+        .add(T07::id())
+        .add(T08::id())
+        .add(T09::id())
+        .add(T10::id())
+        .add(T11::id())
+        .add(T12::id())
+        .add(T13::id())
+        .add(T14::id())
+        .add(T15::id())
+        .add(T16::id())
+        .add(T17::id())
+        .add(T18::id())
+        .add(T19::id())
+        .add(T20::id())
+        .add(T21::id())
+        .add(T22::id())
+        .add(T23::id())
+        .add(T24::id())
+        .add(T25::id())
+        .add(T26::id())
+        .add(T27::id())
+        .add(T28::id())
+        .add(T29::id())
+        .add(T30::id())
+        .add(T31::id());
 
     let mut count = 0;
     f.run(|mut it| {
@@ -5884,10 +5965,7 @@ fn query_builder_with_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world
-        .entity()
-        .add(Position::id())
-        .add(Velocity::id());
+    let e1 = world.entity().add(Position::id()).add(Velocity::id());
     world.entity().add(Position::id());
 
     let mut count = 0;
@@ -6194,8 +6272,12 @@ fn query_builder_set_group_on_query() {
     q.set_group(tgt_b).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b);
-        if e == e2 { e2_found = true; }
-        if e == e5 { e5_found = true; }
+        if e == e2 {
+            e2_found = true;
+        }
+        if e == e5 {
+            e5_found = true;
+        }
         count += 1;
     });
 
@@ -6243,8 +6325,12 @@ fn query_builder_set_group_type_on_query() {
     q.set_group(TgtBSGT::id()).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b_raw);
-        if e == e2 { e2_found = true; }
-        if e == e5 { e5_found = true; }
+        if e == e2 {
+            e2_found = true;
+        }
+        if e == e5 {
+            e5_found = true;
+        }
         count += 1;
     });
 
@@ -6382,11 +6468,7 @@ fn query_builder_query_w_this_second() {
     let rel = world.entity();
 
     // Use $this variable via set_second to match entities where (rel, entity_itself)
-    let q = world
-        .query::<()>()
-        .with(rel)
-        .set_second("$this")
-        .build();
+    let q = world.query::<()>().with(rel).set_second("$this").build();
 
     let e1 = world.entity();
     e1.add((rel, e1));
@@ -6697,7 +6779,6 @@ fn query_builder_each_w_untyped_field_at_w_fixed_src() {
     assert_eq!(count, 2);
 }
 
-
 // ────────────────────────────────────────────────────────────────
 // New tests appended below
 // ────────────────────────────────────────────────────────────────
@@ -6716,7 +6797,10 @@ fn ptr_type() {
         .entity()
         .set(Position { x: 0, y: 0 })
         .set(Velocity { x: 0, y: 0 });
-    world.entity().set(Velocity { x: 0, y: 0 }).set(Mass { value: 0 });
+    world
+        .entity()
+        .set(Velocity { x: 0, y: 0 })
+        .set(Mass { value: 0 });
 
     let mut count = 0;
     q.each_entity(|e, (_p, _v)| {
@@ -6962,10 +7046,7 @@ fn builder_build_to_auto() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world
-        .entity()
-        .add(Position::id())
-        .add(Velocity::id());
+    let e1 = world.entity().add(Position::id()).add(Velocity::id());
     world.entity().add(Position::id());
 
     let mut count = 0;
@@ -6981,65 +7062,145 @@ fn builder_build_to_auto() {
 
 #[test]
 fn n32_terms() {
-    #[derive(Component)] struct T00;
-    #[derive(Component)] struct T01;
-    #[derive(Component)] struct T02;
-    #[derive(Component)] struct T03;
-    #[derive(Component)] struct T04;
-    #[derive(Component)] struct T05;
-    #[derive(Component)] struct T06;
-    #[derive(Component)] struct T07;
-    #[derive(Component)] struct T08;
-    #[derive(Component)] struct T09;
-    #[derive(Component)] struct T10;
-    #[derive(Component)] struct T11;
-    #[derive(Component)] struct T12;
-    #[derive(Component)] struct T13;
-    #[derive(Component)] struct T14;
-    #[derive(Component)] struct T15;
-    #[derive(Component)] struct T16;
-    #[derive(Component)] struct T17;
-    #[derive(Component)] struct T18;
-    #[derive(Component)] struct T19;
-    #[derive(Component)] struct T20;
-    #[derive(Component)] struct T21;
-    #[derive(Component)] struct T22;
-    #[derive(Component)] struct T23;
-    #[derive(Component)] struct T24;
-    #[derive(Component)] struct T25;
-    #[derive(Component)] struct T26;
-    #[derive(Component)] struct T27;
-    #[derive(Component)] struct T28;
-    #[derive(Component)] struct T29;
-    #[derive(Component)] struct T30;
-    #[derive(Component)] struct T31;
+    #[derive(Component)]
+    struct T00;
+    #[derive(Component)]
+    struct T01;
+    #[derive(Component)]
+    struct T02;
+    #[derive(Component)]
+    struct T03;
+    #[derive(Component)]
+    struct T04;
+    #[derive(Component)]
+    struct T05;
+    #[derive(Component)]
+    struct T06;
+    #[derive(Component)]
+    struct T07;
+    #[derive(Component)]
+    struct T08;
+    #[derive(Component)]
+    struct T09;
+    #[derive(Component)]
+    struct T10;
+    #[derive(Component)]
+    struct T11;
+    #[derive(Component)]
+    struct T12;
+    #[derive(Component)]
+    struct T13;
+    #[derive(Component)]
+    struct T14;
+    #[derive(Component)]
+    struct T15;
+    #[derive(Component)]
+    struct T16;
+    #[derive(Component)]
+    struct T17;
+    #[derive(Component)]
+    struct T18;
+    #[derive(Component)]
+    struct T19;
+    #[derive(Component)]
+    struct T20;
+    #[derive(Component)]
+    struct T21;
+    #[derive(Component)]
+    struct T22;
+    #[derive(Component)]
+    struct T23;
+    #[derive(Component)]
+    struct T24;
+    #[derive(Component)]
+    struct T25;
+    #[derive(Component)]
+    struct T26;
+    #[derive(Component)]
+    struct T27;
+    #[derive(Component)]
+    struct T28;
+    #[derive(Component)]
+    struct T29;
+    #[derive(Component)]
+    struct T30;
+    #[derive(Component)]
+    struct T31;
 
     let world = World::new();
 
     let f = world
         .query::<()>()
-        .with(T00::id()).with(T01::id()).with(T02::id()).with(T03::id())
-        .with(T04::id()).with(T05::id()).with(T06::id()).with(T07::id())
-        .with(T08::id()).with(T09::id()).with(T10::id()).with(T11::id())
-        .with(T12::id()).with(T13::id()).with(T14::id()).with(T15::id())
-        .with(T16::id()).with(T17::id()).with(T18::id()).with(T19::id())
-        .with(T20::id()).with(T21::id()).with(T22::id()).with(T23::id())
-        .with(T24::id()).with(T25::id()).with(T26::id()).with(T27::id())
-        .with(T28::id()).with(T29::id()).with(T30::id()).with(T31::id())
+        .with(T00::id())
+        .with(T01::id())
+        .with(T02::id())
+        .with(T03::id())
+        .with(T04::id())
+        .with(T05::id())
+        .with(T06::id())
+        .with(T07::id())
+        .with(T08::id())
+        .with(T09::id())
+        .with(T10::id())
+        .with(T11::id())
+        .with(T12::id())
+        .with(T13::id())
+        .with(T14::id())
+        .with(T15::id())
+        .with(T16::id())
+        .with(T17::id())
+        .with(T18::id())
+        .with(T19::id())
+        .with(T20::id())
+        .with(T21::id())
+        .with(T22::id())
+        .with(T23::id())
+        .with(T24::id())
+        .with(T25::id())
+        .with(T26::id())
+        .with(T27::id())
+        .with(T28::id())
+        .with(T29::id())
+        .with(T30::id())
+        .with(T31::id())
         .build();
 
     assert_eq!(f.field_count(), 32);
 
     let e = world
         .entity()
-        .add(T00::id()).add(T01::id()).add(T02::id()).add(T03::id())
-        .add(T04::id()).add(T05::id()).add(T06::id()).add(T07::id())
-        .add(T08::id()).add(T09::id()).add(T10::id()).add(T11::id())
-        .add(T12::id()).add(T13::id()).add(T14::id()).add(T15::id())
-        .add(T16::id()).add(T17::id()).add(T18::id()).add(T19::id())
-        .add(T20::id()).add(T21::id()).add(T22::id()).add(T23::id())
-        .add(T24::id()).add(T25::id()).add(T26::id()).add(T27::id())
-        .add(T28::id()).add(T29::id()).add(T30::id()).add(T31::id());
+        .add(T00::id())
+        .add(T01::id())
+        .add(T02::id())
+        .add(T03::id())
+        .add(T04::id())
+        .add(T05::id())
+        .add(T06::id())
+        .add(T07::id())
+        .add(T08::id())
+        .add(T09::id())
+        .add(T10::id())
+        .add(T11::id())
+        .add(T12::id())
+        .add(T13::id())
+        .add(T14::id())
+        .add(T15::id())
+        .add(T16::id())
+        .add(T17::id())
+        .add(T18::id())
+        .add(T19::id())
+        .add(T20::id())
+        .add(T21::id())
+        .add(T22::id())
+        .add(T23::id())
+        .add(T24::id())
+        .add(T25::id())
+        .add(T26::id())
+        .add(T27::id())
+        .add(T28::id())
+        .add(T29::id())
+        .add(T30::id())
+        .add(T31::id());
 
     let mut count = 0;
     f.run(|mut it| {
@@ -7071,10 +7232,7 @@ fn with_id() {
         .set_cache_kind(QueryCacheKind::Auto)
         .build();
 
-    let e1 = world
-        .entity()
-        .add(Position::id())
-        .add(Velocity::id());
+    let e1 = world.entity().add(Position::id()).add(Velocity::id());
     world.entity().add(Position::id());
 
     let mut count = 0;
@@ -7381,8 +7539,12 @@ fn set_group_on_query() {
     q.set_group(tgt_b).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b);
-        if e == e2 { e2_found = true; }
-        if e == e5 { e5_found = true; }
+        if e == e2 {
+            e2_found = true;
+        }
+        if e == e5 {
+            e5_found = true;
+        }
         count += 1;
     });
 
@@ -7430,8 +7592,12 @@ fn set_group_type_on_query() {
     q.set_group(TgtBSGT::id()).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b_raw);
-        if e == e2 { e2_found = true; }
-        if e == e5 { e5_found = true; }
+        if e == e2 {
+            e2_found = true;
+        }
+        if e == e5 {
+            e5_found = true;
+        }
         count += 1;
     });
 
@@ -7909,4 +8075,3 @@ fn each_w_untyped_field_at_w_fixed_src() {
 
     assert_eq!(count, 2);
 }
-

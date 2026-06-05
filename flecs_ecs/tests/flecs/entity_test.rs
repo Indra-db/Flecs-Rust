@@ -5,7 +5,6 @@ use core::ffi::c_void;
 use crate::common_test::*;
 use crate::enum_test::StandardEnum;
 
-
 #[test]
 fn new() {
     let world = World::new();
@@ -3326,10 +3325,7 @@ fn prefab_hierarchy_w_types() {
     assert!(turret_base.has((*flecs::ChildOf, turret)));
 
     assert_eq!(turret.path().unwrap(), "::Turret");
-    assert_eq!(
-        turret_base.path().unwrap(),
-        "::Turret::Base"
-    );
+    assert_eq!(turret_base.path().unwrap(), "::Turret::Base");
 
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
     assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
@@ -3354,18 +3350,9 @@ fn prefab_hierarchy_w_types() {
     assert!(railgun_beam.has((*flecs::ChildOf, railgun)));
 
     assert_eq!(railgun.path().unwrap(), "::Railgun");
-    assert_eq!(
-        railgun_base.path().unwrap(),
-        "::Railgun::Base"
-    );
-    assert_eq!(
-        railgun_head.path().unwrap(),
-        "::Railgun::Head"
-    );
-    assert_eq!(
-        railgun_beam.path().unwrap(),
-        "::Railgun::Beam"
-    );
+    assert_eq!(railgun_base.path().unwrap(), "::Railgun::Base");
+    assert_eq!(railgun_head.path().unwrap(), "::Railgun::Head");
+    assert_eq!(railgun_beam.path().unwrap(), "::Railgun::Beam");
 
     assert_eq!(railgun.symbol(), "flecs::common_test::Railgun");
     assert_eq!(railgun_head.symbol(), "flecs::common_test::Head");
@@ -3387,10 +3374,7 @@ fn prefab_hierarchy_w_root_types() {
     assert!(turret_base.has((*flecs::ChildOf, turret)));
 
     assert_eq!(turret.path().unwrap(), "::Turret");
-    assert_eq!(
-        turret_base.path().unwrap(),
-        "::Turret::Base"
-    );
+    assert_eq!(turret_base.path().unwrap(), "::Turret::Base");
 
     assert_eq!(turret.symbol(), "flecs::common_test::Turret");
     assert_eq!(turret_base.symbol(), "flecs::common_test::Base");
@@ -4484,13 +4468,6 @@ fn try_get_mut_enum_constant() {
     assert!(ptr.is_null());
 }
 
-
-
-
-
-
-
-
 #[test]
 fn defer_on_replace_w_set_batched_existing() {
     #[derive(Component, Default)]
@@ -4874,7 +4851,8 @@ fn get_t() {
 #[test]
 fn get_n_t() {
     let world = World::new();
-    let e = world.entity()
+    let e = world
+        .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
     e.get::<(&Position, &Velocity)>(|(p, v)| {
@@ -4890,7 +4868,9 @@ fn get_n_t() {
 fn get_r_t() {
     let world = World::new();
     let tgt = world.entity();
-    let e = world.entity().set_first::<Position>(Position { x: 10, y: 20 }, tgt);
+    let e = world
+        .entity()
+        .set_first::<Position>(Position { x: 10, y: 20 }, tgt);
     let ptr = e.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -4902,7 +4882,9 @@ fn get_r_t() {
 #[test]
 fn get_r_t_2() {
     let world = World::new();
-    let e = world.entity().set_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<Position, TagA>(Position { x: 10, y: 20 });
     e.get::<&(Position, TagA)>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
@@ -4914,7 +4896,9 @@ fn get_r_t_2() {
 fn get_r_t_3() {
     let world = World::new();
     let rel = world.entity();
-    let e = world.entity().set_second::<Position>(rel, Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_second::<Position>(rel, Position { x: 10, y: 20 });
     let ptr = e.get_second_untyped::<Position>(rel);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -4926,7 +4910,8 @@ fn get_r_t_3() {
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let e = world.entity();
     e.get::<&Position>(|_| {});
@@ -4936,7 +4921,8 @@ fn get_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_r_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_r_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let tgt = world.entity();
     let e = world.entity();
@@ -4950,7 +4936,8 @@ fn get_r_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_r_t_not_found_2() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_r_t_not_found_2() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let e = world.entity();
     e.get::<&(Position, TagA)>(|_| {});
@@ -5090,7 +5077,8 @@ fn get_mut_t() {
 #[test]
 fn get_mut_n_t() {
     let world = World::new();
-    let e = world.entity()
+    let e = world
+        .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
     e.get::<(&mut Position, &mut Velocity)>(|(p, v)| {
@@ -5110,7 +5098,9 @@ fn get_mut_n_t() {
 fn get_mut_r_t() {
     let world = World::new();
     let tgt = world.entity();
-    let e = world.entity().set_first::<Position>(Position { x: 10, y: 20 }, tgt);
+    let e = world
+        .entity()
+        .set_first::<Position>(Position { x: 10, y: 20 }, tgt);
     let ptr = e.get_first_untyped_mut::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -5122,7 +5112,9 @@ fn get_mut_r_t() {
 #[test]
 fn get_mut_r_t_2() {
     let world = World::new();
-    let e = world.entity().set_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<Position, TagA>(Position { x: 10, y: 20 });
     e.get::<&mut (Position, TagA)>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
@@ -5134,7 +5126,9 @@ fn get_mut_r_t_2() {
 fn get_mut_r_t_3() {
     let world = World::new();
     let rel = world.entity();
-    let e = world.entity().set_second::<Position>(rel, Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_second::<Position>(rel, Position { x: 10, y: 20 });
     let ptr = e.get_second_untyped_mut::<Position>(rel);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -5146,7 +5140,8 @@ fn get_mut_r_t_3() {
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_mut_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_mut_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let e = world.entity();
     e.get::<&mut Position>(|_| {});
@@ -5156,7 +5151,8 @@ fn get_mut_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_mut_r_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_mut_r_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let e = world.entity();
     // get with pair type panics when pair missing
@@ -5167,7 +5163,8 @@ fn get_mut_r_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn get_mut_r_t_not_found_2() {    let _guard = FlecsPanicAbortGuard::install();
+fn get_mut_r_t_not_found_2() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let e = world.entity();
     e.get::<&mut (Position, TagA)>(|_| {});
@@ -5217,7 +5214,10 @@ fn try_get_mut_w_id() {
 fn try_get_mut_n_t() {
     let world = World::new();
     let e = world.entity();
-    assert!(e.try_get::<(&mut Position, &mut Velocity)>(|_| {}).is_none());
+    assert!(
+        e.try_get::<(&mut Position, &mut Velocity)>(|_| {})
+            .is_none()
+    );
     e.set(Position { x: 10, y: 20 });
     e.set(Velocity { x: 1, y: 2 });
     let found = e.try_get::<(&mut Position, &mut Velocity)>(|(p, v)| {
@@ -5312,8 +5312,6 @@ fn try_get_mut_pair_second_type() {
         assert_eq!(p.y, 22);
     });
 }
- 
-
 
 // get_pair_second_invalid_type
 #[test]
@@ -5340,7 +5338,9 @@ fn get_mut_pair_second_invalid_type() {
 #[test]
 fn get_mut_pair_second_type() {
     let world = World::new();
-    let e = world.entity().set_pair::<TagA, Position>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<TagA, Position>(Position { x: 10, y: 20 });
     e.get::<&mut (TagA, Position)>(|p| {
         p.x += 5;
         p.y += 7;
@@ -5381,7 +5381,9 @@ fn set_pair_second_invalid_type() {
     let world = World::new();
     let v = world.component::<Velocity>();
     // set_second with a relation that is the same as component = invalid in flecs
-    world.entity().set_second::<Position>(v, Position { x: 0, y: 0 });
+    world
+        .entity()
+        .set_second::<Position>(v, Position { x: 0, y: 0 });
 }
 
 // get_generic_w_id
@@ -5612,7 +5614,9 @@ fn set_t() {
 fn set_r_t() {
     let world = World::new();
     let tgt = world.entity();
-    let e = world.entity().set_first::<Position>(Position { x: 10, y: 20 }, tgt);
+    let e = world
+        .entity()
+        .set_first::<Position>(Position { x: 10, y: 20 }, tgt);
     let ptr = e.get_first_untyped::<Position>(tgt);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -5624,7 +5628,9 @@ fn set_r_t() {
 #[test]
 fn set_r_t_2() {
     let world = World::new();
-    let e = world.entity().set_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<Position, TagA>(Position { x: 10, y: 20 });
     e.get::<&(Position, TagA)>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
@@ -5636,7 +5642,9 @@ fn set_r_t_2() {
 fn set_r_t_3() {
     let world = World::new();
     let rel = world.entity();
-    let e = world.entity().set_second::<Position>(rel, Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_second::<Position>(rel, Position { x: 10, y: 20 });
     let ptr = e.get_second_untyped::<Position>(rel);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -5721,7 +5729,8 @@ fn assign_r_t_3() {
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn assign_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn assign_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     world.entity().assign(Position { x: 10, y: 20 });
 }
@@ -5730,29 +5739,38 @@ fn assign_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn assign_r_t_not_found() {    let _guard = FlecsPanicAbortGuard::install();
+fn assign_r_t_not_found() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let tgt = world.entity();
-    world.entity().assign_first::<Position>(Position { x: 10, y: 20 }, tgt);
+    world
+        .entity()
+        .assign_first::<Position>(Position { x: 10, y: 20 }, tgt);
 }
 
 // assign_R_T_not_found
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn assign_r_t_not_found_2() {    let _guard = FlecsPanicAbortGuard::install();
+fn assign_r_t_not_found_2() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
-    world.entity().assign_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    world
+        .entity()
+        .assign_pair::<Position, TagA>(Position { x: 10, y: 20 });
 }
 
 // assign_r_T_not_found
 #[test]
 #[should_panic]
 #[ignore = "ecs_abort calls libc abort() unconditionally — cannot be caught by #[should_panic]"]
-fn assign_r_t_not_found_3() {    let _guard = FlecsPanicAbortGuard::install();
+fn assign_r_t_not_found_3() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
     let rel = world.entity();
-    world.entity().assign_second::<Position>(rel, Position { x: 10, y: 20 });
+    world
+        .entity()
+        .assign_second::<Position>(rel, Position { x: 10, y: 20 });
 }
 
 // assign_w_on_set_hook
@@ -5841,10 +5859,7 @@ fn assign_w_on_set_observer() {
 fn assign_w_change_detect() {
     let world = World::new();
 
-    let q = world
-        .query::<&Position>()
-        .detect_changes()
-        .build();
+    let q = world.query::<&Position>().detect_changes().build();
 
     assert!(q.is_changed());
     q.each(|_| {});
@@ -5929,10 +5944,7 @@ fn defer_assign_w_on_set_observer() {
 fn defer_assign_w_change_detect() {
     let world = World::new();
 
-    let q = world
-        .query::<&Position>()
-        .detect_changes()
-        .build();
+    let q = world.query::<&Position>().detect_changes().build();
 
     assert!(q.is_changed());
     q.each(|_| {});
@@ -5996,7 +6008,9 @@ fn assign_non_copy_assignable_w_move_assign() {
         moved: i32,
     }
     let world = World::new();
-    let e = world.entity().set(NonCopyAssignableWMove { x: 0, moved: 0 });
+    let e = world
+        .entity()
+        .set(NonCopyAssignableWMove { x: 0, moved: 0 });
     e.assign(NonCopyAssignableWMove { x: 10, moved: 1 });
     e.try_get::<&NonCopyAssignableWMove>(|comp| {
         assert_eq!(comp.x, 10);
@@ -6027,7 +6041,9 @@ fn set_non_copy_assignable_w_move_assign() {
         moved: i32,
     }
     let world = World::new();
-    let e = world.entity().set(NonCopyAssignableWMove { x: 10, moved: 1 });
+    let e = world
+        .entity()
+        .set(NonCopyAssignableWMove { x: 10, moved: 1 });
     e.try_get::<&NonCopyAssignableWMove>(|comp| {
         assert_eq!(comp.x, 10);
         assert_eq!(comp.moved, 1);
@@ -6087,7 +6103,8 @@ fn emplace() {
 #[test]
 fn emplace_after_add() {
     let world = World::new();
-    let e = world.entity()
+    let e = world
+        .entity()
         .add(Position::id())
         .set(Velocity { x: 30, y: 40 });
     assert!(e.has(Position::id()));
@@ -6103,7 +6120,8 @@ fn emplace_after_add() {
 fn emplace_after_add_pair() {
     let world = World::new();
     let dummy = world.entity();
-    let e = world.entity()
+    let e = world
+        .entity()
         .add((flecs::ChildOf::ID, dummy))
         .set(Velocity { x: 30, y: 40 });
     assert!(e.has((flecs::ChildOf::ID, dummy)));
@@ -6118,7 +6136,9 @@ fn emplace_after_add_pair() {
 #[test]
 fn emplace_pair() {
     let world = World::new();
-    let e = world.entity().set_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<Position, TagA>(Position { x: 10, y: 20 });
     assert!(e.has((Position::id(), TagA::id())));
     e.try_get::<&(Position, TagA)>(|p| {
         assert_eq!(p.x, 10);
@@ -6131,7 +6151,9 @@ fn emplace_pair() {
 fn emplace_pair_w_entity() {
     let world = World::new();
     let tag = world.entity();
-    let e = world.entity().set_first::<Position>(Position { x: 10, y: 20 }, tag);
+    let e = world
+        .entity()
+        .set_first::<Position>(Position { x: 10, y: 20 }, tag);
     assert!(e.has((Position::id(), tag)));
     let ptr = e.get_first_untyped::<Position>(tag);
     assert!(!ptr.is_null());
@@ -6144,7 +6166,9 @@ fn emplace_pair_w_entity() {
 #[test]
 fn emplace_pair_type() {
     let world = World::new();
-    let e = world.entity().set_pair::<Position, TagA>(Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_pair::<Position, TagA>(Position { x: 10, y: 20 });
     assert!(e.has((Position::id(), TagA::id())));
     e.try_get::<&(Position, TagA)>(|p| {
         assert_eq!(p.x, 10);
@@ -6157,7 +6181,9 @@ fn emplace_pair_type() {
 fn emplace_pair_second() {
     let world = World::new();
     let tag = world.entity();
-    let e = world.entity().set_second::<Position>(tag, Position { x: 10, y: 20 });
+    let e = world
+        .entity()
+        .set_second::<Position>(tag, Position { x: 10, y: 20 });
     let ptr = e.get_second_untyped::<Position>(tag);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
@@ -6174,7 +6200,9 @@ fn emplace_override() {
     struct NoDefaultCtor {
         x: i32,
     }
-    let e = world.entity().set_auto_override::<NoDefaultCtor>(NoDefaultCtor { x: 10 });
+    let e = world
+        .entity()
+        .set_auto_override::<NoDefaultCtor>(NoDefaultCtor { x: 10 });
     assert!(e.has(NoDefaultCtor::id()));
     e.try_get::<&NoDefaultCtor>(|p| {
         assert_eq!(p.x, 10);
@@ -6189,7 +6217,9 @@ fn emplace_override_pair() {
     struct NoDefaultCtor {
         x: i32,
     }
-    let e = world.entity().set_pair_override::<NoDefaultCtor, TagA>(NoDefaultCtor { x: 10 });
+    let e = world
+        .entity()
+        .set_pair_override::<NoDefaultCtor, TagA>(NoDefaultCtor { x: 10 });
     assert!(e.has((NoDefaultCtor::id(), TagA::id())));
     e.try_get::<&(NoDefaultCtor, TagA)>(|p| {
         assert_eq!(p.x, 10);
@@ -6358,8 +6388,8 @@ fn compare_id_t() {
     let world = World::new();
     let e1 = world.entity();
     let e2 = world.entity();
-    let id1 = *e1.id();  // deref Entity to u64
-    let id2 = *e2.id();  // deref Entity to u64
+    let id1 = *e1.id(); // deref Entity to u64
+    let id2 = *e2.id(); // deref Entity to u64
     assert_eq!(e1, id1);
     assert_eq!(e2, id2);
     assert_ne!(e1, id2);
@@ -6397,9 +6427,7 @@ fn compare_id() {
 fn is_disabled_component_enabled() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
-    let e = world.entity()
-        .add(Position::id())
-        .disable(Position::id());
+    let e = world.entity().add(Position::id()).disable(Position::id());
     assert!(!e.is_enabled(Position::id()));
 }
 
@@ -6408,9 +6436,7 @@ fn is_disabled_component_enabled() {
 fn is_enabled_component_enabled() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
-    let e = world.entity()
-        .add(Position::id())
-        .enable(Position::id());
+    let e = world.entity().add(Position::id()).enable(Position::id());
     assert!(e.is_enabled(Position::id()));
 }
 
@@ -6429,7 +6455,8 @@ fn is_pair_enabled() {
 fn is_enabled_pair_enabled() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
-    let e = world.entity()
+    let e = world
+        .entity()
         .add((Position::id(), TagA::id()))
         .enable((Position::id(), TagA::id()));
     assert!(e.is_enabled((Position::id(), TagA::id())));
@@ -6440,7 +6467,8 @@ fn is_enabled_pair_enabled() {
 fn is_disabled_pair_enabled() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
-    let e = world.entity()
+    let e = world
+        .entity()
         .add((Position::id(), TagA::id()))
         .disable((Position::id(), TagA::id()));
     assert!(!e.is_enabled((Position::id(), TagA::id())));
@@ -6465,9 +6493,7 @@ fn is_enabled_pair_enabled_w_ids() {
     let world = World::new();
     let rel = world.entity().add(flecs::CanToggle::ID);
     let tgt = world.entity();
-    let e = world.entity()
-        .add((rel, tgt))
-        .enable((rel, tgt));
+    let e = world.entity().add((rel, tgt)).enable((rel, tgt));
     assert!(e.is_enabled((rel, tgt)));
 }
 
@@ -6477,9 +6503,7 @@ fn is_disabled_pair_enabled_w_ids() {
     let world = World::new();
     let rel = world.entity().add(flecs::CanToggle::ID);
     let tgt = world.entity();
-    let e = world.entity()
-        .add((rel, tgt))
-        .disable((rel, tgt));
+    let e = world.entity().add((rel, tgt)).disable((rel, tgt));
     assert!(!e.is_enabled((rel, tgt)));
 }
 
@@ -6501,7 +6525,8 @@ fn is_enabled_pair_enabled_w_tgt_id() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
     let tgt = world.entity();
-    let e = world.entity()
+    let e = world
+        .entity()
         .add((Position::id(), tgt))
         .enable((Position::id(), tgt));
     assert!(e.is_enabled((Position::id(), tgt)));
@@ -6513,7 +6538,8 @@ fn is_disabled_pair_enabled_w_tgt_id() {
     let world = World::new();
     world.component::<Position>().add(flecs::CanToggle::ID);
     let tgt = world.entity();
-    let e = world.entity()
+    let e = world
+        .entity()
         .add((Position::id(), tgt))
         .disable((Position::id(), tgt));
     assert!(!e.is_enabled((Position::id(), tgt)));
@@ -6523,8 +6549,12 @@ fn is_disabled_pair_enabled_w_tgt_id() {
 #[test]
 fn override_id() {
     let world = World::new();
-    let tag_a = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    let tag_b = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let tag_a = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let tag_b = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
     let base = world.entity().auto_override(tag_a).add(tag_b);
     let e = world.entity().is_a(base);
     assert!(e.has(tag_a));
@@ -6537,10 +6567,15 @@ fn override_id() {
 #[test]
 fn override_pair_second() {
     let world = World::new();
-    let tag_a = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    let tag_b = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let tag_a = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let tag_b = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
     world.component::<Position>();
-    let base = world.entity()
+    let base = world
+        .entity()
         .auto_override((tag_a, Position::id()))
         .add((tag_b, Position::id()));
     let e = world.entity().is_a(base);
@@ -6555,9 +6590,14 @@ fn override_pair_second() {
 fn override_pair_w_rel_id() {
     let world = World::new();
     world.component::<Position>();
-    let rel_a = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    let rel_b = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    let base = world.entity()
+    let rel_a = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let rel_b = world
+        .entity()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let base = world
+        .entity()
         .auto_override((rel_a, Position::id()))
         .add((rel_b, Position::id()));
     let e = world.entity().is_a(base);
@@ -6571,7 +6611,9 @@ fn override_pair_w_rel_id() {
 #[test]
 fn set_override_pair_w_tgt_id() {
     let world = World::new();
-    world.component::<Position>().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    world
+        .component::<Position>()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
     let tgt = world.entity();
     let base = world
         .entity()
@@ -6601,7 +6643,10 @@ fn prefab_hierarchy_w_child_override() {
     // hierarchy. In Rust we replicate with explicit is_a between the Base prefabs so
     // Railgun::Base inherits Turret::Base's components through the chain.
     let t = world.prefab_named("PrefabT");
-    let tb = world.prefab_named("PrefabT_Base").child_of(t).add(Foo::id());
+    let tb = world
+        .prefab_named("PrefabT_Base")
+        .child_of(t)
+        .add(Foo::id());
     assert!(t.id() != 0);
     assert!(tb.id() != 0);
 
@@ -6627,9 +6672,14 @@ fn prefab_hierarchy_w_child_override() {
 #[test]
 fn foce_owned() {
     let world = World::new();
-    world.component::<Position>().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    world.component::<Velocity>().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-    let prefab = world.prefab()
+    world
+        .component::<Position>()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    world
+        .component::<Velocity>()
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+    let prefab = world
+        .prefab()
         .add(Position::id())
         .add(Velocity::id())
         .set_auto_override::<Position>(Position { x: 0, y: 0 });
@@ -7218,7 +7268,9 @@ fn add_if_exclusive_r_o_3_2() {
 fn world_lookup_custom_sep() {
     let world = World::new();
     let parent = world.entity_named("parent");
-    let _child = parent.scope(|w| { w.entity_named("child"); });
+    let _child = parent.scope(|w| {
+        w.entity_named("child");
+    });
     // TODO: missing API: world.lookup with custom separator
     // C++ world.lookup("parent.child", ".") — Rust lookup_recursive uses "::" separator
     let found = world.lookup_recursive("parent::child");
@@ -7230,4 +7282,3 @@ fn world_lookup_custom_sep() {
 fn world_lookup_custom_root_sep() {
     // TODO: missing API: world.lookup with custom root separator
 }
-

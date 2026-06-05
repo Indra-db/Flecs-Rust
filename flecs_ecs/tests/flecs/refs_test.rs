@@ -406,13 +406,14 @@ struct DerivedFromEmptyStruct {
 fn refs_empty_base_type() {
     let world = World::new();
 
-    let e = world
-        .entity()
-        .set(DerivedFromEmptyStruct { y: 20 });
+    let e = world.entity().set(DerivedFromEmptyStruct { y: 20 });
 
     // Untyped ref backed by DerivedFromEmptyStruct — mirrors get_ref_w_id<BaseEmpty>(derived_id).
-    let mut r: CachedRef<core::ffi::c_void> =
-        CachedRef::new(&world, e.id(), world.component_id::<DerivedFromEmptyStruct>());
+    let mut r: CachedRef<core::ffi::c_void> = CachedRef::new(
+        &world,
+        e.id(),
+        world.component_id::<DerivedFromEmptyStruct>(),
+    );
 
     r.get(|ptr| {
         let d = unsafe { &*(ptr as *const DerivedFromEmptyStruct) };

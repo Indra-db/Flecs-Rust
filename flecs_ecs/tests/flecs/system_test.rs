@@ -1524,12 +1524,15 @@ fn custom_pipeline() {
         .with(tag)
         .build();
 
-    let post_sys = world.system_named::<()>("post").kind(post_frame).run(|mut it| {
-        while it.next() {
-            it.world().get::<&Count>(|c| assert_eq!(c.0, 2));
-            it.world().get::<&mut Count>(|c| c.0 += 1);
-        }
-    });
+    let post_sys = world
+        .system_named::<()>("post")
+        .kind(post_frame)
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&Count>(|c| assert_eq!(c.0, 2));
+                it.world().get::<&mut Count>(|c| c.0 += 1);
+            }
+        });
     world.entity_from_id(post_sys.id()).add(tag);
 
     let on_sys = world.system_named::<()>("on").kind(on_frame).run(|mut it| {
@@ -1540,12 +1543,15 @@ fn custom_pipeline() {
     });
     world.entity_from_id(on_sys.id()).add(tag);
 
-    let pre_sys = world.system_named::<()>("pre").kind(pre_frame).run(|mut it| {
-        while it.next() {
-            it.world().get::<&Count>(|c| assert_eq!(c.0, 0));
-            it.world().get::<&mut Count>(|c| c.0 += 1);
-        }
-    });
+    let pre_sys = world
+        .system_named::<()>("pre")
+        .kind(pre_frame)
+        .run(|mut it| {
+            while it.next() {
+                it.world().get::<&Count>(|c| assert_eq!(c.0, 0));
+                it.world().get::<&mut Count>(|c| c.0 += 1);
+            }
+        });
     world.entity_from_id(pre_sys.id()).add(tag);
 
     world.get::<&Count>(|c| assert_eq!(c.0, 0));
@@ -1617,7 +1623,9 @@ fn custom_pipeline_w_kind() {
 fn instanced_query_w_singleton_each() {
     let world = World::new();
 
-    world.component::<Velocity>().add_trait::<flecs::Singleton>();
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
     world.set(Velocity { x: 1, y: 2 });
 
     let e1 = world.entity().set(Position { x: 10, y: 20 });
@@ -1685,13 +1693,27 @@ fn instanced_query_w_base_each() {
     e2.set(SelfRef { value: e2.id() });
     let e3 = world.entity().is_a(base).set(Position { x: 30, y: 40 });
     e3.set(SelfRef { value: e3.id() });
-    let e4 = world.entity().is_a(base).set(Position { x: 40, y: 50 }).add(TagA::id());
+    let e4 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 40, y: 50 })
+        .add(TagA::id());
     e4.set(SelfRef { value: e4.id() });
-    let e5 = world.entity().is_a(base).set(Position { x: 50, y: 60 }).add(TagA::id());
+    let e5 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 50, y: 60 })
+        .add(TagA::id());
     e5.set(SelfRef { value: e5.id() });
-    let e6 = world.entity().set(Position { x: 60, y: 70 }).set(Velocity { x: 2, y: 3 });
+    let e6 = world
+        .entity()
+        .set(Position { x: 60, y: 70 })
+        .set(Velocity { x: 2, y: 3 });
     e6.set(SelfRef { value: e6.id() });
-    let e7 = world.entity().set(Position { x: 70, y: 80 }).set(Velocity { x: 4, y: 5 });
+    let e7 = world
+        .entity()
+        .set(Position { x: 70, y: 80 })
+        .set(Velocity { x: 4, y: 5 });
     e7.set(SelfRef { value: e7.id() });
 
     world.set(Count(0));
@@ -1745,7 +1767,9 @@ fn instanced_query_w_base_each() {
 fn instanced_query_w_singleton_iter() {
     let world = World::new();
 
-    world.component::<Velocity>().add_trait::<flecs::Singleton>();
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
     world.set(Velocity { x: 1, y: 2 });
 
     let e1 = world.entity().set(Position { x: 10, y: 20 });
@@ -1821,13 +1845,27 @@ fn instanced_query_w_base_iter() {
     e2.set(SelfRef { value: e2.id() });
     let e3 = world.entity().is_a(base).set(Position { x: 30, y: 40 });
     e3.set(SelfRef { value: e3.id() });
-    let e4 = world.entity().is_a(base).set(Position { x: 40, y: 50 }).add(TagA::id());
+    let e4 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 40, y: 50 })
+        .add(TagA::id());
     e4.set(SelfRef { value: e4.id() });
-    let e5 = world.entity().is_a(base).set(Position { x: 50, y: 60 }).add(TagA::id());
+    let e5 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 50, y: 60 })
+        .add(TagA::id());
     e5.set(SelfRef { value: e5.id() });
-    let e6 = world.entity().set(Position { x: 60, y: 70 }).set(Velocity { x: 2, y: 3 });
+    let e6 = world
+        .entity()
+        .set(Position { x: 60, y: 70 })
+        .set(Velocity { x: 2, y: 3 });
     e6.set(SelfRef { value: e6.id() });
-    let e7 = world.entity().set(Position { x: 70, y: 80 }).set(Velocity { x: 4, y: 5 });
+    let e7 = world
+        .entity()
+        .set(Position { x: 70, y: 80 })
+        .set(Velocity { x: 4, y: 5 });
     e7.set(SelfRef { value: e7.id() });
 
     world.set(Count(0));
@@ -1970,19 +2008,23 @@ fn system_w_type_kind_type_pipeline() {
             }
         });
 
-    world.system::<()>().with(&Tag::id()).kind(First::id()).run(move |mut it| {
-        while it.next() {
-            for i in it.iter() {
-                let world = it.world();
-                let e = it.get_entity(i).unwrap();
-                assert!(e == entity_id);
-                world.get::<&mut Count2>(|c| {
-                    assert_eq!(c.b, 0);
-                    c.b += 1;
-                });
+    world
+        .system::<()>()
+        .with(&Tag::id())
+        .kind(First::id())
+        .run(move |mut it| {
+            while it.next() {
+                for i in it.iter() {
+                    let world = it.world();
+                    let e = it.get_entity(i).unwrap();
+                    assert!(e == entity_id);
+                    world.get::<&mut Count2>(|c| {
+                        assert_eq!(c.b, 0);
+                        c.b += 1;
+                    });
+                }
             }
-        }
-    });
+        });
 
     world.progress();
 
@@ -1998,15 +2040,13 @@ fn default_ctor() {
 
     world.set(Count(0));
 
-    let sys = world
-        .system::<&Position>()
-        .each_entity(|e, p| {
-            assert_eq!(p.x, 10);
-            assert_eq!(p.y, 20);
-            e.world().get::<&mut Count>(|c| {
-                c.0 += 1;
-            });
+    let sys = world.system::<&Position>().each_entity(|e, p| {
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        e.world().get::<&mut Count>(|c| {
+            c.0 += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -2051,15 +2091,13 @@ fn ensure_instanced_w_each() {
 
     world.set(Count(0));
 
-    let sys = world
-        .system::<&Position>()
-        .each_iter(move |it, row, _| {
-            let e = it.get_entity(row).unwrap();
-            assert!(e == e1_id);
-            it.world().get::<&mut Count>(|count| {
-                count.0 += 1;
-            });
+    let sys = world.system::<&Position>().each_iter(move |it, row, _| {
+        let e = it.get_entity(row).unwrap();
+        assert!(e == e1_id);
+        it.world().get::<&mut Count>(|count| {
+            count.0 += 1;
         });
+    });
 
     let _q = sys.query();
 
@@ -2717,14 +2755,11 @@ fn pipeline_step_with_kind_enum() {
 
     world.set(Count(0));
 
-    world
-        .system::<()>()
-        .kind(custom_step)
-        .run(move |mut it| {
-            while it.next() {
-                it.world().get::<&mut Count>(|c| c.0 += 1);
-            }
-        });
+    world.system::<()>().kind(custom_step).run(move |mut it| {
+        while it.next() {
+            it.world().get::<&mut Count>(|c| c.0 += 1);
+        }
+    });
 
     world.progress();
     world.get::<&Count>(|c| assert!(c.0 > 0));
@@ -2739,21 +2774,15 @@ fn pipeline_step_depends_on_pipeline_step_with_enum() {
         .add(flecs::Phase::ID)
         .depends_on(flecs::pipeline::OnStart::ID);
 
-    let custom_step2 = world
-        .entity()
-        .add(flecs::Phase::ID)
-        .depends_on(custom_step);
+    let custom_step2 = world.entity().add(flecs::Phase::ID).depends_on(custom_step);
 
     world.set(Count(0));
 
-    world
-        .system::<()>()
-        .kind(custom_step2)
-        .run(move |mut it| {
-            while it.next() {
-                it.world().get::<&mut Count>(|c| c.0 += 1);
-            }
-        });
+    world.system::<()>().kind(custom_step2).run(move |mut it| {
+        while it.next() {
+            it.world().get::<&mut Count>(|c| c.0 += 1);
+        }
+    });
 
     world.progress();
     world.get::<&Count>(|c| assert!(c.0 > 0));
@@ -2994,9 +3023,7 @@ fn lookup_and_update_ctx() {
 
     world
         .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {}
-        });
+        .run(|mut it| while it.next() {});
 
     let e = world.lookup("Test");
     assert!(*e.id() != 0);
@@ -3026,9 +3053,18 @@ fn set_group() {
     let e2 = world.entity().add((GroupRel::id(), GroupTgtB::id()));
     world.entity().add((GroupRel::id(), GroupTgtC::id()));
 
-    let e4 = world.entity().add((GroupRel::id(), GroupTgtA::id())).add(TagA::id());
-    let e5 = world.entity().add((GroupRel::id(), GroupTgtB::id())).add(TagA::id());
-    world.entity().add((GroupRel::id(), GroupTgtC::id())).add(TagA::id());
+    let e4 = world
+        .entity()
+        .add((GroupRel::id(), GroupTgtA::id()))
+        .add(TagA::id());
+    let e5 = world
+        .entity()
+        .add((GroupRel::id(), GroupTgtB::id()))
+        .add(TagA::id());
+    world
+        .entity()
+        .add((GroupRel::id(), GroupTgtC::id()))
+        .add(TagA::id());
 
     let e1_id = e1.id();
     let e2_id = e2.id();
@@ -3079,9 +3115,9 @@ fn set_group() {
         });
 
     // Run with TgtB group
-    sys.query().set_group(tgt_b_id).run(|mut it| {
-        while it.next() {}
-    });
+    sys.query()
+        .set_group(tgt_b_id)
+        .run(|mut it| while it.next() {});
 
     sys.run();
 

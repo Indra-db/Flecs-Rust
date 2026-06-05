@@ -1,6 +1,8 @@
 //! Registering and working with components
 
-use core::{cmp::Ordering, ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr};
+use core::{
+    cmp::Ordering, ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr,
+};
 
 use crate::core::*;
 #[cfg(feature = "flecs_meta")]
@@ -428,8 +430,8 @@ impl<'a, T> Component<'a, T> {
         // Guard against double-registering a *custom* fn. Overriding the auto-registered
         // panic stub (set when T does not impl PartialOrd) is allowed.
         let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
-        let already_custom = !binding_ctx_ptr.is_null()
-            && unsafe { (*binding_ctx_ptr).on_compare.is_some() };
+        let already_custom =
+            !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_compare.is_some() };
         ecs_assert!(
             !already_custom,
             FlecsErrorCode::InvalidOperation,
@@ -457,8 +459,8 @@ impl<'a, T> Component<'a, T> {
         // Guard against double-registering a *custom* fn. Overriding the auto-registered
         // panic stub (set when T does not impl PartialEq) is allowed.
         let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
-        let already_custom = !binding_ctx_ptr.is_null()
-            && unsafe { (*binding_ctx_ptr).on_equals.is_some() };
+        let already_custom =
+            !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_equals.is_some() };
         ecs_assert!(
             !already_custom,
             FlecsErrorCode::InvalidOperation,
@@ -483,8 +485,7 @@ impl<'a, T> Component<'a, T> {
         // SAFETY: binding_ctx is set in on_compare before this callback is registered
         let ctx = unsafe { (*type_info).hooks.binding_ctx as *const ComponentBindingCtx };
         let func_ptr = unsafe { (*ctx).on_compare.unwrap() };
-        let func: fn(&U, &U) -> core::cmp::Ordering =
-            unsafe { core::mem::transmute(func_ptr) };
+        let func: fn(&U, &U) -> core::cmp::Ordering = unsafe { core::mem::transmute(func_ptr) };
         match func(unsafe { &*(a as *const U) }, unsafe { &*(b as *const U) }) {
             core::cmp::Ordering::Less => -1,
             core::cmp::Ordering::Equal => 0,
@@ -523,10 +524,8 @@ impl<'a, T> Component<'a, T> {
         use crate::core::WorldProvider;
 
         unsafe {
-            let ti_ptr = sys::ecs_get_type_info(
-                (&self.base.entity.world).world_ptr() as *mut _,
-                *self.id,
-            );
+            let ti_ptr =
+                sys::ecs_get_type_info((&self.base.entity.world).world_ptr() as *mut _, *self.id);
             if ti_ptr.is_null() {
                 return None;
             }
@@ -562,10 +561,8 @@ impl<'a, T> Component<'a, T> {
         use crate::core::WorldProvider;
 
         unsafe {
-            let ti_ptr = sys::ecs_get_type_info(
-                (&self.base.entity.world).world_ptr() as *mut _,
-                *self.id,
-            );
+            let ti_ptr =
+                sys::ecs_get_type_info((&self.base.entity.world).world_ptr() as *mut _, *self.id);
             if ti_ptr.is_null() {
                 return None;
             }

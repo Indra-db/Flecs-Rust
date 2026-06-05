@@ -227,7 +227,10 @@ fn implicit_components_system_optional() {
 
     let world = World::new();
 
-    use std::sync::{Arc, atomic::{AtomicI32, Ordering}};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicI32, Ordering},
+    };
     let rotation_count = Arc::new(AtomicI32::new(0));
     let mass_count = Arc::new(AtomicI32::new(0));
     let rc = Arc::clone(&rotation_count);
@@ -284,7 +287,10 @@ fn implicit_components_system_const() {
 
     let world = World::new();
 
-    use std::sync::{Arc, atomic::{AtomicI32, Ordering}};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicI32, Ordering},
+    };
     let count = Arc::new(AtomicI32::new(0));
     let count_c = Arc::clone(&count);
 
@@ -466,11 +472,9 @@ fn implicit_components_first_use_in_system() {
 
     let world = World::new();
 
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Velocity::id());
-        });
+    world.system::<&Position>().each_entity(|e, _p| {
+        e.add(Velocity::id());
+    });
 
     let e = world.entity().add(Position::id());
 
@@ -491,11 +495,9 @@ fn implicit_components_first_use_tag_in_system() {
 
     let world = World::new();
 
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Tag::id());
-        });
+    world.system::<&Position>().each_entity(|e, _p| {
+        e.add(Tag::id());
+    });
 
     let e = world.entity().add(Position::id());
 
@@ -524,12 +526,10 @@ fn implicit_components_first_use_enum_in_system() {
 
     let world = World::new();
 
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Tag::id());
-            e.set(Color::Green);
-        });
+    world.system::<&Position>().each_entity(|e, _p| {
+        e.add(Tag::id());
+        e.set(Color::Green);
+    });
 
     let e = world.entity().add(Position::id());
 

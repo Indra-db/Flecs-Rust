@@ -166,10 +166,7 @@ fn world_factory_query_w_expr() {
     world.component::<Position>();
     world.component::<Velocity>();
 
-    let q = world
-        .query::<()>()
-        .expr("Position, [in] Velocity")
-        .build();
+    let q = world.query::<()>().expr("Position, [in] Velocity").build();
 
     let e = world
         .entity()

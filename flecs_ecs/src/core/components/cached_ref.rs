@@ -30,7 +30,8 @@ impl<'a, T> CachedRef<'a, T> {
         // the world we were called with may be a stage; convert it to a world
         // here if that is the case — ecs_ref_* operations require the real world
         let world_ptr = unsafe {
-            sys::ecs_get_world(stage_world.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
+            sys::ecs_get_world(stage_world.world_ptr_mut() as *const c_void)
+                as *mut sys::ecs_world_t
         };
         let world = unsafe { WorldRef::from_ptr(world_ptr) };
 

@@ -164,7 +164,6 @@ impl World {
         world
     }
 
-
     /// Explicitly release this world handle, decrementing the ref count.
     /// If this is the last handle, the world is finalized (`ecs_fini`).
     ///

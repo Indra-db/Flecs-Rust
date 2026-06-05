@@ -164,18 +164,15 @@ fn singleton_singleton_system() {
 
     world.set(Position { x: 10, y: 20 });
 
-    world
-        .system::<()>()
-        .expr("[inout] Position")
-        .run(|mut it| {
-            while it.next() {
-                let mut p = it.field_mut::<Position>(0);
-                assert_eq!(p[0].x, 10);
-                assert_eq!(p[0].y, 20);
-                p[0].x += 1;
-                p[0].y += 1;
-            }
-        });
+    world.system::<()>().expr("[inout] Position").run(|mut it| {
+        while it.next() {
+            let mut p = it.field_mut::<Position>(0);
+            assert_eq!(p[0].x, 10);
+            assert_eq!(p[0].y, 20);
+            p[0].x += 1;
+            p[0].y += 1;
+        }
+    });
 
     world.progress();
 

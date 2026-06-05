@@ -425,10 +425,7 @@ fn query_term_each_pair_type() {
 
     let mut count = 0;
     // (Rel2, Obj2) is a pair of ZSTs - use id-based query
-    let q = world
-        .query::<()>()
-        .with((Rel2::id(), Obj2::id()))
-        .build();
+    let q = world.query::<()>().with((Rel2::id(), Obj2::id())).build();
     q.each_entity(|e, ()| {
         if e == e1 || e == e2 || e == e3 {
             count += 1;
@@ -561,7 +558,10 @@ fn query_term_get_id() {
     assert_eq!(world.id_view_from(Velocity::id()), q.term(1).id());
     assert!(world.id_view_from(q.term(2).id()).is_pair());
     assert_eq!(world.id_view_from(q.term(2).id()).first_id().id(), foo.id());
-    assert_eq!(world.id_view_from(q.term(2).id()).second_id().id(), bar.id());
+    assert_eq!(
+        world.id_view_from(q.term(2).id()).second_id().id(),
+        bar.id()
+    );
 }
 
 // ─── term_get_subj ────────────────────────────────────────────────────────────
@@ -672,7 +672,7 @@ fn query_get_count_direct() {
 
 // ─── get_is_true_direct ───────────────────────────────────────────────────────
 
-#[test] 
+#[test]
 fn query_get_is_true_direct() {
     #[derive(Component)]
     struct A;
@@ -847,10 +847,7 @@ fn query_set_this_var() {
 fn query_inspect_terms_w_expr() {
     let world = World::new();
 
-    let q = world
-        .query::<()>()
-        .expr("(ChildOf,#0)")
-        .build();
+    let q = world.query::<()>().expr("(ChildOf,#0)").build();
 
     let mut count = 0;
     q.each_term(|term| {
@@ -904,9 +901,7 @@ fn query_find_w_entity() {
         .set(Velocity { x: 20, y: 30 });
 
     let q = world.new_query::<&Position>();
-    let r = q.find_entity(|e, p| {
-        e.get::<&Velocity>(|v| p.x == v.x && p.y == v.y)
-    });
+    let r = q.find_entity(|e, p| e.get::<&Velocity>(|v| p.x == v.x && p.y == v.y));
     assert_eq!(r.unwrap(), e2);
 }
 
@@ -1033,10 +1028,7 @@ fn query_run_shared() {
 
     let base = world.entity().set(Velocity { x: 1, y: 2 });
 
-    let e1 = world
-        .entity()
-        .set(Position { x: 10, y: 20 })
-        .is_a(base);
+    let e1 = world.entity().set(Position { x: 10, y: 20 }).is_a(base);
 
     let e2 = world
         .entity()
@@ -1118,10 +1110,22 @@ fn query_run_optional() {
         }
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 33); assert_eq!(p.y, 44); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 61); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 71); assert_eq!(p.y, 81); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 33);
+        assert_eq!(p.y, 44);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 61);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 71);
+        assert_eq!(p.y, 81);
+    });
 }
 
 // ─── run_sparse_w_with ────────────────────────────────────────────────────────
@@ -1415,14 +1419,8 @@ fn query_each_shared() {
 
     let base = world.entity().set(Velocity { x: 1, y: 2 });
 
-    let e1 = world
-        .entity()
-        .set(Position { x: 10, y: 20 })
-        .is_a(base);
-    let e2 = world
-        .entity()
-        .set(Position { x: 20, y: 30 })
-        .is_a(base);
+    let e1 = world.entity().set(Position { x: 10, y: 20 }).is_a(base);
+    let e2 = world.entity().set(Position { x: 20, y: 30 }).is_a(base);
     let e3 = world
         .entity()
         .set(Position { x: 10, y: 20 })
@@ -1435,9 +1433,18 @@ fn query_each_shared() {
         p.y += v.y;
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 32); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 13); assert_eq!(p.y, 24); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 13);
+        assert_eq!(p.y, 24);
+    });
 }
 
 // ─── each_optional ────────────────────────────────────────────────────────────
@@ -1471,10 +1478,22 @@ fn query_each_optional() {
         }
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 33); assert_eq!(p.y, 44); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 61); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 71); assert_eq!(p.y, 81); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 33);
+        assert_eq!(p.y, 44);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 61);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 71);
+        assert_eq!(p.y, 81);
+    });
 }
 
 // ─── each_dont_fragment ───────────────────────────────────────────────────────
@@ -1557,10 +1576,7 @@ fn query_signature_const() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world
-        .query::<()>()
-        .expr("Position, [in] Velocity")
-        .build();
+    let q = world.query::<()>().expr("Position, [in] Velocity").build();
 
     q.run(|mut it| {
         while it.next() {
@@ -1594,10 +1610,7 @@ fn query_signature_shared() {
 
     let base = world.entity().set(Velocity { x: 1, y: 2 });
 
-    let e1 = world
-        .entity()
-        .set(Position { x: 10, y: 20 })
-        .is_a(base);
+    let e1 = world.entity().set(Position { x: 10, y: 20 }).is_a(base);
     let e2 = world
         .entity()
         .set(Position { x: 10, y: 20 })
@@ -1627,8 +1640,14 @@ fn query_signature_shared() {
         }
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 13); assert_eq!(p.y, 24); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 13);
+        assert_eq!(p.y, 24);
+    });
 }
 
 // ─── signature_optional ───────────────────────────────────────────────────────
@@ -1675,10 +1694,22 @@ fn query_signature_optional() {
         }
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 33); assert_eq!(p.y, 44); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 61); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 71); assert_eq!(p.y, 81); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 33);
+        assert_eq!(p.y, 44);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 61);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 71);
+        assert_eq!(p.y, 81);
+    });
 }
 
 // ─── query_single_pair ────────────────────────────────────────────────────────
@@ -1693,10 +1724,7 @@ fn query_query_single_pair() {
     world.entity().add((Pair2::id(), Position::id()));
     let e2 = world.entity().add((Pair2::id(), Velocity::id()));
 
-    let q = world
-        .query::<()>()
-        .expr("(Pair2, Velocity)")
-        .build();
+    let q = world.query::<()>().expr("(Pair2, Velocity)").build();
 
     let mut table_count = 0;
     let mut entity_count = 0;
@@ -1918,13 +1946,19 @@ fn query_inspect_terms() {
     assert_eq!(q.field_count(), 3);
 
     let t = q.term(0);
-    assert_eq!(*t.id().entity_view(&world).id(), Position::entity_id(&world));
+    assert_eq!(
+        *t.id().entity_view(&world).id(),
+        Position::entity_id(&world)
+    );
     assert_eq!(t.oper(), OperKind::And);
     // &Position = read-only ref → In inout (Rust &T maps to EcsIn, matching with<const T>())
     assert_eq!(t.inout(), InOutKind::In);
 
     let t = q.term(1);
-    assert_eq!(*t.id().entity_view(&world).id(), Velocity::entity_id(&world));
+    assert_eq!(
+        *t.id().entity_view(&world).id(),
+        Velocity::entity_id(&world)
+    );
     assert_eq!(t.oper(), OperKind::And);
     // &Velocity::id() = explicit read ref → In inout
     assert_eq!(t.inout(), InOutKind::In);
@@ -1954,11 +1988,17 @@ fn query_inspect_terms_w_each() {
     let mut count = 0;
     q.each_term(|t| {
         if count == 0 {
-            assert_eq!(*t.id().entity_view(&world).id(), Position::entity_id(&world));
+            assert_eq!(
+                *t.id().entity_view(&world).id(),
+                Position::entity_id(&world)
+            );
             // &Position = read-only ref → In inout
             assert_eq!(t.inout(), InOutKind::In);
         } else if count == 1 {
-            assert_eq!(*t.id().entity_view(&world).id(), Velocity::entity_id(&world));
+            assert_eq!(
+                *t.id().entity_view(&world).id(),
+                Velocity::entity_id(&world)
+            );
             // &Velocity::id() = explicit read ref → In inout
             assert_eq!(t.inout(), InOutKind::In);
         } else if count == 2 {
@@ -1980,10 +2020,7 @@ fn query_inspect_terms_w_each() {
 fn query_comp_to_str() {
     let world = World::new();
 
-    let q = world
-        .query::<&Position>()
-        .with(&Velocity::id())
-        .build();
+    let q = world.query::<&Position>().with(&Velocity::id()).build();
 
     let s = q.to_string();
     assert!(s.contains("Position"));
@@ -2075,8 +2112,12 @@ fn query_each_pair_type() {
 
     let world = World::new();
 
-    let e1 = world.entity().set_pair::<EatsData, ApplesTag>(EatsData { amount: 10 });
-    world.entity().set_pair::<EatsData, PearsTag>(EatsData { amount: 20 });
+    let e1 = world
+        .entity()
+        .set_pair::<EatsData, ApplesTag>(EatsData { amount: 10 });
+    world
+        .entity()
+        .set_pair::<EatsData, PearsTag>(EatsData { amount: 20 });
 
     let q = world.new_query::<&(EatsData, ApplesTag)>();
 
@@ -2169,7 +2210,9 @@ fn query_each_pair_object() {
     let e1 = world
         .entity()
         .set_pair::<Event, Begin>(Event { value: "Big Bang" })
-        .set_pair::<Event, End>(Event { value: "Heat Death" });
+        .set_pair::<Event, End>(Event {
+            value: "Heat Death",
+        });
 
     let q = world.new_query::<(&(Event, Begin), &(Event, End))>();
 
@@ -2202,7 +2245,9 @@ fn query_iter_pair_object() {
     let e1 = world
         .entity()
         .set_pair::<EventVal, BeginEvt>(EventVal { value: "Big Bang" })
-        .set_pair::<EventVal, EndEvt>(EventVal { value: "Heat Death" });
+        .set_pair::<EventVal, EndEvt>(EventVal {
+            value: "Heat Death",
+        });
 
     let q = world.new_query::<(&(EventVal, BeginEvt), &(EventVal, EndEvt))>();
 
@@ -2233,11 +2278,9 @@ fn query_iter_query_in_system() {
 
     let q = world.new_query::<&Velocity>();
 
-    world
-        .system::<&Position>()
-        .each_entity(move |_e1, _| {
-            q.each_entity(|_e2, _| {});
-        });
+    world.system::<&Position>().each_entity(move |_e1, _| {
+        q.each_entity(|_e2, _| {});
+    });
 
     world.progress();
     // Just assert no crash occurred
@@ -2270,7 +2313,9 @@ fn query_iter_type() {
 fn query_instanced_query_w_singleton_each() {
     let world = World::new();
 
-    world.component::<Velocity>().add_trait::<flecs::Singleton>();
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
     world.set(Velocity { x: 1, y: 2 });
 
     let e1 = world.entity().set(Position { x: 10, y: 20 });
@@ -2293,11 +2338,26 @@ fn query_instanced_query_w_singleton_each() {
 
     assert_eq!(count, 5);
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 32); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 31); assert_eq!(p.y, 42); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 41); assert_eq!(p.y, 52); });
-    e5.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 62); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 42);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 41);
+        assert_eq!(p.y, 52);
+    });
+    e5.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 62);
+    });
 }
 
 // ─── instanced_query_w_base_each ─────────────────────────────────────────────
@@ -2311,10 +2371,24 @@ fn query_instanced_query_w_base_each() {
     let e1 = world.entity().is_a(base).set(Position { x: 10, y: 20 });
     let e2 = world.entity().is_a(base).set(Position { x: 20, y: 30 });
     let e3 = world.entity().is_a(base).set(Position { x: 30, y: 40 });
-    let e4 = world.entity().is_a(base).set(Position { x: 40, y: 50 }).add(Tag::id());
-    let e5 = world.entity().is_a(base).set(Position { x: 50, y: 60 }).add(Tag::id());
-    let e6 = world.entity().set(Position { x: 60, y: 70 }).set(Velocity { x: 2, y: 3 });
-    let e7 = world.entity().set(Position { x: 70, y: 80 }).set(Velocity { x: 4, y: 5 });
+    let e4 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 40, y: 50 })
+        .add(Tag::id());
+    let e5 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 50, y: 60 })
+        .add(Tag::id());
+    let e6 = world
+        .entity()
+        .set(Position { x: 60, y: 70 })
+        .set(Velocity { x: 2, y: 3 });
+    let e7 = world
+        .entity()
+        .set(Position { x: 70, y: 80 })
+        .set(Velocity { x: 4, y: 5 });
 
     let q = world.new_query::<(&mut Position, &Velocity)>();
 
@@ -2327,13 +2401,34 @@ fn query_instanced_query_w_base_each() {
 
     assert_eq!(count, 7);
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 32); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 31); assert_eq!(p.y, 42); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 41); assert_eq!(p.y, 52); });
-    e5.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 62); });
-    e6.get::<&Position>(|p| { assert_eq!(p.x, 62); assert_eq!(p.y, 73); });
-    e7.get::<&Position>(|p| { assert_eq!(p.x, 74); assert_eq!(p.y, 85); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 42);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 41);
+        assert_eq!(p.y, 52);
+    });
+    e5.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 62);
+    });
+    e6.get::<&Position>(|p| {
+        assert_eq!(p.x, 62);
+        assert_eq!(p.y, 73);
+    });
+    e7.get::<&Position>(|p| {
+        assert_eq!(p.x, 74);
+        assert_eq!(p.y, 85);
+    });
 }
 
 // ─── instanced_query_w_singleton_iter ────────────────────────────────────────
@@ -2342,7 +2437,9 @@ fn query_instanced_query_w_base_each() {
 fn query_instanced_query_w_singleton_iter() {
     let world = World::new();
 
-    world.component::<Velocity>().add_trait::<flecs::Singleton>();
+    world
+        .component::<Velocity>()
+        .add_trait::<flecs::Singleton>();
     world.set(Velocity { x: 1, y: 2 });
 
     let e1 = world.entity().set(Position { x: 10, y: 20 });
@@ -2373,11 +2470,26 @@ fn query_instanced_query_w_singleton_iter() {
 
     assert_eq!(count, 5);
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 32); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 31); assert_eq!(p.y, 42); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 41); assert_eq!(p.y, 52); });
-    e5.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 62); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 42);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 41);
+        assert_eq!(p.y, 52);
+    });
+    e5.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 62);
+    });
 }
 
 // ─── instanced_query_w_base_iter ─────────────────────────────────────────────
@@ -2391,10 +2503,24 @@ fn query_instanced_query_w_base_iter() {
     let e1 = world.entity().is_a(base).set(Position { x: 10, y: 20 });
     let e2 = world.entity().is_a(base).set(Position { x: 20, y: 30 });
     let e3 = world.entity().is_a(base).set(Position { x: 30, y: 40 });
-    let e4 = world.entity().is_a(base).set(Position { x: 40, y: 50 }).add(Tag::id());
-    let e5 = world.entity().is_a(base).set(Position { x: 50, y: 60 }).add(Tag::id());
-    let e6 = world.entity().set(Position { x: 60, y: 70 }).set(Velocity { x: 2, y: 3 });
-    let e7 = world.entity().set(Position { x: 70, y: 80 }).set(Velocity { x: 4, y: 5 });
+    let e4 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 40, y: 50 })
+        .add(Tag::id());
+    let e5 = world
+        .entity()
+        .is_a(base)
+        .set(Position { x: 50, y: 60 })
+        .add(Tag::id());
+    let e6 = world
+        .entity()
+        .set(Position { x: 60, y: 70 })
+        .set(Velocity { x: 2, y: 3 });
+    let e7 = world
+        .entity()
+        .set(Position { x: 70, y: 80 })
+        .set(Velocity { x: 4, y: 5 });
 
     let q = world.new_query::<(&mut Position, &Velocity)>();
 
@@ -2420,13 +2546,34 @@ fn query_instanced_query_w_base_iter() {
 
     assert_eq!(count, 7);
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 32); });
-    e3.get::<&Position>(|p| { assert_eq!(p.x, 31); assert_eq!(p.y, 42); });
-    e4.get::<&Position>(|p| { assert_eq!(p.x, 41); assert_eq!(p.y, 52); });
-    e5.get::<&Position>(|p| { assert_eq!(p.x, 51); assert_eq!(p.y, 62); });
-    e6.get::<&Position>(|p| { assert_eq!(p.x, 62); assert_eq!(p.y, 73); });
-    e7.get::<&Position>(|p| { assert_eq!(p.x, 74); assert_eq!(p.y, 85); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 32);
+    });
+    e3.get::<&Position>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 42);
+    });
+    e4.get::<&Position>(|p| {
+        assert_eq!(p.x, 41);
+        assert_eq!(p.y, 52);
+    });
+    e5.get::<&Position>(|p| {
+        assert_eq!(p.x, 51);
+        assert_eq!(p.y, 62);
+    });
+    e6.get::<&Position>(|p| {
+        assert_eq!(p.x, 62);
+        assert_eq!(p.y, 73);
+    });
+    e7.get::<&Position>(|p| {
+        assert_eq!(p.x, 74);
+        assert_eq!(p.y, 85);
+    });
 }
 
 // ─── query_each_from_component ────────────────────────────────────────────────
@@ -2440,8 +2587,14 @@ fn query_query_each_from_component() {
 
     let world = World::new();
 
-    world.entity().set(Position { x: 0, y: 0 }).set(Velocity { x: 0, y: 0 });
-    world.entity().set(Position { x: 0, y: 0 }).set(Velocity { x: 0, y: 0 });
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     let q = world.new_query::<(&Position, &Velocity)>();
     world.entity().set(QueryComp { q: Some(q) });
@@ -2472,8 +2625,14 @@ fn query_query_iter_from_component() {
 
     let world = World::new();
 
-    world.entity().set(Position { x: 0, y: 0 }).set(Velocity { x: 0, y: 0 });
-    world.entity().set(Position { x: 0, y: 0 }).set(Velocity { x: 0, y: 0 });
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
+    world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 0, y: 0 });
 
     let q = world.new_query::<(&Position, &Velocity)>();
     world.entity().set(QueryIterComp { q: Some(q) });
@@ -2579,7 +2738,14 @@ fn query_query_each_w_iter() {
     let mut invoked = 0;
     q.each_iter(|it, i, p| {
         assert_eq!(it.count(), 2);
-        assert_eq!(it.entity_id(i), if usize::from(i) == 0 { e1.id() } else { e2.id() });
+        assert_eq!(
+            it.entity_id(i),
+            if usize::from(i) == 0 {
+                e1.id()
+            } else {
+                e2.id()
+            }
+        );
         p.x += 1;
         p.y += 1;
         invoked += 1;
@@ -2587,8 +2753,14 @@ fn query_query_each_w_iter() {
 
     assert_eq!(invoked, 2);
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 21); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 21); assert_eq!(p.y, 31); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 21);
+        assert_eq!(p.y, 31);
+    });
 }
 
 // ─── field_at_from_each_w_iter ────────────────────────────────────────────────
@@ -2606,10 +2778,7 @@ fn query_field_at_from_each_w_iter() {
         .set(Position { x: 20, y: 30 })
         .set(Velocity { x: 3, y: 4 });
 
-    let q = world
-        .query::<&Position>()
-        .with(&mut Velocity::id())
-        .build();
+    let q = world.query::<&Position>().with(&mut Velocity::id()).build();
 
     let mut count = 0;
     q.each_iter(|it, row, _p| {
@@ -2643,10 +2812,7 @@ fn query_field_at_type_from_each_w_iter() {
         .set(Position { x: 20, y: 30 })
         .set(Velocity { x: 3, y: 4 });
 
-    let q = world
-        .query::<&Position>()
-        .with(&mut Velocity::id())
-        .build();
+    let q = world.query::<&Position>().with(&mut Velocity::id()).build();
 
     let mut count = 0;
     q.each_iter(|it, row, _p| {
@@ -2680,10 +2846,7 @@ fn query_field_at_const_type_from_each_w_iter() {
         .set(Position { x: 20, y: 30 })
         .set(Velocity { x: 3, y: 4 });
 
-    let q = world
-        .query::<&Position>()
-        .with(&Velocity::id())
-        .build();
+    let q = world.query::<&Position>().with(&Velocity::id()).build();
 
     let mut count = 0;
     q.each_iter(|it, row, _p| {
@@ -2938,13 +3101,16 @@ fn query_set_group_captured_query() {
     let tgt_a = world.entity();
     let tgt_b = world.entity();
 
-    let q = world
-        .query::<&Position>()
-        .group_by(rel)
-        .build();
+    let q = world.query::<&Position>().group_by(rel).build();
 
-    world.entity().set(Position { x: 10, y: 20 }).add((rel, tgt_a));
-    let e2 = world.entity().set(Position { x: 20, y: 30 }).add((rel, tgt_b));
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add((rel, tgt_a));
+    let e2 = world
+        .entity()
+        .set(Position { x: 20, y: 30 })
+        .add((rel, tgt_b));
 
     let run = || {
         let mut count = 0;
@@ -2976,8 +3142,14 @@ fn query_set_var_captured_query() {
         .set_var("var")
         .build();
 
-    world.entity().set(Position { x: 10, y: 20 }).add((rel, tgt_a));
-    let e2 = world.entity().set(Position { x: 20, y: 30 }).add((rel, tgt_b));
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add((rel, tgt_a));
+    let e2 = world
+        .entity()
+        .set(Position { x: 20, y: 30 })
+        .add((rel, tgt_b));
 
     let run = || {
         let mut count = 0;
@@ -3011,8 +3183,14 @@ fn query_set_var_id_captured_query() {
 
     let var_id = q.find_var("var").unwrap();
 
-    world.entity().set(Position { x: 10, y: 20 }).add((rel, tgt_a));
-    let e2 = world.entity().set(Position { x: 20, y: 30 }).add((rel, tgt_b));
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add((rel, tgt_a));
+    let e2 = world
+        .entity()
+        .set(Position { x: 20, y: 30 })
+        .add((rel, tgt_b));
 
     let run = || {
         let mut count = 0;
@@ -3111,10 +3289,7 @@ fn query_query_from_entity() {
 fn query_query_from_entity_name() {
     let world = World::new();
 
-    let q1 = world
-        .query::<(&Position, &Velocity)>()
-        .named("qe2")
-        .build();
+    let q1 = world.query::<(&Position, &Velocity)>().named("qe2").build();
 
     world.entity().add(Position::id());
     let e2 = world.entity().add(Position::id()).add(Velocity::id());
@@ -3166,7 +3341,10 @@ fn query_run_w_iter_fini_interrupt() {
 
     let e1 = world.entity().set(Position { x: 10, y: 20 }).add(Foo::id());
     world.entity().set(Position { x: 10, y: 20 }).add(Bar::id());
-    world.entity().set(Position { x: 10, y: 20 }).add(Hello::id());
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add(Hello::id());
 
     let q = world.new_query::<&Position>();
 
@@ -3230,12 +3408,10 @@ fn query_add_to_match_from_staged_query() {
 
     world.readonly_begin(false);
 
-    stage
-        .new_query::<&Position>()
-        .each_entity(|e, _| {
-            e.add(Velocity::id());
-            assert!(!e.has(Velocity::id()));
-        }); 
+    stage.new_query::<&Position>().each_entity(|e, _| {
+        e.add(Velocity::id());
+        assert!(!e.has(Velocity::id()));
+    });
 
     world.readonly_end();
 
@@ -3274,8 +3450,14 @@ fn query_empty_tables_each() {
         p.y += v.y;
     });
 
-    e1.get::<&Position>(|p| { assert_eq!(p.x, 11); assert_eq!(p.y, 22); });
-    e2.get::<&Position>(|p| { assert_eq!(p.x, 22); assert_eq!(p.y, 33); });
+    e1.get::<&Position>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+    e2.get::<&Position>(|p| {
+        assert_eq!(p.x, 22);
+        assert_eq!(p.y, 33);
+    });
 }
 
 // ─── copy_operators ───────────────────────────────────────────────────────────
@@ -3315,7 +3497,9 @@ fn query_optional_singleton() {
 
     let world = World::new();
 
-    world.component::<TestComp>().add_trait::<flecs::Singleton>();
+    world
+        .component::<TestComp>()
+        .add_trait::<flecs::Singleton>();
 
     let mut invoked = 0;
 
@@ -3326,7 +3510,13 @@ fn query_optional_singleton() {
 
     assert_eq!(invoked, 1);
 
-    world.set(TestComp { a: 10, b: 20, c: 30, d: 40, e: 50 });
+    world.set(TestComp {
+        a: 10,
+        b: 20,
+        c: 30,
+        d: 40,
+        e: 50,
+    });
 
     world.new_query::<Option<&TestComp>>().each(|ptr| {
         assert!(ptr.is_some());
@@ -3466,4 +3656,3 @@ fn query_pair_with_variable_src() {
 // ─── pair_with_variable_src_no_row_fields ────────────────────────────────────
 // Similar to query_pair_with_variable_src above but with non-tag Rel component.
 // Covered by the variable src test above.
-

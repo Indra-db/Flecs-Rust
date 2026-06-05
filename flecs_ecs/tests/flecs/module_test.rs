@@ -178,8 +178,8 @@ mod ns_parent {
 }
 
 mod module_with_core_name_mod {
-    use flecs_ecs::prelude::*;
     use super::Position;
+    use flecs_ecs::prelude::*;
 
     #[derive(Component)]
     pub struct Module;
@@ -238,7 +238,10 @@ struct SystemAndImplicitComponent;
 
 impl Module for SystemAndImplicitComponent {
     fn module(world: &World) {
-        world.system_named::<()>("VelocitySys").with(Velocity::id()).run(|_| {});
+        world
+            .system_named::<()>("VelocitySys")
+            .with(Velocity::id())
+            .run(|_| {});
     }
 }
 
@@ -248,7 +251,10 @@ struct SystemAndExplicitComponent;
 impl Module for SystemAndExplicitComponent {
     fn module(world: &World) {
         world.component::<Velocity>();
-        world.system_named::<()>("VelocitySys").with(Velocity::id()).run(|_| {});
+        world
+            .system_named::<()>("VelocitySys")
+            .with(Velocity::id())
+            .run(|_| {});
     }
 }
 
@@ -316,7 +322,10 @@ fn module_nested_module() {
     let velocity = world.lookup("ns::NestedModule::Velocity");
     assert_ne!(velocity.id(), 0);
 
-    assert_eq!(velocity.path(), Some("::ns::NestedModule::Velocity".to_string()));
+    assert_eq!(
+        velocity.path(),
+        Some("::ns::NestedModule::Velocity".to_string())
+    );
 }
 
 #[test]
@@ -647,7 +656,10 @@ fn module_rename_namespace_shorter() {
     assert_eq!(m.path(), Some("::ns::ShorterParent".to_string()));
     assert!(ecs.try_lookup("::ns_parent").is_none());
     assert!(ecs.try_lookup("::ns_parent::ShorterParent").is_none());
-    assert!(ecs.try_lookup("::ns_parent::ShorterParent::NsType").is_none());
+    assert!(
+        ecs.try_lookup("::ns_parent::ShorterParent::NsType")
+            .is_none()
+    );
     assert!(ecs.try_lookup("::ns::ShorterParent::NsType").is_some());
 
     let ns = ecs.lookup("::ns");
@@ -661,11 +673,20 @@ fn module_rename_namespace_longer() {
 
     let m = ecs.import::<ns_parent::LongerParent>();
     assert!(m.has(flecs::Module::ID));
-    assert_eq!(m.path(), Some("::ns_parent_namespace::LongerParent".to_string()));
+    assert_eq!(
+        m.path(),
+        Some("::ns_parent_namespace::LongerParent".to_string())
+    );
     assert!(ecs.try_lookup("::ns_parent").is_none());
     assert!(ecs.try_lookup("::ns_parent::LongerParent").is_none());
-    assert!(ecs.try_lookup("::ns_parent::LongerParent::NsType").is_none());
-    assert!(ecs.try_lookup("::ns_parent_namespace::LongerParent::NsType").is_some());
+    assert!(
+        ecs.try_lookup("::ns_parent::LongerParent::NsType")
+            .is_none()
+    );
+    assert!(
+        ecs.try_lookup("::ns_parent_namespace::LongerParent::NsType")
+            .is_some()
+    );
 
     let ns = ecs.lookup("::ns_parent_namespace");
     assert_ne!(ns.id(), 0);
@@ -681,7 +702,10 @@ fn module_rename_namespace_nested() {
 
     assert_eq!(m.path(), Some("::ns::child::Nested".to_string()));
     assert!(ecs.try_lookup("::ns::child::Nested::NsType").is_some());
-    assert!(ecs.try_lookup("::ns_parent::ns_child::Nested::NsType").is_none());
+    assert!(
+        ecs.try_lookup("::ns_parent::ns_child::Nested::NsType")
+            .is_none()
+    );
     assert!(ecs.try_lookup("::ns_parent::ns_child::Nested").is_none());
     assert!(ecs.try_lookup("::ns_parent::ns_child").is_none());
     assert!(ecs.try_lookup("::ns_parent").is_none());

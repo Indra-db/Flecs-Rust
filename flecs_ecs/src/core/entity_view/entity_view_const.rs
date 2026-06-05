@@ -1994,9 +1994,8 @@ impl<'a> EntityView<'a> {
     /// The entity, or entity with id 0 if not found.
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup_recursive(name).unwrap_or_else(|| {
-            EntityView::new_from(self.world, Entity(0))
-        })
+        self.try_lookup_recursive(name)
+            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
     }
 
     /// Lookup an entity by name.

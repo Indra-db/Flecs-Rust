@@ -68,12 +68,14 @@ fn multi_world_component() {
     assert_eq!(p_1.id(), v_2.id());
     assert_eq!(v_1.id(), m_2.id());
 
-    let w1_e = w1.entity()
+    let w1_e = w1
+        .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 })
         .set(Mass { value: 100 });
 
-    let w2_e = w2.entity()
+    let w2_e = w2
+        .entity()
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 })
         .set(Mass { value: 100 });
@@ -377,9 +379,18 @@ fn count_pair() {
     world.entity().add((flecs::ChildOf::ID, parent.id()));
     world.entity().add((flecs::ChildOf::ID, parent.id()));
     world.entity().add((flecs::ChildOf::ID, parent.id()));
-    world.entity().add((flecs::ChildOf::ID, parent.id())).add(Mass::id());
-    world.entity().add((flecs::ChildOf::ID, parent.id())).add(Mass::id());
-    world.entity().add((flecs::ChildOf::ID, parent.id())).add(Velocity::id());
+    world
+        .entity()
+        .add((flecs::ChildOf::ID, parent.id()))
+        .add(Mass::id());
+    world
+        .entity()
+        .add((flecs::ChildOf::ID, parent.id()))
+        .add(Mass::id());
+    world
+        .entity()
+        .add((flecs::ChildOf::ID, parent.id()))
+        .add(Velocity::id());
 
     assert_eq!(world.count((flecs::ChildOf::ID, parent.id())), 6);
 }
@@ -397,7 +408,10 @@ fn count_pair_type_id() {
     world.entity().add((Rel::id(), target.id()));
     world.entity().add((Rel::id(), target.id())).add(Mass::id());
     world.entity().add((Rel::id(), target.id())).add(Mass::id());
-    world.entity().add((Rel::id(), target.id())).add(Velocity::id());
+    world
+        .entity()
+        .add((Rel::id(), target.id()))
+        .add(Velocity::id());
 
     assert_eq!(world.count((Rel::id(), target.id())), 6);
 }
@@ -416,7 +430,10 @@ fn count_pair_id() {
     world.entity().add((rel.id(), target.id()));
     world.entity().add((rel.id(), target.id())).add(Mass::id());
     world.entity().add((rel.id(), target.id())).add(Mass::id());
-    world.entity().add((rel.id(), target.id())).add(Velocity::id());
+    world
+        .entity()
+        .add((rel.id(), target.id()))
+        .add(Velocity::id());
 
     assert_eq!(world.count((rel.id(), target.id())), 6);
 }
@@ -483,7 +500,8 @@ fn with_tag() {
     assert!(!self_comp.has(tag.id()));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with(tag.id())
         .build()
         .each_entity(|e, _| {
@@ -513,7 +531,8 @@ fn with_tag_type() {
     assert!(!self_comp.has(Tag::id()));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with(Tag::id())
         .build()
         .each_entity(|e, _| {
@@ -546,7 +565,8 @@ fn with_relation() {
     assert!(!self_comp.has((likes.id(), bob.id())));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with((likes.id(), bob.id()))
         .build()
         .each_entity(|e, _| {
@@ -578,7 +598,8 @@ fn with_relation_type() {
     assert!(!self_comp.has((Likes::id(), bob.id())));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with((Likes::id(), bob.id()))
         .build()
         .each_entity(|e, _| {
@@ -608,7 +629,8 @@ fn with_relation_object_type() {
     assert!(!self_comp.has((Likes::id(), Bob::id())));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with((Likes::id(), Bob::id()))
         .build()
         .each_entity(|e, _| {
@@ -660,7 +682,8 @@ fn with_scope() {
     assert!(!self_comp.has((flecs::ChildOf::ID, parent.id())));
 
     let mut count = 0;
-    world.query::<()>()
+    world
+        .query::<()>()
         .with((flecs::ChildOf::ID, parent.id()))
         .build()
         .each_entity(|e, _| {
@@ -944,7 +967,8 @@ fn template_component_from_module_2_args() {
     let tid = world.component_id::<TypeWithArgs<Foo, Bar>>();
     assert_ne!(tid, 0u64);
 
-    let mid = m.try_lookup("TypeWithArgs<Foo,Bar>")
+    let mid = m
+        .try_lookup("TypeWithArgs<Foo,Bar>")
         .or_else(|| m.try_lookup("TypeWithArgs<Foo, Bar>"));
     assert!(mid.is_some());
     assert_eq!(mid.unwrap().id(), tid);
@@ -1236,7 +1260,10 @@ fn remove_all_pair() {
 
     let e1 = world.entity().add((rel.id(), obj_a.id()));
     let e2 = world.entity().add((rel.id(), obj_a.id()));
-    let e3 = world.entity().add((rel.id(), obj_a.id())).add((rel.id(), obj_b.id()));
+    let e3 = world
+        .entity()
+        .add((rel.id(), obj_a.id()))
+        .add((rel.id(), obj_b.id()));
 
     world.remove_all((rel.id(), obj_a.id()));
 
@@ -1263,7 +1290,10 @@ fn remove_all_pair_type() {
 
     let e1 = world.entity().add((Rel::id(), ObjA::id()));
     let e2 = world.entity().add((Rel::id(), ObjA::id()));
-    let e3 = world.entity().add((Rel::id(), ObjA::id())).add((Rel::id(), ObjB::id()));
+    let e3 = world
+        .entity()
+        .add((Rel::id(), ObjA::id()))
+        .add((Rel::id(), ObjB::id()));
 
     world.remove_all((Rel::id(), ObjA::id()));
 
@@ -1404,7 +1434,9 @@ fn get_alive() {
 
     let e2 = world.entity();
     assert_ne!(*e1.id(), *e2.id());
-    assert_eq!(e_no_gen, unsafe { flecs_ecs::sys::ecs_strip_generation(*e2.id()) });
+    assert_eq!(e_no_gen, unsafe {
+        flecs_ecs::sys::ecs_strip_generation(*e2.id())
+    });
 
     let alive = world.get_alive(e_no_gen);
     assert_eq!(alive, e2.id());
@@ -1420,10 +1452,9 @@ fn make_alive() {
 
     let e2 = world.entity();
     assert_ne!(e1.id(), e2.id());
-    assert_eq!(
-        *e1.id(),
-        unsafe { flecs_ecs::sys::ecs_strip_generation(*e2.id()) }
-    );
+    assert_eq!(*e1.id(), unsafe {
+        flecs_ecs::sys::ecs_strip_generation(*e2.id())
+    });
     e2.destruct();
     assert!(!e2.is_alive());
 
@@ -1544,15 +1575,13 @@ fn run_post_frame() {
 
     let world = World::new();
 
-    world
-        .system::<()>()
-        .run(|mut it| {
-            while it.next() {
-                it.world().run_post_frame(|_w| {
-                    CTX.with(|c| c.set(c.get() + 1));
-                });
-            }
-        });
+    world.system::<()>().run(|mut it| {
+        while it.next() {
+            it.world().run_post_frame(|_w| {
+                CTX.with(|c| c.set(c.get() + 1));
+            });
+        }
+    });
 
     CTX.with(|c| assert_eq!(c.get(), 10));
     world.progress_time(1.0);
@@ -1640,10 +1669,7 @@ fn set_get_context() {
 
     let mut ctx: i32 = 0;
     world.set_context(&mut ctx as *mut i32 as *mut std::ffi::c_void, None);
-    assert_eq!(
-        world.context() as *const i32,
-        &ctx as *const i32
-    );
+    assert_eq!(world.context() as *const i32, &ctx as *const i32);
 }
 
 #[test]
@@ -1856,9 +1882,11 @@ fn fini_reentrancy() {
 
     let world = World::new();
 
-    world.component::<A>().on_remove(|e: EntityView, _a: &mut A| {
-        let _w = e.world();
-    });
+    world
+        .component::<A>()
+        .on_remove(|e: EntityView, _a: &mut A| {
+            let _w = e.world();
+        });
 
     world.entity().add(A::id());
     // world drops here; on_remove fires with world reference - should not abort
@@ -1933,7 +1961,6 @@ fn id_if_registered() {
     }
 }
 
-
 #[test]
 fn get_type_info_t() {
     let world = World::new();
@@ -1987,7 +2014,10 @@ fn get_type_info_rel_type_tgt_type() {
     #[derive(Component)]
     struct Tgt;
     let world = World::new();
-    let ti = world.type_info_from((world.component_id::<Position>(), world.component_id::<Tgt>()));
+    let ti = world.type_info_from((
+        world.component_id::<Position>(),
+        world.component_id::<Tgt>(),
+    ));
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
     assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
@@ -2042,11 +2072,12 @@ fn get_type_info_rel_type_tgt_type_tag() {
     #[derive(Component)]
     struct LocalTgt;
     let world = World::new();
-    let ti = world.type_info_from((world.component_id::<LocalTag>(), world.component_id::<LocalTgt>()));
+    let ti = world.type_info_from((
+        world.component_id::<LocalTag>(),
+        world.component_id::<LocalTgt>(),
+    ));
     assert!(ti.is_none());
 }
-
-
 
 #[test]
 fn builtin_after_reset() {
@@ -2075,7 +2106,6 @@ fn readonly_begin_end() {
     assert_eq!(count, 1);
 }
 
-
 #[test]
 fn defer_begin_end() {
     let world = World::new();
@@ -2101,7 +2131,9 @@ fn on_destroyed() {
     static mut CALLED: bool = false;
 
     fn on_destroyed(_w: WorldRef) {
-        unsafe { CALLED = true; }
+        unsafe {
+            CALLED = true;
+        }
     }
 
     {
@@ -2155,7 +2187,6 @@ fn stage_count() {
     assert_eq!(world.get_stage_count(), 4);
 }
 
-
 #[test]
 fn preallocate_entity_count() {
     let world = World::new();
@@ -2183,7 +2214,7 @@ fn should_quit() {
     let world = World::new();
 
     assert!(!world.should_quit());
-} 
+}
 
 #[test]
 fn is_deferred() {
@@ -2229,7 +2260,10 @@ fn register_after_delete() {
 fn entity_with_component() {
     let world = World::new();
 
-    let e = world.entity().set(Position { x: 5, y: 10 }).set(Velocity { x: 1, y: 2 });
+    let e = world
+        .entity()
+        .set(Position { x: 5, y: 10 })
+        .set(Velocity { x: 1, y: 2 });
 
     assert!(e.has(Position::id()));
     assert!(e.has(Velocity::id()));

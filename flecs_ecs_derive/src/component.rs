@@ -3,8 +3,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Expr, Fields, Ident, LitStr, Path, Result, Token, Type,
-    parse::ParseStream,
+    Data, DeriveInput, Expr, Fields, Ident, LitStr, Path, Result, Token, Type, parse::ParseStream,
 };
 
 // Parse #[flecs(...)] attribute and build calls to _component.add_trait::<flecs::...>();

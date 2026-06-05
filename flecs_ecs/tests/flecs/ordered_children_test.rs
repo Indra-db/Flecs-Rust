@@ -22,18 +22,9 @@ fn ordered_children_children_1_table() {
     let world = World::new();
 
     let parent = world.entity().add(flecs::OrderedChildren);
-    let child_a = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
-    let child_b = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
-    let child_c = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
+    let child_a = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
+    let child_b = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
+    let child_c = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
 
     let mut v: Vec<Entity> = Vec::new();
     parent.each_child(|e| {
@@ -50,18 +41,9 @@ fn ordered_children_children_2_tables() {
     let world = World::new();
 
     let parent = world.entity().add(flecs::OrderedChildren);
-    let child_a = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
-    let child_b = world
-        .entity()
-        .child_of(parent)
-        .set(Velocity { x: 0, y: 0 });
-    let child_c = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
+    let child_a = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
+    let child_b = world.entity().child_of(parent).set(Velocity { x: 0, y: 0 });
+    let child_c = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
 
     let mut v: Vec<Entity> = Vec::new();
     parent.each_child(|e| {
@@ -78,18 +60,9 @@ fn ordered_children_set_child_order() {
     let world = World::new();
 
     let parent = world.entity().add(flecs::OrderedChildren);
-    let child_a = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
-    let child_b = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
-    let child_c = world
-        .entity()
-        .child_of(parent)
-        .set(Position { x: 0, y: 0 });
+    let child_a = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
+    let child_b = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
+    let child_c = world.entity().child_of(parent).set(Position { x: 0, y: 0 });
 
     {
         let mut v: Vec<Entity> = Vec::new();

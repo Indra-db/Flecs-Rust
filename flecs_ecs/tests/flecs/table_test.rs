@@ -61,7 +61,10 @@ fn table_each_locked() {
     }));
     // Leak world to prevent Drop from aborting on partially-iterated locked state.
     std::mem::forget(world);
-    assert!(result.is_err(), "expected panic when mutating entity during locked iteration");
+    assert!(
+        result.is_err(),
+        "expected panic when mutating entity during locked iteration"
+    );
 }
 
 /// Same as table_each but using the no-entity callback form.
@@ -93,7 +96,10 @@ fn table_each_without_entity_locked() {
         });
     }));
     std::mem::forget(world);
-    assert!(result.is_err(), "expected panic when mutating entity during locked each iteration");
+    assert!(
+        result.is_err(),
+        "expected panic when mutating entity during locked each iteration"
+    );
 }
 
 // -- Table_iter ------------------------------------------------------------
@@ -132,7 +138,10 @@ fn table_iter_locked() {
         });
     }));
     std::mem::forget(world);
-    assert!(result.is_err(), "expected panic when mutating entity during locked run iteration");
+    assert!(
+        result.is_err(),
+        "expected panic when mutating entity during locked run iteration"
+    );
 }
 
 /// query.run() without component terms — structural changes to another entity
@@ -169,7 +178,10 @@ fn table_iter_without_components_locked() {
         });
     }));
     std::mem::forget(world);
-    assert!(result.is_err(), "expected panic when mutating entity during locked run iteration without components");
+    assert!(
+        result.is_err(),
+        "expected panic when mutating entity during locked run iteration without components"
+    );
 }
 
 // -- Table_multi_get -------------------------------------------------------
@@ -346,18 +358,9 @@ fn table_has_pair_r_t_typed() {
     let t2 = world.entity();
     let t3 = world.entity();
 
-    let e = world
-        .entity()
-        .add((R::id(), t1))
-        .add((R::id(), t2));
-    world
-        .entity()
-        .add((R::id(), t1))
-        .add((R::id(), t2));
-    world
-        .entity()
-        .add((R::id(), t1))
-        .add((R::id(), t2));
+    let e = world.entity().add((R::id(), t1)).add((R::id(), t2));
+    world.entity().add((R::id(), t1)).add((R::id(), t2));
+    world.entity().add((R::id(), t1)).add((R::id(), t2));
 
     let table = e.table().unwrap();
     assert!(table.has((R::id(), t1)));
@@ -498,7 +501,10 @@ fn table_get_pair_r_t() {
 
     let table = e.table().unwrap();
 
-    let p = table.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
+    let p = table.get_pair_ids_mut_untyped(
+        world.component_id::<Position>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -510,7 +516,10 @@ fn table_get_pair_r_t() {
         assert_eq!((*p_ptr.add(2)).y, 40);
     }
 
-    let v = table.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
+    let v = table.get_pair_ids_mut_untyped(
+        world.component_id::<Velocity>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -545,7 +554,10 @@ fn table_get_pair_r_t_typed_first() {
 
     let table = e.table().unwrap();
 
-    let p = table.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
+    let p = table.get_pair_ids_mut_untyped(
+        world.component_id::<Position>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -557,7 +569,10 @@ fn table_get_pair_r_t_typed_first() {
         assert_eq!((*p_ptr.add(2)).y, 40);
     }
 
-    let v = table.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
+    let v = table.get_pair_ids_mut_untyped(
+        world.component_id::<Velocity>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -708,7 +723,10 @@ fn table_range_get_pair_r_t() {
 
     let range = e.range().unwrap();
 
-    let p = range.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
+    let p = range.get_pair_ids_mut_untyped(
+        world.component_id::<Position>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -716,7 +734,10 @@ fn table_range_get_pair_r_t() {
         assert_eq!((*p_ptr).y, 30);
     }
 
-    let v = range.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
+    let v = range.get_pair_ids_mut_untyped(
+        world.component_id::<Velocity>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -746,7 +767,10 @@ fn table_range_get_pair_r_t_typed_first() {
 
     let range = e.range().unwrap();
 
-    let p = range.get_pair_ids_mut_untyped(world.component_id::<Position>(), world.component_id::<Tgt>());
+    let p = range.get_pair_ids_mut_untyped(
+        world.component_id::<Position>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(p.is_some());
     let p_ptr = p.unwrap() as *mut Position;
     unsafe {
@@ -754,7 +778,10 @@ fn table_range_get_pair_r_t_typed_first() {
         assert_eq!((*p_ptr).y, 30);
     }
 
-    let v = range.get_pair_ids_mut_untyped(world.component_id::<Velocity>(), world.component_id::<Tgt>());
+    let v = range.get_pair_ids_mut_untyped(
+        world.component_id::<Velocity>(),
+        world.component_id::<Tgt>(),
+    );
     assert!(v.is_some());
     let v_ptr = v.unwrap() as *mut Velocity;
     unsafe {
@@ -956,7 +983,10 @@ fn table_lock() {
     table.unlock();
     std::mem::forget(world);
 
-    assert!(result.is_err(), "expected panic when setting component on locked table");
+    assert!(
+        result.is_err(),
+        "expected panic when setting component on locked table"
+    );
 }
 
 // -- Table_unlock ----------------------------------------------------------
@@ -984,7 +1014,10 @@ fn table_has_flags() {
     let world = World::new();
 
     let parent = world.entity();
-    let e1 = world.entity().child_of(parent).set(Position { x: 10, y: 20 });
+    let e1 = world
+        .entity()
+        .child_of(parent)
+        .set(Position { x: 10, y: 20 });
 
     let table = e1.table().unwrap();
 

@@ -106,10 +106,7 @@ pub enum EnumClassWithLargeConstant {
 fn enum_standard_enum_reflection() {
     let world = World::new();
     let entity = world.entity_from_enum(StandardEnum::Red);
-    assert_eq!(
-        entity.path().unwrap(),
-        "::StandardEnum::Red"
-    );
+    assert_eq!(entity.path().unwrap(), "::StandardEnum::Red");
 
     let entity2 = world.entity().set(StandardEnum::Blue);
 
@@ -138,14 +135,8 @@ fn enum_standard_enum_reflection() {
     assert!(StandardEnum::Blue.is_field_registered_as_entity(&world));
     assert!(StandardEnum::Green.is_field_registered_as_entity(&world));
     assert_eq!(red.path().unwrap(), "::StandardEnum::Red");
-    assert_eq!(
-        green.path().unwrap(),
-        "::StandardEnum::Green"
-    );
-    assert_eq!(
-        blue.path().unwrap(),
-        "::StandardEnum::Blue"
-    );
+    assert_eq!(green.path().unwrap(), "::StandardEnum::Green");
+    assert_eq!(blue.path().unwrap(), "::StandardEnum::Blue");
 }
 
 // ---- New enum tests ----
@@ -185,7 +176,9 @@ fn enum_add_enum_class_constant() {
 fn enum_add_singleton_enum_constant() {
     let world = World::new();
 
-    world.component::<StandardEnum>().add_trait::<flecs::Singleton>();
+    world
+        .component::<StandardEnum>()
+        .add_trait::<flecs::Singleton>();
 
     world.add_enum(StandardEnum::Red);
     assert!(world.has_enum(StandardEnum::Red));
@@ -360,7 +353,9 @@ fn enum_query_enum_constant() {
 fn enum_query_singleton_enum_constant() {
     let world = World::new();
 
-    world.component::<StandardEnum>().add_trait::<flecs::Singleton>();
+    world
+        .component::<StandardEnum>()
+        .add_trait::<flecs::Singleton>();
 
     let blue_id = StandardEnum::Blue.id_variant(&world);
     let comp_id = world.component_id::<StandardEnum>();
@@ -934,7 +929,10 @@ fn enum_enum_w_one_constant_index_of() {
     let world = World::new();
     let entity = world.entity_from_enum(OneConstant::ConstantOne);
     assert!(entity.is_valid());
-    assert_eq!(entity.to_constant::<OneConstant>(), OneConstant::ConstantOne);
+    assert_eq!(
+        entity.to_constant::<OneConstant>(),
+        OneConstant::ConstantOne
+    );
 }
 
 // ─── bitmask_enum_with_type_reflection ───────────────────────────────────────
@@ -970,7 +968,10 @@ fn enum_bitmask_enum_with_type_reflection() {
     assert!(enum_type.is_valid(1), "1 should be valid");
     assert!(enum_type.is_valid(8), "8 should be valid");
     assert!(!enum_type.is_valid(3), "3 should not be valid (sparse)");
-    assert!(!enum_type.is_valid(7), "7 should not be valid (not a constant)");
+    assert!(
+        !enum_type.is_valid(7),
+        "7 should not be valid (not a constant)"
+    );
 }
 
 // ─── enum_with_mixed_constants_and_bitmask ───────────────────────────────────

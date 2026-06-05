@@ -569,9 +569,7 @@ fn system_builder_name_arg() {
         .term_at(0)
         .src()
         .name("MySystem")
-        .run(|mut it| {
-            while it.next() {}
-        });
+        .run(|mut it| while it.next() {});
 
     assert!(s.has(Position::id()));
 }
@@ -632,11 +630,14 @@ fn system_builder_write_annotation() {
             e.add(LocalTagB::id());
         });
 
-    world.system::<()>().with(&LocalTagB::id()).each_entity(move |e, _| {
-        b_count2.set(b_count2.get() + 1);
-        assert_eq!(e.id(), e1);
-        assert!(e.has(LocalTagB::id()));
-    });
+    world
+        .system::<()>()
+        .with(&LocalTagB::id())
+        .each_entity(move |e, _| {
+            b_count2.set(b_count2.get() + 1);
+            assert_eq!(e.id(), e1);
+            assert!(e.has(LocalTagB::id()));
+        });
 
     assert_eq!(a_count.get(), 0);
     assert_eq!(b_count.get(), 0);

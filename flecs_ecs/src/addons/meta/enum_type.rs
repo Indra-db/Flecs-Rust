@@ -45,11 +45,7 @@ impl<'a, T: ComponentId> EnumType<'a, T> {
     pub fn last(&self) -> i32 {
         // Count enum values via iteration (relies on enum having PartialOrd+PartialEq)
         let count = T::UnderlyingEnumType::iter().count();
-        if count > 0 {
-            (count - 1) as i32
-        } else {
-            -1
-        }
+        if count > 0 { (count - 1) as i32 } else { -1 }
     }
 
     /// Get the constant index for a given underlying value.

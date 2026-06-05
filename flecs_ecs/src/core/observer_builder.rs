@@ -246,12 +246,20 @@ impl<P, T: QueryTuple> core::fmt::Debug for ObserverBuilder<'_, P, T> {
             let first_name = if t.first.name.is_null() {
                 None
             } else {
-                Some(unsafe { core::ffi::CStr::from_ptr(t.first.name).to_str().unwrap_or("?") })
+                Some(unsafe {
+                    core::ffi::CStr::from_ptr(t.first.name)
+                        .to_str()
+                        .unwrap_or("?")
+                })
             };
             let src_name = if t.src.name.is_null() {
                 None
             } else {
-                Some(unsafe { core::ffi::CStr::from_ptr(t.src.name).to_str().unwrap_or("?") })
+                Some(unsafe {
+                    core::ffi::CStr::from_ptr(t.src.name)
+                        .to_str()
+                        .unwrap_or("?")
+                })
             };
             term_list.push(format!(
                 "{{ id={:#x}, first.id={:#x}, first.name={:?}, src.id={:#x}, src.name={:?}, inout={}, oper={} }}",

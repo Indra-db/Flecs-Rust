@@ -311,10 +311,7 @@ fn paths_id_from_str_pair_from_str() {
 
     let id = IdView::new_from_str(&world, "(Rel, Tgt)");
     assert_ne!(id, 0u64);
-    assert_eq!(
-        id,
-        world.id_view_from((rel, tgt))
-    );
+    assert_eq!(id, world.id_view_from((rel, tgt)));
 }
 
 #[test]

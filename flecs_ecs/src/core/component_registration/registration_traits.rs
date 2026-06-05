@@ -670,7 +670,10 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     /// if uncertain, use `try_register_component::<T>` to try and register it
     unsafe fn id_variant_unchecked<'a>(&self, world: impl WorldProvider<'a>) -> EntityView<'a> {
         let index = self.enum_index();
-        EntityView::new_from(world.world(), Self::__get_variant_id_from_world(index, world))
+        EntityView::new_from(
+            world.world(),
+            Self::__get_variant_id_from_world(index, world),
+        )
     }
 
     #[doc(hidden)]
@@ -687,7 +690,10 @@ pub trait EnumComponentInfo: ComponentType<Enum> + ComponentId {
     /// This function is unsafe because you must ensure that the index is within the bounds of
     /// the number of variants in the enum. If uncertain, use `SIZE_ENUM_FIELDS` to check.
     #[doc(hidden)]
-    unsafe fn id_variant_of_index_unchecked<'a>(index: usize, world: impl WorldProvider<'a>) -> u64 {
+    unsafe fn id_variant_of_index_unchecked<'a>(
+        index: usize,
+        world: impl WorldProvider<'a>,
+    ) -> u64 {
         Self::__get_variant_id_from_world(index, world)
     }
 

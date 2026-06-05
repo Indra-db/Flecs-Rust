@@ -1,8 +1,7 @@
 #![allow(dead_code)]
+use crate::common_test::FlecsPanicAbortGuard;
 use flecs_ecs::core::{ComponentInfo, EntityViewGet, World};
 use flecs_ecs_derive::Component;
-use crate::common_test::FlecsPanicAbortGuard;
-
 
 // normal structs
 #[derive(Component)]
@@ -59,9 +58,7 @@ fn copy_hook_implemented_for_drop_types() {
 }
 
 #[test]
-#[should_panic(
-    expected = "Clone is not implemented for type"
-)]
+#[should_panic(expected = "Clone is not implemented for type")]
 fn copy_hook_not_implemented_for_drop_types() {
     let world = World::new();
     // Guard installed AFTER World::new() so it survives the reset of abort_.

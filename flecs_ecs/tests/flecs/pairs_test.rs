@@ -47,9 +47,7 @@ struct LocalBobTag;
 fn pairs_add_component_pair() {
     let world = World::new();
 
-    let entity = world
-        .entity()
-        .add((PairData::id(), Position::id()));
+    let entity = world.entity().add((PairData::id(), Position::id()));
 
     assert!(entity.id() != 0);
     assert!(entity.has((PairData::id(), Position::id())));
@@ -187,9 +185,7 @@ fn pairs_set_tag_pair() {
 
     let pair_e = world.entity_named("Pair");
 
-    let entity = world
-        .entity()
-        .set_second(pair_e, Position { x: 10, y: 20 });
+    let entity = world.entity().set_second(pair_e, Position { x: 10, y: 20 });
 
     assert!(entity.id() != 0);
     assert!(entity.has((pair_e, Position::id())));
@@ -332,11 +328,11 @@ fn pairs_override_pair() {
 fn pairs_override_tag_pair() {
     let world = World::new();
 
-    let pair_e = world.entity().add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
-
-    let base = world
+    let pair_e = world
         .entity()
-        .set_second(pair_e, Position { x: 10, y: 20 });
+        .add((flecs::OnInstantiate::ID, flecs::Inherit::ID));
+
+    let base = world.entity().set_second(pair_e, Position { x: 10, y: 20 });
 
     let instance = world.entity().is_a(base);
 
@@ -409,9 +405,7 @@ fn pairs_ensure_pair_tag() {
     let world = World::new();
 
     let pair_e = world.entity();
-    let e = world
-        .entity()
-        .set_second(pair_e, Position { x: 10, y: 20 });
+    let e = world.entity().set_second(pair_e, Position { x: 10, y: 20 });
 
     let ptr = e.get_second_untyped::<Position>(pair_e) as *const Position;
     assert!(!ptr.is_null());
@@ -426,9 +420,7 @@ fn pairs_ensure_pair_tag_existing() {
     let world = World::new();
 
     let pair_e = world.entity();
-    let e = world
-        .entity()
-        .set_second(pair_e, Position { x: 10, y: 20 });
+    let e = world.entity().set_second(pair_e, Position { x: 10, y: 20 });
 
     // already exists — get the value
     let ptr = e.get_second_untyped::<Position>(pair_e) as *const Position;
@@ -704,9 +696,7 @@ fn pairs_get_second() {
 
     let rel = world.entity();
 
-    let e = world
-        .entity()
-        .set_second(rel, Position { x: 10, y: 20 });
+    let e = world.entity().set_second(rel, Position { x: 10, y: 20 });
 
     assert!(e.has((rel, Position::id())));
 
@@ -724,9 +714,7 @@ fn pairs_get_second_id() {
 
     let rel = world.entity();
 
-    let e = world
-        .entity()
-        .set_second(rel, Position { x: 10, y: 20 });
+    let e = world.entity().set_second(rel, Position { x: 10, y: 20 });
 
     assert!(e.has((rel, Position::id())));
 
@@ -744,9 +732,7 @@ fn pairs_get_second_id_t() {
 
     let rel = world.entity();
 
-    let e = world
-        .entity()
-        .set_second(rel, Position { x: 10, y: 20 });
+    let e = world.entity().set_second(rel, Position { x: 10, y: 20 });
 
     assert!(e.has((rel, Position::id())));
 
@@ -1374,9 +1360,7 @@ fn pairs_set_r_existing_value() {
     let world = World::new();
 
     let p = Position { x: 10, y: 20 };
-    let e = world
-        .entity()
-        .set_pair::<Position, Tag>(p);
+    let e = world.entity().set_pair::<Position, Tag>(p);
 
     e.get::<&(Position, Tag)>(|ptr| {
         assert_eq!(ptr.x, 10);
@@ -1388,9 +1372,7 @@ fn pairs_set_r_existing_value() {
 fn pairs_symmetric_w_childof() {
     let world = World::new();
 
-    world
-        .component::<LocalLikes>()
-        .add(flecs::Symmetric::ID);
+    world.component::<LocalLikes>().add(flecs::Symmetric::ID);
 
     let idk = world.entity_named("Idk");
 

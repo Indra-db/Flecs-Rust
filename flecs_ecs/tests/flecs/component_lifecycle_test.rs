@@ -4,7 +4,6 @@
 #![allow(non_snake_case)]
 use crate::common_test::*;
 
-
 // Per-thread counters: each test thread gets its own zero-initialized counts,
 // so no locking or resetting is needed between tests.
 use core::cell::Cell;
@@ -61,63 +60,123 @@ fn reset_count_no_default_counters() {
 
 #[track_caller]
 fn test_pod_ctor(value: i32) {
-    assert_eq!(POD_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch pod");
+    assert_eq!(
+        POD_CTOR_INVOKED.with(|c| c.get()),
+        value,
+        "constructed count mismatch pod"
+    );
 }
 #[track_caller]
 fn test_pod_clone(value: i32) {
-    assert_eq!(POD_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch pod");
+    assert_eq!(
+        POD_CLONE_INVOKED.with(|c| c.get()),
+        value,
+        "cloned count mismatch pod"
+    );
 }
 #[track_caller]
 fn test_pod_drop(value: i32) {
-    assert_eq!(POD_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch pod");
+    assert_eq!(
+        POD_DROP_INVOKED.with(|c| c.get()),
+        value,
+        "dropped count mismatch pod"
+    );
 }
 #[track_caller]
 fn test_string_ctor(value: i32) {
-    assert_eq!(STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch struct w/ string");
+    assert_eq!(
+        STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.get()),
+        value,
+        "constructed count mismatch struct w/ string"
+    );
 }
 #[track_caller]
 fn test_string_clone(value: i32) {
-    assert_eq!(STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch struct w/ string");
+    assert_eq!(
+        STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.get()),
+        value,
+        "cloned count mismatch struct w/ string"
+    );
 }
 #[track_caller]
 fn test_string_drop(value: i32) {
-    assert_eq!(STRUCT_W_STRING_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch struct w/ string");
+    assert_eq!(
+        STRUCT_W_STRING_DROP_INVOKED.with(|c| c.get()),
+        value,
+        "dropped count mismatch struct w/ string"
+    );
 }
 #[track_caller]
 fn test_vector_ctor(value: i32) {
-    assert_eq!(STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch struct w/ vector");
+    assert_eq!(
+        STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.get()),
+        value,
+        "constructed count mismatch struct w/ vector"
+    );
 }
 #[track_caller]
 fn test_vector_clone(value: i32) {
-    assert_eq!(STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch struct w/ vector");
+    assert_eq!(
+        STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.get()),
+        value,
+        "cloned count mismatch struct w/ vector"
+    );
 }
 #[track_caller]
 fn test_vector_drop(value: i32) {
-    assert_eq!(STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch struct w/ vector");
+    assert_eq!(
+        STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.get()),
+        value,
+        "dropped count mismatch struct w/ vector"
+    );
 }
 #[track_caller]
 fn test_no_default_invoked_ctor(value: i32) {
-    assert_eq!(NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch no_default_invoked");
+    assert_eq!(
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.get()),
+        value,
+        "constructed count mismatch no_default_invoked"
+    );
 }
 #[track_caller]
 fn test_no_default_invoked_clone(value: i32) {
-    assert_eq!(NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch no_default_invoked");
+    assert_eq!(
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.get()),
+        value,
+        "cloned count mismatch no_default_invoked"
+    );
 }
 #[track_caller]
 fn test_no_default_invoked_drop(value: i32) {
-    assert_eq!(NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch no_default_invoked");
+    assert_eq!(
+        NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.get()),
+        value,
+        "dropped count mismatch no_default_invoked"
+    );
 }
 #[track_caller]
 fn test_no_default_ctor(value: i32) {
-    assert_eq!(NO_DEFAULT_CTOR_INVOKED.with(|c| c.get()), value, "constructed count mismatch no_default");
+    assert_eq!(
+        NO_DEFAULT_CTOR_INVOKED.with(|c| c.get()),
+        value,
+        "constructed count mismatch no_default"
+    );
 }
 #[track_caller]
 fn test_no_default_clone(value: i32) {
-    assert_eq!(NO_DEFAULT_CLONE_INVOKED.with(|c| c.get()), value, "cloned count mismatch no_default");
+    assert_eq!(
+        NO_DEFAULT_CLONE_INVOKED.with(|c| c.get()),
+        value,
+        "cloned count mismatch no_default"
+    );
 }
 #[track_caller]
 fn test_no_default_drop(value: i32) {
-    assert_eq!(NO_DEFAULT_DROP_INVOKED.with(|c| c.get()), value, "dropped count mismatch no_default");
+    assert_eq!(
+        NO_DEFAULT_DROP_INVOKED.with(|c| c.get()),
+        value,
+        "dropped count mismatch no_default"
+    );
 }
 
 fn world_new() -> World {
@@ -171,21 +230,27 @@ pub struct StructWithString {
 impl StructWithString {
     pub fn new(value: &str) -> Self {
         STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithString { value: value.to_string() }
+        StructWithString {
+            value: value.to_string(),
+        }
     }
 }
 
 impl Default for StructWithString {
     fn default() -> Self {
         STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithString { value: String::new() }
+        StructWithString {
+            value: String::new(),
+        }
     }
 }
 
 impl Clone for StructWithString {
     fn clone(&self) -> Self {
         STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithString { value: self.value.clone() }
+        StructWithString {
+            value: self.value.clone(),
+        }
     }
 }
 
@@ -203,21 +268,27 @@ pub struct StructWithVector {
 impl StructWithVector {
     pub fn new(value: &[i32]) -> Self {
         STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithVector { value: value.to_vec() }
+        StructWithVector {
+            value: value.to_vec(),
+        }
     }
 }
 
 impl Default for StructWithVector {
     fn default() -> Self {
         STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithVector { value: Vec::default() }
+        StructWithVector {
+            value: Vec::default(),
+        }
     }
 }
 
 impl Clone for StructWithVector {
     fn clone(&self) -> Self {
         STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.set(c.get() + 1));
-        StructWithVector { value: self.value.clone() }
+        StructWithVector {
+            value: self.value.clone(),
+        }
     }
 }
 
@@ -2164,7 +2235,6 @@ fn on_replace_hook() {
     assert_eq!(v.y, 8);
 }
 
-
 fn lifecycle_struct_w_vector_set() {
     let world = world_new();
     world.component::<StructWithVector>();
@@ -2234,9 +2304,7 @@ fn lifecycle_on_add_hook_sparse_w_iter() {
     let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
-    world
-        .component::<Position>()
-        .add_trait::<flecs::Sparse>();
+    world.component::<Position>().add_trait::<flecs::Sparse>();
     world.component::<Position>().on_add(move |e, _| {
         e_arg_clone.set(*e.id());
         e.world().get::<&mut Count>(|count| {
@@ -2266,9 +2334,7 @@ fn lifecycle_on_remove_hook_sparse_w_iter() {
     let e_arg = std::rc::Rc::new(core::cell::Cell::new(0u64));
     let e_arg_clone = e_arg.clone();
 
-    world
-        .component::<Position>()
-        .add_trait::<flecs::Sparse>();
+    world.component::<Position>().add_trait::<flecs::Sparse>();
     world.component::<Position>().on_remove(move |e, _| {
         e_arg_clone.set(*e.id());
         e.world().get::<&mut Count>(|count| {
@@ -2303,9 +2369,7 @@ fn lifecycle_on_set_hook_sparse_w_iter() {
     let v_clone = v_cell.clone();
     let e_arg_clone = e_arg.clone();
 
-    world
-        .component::<Position>()
-        .add_trait::<flecs::Sparse>();
+    world.component::<Position>().add_trait::<flecs::Sparse>();
     world.component::<Position>().on_set(move |e, _| {
         e_arg_clone.set(*e.id());
         e.world().get::<&mut Count>(|count| {
@@ -2335,7 +2399,6 @@ fn lifecycle_on_set_hook_sparse_w_iter() {
     assert_eq!(v.x, 30);
     assert_eq!(v.y, 40);
 }
-
 
 fn lifecycle_no_copy_ctor() {
     let world = World::new();
@@ -2724,13 +2787,13 @@ impl NoDefaultEmplace {
     }
 }
 
-#[test] 
+#[test]
 fn component_lifecycle_emplace_w_ctor() {
     // In Rust, `set` is the equivalent of C++ `emplace` — ownership is passed directly
     let world = World::new();
 
     let e = world.entity().set(EmplaceTest::new(10));
- 
+
     e.get::<&EmplaceTest>(|p| {
         assert_eq!(p.value, 10);
     });
@@ -3230,10 +3293,8 @@ fn component_lifecycle_grow_no_default_ctor_move_w_component() {
 // dtor_w_non_trivial_implicit_move — drop fires when entity is destructed
 // and another entity gets moved into its slot.
 
-static IMPLICIT_MOVE_CTOR: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static IMPLICIT_MOVE_DROP: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
+static IMPLICIT_MOVE_CTOR: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static IMPLICIT_MOVE_DROP: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 static IMPLICIT_MOVE_DROP_VALUE: core::sync::atomic::AtomicI32 =
     core::sync::atomic::AtomicI32::new(0);
 
@@ -3290,10 +3351,8 @@ fn component_lifecycle_dtor_w_non_trivial_implicit_move() {
     assert!(IMPLICIT_MOVE_DROP.load(core::sync::atomic::Ordering::SeqCst) >= 1);
 }
 
-static EXPLICIT_MOVE_CTOR: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
-static EXPLICIT_MOVE_DROP: core::sync::atomic::AtomicI32 =
-    core::sync::atomic::AtomicI32::new(0);
+static EXPLICIT_MOVE_CTOR: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+static EXPLICIT_MOVE_DROP: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
 static EXPLICIT_MOVE_DROP_VALUE: core::sync::atomic::AtomicI32 =
     core::sync::atomic::AtomicI32::new(0);
 
@@ -3505,7 +3564,10 @@ fn compare_WithGreaterThan() {
     // After on_compare: hook is registered
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
-    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be auto-generated"
+    );
 
     // Verify hooks work by calling them directly via safe API
     let a = WithGreaterThan { value: 1 };
@@ -3535,7 +3597,10 @@ fn compare_WithLessThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
-    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be auto-generated"
+    );
 
     let a = WithLessThan { value: 2 };
     let b = WithLessThan { value: 1 };
@@ -3559,7 +3624,10 @@ fn compare_WithLessAndGreaterThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
-    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be auto-generated"
+    );
 
     let a = WithLessAndGreaterThan { value: 1 };
     let b = WithLessAndGreaterThan { value: 2 };
@@ -3579,11 +3647,16 @@ fn compare_WithEqualsAndGreaterThan() {
     let world = World::new();
     let c = world.component::<WithEqualsAndGreaterThan>();
 
-    c.on_compare(|a: &WithEqualsAndGreaterThan, b: &WithEqualsAndGreaterThan| a.value.cmp(&b.value));
+    c.on_compare(
+        |a: &WithEqualsAndGreaterThan, b: &WithEqualsAndGreaterThan| a.value.cmp(&b.value),
+    );
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
-    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be auto-generated"
+    );
 
     let a = WithEqualsAndGreaterThan { value: 1 };
     let b = WithEqualsAndGreaterThan { value: 1 };
@@ -3607,7 +3680,10 @@ fn compare_WithEqualsAndLessThan() {
 
     let hooks = c.get_hooks();
     assert!(hooks.cmp.is_some(), "cmp hook should be registered");
-    assert!(hooks.equals.is_some(), "equals hook should be auto-generated");
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be auto-generated"
+    );
 
     let a = WithEqualsAndLessThan { value: 2 };
     let b = WithEqualsAndLessThan { value: 2 };
@@ -3753,7 +3829,6 @@ fn component_lifecycle_struct_w_vector_set_2_remove_w_tag() {
     struct_w_vector_set_2_remove_w_tag();
 }
 
-
 // ─── ctor_w_2_worlds ──────────────────────────────────────────────────────────
 
 #[test]
@@ -3813,15 +3888,29 @@ fn compare_uint8_enum() {
     let c = world.component::<Enum8>();
     let hooks = c.get_hooks();
 
-    assert!(hooks.cmp.is_some(), "cmp hook should be registered for enum");
-    assert!(hooks.equals.is_some(), "equals hook should be registered for enum");
+    assert!(
+        hooks.cmp.is_some(),
+        "cmp hook should be registered for enum"
+    );
+    assert!(
+        hooks.equals.is_some(),
+        "equals hook should be registered for enum"
+    );
 
     let red = Enum8::Red;
     let yellow = Enum8::Yellow;
     let blue = Enum8::Blue;
 
-    assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less), "Red < Yellow");
-    assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater), "Blue > Red");
+    assert_eq!(
+        c.compare(&red, &yellow),
+        Some(Ordering::Less),
+        "Red < Yellow"
+    );
+    assert_eq!(
+        c.compare(&blue, &red),
+        Some(Ordering::Greater),
+        "Blue > Red"
+    );
     assert_eq!(c.are_equal(&red, &blue), Some(false), "Red != Blue");
     assert_eq!(c.are_equal(&red, &red), Some(true), "Red == Red");
 }

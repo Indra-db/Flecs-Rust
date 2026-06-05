@@ -45,7 +45,9 @@ impl FlecsPanicAbortGuard {
         use std::sync::{Mutex, OnceLock};
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
         let mutex = LOCK.get_or_init(|| Mutex::new(()));
-        let lock = mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let lock = mutex
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
 
         unsafe extern "C-unwind" fn panic_shim() {
             // Signal the abort() override to suppress the redundant libc abort()
@@ -70,7 +72,10 @@ impl FlecsPanicAbortGuard {
             orig
         };
 
-        FlecsPanicAbortGuard { original, _lock: lock }
+        FlecsPanicAbortGuard {
+            original,
+            _lock: lock,
+        }
     }
 }
 
@@ -100,9 +105,7 @@ pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
 #[allow(unsafe_op_in_unsafe_fn)]
 unsafe extern "C" fn abort() {
     // Suppress if guard is active OR if a Rust panic is already unwinding (secondary abort).
-    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst)
-        || std::thread::panicking()
-    {
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) || std::thread::panicking() {
         return;
     }
     libc::raise(libc::SIGABRT);
@@ -119,9 +122,7 @@ unsafe extern "C" fn __assert_rtn(
     _line: core::ffi::c_int,
     _expr: *const core::ffi::c_char,
 ) {
-    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst)
-        || std::thread::panicking()
-    {
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) || std::thread::panicking() {
         return;
     }
     libc::raise(libc::SIGABRT);
@@ -477,12 +478,11 @@ pub mod ns {
             world.module::<NamespaceModule>("NamespaceModule");
             world.component::<FooComp>();
 
-            world.system::<&FooComp>()
-                .run(|mut it| {
-                    while it.next() {
-                        increment_invoke_count();
-                    }
-                });
+            world.system::<&FooComp>().run(|mut it| {
+                while it.next() {
+                    increment_invoke_count();
+                }
+            });
         }
     }
 }

@@ -2578,7 +2578,7 @@ fn flecs_docs_component_traits_compile_test() {
     let e = world
         .entity()
         .set(Position { x: 10.0, y: 20.9 })
-        .add(   (Serializable, Position::id())); // Because Serializable is a tag, the pair
+        .add((Serializable, Position::id())); // Because Serializable is a tag, the pair
     // has a value of type Position
 
     // Gets value from Position component

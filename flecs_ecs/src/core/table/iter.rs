@@ -1107,8 +1107,7 @@ where
             self.get_field_at_sparse_internal::<T>(index, row)
         } else {
             // Dense component: index into the contiguous array
-            let (array, _is_shared, count) =
-                self.field_internal_parts::<T::UnderlyingType>(index);
+            let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
             if array.is_null() || row >= count {
                 return None;
             }
@@ -1215,8 +1214,7 @@ where
             self.get_field_at_sparse_internal_mut::<T>(index, row)
         } else {
             // Dense component: index into the contiguous array
-            let (array, _is_shared, count) =
-                self.field_internal_parts::<T::UnderlyingType>(index);
+            let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
             if array.is_null() || row >= count {
                 return None;
             }
@@ -1824,21 +1822,34 @@ where
         row: usize,
     ) -> &'a T::UnderlyingType {
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
-        assert!(!array.is_null(), "field_at_dense: null array at index {index}");
-        assert!(row < count, "field_at_dense: row {row} out of bounds (count={count})");
+        assert!(
+            !array.is_null(),
+            "field_at_dense: null array at index {index}"
+        );
+        assert!(
+            row < count,
+            "field_at_dense: row {row} out of bounds (count={count})"
+        );
         // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
         // The pointer is valid for reads for the lifetime 'a which is bound to &'a self.
         unsafe { &*array.add(row) }
     }
 
+    #[allow(clippy::mut_from_ref)]
     fn field_at_dense_internal_mut<T: ComponentId>(
         &'a self,
         index: i8,
         row: usize,
     ) -> &'a mut T::UnderlyingType {
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
-        assert!(!array.is_null(), "field_at_dense_mut: null array at index {index}");
-        assert!(row < count, "field_at_dense_mut: row {row} out of bounds (count={count})");
+        assert!(
+            !array.is_null(),
+            "field_at_dense_mut: null array at index {index}"
+        );
+        assert!(
+            row < count,
+            "field_at_dense_mut: row {row} out of bounds (count={count})"
+        );
         // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
         // Aliasing is the caller's responsibility, matching the contract of field_internal_mut.
         unsafe { &mut *array.add(row) }

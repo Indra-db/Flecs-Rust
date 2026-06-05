@@ -1444,9 +1444,7 @@ fn on_set_singleton_set_component_named_entity() {
         .observer::<flecs::OnSet, &MySingletonComponent>()
         .write(MySingletonComponent::id())
         .each_iter(|it, _row, c1| {
-            it.world()
-                .entity_named("A")
-                .set(MyComponent { v: c1.v });
+            it.world().entity_named("A").set(MyComponent { v: c1.v });
         });
 
     world.set(MySingletonComponent { v: 1 });
@@ -1683,7 +1681,10 @@ fn other_table_w_pair() {
             });
         });
 
-    world.entity().add(Position::id()).add((Likes::id(), Apples::id()));
+    world
+        .entity()
+        .add(Position::id())
+        .add((Likes::id(), Apples::id()));
     world.get::<&Count>(|count| {
         assert_eq!(count.0, 1);
     });
@@ -1711,7 +1712,10 @@ fn other_table_w_pair_wildcard() {
             });
         });
 
-    world.entity().add(Position::id()).add((Likes::id(), Apples::id()));
+    world
+        .entity()
+        .add(Position::id())
+        .add((Likes::id(), Apples::id()));
     world.get::<&Count>(|count| {
         assert_eq!(count.0, 1);
     });
@@ -2124,24 +2128,22 @@ fn untyped_field() {
     world.set(Count(0));
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .observer::<flecs::OnSet, &Position>()
-        .run(|mut it| {
-            it.world().get::<&mut Count2>(|c| {
-                c.a += 1; // invoked count
-            });
-            while it.next() {
-                it.world().get::<&mut Count2>(|c| {
-                    c.b += 1; // iteration count
-                });
-                let size = it.size(0);
-                assert_eq!(size, core::mem::size_of::<Position>());
-                let f = it.field_untyped(0);
-                let p = unsafe { &*(f.at(0) as *const Position) };
-                assert_eq!(p.x, 10);
-                assert_eq!(p.y, 20);
-            }
+    world.observer::<flecs::OnSet, &Position>().run(|mut it| {
+        it.world().get::<&mut Count2>(|c| {
+            c.a += 1; // invoked count
         });
+        while it.next() {
+            it.world().get::<&mut Count2>(|c| {
+                c.b += 1; // iteration count
+            });
+            let size = it.size(0);
+            assert_eq!(size, core::mem::size_of::<Position>());
+            let f = it.field_untyped(0);
+            let p = unsafe { &*(f.at(0) as *const Position) };
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -2161,27 +2163,26 @@ fn query_eval_w_component_that_triggered_observer() {
     let sequence = world.entity().add(sequence_shared).id();
     let child = world.entity().id();
 
-    eprintln!("entry_event={:?} sequence_shared={:?} sequence={:?} child={:?}",
-        entry_event, sequence_shared, sequence, child);
-
     world.set(Count(0));
 
     let mut ob = world.observer_id::<()>(entry_event);
     ob.with("$Sequence")
-      .with(sequence_shared).set_src("$Sequence").filter();
-
-    eprintln!("observer builder before build: {ob:#?}");
+        .with(sequence_shared)
+        .set_src("$Sequence")
+        .filter();
 
     ob.each_iter(move |it, i, _| {
-        eprintln!("fired: id(0)={:?} event_id={:?} entity={:?} deferred={}",
-            it.id(0).id(), it.iter.event_id, it.entity(i).id(), it.world().is_deferred());
         assert_eq!(it.id(0), sequence);
         it.world().get::<&mut Count>(|c| {
             if c.0 == 0 {
                 c.0 += 1;
                 let e = it.entity(i).add(child);
                 unsafe {
-                    e.world().event_id(entry_event).entity(e).add(child).enqueue(());
+                    e.world()
+                        .event_id(entry_event)
+                        .entity(e)
+                        .add(child)
+                        .enqueue(());
                 }
             }
         });
@@ -2380,13 +2381,19 @@ fn n2_terms_un_set() {
         });
 
     let e = world.entity();
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     e.set(Position { x: 10, y: 20 });
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     e.set(Velocity { x: 1, y: 2 });
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     // Remove one term — this triggers the OnRemove observer if entity has both
     e.remove(Velocity::id());
@@ -2402,24 +2409,26 @@ fn run_callback_w_1_field() {
 
     world.set(Count(0));
 
-    world
-        .observer::<flecs::OnSet, &Position>()
-        .run(|mut it| {
-            while it.next() {
-                let p = it.field::<Position>(0);
-                assert_eq!(p[0].x, 10);
-                assert_eq!(p[0].y, 20);
-                it.world().get::<&mut Count>(|count| {
-                    count.0 += 1;
-                });
-            }
-        });
+    world.observer::<flecs::OnSet, &Position>().run(|mut it| {
+        while it.next() {
+            let p = it.field::<Position>(0);
+            assert_eq!(p[0].x, 10);
+            assert_eq!(p[0].y, 20);
+            it.world().get::<&mut Count>(|count| {
+                count.0 += 1;
+            });
+        }
+    });
 
     let e = world.entity();
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     e.set(Position { x: 10, y: 20 });
-    world.get::<&Count>(|count| { assert_eq!(count.0, 1); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 1);
+    });
 }
 
 // ─── run_callback_w_2_fields ──────────────────────────────────────────────────
@@ -2447,13 +2456,19 @@ fn run_callback_w_2_fields() {
         });
 
     let e = world.entity();
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     e.set(Position { x: 10, y: 20 });
-    world.get::<&Count>(|count| { assert_eq!(count.0, 0); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 0);
+    });
 
     e.set(Velocity { x: 1, y: 2 });
-    world.get::<&Count>(|count| { assert_eq!(count.0, 1); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 1);
+    });
 }
 
 // ─── run_callback_w_yield_existing_1_field ────────────────────────────────────
@@ -2479,7 +2494,9 @@ fn run_callback_w_yield_existing_1_field() {
             }
         });
 
-    world.get::<&Count>(|count| { assert_eq!(count.0, 1); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 1);
+    });
 }
 
 // ─── run_callback_w_yield_existing_2_fields ───────────────────────────────────
@@ -2511,5 +2528,7 @@ fn run_callback_w_yield_existing_2_fields() {
             }
         });
 
-    world.get::<&Count>(|count| { assert_eq!(count.0, 1); });
+    world.get::<&Count>(|count| {
+        assert_eq!(count.0, 1);
+    });
 }

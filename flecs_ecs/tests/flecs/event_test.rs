@@ -97,11 +97,7 @@ fn event_evt_1_id_table() {
         });
 
     unsafe {
-        world
-            .event_id(evt)
-            .add(id)
-            .table(table, 0, 1)
-            .emit(&());
+        world.event_id(evt).add(id).table(table, 0, 1).emit(&());
     }
 }
 
@@ -258,16 +254,13 @@ fn event_evt_typed_ctx() {
 
     let count = std::cell::Cell::new(0i32);
 
-    world
-        .observer::<EvtData, ()>()
-        .with(id)
-        .run(move |mut it| {
-            while it.next() {
-                assert_eq!(it.entity(0usize).id(), e1_id);
-                assert_eq!(it.param().value, 10);
-                count.set(count.get() + 1);
-            }
-        });
+    world.observer::<EvtData, ()>().with(id).run(move |mut it| {
+        while it.next() {
+            assert_eq!(it.entity(0usize).id(), e1_id);
+            assert_eq!(it.param().value, 10);
+            count.set(count.get() + 1);
+        }
+    });
 
     world
         .event::<EvtData>()
@@ -286,16 +279,13 @@ fn event_evt_implicit_typed_ctx() {
 
     let count = std::cell::Cell::new(0i32);
 
-    world
-        .observer::<EvtData, ()>()
-        .with(id)
-        .run(move |mut it| {
-            while it.next() {
-                assert_eq!(it.entity(0usize).id(), e1_id);
-                assert_eq!(it.param().value, 10);
-                count.set(count.get() + 1);
-            }
-        });
+    world.observer::<EvtData, ()>().with(id).run(move |mut it| {
+        while it.next() {
+            assert_eq!(it.entity(0usize).id(), e1_id);
+            assert_eq!(it.param().value, 10);
+            count.set(count.get() + 1);
+        }
+    });
 
     // C++ .ctx({10}) is implicit construction; Rust requires explicit struct
     world
@@ -472,9 +462,17 @@ fn event_emit_custom_for_any() {
             count_b.set(count_b.get() + 1);
         });
 
-    world.event::<Evt>().add(flecs::Any::ID).entity(e1).emit(&Evt);
+    world
+        .event::<Evt>()
+        .add(flecs::Any::ID)
+        .entity(e1)
+        .emit(&Evt);
 
-    world.event::<Evt>().add(flecs::Any::ID).entity(e2).emit(&Evt);
+    world
+        .event::<Evt>()
+        .add(flecs::Any::ID)
+        .entity(e2)
+        .emit(&Evt);
 
     // Note: count_a and count_b are moved into closures; values not accessible after.
     // The assertions about counts are inside the closures (equivalent to C++ test_int checks).

@@ -946,10 +946,7 @@ fn meta_primitive_type() {
     });
 
     t.get::<&flecs::meta::Type>(|mt| {
-        assert_eq!(
-            mt.kind,
-            flecs_ecs_sys::ecs_type_kind_t_EcsPrimitiveType
-        );
+        assert_eq!(mt.kind, flecs_ecs_sys::ecs_type_kind_t_EcsPrimitiveType);
     });
 
     t.get::<&flecs::meta::Primitive>(|pt| {
@@ -974,10 +971,7 @@ fn meta_array_type() {
     });
 
     t.get::<&flecs::meta::Type>(|mt| {
-        assert_eq!(
-            mt.kind,
-            flecs_ecs_sys::ecs_type_kind_t_EcsArrayType
-        );
+        assert_eq!(mt.kind, flecs_ecs_sys::ecs_type_kind_t_EcsArrayType);
     });
 
     t.get::<&flecs::meta::Array>(|at| {
@@ -998,10 +992,7 @@ fn meta_vector_type() {
     assert!(t.has(id::<flecs::meta::Vector>()));
 
     t.get::<&flecs::meta::Type>(|mt| {
-        assert_eq!(
-            mt.kind,
-            flecs_ecs_sys::ecs_type_kind_t_EcsVectorType
-        );
+        assert_eq!(mt.kind, flecs_ecs_sys::ecs_type_kind_t_EcsVectorType);
     });
 
     t.get::<&flecs::meta::Vector>(|vt| {
@@ -1071,9 +1062,7 @@ fn meta_entity_from_json_w_values() {
 
     let e = world.entity();
     // Component is registered with short name "JsonPos" (type_name_without_scope)
-    e.from_json(
-        "{\"name\":\"ent\", \"components\":{\"JsonPos\": {\"x\":10, \"y\":20}}}",
-    );
+    e.from_json("{\"name\":\"ent\", \"components\":{\"JsonPos\": {\"x\":10, \"y\":20}}}");
 
     assert_ne!(e.id(), 0);
     assert_eq!(e.name(), "ent");
@@ -1091,9 +1080,7 @@ fn meta_entity_from_json_w_values() {
 fn meta_entity_to_json() {
     let world = World::new();
 
-    let e = world
-        .entity_named("foo")
-        .set(JsonPos { x: 10.0, y: 20.0 });
+    let e = world.entity_named("foo").set(JsonPos { x: 10.0, y: 20.0 });
     let json = e.to_json(None);
     // In Rust, JsonPos lives in the meta_test module scope, so Flecs uses the
     // fully-qualified path in JSON output. C++ uses the short name because types
@@ -1110,9 +1097,7 @@ fn meta_entity_to_json() {
 fn meta_entity_to_json_w_default_desc() {
     let world = World::new();
 
-    let e = world
-        .entity_named("foo")
-        .set(JsonPos { x: 10.0, y: 20.0 });
+    let e = world.entity_named("foo").set(JsonPos { x: 10.0, y: 20.0 });
     // SAFETY: ecs_entity_to_json_desc_t is a plain C struct, zero-init is valid
     let desc: json::EntityToJsonDesc = unsafe { core::mem::zeroed() };
     let json = e.to_json(Some(&desc));
@@ -1129,9 +1114,7 @@ fn meta_entity_to_json_w_default_desc() {
 fn meta_iter_to_json() {
     let world = World::new();
 
-    world
-        .entity_named("foo")
-        .set(JsonPos { x: 10.0, y: 20.0 });
+    world.entity_named("foo").set(JsonPos { x: 10.0, y: 20.0 });
 
     let q = world.new_query::<&JsonPos>();
     let json = q.to_json(None);
@@ -1149,9 +1132,7 @@ fn meta_iter_to_json() {
 fn meta_query_to_json() {
     let world = World::new();
 
-    world
-        .entity_named("foo")
-        .set(JsonPos { x: 10.0, y: 20.0 });
+    world.entity_named("foo").set(JsonPos { x: 10.0, y: 20.0 });
 
     let q = world.new_query::<&JsonPos>();
     let json = q.to_json(None);
@@ -1169,9 +1150,7 @@ fn meta_query_to_json() {
 fn meta_query_to_json_w_default_desc() {
     let world = World::new();
 
-    world
-        .entity_named("foo")
-        .set(JsonPos { x: 10.0, y: 20.0 });
+    world.entity_named("foo").set(JsonPos { x: 10.0, y: 20.0 });
 
     let q = world.new_query::<&JsonPos>();
     // SAFETY: ecs_iter_to_json_desc_t is a plain C struct, zero-init is valid
@@ -1179,10 +1158,7 @@ fn meta_query_to_json_w_default_desc() {
     let json = q.to_json(Some(&desc));
     assert!(json.is_some());
     // Zero-initialized desc has serialize_values=false → no field values emitted
-    assert_eq!(
-        json.unwrap(),
-        "{\"results\":[{\"name\":\"foo\"}]}"
-    );
+    assert_eq!(json.unwrap(), "{\"results\":[{\"name\":\"foo\"}]}");
 }
 
 // ── set_type_json ──
@@ -1243,11 +1219,7 @@ fn meta_set_pair_R_T_json() {
 
     let e = world
         .entity()
-        .set_json(
-            (JsonPos::id(), PairTag::id()),
-            "{\"x\":10, \"y\":20}",
-            None,
-        );
+        .set_json((JsonPos::id(), PairTag::id()), "{\"x\":10, \"y\":20}", None);
 
     e.try_get::<&(JsonPos, PairTag)>(|p| {
         assert_eq!(p.x, 10.0);
@@ -1465,11 +1437,7 @@ fn meta_custom_std_vector_std_string_to_json() {
         .component_ext::<Vec<String>>(id)
         .opaque_func_id::<_, String>(id, std_vector_support::<String>);
 
-    let v = vec![
-        "hello".to_string(),
-        "world".to_string(),
-        "foo".to_string(),
-    ];
+    let v = vec!["hello".to_string(), "world".to_string(), "foo".to_string()];
     let json = world.to_json_dyn::<Vec<String>>(id, &v);
     assert_eq!(json, "[\"hello\", \"world\", \"foo\"]");
 }
@@ -1677,7 +1645,10 @@ fn meta_type_w_std_vector_std_string_std_vector() {
         v2: vec![4, 5, 6],
     };
     let json = world.to_json::<TVecStrVec>(&v);
-    assert_eq!(json, "{\"v1\":[1, 2, 3], \"s\":\"hello world\", \"v2\":[4, 5, 6]}");
+    assert_eq!(
+        json,
+        "{\"v1\":[1, 2, 3], \"s\":\"hello world\", \"v2\":[4, 5, 6]}"
+    );
 }
 
 // ── type_w_std_vector_std_vector_std_string ──
@@ -1713,7 +1684,10 @@ fn meta_type_w_std_vector_std_vector_std_string() {
         s: "hello world".to_string(),
     };
     let json = world.to_json::<TVecVecStr>(&v);
-    assert_eq!(json, "{\"v1\":[1, 2, 3], \"v2\":[4, 5, 6], \"s\":\"hello world\"}");
+    assert_eq!(
+        json,
+        "{\"v1\":[1, 2, 3], \"v2\":[4, 5, 6], \"s\":\"hello world\"}"
+    );
 }
 
 // ── type_w_std_string_std_string ──
@@ -1832,10 +1806,7 @@ fn meta_units() {
 
     t.lookup("meters").get::<&flecs::meta::Member>(|m| {
         assert_eq!(m.type_, flecs::meta::I32);
-        assert_eq!(
-            m.unit,
-            units::length::Meters::get_id(&world)
-        );
+        assert_eq!(m.unit, units::length::Meters::get_id(&world));
     });
 }
 
@@ -1860,14 +1831,8 @@ fn meta_unit_w_quantity() {
     unit_2.unit(Some("u2"), 0u64, 0u64, 0u64, 0, 0);
     unit_2.quantity::<units::Length>();
 
-    assert!(unit_1.has((
-        flecs::meta::Quantity::ID,
-        *custom_quantity
-    )));
-    assert!(unit_2.has((
-        flecs::meta::Quantity::ID,
-        units::Length::get_id(&world)
-    )));
+    assert!(unit_1.has((flecs::meta::Quantity::ID, *custom_quantity)));
+    assert!(unit_2.has((flecs::meta::Quantity::ID, units::Length::get_id(&world))));
 }
 
 // ── unit_w_prefix ──
