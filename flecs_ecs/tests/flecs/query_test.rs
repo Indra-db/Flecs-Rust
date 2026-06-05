@@ -3431,7 +3431,7 @@ fn iter_targets() {
 }
 
 #[test]
-fn iter_targets_2nd_field() {
+fn iter_targets_second_field() {
     let world = World::new();
 
     let likes = world.entity();
