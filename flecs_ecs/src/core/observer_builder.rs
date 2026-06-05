@@ -232,3 +232,33 @@ impl<'a, P, T: QueryTuple> WorldProvider<'a> for ObserverBuilder<'a, P, T> {
 }
 
 implement_reactor_api!(ObserverBuilder<'a, P, T>);
+
+impl<P, T: QueryTuple> core::fmt::Debug for ObserverBuilder<'_, P, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let qd = &self.desc.query;
+        let mut ds = f.debug_struct("ObserverBuilder");
+        ds.field("events", &&self.desc.events[..self.event_count]);
+        let mut term_list = Vec::new();
+        for t in qd.terms.iter() {
+            if t.id == 0 && t.first.id == 0 && t.first.name.is_null() {
+                break;
+            }
+            let first_name = if t.first.name.is_null() {
+                None
+            } else {
+                Some(unsafe { core::ffi::CStr::from_ptr(t.first.name).to_str().unwrap_or("?") })
+            };
+            let src_name = if t.src.name.is_null() {
+                None
+            } else {
+                Some(unsafe { core::ffi::CStr::from_ptr(t.src.name).to_str().unwrap_or("?") })
+            };
+            term_list.push(format!(
+                "{{ id={:#x}, first.id={:#x}, first.name={:?}, src.id={:#x}, src.name={:?}, inout={}, oper={} }}",
+                t.id, t.first.id, first_name, t.src.id, src_name, t.inout, t.oper
+            ));
+        }
+        ds.field("terms", &term_list);
+        ds.finish()
+    }
+}

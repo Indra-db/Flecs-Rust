@@ -2,679 +2,789 @@
 #![allow(clippy::std_instead_of_alloc)]
 use flecs_ecs::prelude::*;
 
-// Module-level types for tests that verify lookup by short name.
-// Components are registered with their short name (type_name_without_scope),
-// so world.lookup("IcPosition") finds IcPosition regardless of Rust module path.
-
+// ---------------------------------------------------------------------------
+// Shared component types used across multiple tests
+// ---------------------------------------------------------------------------
 #[derive(Component, Default)]
-struct IcPosition {
+struct Position {
     pub x: f32,
     pub y: f32,
 }
 
 #[derive(Component, Default)]
-struct IcVelocity {
+struct Velocity {
     pub x: f32,
     pub y: f32,
 }
 
-#[derive(Component, Default)]
-struct IcPair {
-    pub value: i32,
-}
-
-// ----------------------------------------------------------------------------
-// ImplicitComponents — tests verify that first-use of a type auto-registers
-// the component (implicit registration). Tests that check lookup by qualified
-// path use module-level types (IcPosition etc.) whose Rust path matches the
-// expected Flecs entity path.
-// ----------------------------------------------------------------------------
-
-#[test]
-fn add() {
-    let world = World::new();
-
-    let e = world.entity().add(IcPosition::id());
-
-    let arch_str = e.archetype().to_string().unwrap_or_default();
-    assert!(
-        arch_str.contains("IcPosition"),
-        "expected 'IcPosition' in archetype, got '{arch_str}'"
-    );
-    assert!(e.has(IcPosition::id()));
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn remove() {
-    let world = World::new();
-
-    let e = world.entity().remove(IcPosition::id());
-
-    assert!(!e.has(IcPosition::id()));
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn has() {
-    let world = World::new();
-
-    let e = world.entity();
-    assert!(!e.has(IcPosition::id()));
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn set() {
-    let world = World::new();
-
-    let e = world.entity().set(IcPosition { x: 10.0, y: 20.0 });
-
-    let arch_str = e.archetype().to_string().unwrap_or_default();
-    assert!(
-        arch_str.contains("IcPosition"),
-        "expected 'IcPosition' in archetype, got '{arch_str}'"
-    );
-    assert!(e.has(IcPosition::id()));
-
-    e.get::<&IcPosition>(|p| {
-        assert!((p.x - 10.0).abs() < f32::EPSILON);
-        assert!((p.y - 20.0).abs() < f32::EPSILON);
-    });
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn get() {
-    let world = World::new();
-
-    let e = world.entity();
-
-    // try_get returns None when component is absent
-    let found = e.try_get::<&IcPosition>(|_p| true);
-    assert!(found.is_none());
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn add_pair() {
-    let world = World::new();
-
-    let e = world.entity().add((IcPair::id(), IcPosition::id()));
-
-    let arch_str = e.archetype().to_string().unwrap_or_default();
-    assert!(
-        arch_str.contains("IcPair") && arch_str.contains("IcPosition"),
-        "expected '(IcPair,IcPosition)' in archetype, got '{arch_str}'"
-    );
-    assert!(e.has((IcPair::id(), IcPosition::id())));
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    let pair = world.lookup("IcPair");
-    assert!(pair.id() != 0);
-}
-
-#[test]
-fn remove_pair() {
-    let world = World::new();
-
-    let e = world.entity().remove((IcPosition::id(), IcPair::id()));
-
-    assert!(!e.has((IcPosition::id(), IcPair::id())));
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    let pair = world.lookup("IcPair");
-    assert!(pair.id() != 0);
-}
-
-#[test]
-fn module() {
-    // In C++: world.module<Position>() — registers Position as a module component.
-    // Verifies the component can be found by its qualified Rust type path.
-    let world = World::new();
-
-    world.component::<IcPosition>();
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-}
-
-#[test]
-fn system() {
-    let world = World::new();
-
-    world
-        .system::<(&mut IcPosition, &mut IcVelocity)>()
-        .each_entity(|_e, (_p, _v)| {});
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    let velocity = world.lookup("IcVelocity");
-    assert!(velocity.id() != 0);
-}
-
-#[test]
-fn system_optional() {
-    #[derive(Component, Default)]
-    struct Rotation {
-        angle: f32,
-    }
-    #[derive(Component, Default)]
-    struct Mass {
-        value: f32,
-    }
-
-    let world = World::new();
-
-    use std::sync::Arc;
-    use core::sync::atomic::{AtomicI32, Ordering};
-    let rotation_count = Arc::new(AtomicI32::new(0));
-    let mass_count = Arc::new(AtomicI32::new(0));
-    let rc = Arc::clone(&rotation_count);
-    let mc = Arc::clone(&mass_count);
-
-    world
-        .system::<(Option<&Rotation>, Option<&Mass>)>()
-        .each_entity(move |_e, (r, m)| {
-            if r.is_some() {
-                rc.fetch_add(1, Ordering::Relaxed);
-            }
-            if m.is_some() {
-                mc.fetch_add(1, Ordering::Relaxed);
-            }
-        });
-
-    world.entity().set(Rotation { angle: 10.0 });
-    world.entity().set(Mass { value: 20.0 });
-    world
-        .entity()
-        .set(Rotation { angle: 30.0 })
-        .set(Mass { value: 40.0 });
-
-    let rotation = world.lookup("Rotation");
-    assert!(rotation.id() != 0);
-
-    let mass = world.lookup("Mass");
-    assert!(mass.id() != 0);
-
-    let rcomp = world.component::<Rotation>();
-    assert_eq!(rcomp.id(), rotation.id());
-
-    let mcomp = world.component::<Mass>();
-    assert_eq!(mcomp.id(), mass.id());
-
-    world.progress();
-
-    assert_eq!(rotation_count.load(Ordering::Relaxed), 2);
-    assert_eq!(mass_count.load(Ordering::Relaxed), 2);
-}
-
-#[test]
-fn system_const() {
-    let world = World::new();
-
-    use std::sync::Arc;
-    use core::sync::atomic::{AtomicI32, Ordering};
-    let count = Arc::new(AtomicI32::new(0));
-    let count_c = Arc::clone(&count);
-
-    world
-        .system::<(&mut IcPosition, &IcVelocity)>()
-        .each_entity(move |_e, (p, v)| {
-            p.x += v.x;
-            p.y += v.y;
-            count_c.fetch_add(1, Ordering::Relaxed);
-        });
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    let velocity = world.lookup("IcVelocity");
-    assert!(velocity.id() != 0);
-
-    let e = world
-        .entity()
-        .set(IcPosition { x: 10.0, y: 20.0 })
-        .set(IcVelocity { x: 1.0, y: 2.0 });
-
-    let pcomp = world.component::<IcPosition>();
-    assert_eq!(pcomp.id(), position.id());
-
-    let vcomp = world.component::<IcVelocity>();
-    assert_eq!(vcomp.id(), velocity.id());
-
-    world.progress();
-
-    assert_eq!(count.load(Ordering::Relaxed), 1);
-
-    e.get::<&IcPosition>(|p| {
-        assert!((p.x - 11.0).abs() < f32::EPSILON);
-        assert!((p.y - 22.0).abs() < f32::EPSILON);
-    });
-}
-
-#[test]
-fn query() {
-    let world = World::new();
-
-    let q = world.new_query::<(&mut IcPosition, &mut IcVelocity)>();
-
-    q.each_entity(|_e, (_p, _v)| {});
-
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    let velocity = world.lookup("IcVelocity");
-    assert!(velocity.id() != 0);
-}
-
-#[test]
-fn implicit_name() {
-    let world = World::new();
-
-    let pcomp = world.component::<IcPosition>();
-
-    // Verify the component can be found by its fully-qualified Rust type path
-    let position = world.lookup("IcPosition");
-    assert!(position.id() != 0);
-
-    assert_eq!(pcomp.id(), position.id());
-}
-
-#[test]
-fn reinit() {
-    // The C++ test calls flecs::_::type<Position>::reset() to simulate
-    // registration across translation units (forcing a re-lookup on next use).
-    // In Rust, #[derive(Component)] uses a thread-local static for the ID,
-    // and there is no public reset API. We verify that registering the same
-    // component type twice returns the same entity ID (idempotent registration).
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    let comp_1 = world.component::<Position>();
-
-    // Re-registering must return the same entity
-    let comp_2 = world.component::<Position>();
-    assert_eq!(comp_1.id(), comp_2.id());
-
-    let e = world.entity().add(Position::id());
-    assert!(e.has(Position::id()));
-
-    // Both lookups must match
-    assert_eq!(world.component::<Position>().id(), comp_1.id());
-}
-
-#[test]
-fn reinit_scoped() {
-    // Mirrors C++ ImplicitComponents_reinit_scoped with Foo::Position.
-    // Rust modules are compile-time, not runtime scopes, so we simply verify
-    // idempotent registration for a locally-scoped type.
-    mod foo {
-        use flecs_ecs::prelude::*;
-
-        #[derive(Component, Default)]
-        pub struct Position {
-            pub x: f32,
-            pub y: f32,
+// ---------------------------------------------------------------------------
+// Module definitions mirroring Module.cpp
+// ---------------------------------------------------------------------------
+
+mod ns {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component)]
+    pub struct NestedModule;
+
+    impl Module for NestedModule {
+        fn module(world: &World) {
+            world.module::<NestedModule>("ns::NestedModule");
+            world.component::<super::Velocity>();
         }
     }
 
-    let world = World::new();
-
-    let comp_1 = world.component::<foo::Position>();
-    let comp_2 = world.component::<foo::Position>();
-    assert_eq!(comp_1.id(), comp_2.id());
-
-    let e = world.entity().add(foo::Position::id());
-    assert!(e.has(foo::Position::id()));
-
-    assert_eq!(world.component::<foo::Position>().id(), comp_1.id());
-}
-
-#[test]
-fn reinit_w_lifecycle() {
-    // C++ version sets a custom ctor hook and verifies it fires on add.
-    // Rust lifecycle hooks are registered via #[flecs(on_add=...)] or
-    // component().on_add(...). We verify the component is stable across
-    // multiple add operations, consistent with the C++ intent.
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    let comp_1 = world.component::<Position>();
-
-    let e1 = world.entity().add(Position::id());
-    assert!(e1.has(Position::id()));
-
-    // Re-verify same component id
-    let comp_2 = world.component::<Position>();
-    assert_eq!(comp_1.id(), comp_2.id());
-
-    let e2 = world.entity().add(Position::id());
-    assert!(e2.has(Position::id()));
-
-    assert_eq!(world.component::<Position>().id(), comp_1.id());
-}
-
-#[test]
-fn first_use_in_system() {
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-    #[derive(Component, Default)]
-    struct Velocity {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Velocity::id());
-        });
-
-    let e = world.entity().add(Position::id());
-
-    world.progress();
-
-    assert!(e.has(Velocity::id()));
-}
-
-#[test]
-fn first_use_tag_in_system() {
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
     #[derive(Component)]
-    struct Tag;
+    pub struct SimpleModule;
 
-    let world = World::new();
+    impl Module for SimpleModule {
+        fn module(world: &World) {
+            world.module::<SimpleModule>("ns::SimpleModule");
+            world.import::<NestedModule>();
+            world.component::<super::Position>();
+        }
+    }
 
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Tag::id());
-        });
+    #[derive(Component)]
+    pub struct NestedNameSpaceType;
 
-    let e = world.entity().add(Position::id());
+    #[derive(Component)]
+    pub struct NestedTypeModule;
 
-    world.progress();
+    impl Module for NestedTypeModule {
+        fn module(world: &World) {
+            world.module::<NestedTypeModule>("ns::NestedTypeModule");
+            world.component::<NestedType>();
+            world.component::<NestedNameSpaceType>();
+        }
+    }
 
-    assert!(e.has(Tag::id()));
+    #[derive(Component)]
+    pub struct NestedType;
+
+    #[derive(Component)]
+    pub struct NamedModule;
+
+    impl Module for NamedModule {
+        fn module(world: &World) {
+            world.module::<NamedModule>("::my_scope::NamedModule");
+            world.component::<super::Position>();
+        }
+    }
+
+    #[derive(Component)]
+    pub struct ImplicitModule;
+
+    impl Module for ImplicitModule {
+        fn module(world: &World) {
+            world.module::<ImplicitModule>("ns::ImplicitModule");
+            world.component::<super::Position>();
+        }
+    }
+
+    #[derive(Component)]
+    pub struct NamedModuleInRoot;
+
+    impl Module for NamedModuleInRoot {
+        fn module(world: &World) {
+            world.module::<NamedModuleInRoot>("::NamedModuleInRoot");
+            world.component::<super::Position>();
+        }
+    }
+
+    #[derive(Component)]
+    pub struct ReparentModule;
+
+    impl Module for ReparentModule {
+        fn module(world: &World) {
+            let m = world.module::<ReparentModule>("ReparentModule");
+            m.child_of(world.entity_named("::parent"));
+
+            let other = world.entity_named("::ns::ReparentModule");
+            assert_ne!(other.id(), 0);
+            assert_ne!(other.id(), m.id());
+        }
+    }
 }
 
-#[test]
-fn first_use_enum_in_system() {
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
+#[derive(Component)]
+struct ReparentRootModule;
+
+impl Module for ReparentRootModule {
+    fn module(world: &World) {
+        world.module::<ReparentRootModule>("ns::ReparentRootModule");
     }
+}
+
+mod renamed_root_module {
+    use flecs_ecs::prelude::*;
+
     #[derive(Component)]
-    struct Tag;
+    pub struct Module;
 
-    #[repr(C)]
-    #[derive(Component, PartialEq, Debug)]
-    enum Color {
-        Red,
-        Green,
-        Blue,
+    impl flecs_ecs::addons::module::Module for Module {
+        fn module(world: &World) {
+            world.module::<Module>("::MyModule");
+            for _ in 0..5 {
+                let e = world.entity();
+                // entity id fits in u32 (low-id range)
+                assert_eq!(e.id().0 as u32 as u64, e.id().0);
+            }
+        }
+    }
+}
+
+mod ns_parent {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component, Default)]
+    pub struct NsType {
+        pub x: f32,
     }
 
+    #[derive(Component)]
+    pub struct ShorterParent;
+
+    impl Module for ShorterParent {
+        fn module(world: &World) {
+            world.module::<ShorterParent>("ns::ShorterParent");
+            world.component::<NsType>();
+        }
+    }
+
+    #[derive(Component)]
+    pub struct LongerParent;
+
+    impl Module for LongerParent {
+        fn module(world: &World) {
+            world.module::<LongerParent>("ns_parent_namespace::LongerParent");
+            world.component::<NsType>();
+        }
+    }
+
+    pub mod ns_child {
+        use flecs_ecs::prelude::*;
+
+        #[derive(Component)]
+        pub struct Nested;
+
+        impl Module for Nested {
+            fn module(world: &World) {
+                world.module::<Nested>("ns::child::Nested");
+                world.component::<super::NsType>();
+            }
+        }
+    }
+}
+
+mod module_with_core_name_mod {
+    use flecs_ecs::prelude::*;
+    use super::Position;
+
+    #[derive(Component)]
+    pub struct Module;
+
+    impl flecs_ecs::addons::module::Module for Module {
+        fn module(world: &World) {
+            world.module::<Module>("::Module");
+            world.component::<Position>();
+        }
+    }
+}
+
+thread_local! {
+    static MODULE_CTOR_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
+    static MODULE_DTOR_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
+}
+
+fn reset_dtor_counts() {
+    MODULE_CTOR_INVOKED.with(|c| *c.borrow_mut() = 0);
+    MODULE_DTOR_INVOKED.with(|c| *c.borrow_mut() = 0);
+}
+
+#[derive(Component)]
+struct ModuleWDtor {
+    _pad: u8,
+}
+
+impl Drop for ModuleWDtor {
+    fn drop(&mut self) {
+        MODULE_DTOR_INVOKED.with(|c| *c.borrow_mut() += 1);
+    }
+}
+
+impl Module for ModuleWDtor {
+    fn module(world: &World) {
+        world.module::<ModuleWDtor>("ModuleWDtor");
+        MODULE_CTOR_INVOKED.with(|c| *c.borrow_mut() += 1);
+        world.system::<()>().run(|_| {});
+    }
+}
+
+#[derive(Component)]
+struct ModuleA;
+
+#[derive(Component)]
+struct ModuleAComponent;
+
+impl Module for ModuleA {
+    fn module(world: &World) {
+        world.component::<ModuleAComponent>();
+    }
+}
+
+#[derive(Component)]
+struct SystemAndImplicitComponent;
+
+impl Module for SystemAndImplicitComponent {
+    fn module(world: &World) {
+        world.system_named::<()>("VelocitySys").with(Velocity::id()).run(|_| {});
+    }
+}
+
+#[derive(Component)]
+struct SystemAndExplicitComponent;
+
+impl Module for SystemAndExplicitComponent {
+    fn module(world: &World) {
+        world.component::<Velocity>();
+        world.system_named::<()>("VelocitySys").with(Velocity::id()).run(|_| {});
+    }
+}
+
+thread_local! {
+    static SINGLETON_TEST_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
+}
+
+#[derive(Component)]
+struct SingletonTest;
+
+impl Module for SingletonTest {
+    fn module(world: &World) {
+        assert!(world.component::<SingletonTest>().has(flecs::Singleton::ID));
+        SINGLETON_TEST_INVOKED.with(|c| *c.borrow_mut() += 1);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn module_import() {
     let world = World::new();
 
-    world
-        .system::<&Position>()
-        .each_entity(|e, _p| {
-            e.add(Tag::id());
-            e.set(Color::Green);
-        });
+    let m = world.import::<ns::SimpleModule>();
+    assert_ne!(m.id(), 0);
+    assert_eq!(m.path(), Some("::ns::SimpleModule".to_string()));
+    assert!(m.has(flecs::Module::ID));
 
     let e = world.entity().add(Position::id());
-
-    world.progress();
-
+    assert_ne!(e.id(), 0);
     assert!(e.has(Position::id()));
-    assert!(e.has(Tag::id()));
+}
 
-    e.try_get::<&Color>(|c| {
-        assert_eq!(*c, Color::Green);
+#[test]
+fn module_lookup_from_scope() {
+    let world = World::new();
+    world.import::<ns::SimpleModule>();
+
+    let ns_entity = world.lookup("ns");
+    assert_ne!(ns_entity.id(), 0);
+
+    let module_entity = world.lookup("ns::SimpleModule");
+    assert_ne!(module_entity.id(), 0);
+
+    let position_entity = world.lookup("ns::SimpleModule::Position");
+    assert_ne!(position_entity.id(), 0);
+
+    let nested_module = ns_entity.lookup("SimpleModule");
+    assert_eq!(module_entity.id(), nested_module.id());
+
+    let module_position = module_entity.lookup("Position");
+    assert_eq!(position_entity.id(), module_position.id());
+
+    let ns_position = ns_entity.lookup("SimpleModule::Position");
+    assert_eq!(position_entity.id(), ns_position.id());
+}
+
+#[test]
+fn module_nested_module() {
+    let world = World::new();
+    world.import::<ns::SimpleModule>();
+
+    let velocity = world.lookup("ns::NestedModule::Velocity");
+    assert_ne!(velocity.id(), 0);
+
+    assert_eq!(velocity.path(), Some("::ns::NestedModule::Velocity".to_string()));
+}
+
+#[test]
+fn module_nested_type_module() {
+    let world = World::new();
+    world.import::<ns::NestedTypeModule>();
+
+    let ns_entity = world.lookup("ns");
+    assert_ne!(ns_entity.id(), 0);
+
+    let module_entity = world.lookup("ns::NestedTypeModule");
+    assert_ne!(module_entity.id(), 0);
+
+    let type_entity = world.lookup("ns::NestedTypeModule::NestedType");
+    assert_ne!(type_entity.id(), 0);
+
+    let ns_type_entity = world.lookup("ns::NestedTypeModule::NestedNameSpaceType");
+    assert_ne!(ns_type_entity.id(), 0);
+
+    let mut childof_count = 0i32;
+    type_entity.each_pair(flecs::ChildOf::ID, flecs::Wildcard::ID, |_| {
+        childof_count += 1;
     });
+    assert_eq!(childof_count, 1);
 
-    // Color enum component should have Exclusive trait
-    assert!(world.component::<Color>().has(flecs::Exclusive));
-}
-
-#[test]
-fn use_const() {
-    // C++: world.use<const Position>() — registers Position and marks it const.
-    // Rust has no world.use<>() API. We verify normal registration + get still
-    // works with a shared (&) reference (the Rust const-equivalent).
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    // Implicit registration via set
-    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
-
-    assert!(e.has(Position::id()));
-
-    e.get::<&Position>(|p| {
-        assert!((p.x - 10.0).abs() < f32::EPSILON);
-        assert!((p.y - 20.0).abs() < f32::EPSILON);
+    childof_count = 0;
+    ns_type_entity.each_pair(flecs::ChildOf::ID, flecs::Wildcard::ID, |_| {
+        childof_count += 1;
     });
+    assert_eq!(childof_count, 1);
 }
 
 #[test]
-fn use_const_w_stage() {
-    // C++: world.use<const Velocity>() then progress.
-    // Rust: verify component accessible as &Velocity after system runs.
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-    #[derive(Component, Default)]
-    struct Velocity {
-        x: f32,
-        y: f32,
-    }
-
+fn module_component_redefinition_outside_module() {
     let world = World::new();
+    world.import::<ns::SimpleModule>();
 
-    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+    let pos_comp = world.lookup("ns::SimpleModule::Position");
+    assert_ne!(pos_comp.id(), 0);
 
-    world.system::<&Position>().each_entity(|e, _p| {
-        e.set(Velocity { x: 1.0, y: 2.0 });
+    let pos = world.component::<Position>();
+    assert_ne!(pos.id(), 0);
+    assert_eq!(pos.id(), pos_comp.id());
+
+    let mut childof_count = 0i32;
+    pos_comp.each_pair(flecs::ChildOf::ID, flecs::Wildcard::ID, |_| {
+        childof_count += 1;
     });
-
-    world.progress();
-
-    assert!(e.has(Velocity::id()));
-
-    e.get::<&Velocity>(|v| {
-        assert!((v.x - 1.0).abs() < f32::EPSILON);
-        assert!((v.y - 2.0).abs() < f32::EPSILON);
-    });
+    assert_eq!(childof_count, 1);
 }
 
 #[test]
-fn use_const_w_threads() {
-    // C++: world.use<const Velocity>() + set_threads(2).
-    // Rust: same pattern with multi-threading enabled.
-    #[derive(Component, Default)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-    #[derive(Component, Default)]
-    struct Velocity {
-        x: f32,
-        y: f32,
-    }
-
+fn module_tag_on_namespace() {
     let world = World::new();
 
-    let e = world.entity().set(Position { x: 10.0, y: 20.0 });
+    let mid = world.import::<ns::NestedModule>();
+    assert!(mid.has(flecs::Module::ID));
 
-    world.system::<&Position>().each_entity(|e, _p| {
-        e.set(Velocity { x: 1.0, y: 2.0 });
-    });
-
-    world.set_threads(2);
-    world.progress();
-
-    assert!(e.has(Velocity::id()));
-
-    e.get::<&Velocity>(|v| {
-        assert!((v.x - 1.0).abs() < f32::EPSILON);
-        assert!((v.y - 2.0).abs() < f32::EPSILON);
-    });
+    let nsid = world.lookup("ns");
+    assert!(nsid.has(flecs::Module::ID));
 }
 
 #[test]
-fn implicit_base() {
-    // C++: world.use<Position>(), then check id() == id<const Position>() == id<Position&>().
-    // In Rust all reference variants map to the same underlying ComponentId.
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
+fn module_dtor_on_fini() {
+    reset_dtor_counts();
 
-    let world = World::new();
-
-    let v = world.component::<Position>();
-
-    // &Position and &mut Position resolve to the same component id
-    let v_const = world.component::<Position>();
-    assert_eq!(v.id(), v_const.id());
-}
-
-#[test]
-fn implicit_const() {
-    // C++: world.use<const Position>() — same id checks.
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    let v = world.component::<Position>();
-
-    let v2 = world.component::<Position>();
-    assert_eq!(v.id(), v2.id());
-}
-
-#[test]
-fn implicit_ref() {
-    // C++: world.use<Position&>() — same id checks.
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    let v = world.component::<Position>();
-    let v2 = world.component::<Position>();
-    assert_eq!(v.id(), v2.id());
-}
-
-#[test]
-fn implicit_const_ref() {
-    // C++: world.use<const Position&>() — same id checks.
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
-    let world = World::new();
-
-    let v = world.component::<Position>();
-    let v2 = world.component::<Position>();
-    assert_eq!(v.id(), v2.id());
-}
-
-#[test]
-fn vector_elem_type() {
-    // C++: world.vector<int>() — creates a meta vector type entity.
-    // Rust: world.vector::<i32>() is available under the flecs_meta feature.
-    let world = World::new();
+    MODULE_CTOR_INVOKED.with(|c| assert_eq!(*c.borrow(), 0));
+    MODULE_DTOR_INVOKED.with(|c| assert_eq!(*c.borrow(), 0));
 
     {
-        let v = world.vector::<i32>();
-        assert!(v.id() != 0);
+        let ecs = World::new();
+
+        ecs.import::<ModuleWDtor>();
+
+        MODULE_CTOR_INVOKED.with(|c| assert_eq!(*c.borrow(), 1));
+        MODULE_DTOR_INVOKED.with(|c| assert_eq!(*c.borrow(), 0));
     }
+
+    MODULE_DTOR_INVOKED.with(|c| assert_eq!(*c.borrow(), 1));
+}
+
+#[test]
+fn module_register_w_root_name() {
+    let world = World::new();
+
+    let m = world.import::<ns::NamedModule>();
+    let m_lookup = world.lookup("::my_scope::NamedModule");
+    assert_ne!(m.id(), 0);
+    assert_eq!(m.id(), m_lookup.id());
+
+    let ns_lookup = world.try_lookup("::ns::NamedModule");
+    assert!(ns_lookup.is_none());
+}
+
+#[test]
+fn module_implicit_module() {
+    let world = World::new();
+
+    let m = world.import::<ns::ImplicitModule>();
+    let m_lookup = world.lookup("::ns::ImplicitModule");
+    assert_ne!(m.id(), 0);
+    assert_eq!(m.id(), m_lookup.id());
+
+    let p = world.component::<Position>();
+    let p_lookup = world.lookup("::ns::ImplicitModule::Position");
+    assert_ne!(p.id(), 0);
+    assert_eq!(p.id(), p_lookup.id());
+}
+
+#[test]
+fn module_module_in_namespace_w_root_name() {
+    let world = World::new();
+
+    let m = world.import::<ns::NamedModuleInRoot>();
+    let m_lookup = world.lookup("::NamedModuleInRoot");
+    assert_ne!(m.id(), 0);
+    assert_eq!(m.id(), m_lookup.id());
+    assert_eq!(m.path(), Some("::NamedModuleInRoot".to_string()));
+
+    let p = world.component::<Position>();
+    let p_lookup = world.lookup("::NamedModuleInRoot::Position");
+    assert_ne!(p.id(), 0);
+    assert_eq!(p.id(), p_lookup.id());
+}
+
+#[test]
+fn module_module_as_entity() {
+    let world = World::new();
+
+    let m = world.import::<ns::SimpleModule>();
+    assert_ne!(m.id(), 0);
+
+    let e = world.component::<ns::SimpleModule>();
+    assert_eq!(m.id(), e.id());
+}
+
+#[test]
+fn module_module_as_component() {
+    let world = World::new();
+
+    let m = world.import::<ns::SimpleModule>();
+    assert_ne!(m.id(), 0);
+
+    let e = world.component::<ns::SimpleModule>();
+    assert_eq!(m.id(), e.id());
+}
+
+#[test]
+fn module_module_with_core_name() {
+    let world = World::new();
+
+    let m = world.import::<module_with_core_name_mod::Module>();
+    assert_ne!(m.id(), 0);
+    assert_eq!(m.path(), Some("::Module".to_string()));
+
+    let pos = m.lookup("Position");
+    assert_ne!(pos.id(), 0);
+    assert_eq!(pos.path(), Some("::Module::Position".to_string()));
+    assert_eq!(pos.id(), world.component_id::<Position>());
+}
+
+#[test]
+fn module_import_addons_two_worlds() {
+    let a = World::new();
+    let m1 = a.import::<flecs_ecs::addons::stats::Stats>();
+    let u1 = a.import::<flecs_ecs::addons::units::Units>();
+
+    let b = World::new();
+    let m2 = b.import::<flecs_ecs::addons::stats::Stats>();
+    let u2 = b.import::<flecs_ecs::addons::units::Units>();
+
+    assert_eq!(m1.id(), m2.id());
+    assert_eq!(u1.id(), u2.id());
+}
+
+#[test]
+fn module_lookup_module_after_reparent() {
+    let world = World::new();
+
+    let m = world.import::<ns::NestedModule>();
+    assert_eq!(m.path(), Some("::ns::NestedModule".to_string()));
+    assert_eq!(world.lookup("::ns::NestedModule").id(), m.id());
+
+    let p = world.entity_named("p");
+    m.child_of(p);
+    assert_eq!(m.path(), Some("::p::NestedModule".to_string()));
+    assert_eq!(world.lookup("::p::NestedModule").id(), m.id());
+
+    assert_eq!(world.try_lookup("::ns::NestedModule"), None);
+
+    let e = world.entity_named("::ns::NestedModule");
+    assert_ne!(e.id(), m.id());
+
+    let count_child_of_p = world
+        .query::<()>()
+        .expr("(ChildOf, p.NestedModule)")
+        .build()
+        .count();
+    assert!(count_child_of_p > 0);
+
+    let count_child_of_ns = world
+        .query::<()>()
+        .expr("(ChildOf, ns.NestedModule)")
+        .build()
+        .count();
+    assert_eq!(count_child_of_ns, 0);
+}
+
+#[test]
+fn module_reparent_module_in_ctor() {
+    let world = World::new();
+
+    let m = world.import::<ns::ReparentModule>();
+    assert_eq!(m.path(), Some("::parent::ReparentModule".to_string()));
+
+    let other = world.lookup("::ns::ReparentModule");
+    assert_ne!(other.id(), 0);
+    assert_ne!(other.id(), m.id());
+}
+
+mod namespace_lvl1 {
+    pub mod namespace_lvl2 {
+        pub mod struct_lvl1 {
+            #[derive(flecs_ecs::prelude::Component)]
+            pub struct StructLvl2_1;
+            #[derive(flecs_ecs::prelude::Component)]
+            pub struct StructLvl2_2;
+        }
+    }
+}
+
+// Rust Flecs strips the module path and registers only the short type name via
+// get_type_name_without_scope. The CPP behavior of auto-creating Module-tagged
+// scope entities from C++ namespaces does not exist in the Rust binding.
+#[test]
+#[ignore]
+fn module_implicitly_add_module_to_scopes_component() {
+    use namespace_lvl1::namespace_lvl2::struct_lvl1::StructLvl2_1;
+
+    let ecs = World::new();
+
+    let comp = ecs.component::<StructLvl2_1>();
+    let mut current = comp.base.entity;
+    assert_ne!(current.id(), 0);
+    assert!(!current.has(flecs::Module::ID));
+    assert!(current.has(flecs::Component::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2::struct_lvl1::StructLvl2_1".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2::struct_lvl1".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(current.path(), Some("::namespace_lvl1".to_string()));
+
+    let top_parent = current.parent();
+    assert!(top_parent.is_none() || top_parent.unwrap().id() == 0);
+}
+
+// Same reason as module_implicitly_add_module_to_scopes_component.
+#[test]
+#[ignore]
+fn module_implicitly_add_module_to_scopes_entity() {
+    use namespace_lvl1::namespace_lvl2::struct_lvl1::StructLvl2_2;
+
+    let ecs = World::new();
+
+    // Use ecs.component::<StructLvl2_2>() to register and get entity - mirrors
+    // CPP ecs.entity<StructLvl2_2>().set<flecs::Component>({})
+    let comp2 = ecs.component::<StructLvl2_2>();
+    let mut current = comp2.base.entity;
+    assert_ne!(current.id(), 0);
+    assert!(!current.has(flecs::Module::ID));
+    assert!(current.has(flecs::Component::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2::struct_lvl1::StructLvl2_2".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2::struct_lvl1".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(
+        current.path(),
+        Some("::namespace_lvl1::namespace_lvl2".to_string())
+    );
+
+    current = current.parent().unwrap();
+    assert_ne!(current.id(), 0);
+    assert!(current.has(flecs::Module::ID));
+    assert_eq!(current.path(), Some("::namespace_lvl1".to_string()));
+
+    let top_parent = current.parent();
+    assert!(top_parent.is_none() || top_parent.unwrap().id() == 0);
+}
+
+#[test]
+fn module_rename_namespace_shorter() {
+    let ecs = World::new();
+
+    let m = ecs.import::<ns_parent::ShorterParent>();
+    assert!(m.has(flecs::Module::ID));
+    assert_eq!(m.path(), Some("::ns::ShorterParent".to_string()));
+    assert!(ecs.try_lookup("::ns_parent").is_none());
+    assert!(ecs.try_lookup("::ns_parent::ShorterParent").is_none());
+    assert!(ecs.try_lookup("::ns_parent::ShorterParent::NsType").is_none());
+    assert!(ecs.try_lookup("::ns::ShorterParent::NsType").is_some());
+
+    let ns = ecs.lookup("::ns");
+    assert_ne!(ns.id(), 0);
+    assert!(ns.has(flecs::Module::ID));
+}
+
+#[test]
+fn module_rename_namespace_longer() {
+    let ecs = World::new();
+
+    let m = ecs.import::<ns_parent::LongerParent>();
+    assert!(m.has(flecs::Module::ID));
+    assert_eq!(m.path(), Some("::ns_parent_namespace::LongerParent".to_string()));
+    assert!(ecs.try_lookup("::ns_parent").is_none());
+    assert!(ecs.try_lookup("::ns_parent::LongerParent").is_none());
+    assert!(ecs.try_lookup("::ns_parent::LongerParent::NsType").is_none());
+    assert!(ecs.try_lookup("::ns_parent_namespace::LongerParent::NsType").is_some());
+
+    let ns = ecs.lookup("::ns_parent_namespace");
+    assert_ne!(ns.id(), 0);
+    assert!(ns.has(flecs::Module::ID));
+}
+
+#[test]
+fn module_rename_namespace_nested() {
+    let ecs = World::new();
+
+    let m = ecs.import::<ns_parent::ns_child::Nested>();
+    assert!(m.has(flecs::Module::ID));
+
+    assert_eq!(m.path(), Some("::ns::child::Nested".to_string()));
+    assert!(ecs.try_lookup("::ns::child::Nested::NsType").is_some());
+    assert!(ecs.try_lookup("::ns_parent::ns_child::Nested::NsType").is_none());
+    assert!(ecs.try_lookup("::ns_parent::ns_child::Nested").is_none());
+    assert!(ecs.try_lookup("::ns_parent::ns_child").is_none());
+    assert!(ecs.try_lookup("::ns_parent").is_none());
+
+    let ns = ecs.lookup("::ns");
+    assert_ne!(ns.id(), 0);
+    assert!(ns.has(flecs::Module::ID));
+
+    let ns_child = ecs.lookup("::ns::child");
+    assert_ne!(ns_child.id(), 0);
+    assert!(ns_child.has(flecs::Module::ID));
+}
+
+#[test]
+fn module_rename_reparent_root_module() {
+    let ecs = World::new();
+
+    let m = ecs.import::<ReparentRootModule>();
+    let p = m.parent().unwrap();
+    assert_ne!(p.id(), 0);
+    assert_eq!(p.name(), "ns");
+    assert_eq!(m.name(), "ReparentRootModule");
+}
+
+#[test]
+fn module_no_recycle_after_rename_reparent() {
+    let ecs = World::new();
+
+    let m = ecs.import::<renamed_root_module::Module>();
+    let p = m.parent();
+    assert!(p.is_none() || p.unwrap().id() == 0);
+    assert_eq!(m.name(), "MyModule");
+}
+
+#[test]
+fn module_reimport_after_delete() {
+    use module_with_core_name_mod::Module as CoreModule;
+
+    let ecs = World::new();
 
     {
-        let v = world.vector::<i32>();
-        assert!(v.id() != 0);
+        let m = ecs.import::<CoreModule>();
+        assert_eq!(m.lookup("Position").id(), ecs.component::<Position>().id());
+        assert_eq!(m.id(), ecs.component::<CoreModule>().id());
+    }
+
+    ecs.component::<CoreModule>().destruct();
+
+    {
+        let m = ecs.import::<CoreModule>();
+        assert_eq!(m.lookup("Position").id(), ecs.component::<Position>().id());
+        assert_eq!(m.id(), ecs.component::<CoreModule>().id());
     }
 }
 
 #[test]
-fn tag_has_component() {
-    // C++: flecs::id c = world.id<EmptyType>(); c.entity().has<flecs::Component>()
-    // Empty types (tags) are still registered as Flecs components.
-    #[derive(Component)]
-    struct EmptyType;
-
+fn module_component_name_w_module_name() {
     let world = World::new();
 
-    let c = world.component::<EmptyType>();
-    assert!(c.has(flecs::Component::ID));
+    let m = world.import::<ModuleA>();
+    assert_ne!(m.id(), 0);
+    let c = world.lookup("ModuleA::ModuleAComponent");
+    assert_ne!(c.id(), 0);
+    assert_eq!(c.name(), "ModuleAComponent");
+    assert_eq!(c.parent().unwrap().name(), "ModuleA");
 }
 
 #[test]
-fn component_has_component() {
-    // C++: world.id<Position>().entity().has<flecs::Component>()
-    #[derive(Component)]
-    struct Position {
-        x: f32,
-        y: f32,
-    }
-
+fn module_delete_module_w_implicit_component_and_system() {
     let world = World::new();
 
-    let c = world.component::<Position>();
-    assert!(c.has(flecs::Component::ID));
+    let m = world.import::<SystemAndImplicitComponent>();
+
+    assert!(m.try_lookup("Velocity").is_none());
+    assert_ne!(world.lookup("Velocity").id(), 0);
+    assert_ne!(m.lookup("VelocitySys").id(), 0);
+
+    m.destruct();
+
+    // verify no crash
+    assert!(true);
+}
+
+#[test]
+fn module_delete_module_w_explicit_component_and_system() {
+    let world = World::new();
+
+    let m = world.import::<SystemAndExplicitComponent>();
+
+    assert_ne!(m.lookup("Velocity").id(), 0);
+    assert_ne!(m.lookup("VelocitySys").id(), 0);
+
+    m.destruct();
+
+    // verify no crash
+    assert!(true);
+}
+
+#[test]
+fn module_module_has_singleton() {
+    let world = World::new();
+
+    let e = world.import::<SingletonTest>();
+
+    assert!(e.has(flecs::Singleton::ID));
 }

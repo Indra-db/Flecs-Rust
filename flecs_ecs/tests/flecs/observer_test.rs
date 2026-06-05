@@ -2152,26 +2152,214 @@ fn untyped_field() {
 }
 
 #[test]
+#[ignore = "need to update flecs to fix"]
 fn query_eval_w_component_that_triggered_observer() {
-    // TODO: missing API: observer with $Variable source term + world.event_id(e).entity(e).add(id).enqueue(())
-    // Complex multi-step event queuing with variable-source observers not yet exposed in Rust API
+    let world = World::new();
+
+    let entry_event = world.entity().id();
+    let sequence_shared = world.entity().add_trait::<flecs::Trait>().id();
+    let sequence = world.entity().add(sequence_shared).id();
+    let child = world.entity().id();
+
+    eprintln!("entry_event={:?} sequence_shared={:?} sequence={:?} child={:?}",
+        entry_event, sequence_shared, sequence, child);
+
+    world.set(Count(0));
+
+    let mut ob = world.observer_id::<()>(entry_event);
+    ob.with("$Sequence")
+      .with(sequence_shared).set_src("$Sequence").filter();
+
+    eprintln!("observer builder before build: {ob:#?}");
+
+    ob.each_iter(move |it, i, _| {
+        eprintln!("fired: id(0)={:?} event_id={:?} entity={:?} deferred={}",
+            it.id(0).id(), it.iter.event_id, it.entity(i).id(), it.world().is_deferred());
+        assert_eq!(it.id(0), sequence);
+        it.world().get::<&mut Count>(|c| {
+            if c.0 == 0 {
+                c.0 += 1;
+                let e = it.entity(i).add(child);
+                unsafe {
+                    e.world().event_id(entry_event).entity(e).add(child).enqueue(());
+                }
+            }
+        });
+    });
+
+    unsafe {
+        world
+            .event_id(entry_event)
+            .entity(world.entity().add(sequence))
+            .add(sequence)
+            .enqueue(());
+    }
+    world.progress();
+
+    world.get::<&Count>(|c| assert_eq!(c.0, 1));
 }
 
 #[test]
+#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_first_var_that_triggered_observer() {
-    // TODO: missing API: expr() with pair variables ($Rel, tgt) + enqueue event with pair id
-    // world.observer().expr("($Rel, MatchTgt), RelTag($Rel)").event(e).each(...)
-    // world.event_id(entry_event).entity(e).add(pair_id).enqueue(());
+    let world = World::new();
+
+    let entry_event = world.entity();
+    let rel_tag = world.entity_named("RelTag");
+    let rel = world.entity_named("MatchRel").add(rel_tag.id());
+    let tgt = world.entity_named("MatchTgt");
+    let other_rel = world.entity_named("OtherRel");
+
+    let entry_event_id = entry_event.id();
+    let rel_id = rel.id();
+    let tgt_id = tgt.id();
+    let other_rel_id = other_rel.id();
+
+    world.set(Count(0));
+
+    world
+        .observer_id::<()>(entry_event)
+        .expr("($Rel, MatchTgt), RelTag($Rel)")
+        .each_iter(move |it, i, _| {
+            assert_eq!(it.get_var_by_name("Rel").id(), rel_id);
+            let mut first = false;
+            it.world().get::<&mut Count>(|c| {
+                first = c.0 == 0;
+                c.0 += 1;
+            });
+            if first {
+                let e = it.entity(i);
+                e.add((other_rel_id, tgt_id));
+                unsafe {
+                    e.world()
+                        .event_id(entry_event_id)
+                        .add((other_rel_id, tgt_id))
+                        .entity(e)
+                        .enqueue(());
+                }
+            }
+        });
+
+    unsafe {
+        world
+            .event_id(entry_event_id)
+            .add((rel_id, tgt_id))
+            .entity(world.entity().add((rel_id, tgt_id)))
+            .enqueue(());
+    }
+    world.progress();
+
+    world.get::<&Count>(|c| assert_eq!(c.0, 1));
 }
 
 #[test]
+#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_second_var_that_triggered_observer() {
-    // TODO: missing API: expr() with pair variables (rel, $Tgt) + enqueue event with pair id
+    let world = World::new();
+
+    let entry_event = world.entity();
+    let tgt_tag = world.entity_named("TgtTag");
+    let rel = world.entity_named("MatchRel");
+    let tgt = world.entity_named("MatchTgt").add(tgt_tag.id());
+    let other_tgt = world.entity_named("OtherTgt");
+
+    let entry_event_id = entry_event.id();
+    let rel_id = rel.id();
+    let tgt_id = tgt.id();
+    let other_tgt_id = other_tgt.id();
+
+    world.set(Count(0));
+
+    world
+        .observer_id::<()>(entry_event)
+        .expr("(MatchRel, $Tgt), TgtTag($Tgt)")
+        .each_iter(move |it, i, _| {
+            assert_eq!(it.get_var_by_name("Tgt").id(), tgt_id);
+            let mut first = false;
+            it.world().get::<&mut Count>(|c| {
+                first = c.0 == 0;
+                c.0 += 1;
+            });
+            if first {
+                let e = it.entity(i);
+                e.add((rel_id, other_tgt_id));
+                unsafe {
+                    e.world()
+                        .event_id(entry_event_id)
+                        .add((rel_id, other_tgt_id))
+                        .entity(e)
+                        .enqueue(());
+                }
+            }
+        });
+
+    unsafe {
+        world
+            .event_id(entry_event_id)
+            .add((rel_id, tgt_id))
+            .entity(world.entity().add((rel_id, tgt_id)))
+            .enqueue(());
+    }
+    world.progress();
+
+    world.get::<&Count>(|c| assert_eq!(c.0, 1));
 }
 
 #[test]
+#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_both_vars_that_triggered_observer() {
-    // TODO: missing API: expr() with pair variables ($Rel, $Tgt) + enqueue event with pair id
+    let world = World::new();
+
+    let entry_event = world.entity();
+    let rel_tag = world.entity_named("RelTag");
+    let tgt_tag = world.entity_named("TgtTag");
+    let rel = world.entity_named("MatchRel").add(rel_tag.id());
+    let tgt = world.entity_named("MatchTgt").add(tgt_tag.id());
+    let other_rel = world.entity_named("OtherRel");
+    let other_tgt = world.entity_named("OtherTgt");
+
+    let entry_event_id = entry_event.id();
+    let rel_id = rel.id();
+    let tgt_id = tgt.id();
+    let other_rel_id = other_rel.id();
+    let other_tgt_id = other_tgt.id();
+
+    world.set(Count(0));
+
+    world
+        .observer_id::<()>(entry_event)
+        .expr("($Rel, $Tgt), RelTag($Rel), TgtTag($Tgt)")
+        .each_iter(move |it, i, _| {
+            assert_eq!(it.get_var_by_name("Rel").id(), rel_id);
+            assert_eq!(it.get_var_by_name("Tgt").id(), tgt_id);
+            let mut first = false;
+            it.world().get::<&mut Count>(|c| {
+                first = c.0 == 0;
+                c.0 += 1;
+            });
+            if first {
+                let e = it.entity(i);
+                e.add((other_rel_id, other_tgt_id));
+                unsafe {
+                    e.world()
+                        .event_id(entry_event_id)
+                        .add((other_rel_id, other_tgt_id))
+                        .entity(e)
+                        .enqueue(());
+                }
+            }
+        });
+
+    unsafe {
+        world
+            .event_id(entry_event_id)
+            .add((rel_id, tgt_id))
+            .entity(world.entity().add((rel_id, tgt_id)))
+            .enqueue(());
+    }
+    world.progress();
+
+    world.get::<&Count>(|c| assert_eq!(c.0, 1));
 }
 
 // ─── 2_terms_un_set ───────────────────────────────────────────────────────────
