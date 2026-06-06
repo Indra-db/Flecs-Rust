@@ -580,7 +580,7 @@ impl<'a, T> FieldMut<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
-    /// Create an empty FieldMut for optional unset fields — no lock acquired regardless of LOCK.
+    /// Create an empty `FieldMut` for optional unset fields — no lock acquired regardless of LOCK.
     #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn new_empty(is_shared: bool) -> Self {

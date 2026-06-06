@@ -211,13 +211,13 @@ fn pairs_system_1_pair_instance() {
         .entity()
         .set_pair::<PairData, Position>(PairData { value: 10.0 });
 
-    let invoke_count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let entity_count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let trait_value = std::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let invoke_count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let entity_count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let trait_value = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
 
-    let ic = invoke_count.clone();
-    let ec = entity_count.clone();
-    let tv = trait_value.clone();
+    let ic = alloc::sync::Arc::clone(&invoke_count);
+    let ec = alloc::sync::Arc::clone(&entity_count);
+    let tv = alloc::sync::Arc::clone(&trait_value);
 
     world
         .system::<()>()
@@ -250,13 +250,13 @@ fn pairs_system_2_pair_instances() {
         .set_pair::<PairData, Position>(PairData { value: 10.0 })
         .set_pair::<PairData, Velocity>(PairData { value: 20.0 });
 
-    let invoke_count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let entity_count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let trait_value = std::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let invoke_count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let entity_count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let trait_value = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
 
-    let ic = invoke_count.clone();
-    let ec = entity_count.clone();
-    let tv = trait_value.clone();
+    let ic = alloc::sync::Arc::clone(&invoke_count);
+    let ec = alloc::sync::Arc::clone(&entity_count);
+    let tv = alloc::sync::Arc::clone(&trait_value);
 
     world
         .system::<()>()
@@ -1392,8 +1392,8 @@ fn pairs_modified_tag_second() {
     // In Rust: observer for (Position, Tag) pair triggered by set_pair
     let world = World::new();
 
-    let count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let count_c = count.clone();
+    let count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let count_c = alloc::sync::Arc::clone(&count);
 
     world
         .observer::<flecs::OnSet, &(Position, Tag)>()
@@ -1416,8 +1416,8 @@ fn pairs_modified_tag_first() {
     // In Rust: observer for (Tag, Position) pair triggered by set_pair
     let world = World::new();
 
-    let count = std::sync::Arc::new(std::sync::Mutex::new(0i32));
-    let count_c = count.clone();
+    let count = alloc::sync::Arc::new(std::sync::Mutex::new(0i32));
+    let count_c = alloc::sync::Arc::clone(&count);
 
     world
         .observer::<flecs::OnSet, &(Tag, Position)>()

@@ -29,7 +29,7 @@ struct Tgt;
 
 // -- Table_each ------------------------------------------------------------
 
-/// Inside a query.each(), structural changes to a *different* entity's table
+/// Inside a `query.each()`, structural changes to a *different* entity's table
 /// must succeed (the modified entity is not in the locked table).
 #[test]
 fn table_each() {
@@ -45,7 +45,7 @@ fn table_each() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Structural change to the *same* entity inside query.each() must panic
+/// Structural change to the *same* entity inside `query.each()` must panic
 /// when safety locks are enabled (table is locked during iteration).
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
@@ -54,20 +54,20 @@ fn table_each_locked() {
     let _guard = FlecsPanicAbortGuard::install();
     let e1 = world.entity().set(Position { x: 0, y: 0 });
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         world.new_query::<&Position>().each_entity(|_e, _p| {
             e1.add(Mass::id());
         });
     }));
     // Leak world to prevent Drop from aborting on partially-iterated locked state.
-    std::mem::forget(world);
+    core::mem::forget(world);
     assert!(
         result.is_err(),
         "expected panic when mutating entity during locked iteration"
     );
 }
 
-/// Same as table_each but using the no-entity callback form.
+/// Same as `table_each` but using the no-entity callback form.
 #[test]
 fn table_each_without_entity() {
     let world = World::new();
@@ -82,7 +82,7 @@ fn table_each_without_entity() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Locked variant of each_without_entity.
+/// Locked variant of `each_without_entity`.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
 fn table_each_without_entity_locked() {
@@ -90,12 +90,12 @@ fn table_each_without_entity_locked() {
     let _guard = FlecsPanicAbortGuard::install();
     let e1 = world.entity().set(Position { x: 0, y: 0 });
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         world.new_query::<&Position>().each(|_p| {
             e1.add(Mass::id());
         });
     }));
-    std::mem::forget(world);
+    core::mem::forget(world);
     assert!(
         result.is_err(),
         "expected panic when mutating entity during locked each iteration"
@@ -104,7 +104,7 @@ fn table_each_without_entity_locked() {
 
 // -- Table_iter ------------------------------------------------------------
 
-/// Structural changes to a different entity inside query.run() must succeed.
+/// Structural changes to a different entity inside `query.run()` must succeed.
 #[test]
 fn table_iter() {
     let world = World::new();
@@ -121,7 +121,7 @@ fn table_iter() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Structural change to iterated entity inside query.run() must panic
+/// Structural change to iterated entity inside `query.run()` must panic
 /// when safety locks are enabled.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
@@ -130,21 +130,21 @@ fn table_iter_locked() {
     let _guard = FlecsPanicAbortGuard::install();
     let e1 = world.entity().set(Position { x: 0, y: 0 });
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         world.new_query::<&Position>().run(|mut it| {
             while it.next() {
                 e1.add(Mass::id());
             }
         });
     }));
-    std::mem::forget(world);
+    core::mem::forget(world);
     assert!(
         result.is_err(),
         "expected panic when mutating entity during locked run iteration"
     );
 }
 
-/// query.run() without component terms — structural changes to another entity
+/// `query.run()` without component terms — structural changes to another entity
 /// must succeed (no table is locked without component access).
 #[test]
 fn table_iter_without_components() {
@@ -162,7 +162,7 @@ fn table_iter_without_components() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Locked variant of iter_without_components.
+/// Locked variant of `iter_without_components`.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
 fn table_iter_without_components_locked() {
@@ -170,14 +170,14 @@ fn table_iter_without_components_locked() {
     let _guard = FlecsPanicAbortGuard::install();
     let e1 = world.entity().set(Position { x: 0, y: 0 });
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         world.new_query::<&Position>().run(|mut it| {
             while it.next() {
                 e1.add(Mass::id());
             }
         });
     }));
-    std::mem::forget(world);
+    core::mem::forget(world);
     assert!(
         result.is_err(),
         "expected panic when mutating entity during locked run iteration without components"
@@ -186,7 +186,7 @@ fn table_iter_without_components_locked() {
 
 // -- Table_multi_get -------------------------------------------------------
 
-/// entity.get() with multiple components — structural change to another entity inside.
+/// `entity.get()` with multiple components — structural change to another entity inside.
 #[test]
 fn table_multi_get() {
     let world = World::new();
@@ -204,7 +204,7 @@ fn table_multi_get() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Structural change inside entity.get() is deferred (safe) with safety locks.
+/// Structural change inside `entity.get()` is deferred (safe) with safety locks.
 /// The add is queued and applied after the callback returns.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
@@ -228,7 +228,7 @@ fn table_multi_get_locked() {
 
 // -- Table_multi_set -------------------------------------------------------
 
-/// entity.get::<(&mut, &mut)>() with mutable refs — structural change to another entity.
+/// `entity.get::<(&mut, &mut)>()` with mutable refs — structural change to another entity.
 #[test]
 fn table_multi_set() {
     let world = World::new();
@@ -246,7 +246,7 @@ fn table_multi_set() {
     assert!(e2.has(Mass::id()));
 }
 
-/// Structural change inside mutable entity.get() is deferred (safe) with safety locks.
+/// Structural change inside mutable `entity.get()` is deferred (safe) with safety locks.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
 fn table_multi_set_locked() {
@@ -442,7 +442,7 @@ fn table_get_id() {
 
 // -- Table_get_T -----------------------------------------------------------
 
-/// Same as get_id but using the generic typed accessor (get_mut returns &mut [T]).
+/// Same as `get_id` but using the generic typed accessor (`get_mut` returns &mut [T]).
 #[test]
 fn table_get_t() {
     let world = World::new();
@@ -673,7 +673,7 @@ fn table_range_get_id() {
 
 // -- Table_range_get_T -----------------------------------------------------
 
-/// Same as range_get_id but using the typed accessor.
+/// Same as `range_get_id` but using the typed accessor.
 #[test]
 fn table_range_get_t() {
     let world = World::new();
@@ -974,14 +974,14 @@ fn table_lock() {
     table.lock();
 
     // Adding Position to e2 tries to move e2 into the Position table (locked) — panics.
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         e2.set(Position { x: 20, y: 30 });
     }));
 
     // Unlock the table, then forget the world to prevent ecs_fini from
     // hitting an assert on the partially-aborted entity state.
     table.unlock();
-    std::mem::forget(world);
+    core::mem::forget(world);
 
     assert!(
         result.is_err(),

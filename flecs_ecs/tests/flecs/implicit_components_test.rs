@@ -85,8 +85,8 @@ fn implicit_components_set() {
     assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
+        assert!((p.x - 10.0_f32).abs() < f32::EPSILON);
+        assert!((p.y - 20.0_f32).abs() < f32::EPSILON);
     });
 
     let position = world.lookup("Position");
@@ -227,10 +227,8 @@ fn implicit_components_system_optional() {
 
     let world = World::new();
 
-    use std::sync::{
-        Arc,
-        atomic::{AtomicI32, Ordering},
-    };
+    use alloc::sync::Arc;
+    use core::sync::atomic::{AtomicI32, Ordering};
     let rotation_count = Arc::new(AtomicI32::new(0));
     let mass_count = Arc::new(AtomicI32::new(0));
     let rc = Arc::clone(&rotation_count);
@@ -287,10 +285,8 @@ fn implicit_components_system_const() {
 
     let world = World::new();
 
-    use std::sync::{
-        Arc,
-        atomic::{AtomicI32, Ordering},
-    };
+    use alloc::sync::Arc;
+    use core::sync::atomic::{AtomicI32, Ordering};
     let count = Arc::new(AtomicI32::new(0));
     let count_c = Arc::clone(&count);
 
@@ -324,8 +320,8 @@ fn implicit_components_system_const() {
     assert_eq!(count.load(Ordering::Relaxed), 1);
 
     e.get::<&Position>(|p| {
-        assert_eq!(p.x, 11.0);
-        assert_eq!(p.y, 22.0);
+        assert!((p.x - 11.0_f32).abs() < f32::EPSILON);
+        assert!((p.y - 22.0_f32).abs() < f32::EPSILON);
     });
 }
 
@@ -565,8 +561,8 @@ fn implicit_components_use_const() {
     assert!(e.has(Position::id()));
 
     e.get::<&Position>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
+        assert!((p.x - 10.0_f32).abs() < f32::EPSILON);
+        assert!((p.y - 20.0_f32).abs() < f32::EPSILON);
     });
 }
 
@@ -598,8 +594,8 @@ fn implicit_components_use_const_w_stage() {
     assert!(e.has(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
-        assert_eq!(v.x, 1.0);
-        assert_eq!(v.y, 2.0);
+        assert!((v.x - 1.0_f32).abs() < f32::EPSILON);
+        assert!((v.y - 2.0_f32).abs() < f32::EPSILON);
     });
 }
 
@@ -632,8 +628,8 @@ fn implicit_components_use_const_w_threads() {
     assert!(e.has(Velocity::id()));
 
     e.get::<&Velocity>(|v| {
-        assert_eq!(v.x, 1.0);
-        assert_eq!(v.y, 2.0);
+        assert!((v.x - 1.0_f32).abs() < f32::EPSILON);
+        assert!((v.y - 2.0_f32).abs() < f32::EPSILON);
     });
 }
 

@@ -237,7 +237,7 @@ fn register_short_template() {
     #[derive(Component)]
     struct Tmp<T: ComponentId> {
         pub v: i32,
-        _marker: std::marker::PhantomData<T>,
+        _marker: core::marker::PhantomData<T>,
     }
 
     let world = World::new();
@@ -247,8 +247,8 @@ fn register_short_template() {
     assert_eq!(c.name(), "Tmp<Test>");
 
     c.try_get::<&EcsComponent>(|ptr| {
-        assert_eq!(ptr.size, std::mem::size_of::<Tmp<Test>>() as i32);
-        assert_eq!(ptr.alignment, std::mem::align_of::<Tmp<Test>>() as i32);
+        assert_eq!(ptr.size, core::mem::size_of::<Tmp<Test>>() as i32);
+        assert_eq!(ptr.alignment, core::mem::align_of::<Tmp<Test>>() as i32);
     });
 }
 
@@ -472,7 +472,7 @@ fn async_stage_add() {
     let e = world.entity();
     let async_stage = world.create_async_stage();
 
-    e.mut_current_stage(&async_stage).add(Position::id());
+    e.mut_current_stage(async_stage).add(Position::id());
 
     assert!(!e.has(Position::id()));
 
@@ -869,7 +869,7 @@ fn entity_w_tag_name() {
 #[test]
 fn template_component_name() {
     #[derive(Component)]
-    struct TemplateType<T: ComponentId>(std::marker::PhantomData<T>);
+    struct TemplateType<T: ComponentId>(core::marker::PhantomData<T>);
 
     let world = World::new();
 
@@ -882,7 +882,7 @@ fn template_component_name() {
 #[test]
 fn template_component_w_namespace_name() {
     #[derive(Component)]
-    struct TemplateWrapper<T: ComponentId>(std::marker::PhantomData<T>);
+    struct TemplateWrapper<T: ComponentId>(core::marker::PhantomData<T>);
 
     let world = World::new();
     let c = world.component::<TemplateWrapper<Position>>();
@@ -897,7 +897,7 @@ fn template_component_w_namespace_name_and_namespaced_arg() {
     struct Foo;
 
     #[derive(Component)]
-    struct TemplateWrapper<T: ComponentId>(std::marker::PhantomData<T>);
+    struct TemplateWrapper<T: ComponentId>(core::marker::PhantomData<T>);
 
     let world = World::new();
     let c = world.component::<TemplateWrapper<Foo>>();
@@ -909,7 +909,7 @@ fn template_component_w_namespace_name_and_namespaced_arg() {
 #[test]
 fn template_component_w_same_namespace_name() {
     #[derive(Component)]
-    struct Foo<T: ComponentId>(std::marker::PhantomData<T>);
+    struct Foo<T: ComponentId>(core::marker::PhantomData<T>);
 
     let world = World::new();
     let c = world.component::<Foo<Position>>();
@@ -924,7 +924,7 @@ fn template_component_w_same_namespace_name_and_namespaced_arg() {
     struct Bar;
 
     #[derive(Component)]
-    struct Foo<T: ComponentId>(std::marker::PhantomData<T>);
+    struct Foo<T: ComponentId>(core::marker::PhantomData<T>);
 
     let world = World::new();
     let c = world.component::<Foo<Bar>>();
@@ -943,8 +943,8 @@ fn template_component_from_module_2_args() {
 
     #[derive(Component)]
     struct TypeWithArgs<T: ComponentId, U: ComponentId>(
-        std::marker::PhantomData<T>,
-        std::marker::PhantomData<U>,
+        core::marker::PhantomData<T>,
+        core::marker::PhantomData<U>,
     );
 
     #[derive(Component)]
@@ -1567,10 +1567,10 @@ fn set_lookup_path() {
 
 #[test]
 fn run_post_frame() {
-    use std::cell::Cell;
+    use core::cell::Cell;
 
     thread_local! {
-        static CTX: Cell<i32> = Cell::new(10);
+        static CTX: Cell<i32> = const { Cell::new(10) };
     }
 
     let world = World::new();
@@ -1668,7 +1668,7 @@ fn set_get_context() {
     let world = World::new();
 
     let mut ctx: i32 = 0;
-    world.set_context(&mut ctx as *mut i32 as *mut std::ffi::c_void, None);
+    world.set_context(&mut ctx as *mut i32 as *mut core::ffi::c_void, None);
     assert_eq!(world.context() as *const i32, &ctx as *const i32);
 }
 
@@ -1677,14 +1677,14 @@ fn set_get_binding_context() {
     let world = World::new();
 
     let mut ctx: i32 = 0;
-    world.set_context(&mut ctx as *mut i32 as *mut std::ffi::c_void, None);
+    world.set_context(&mut ctx as *mut i32 as *mut core::ffi::c_void, None);
     let retrieved = world.context() as *const i32;
     assert_eq!(retrieved, &ctx as *const i32);
 }
 
 #[test]
 fn set_get_context_w_free() {
-    unsafe extern "C-unwind" fn ctx_free_cb(ctx: *mut std::ffi::c_void) {
+    unsafe extern "C-unwind" fn ctx_free_cb(ctx: *mut core::ffi::c_void) {
         unsafe { *(ctx as *mut i32) = 10 };
     }
 
@@ -1692,7 +1692,7 @@ fn set_get_context_w_free() {
     {
         let world = World::new();
         world.set_context(
-            &mut ctx_val as *mut i32 as *mut std::ffi::c_void,
+            &mut ctx_val as *mut i32 as *mut core::ffi::c_void,
             Some(ctx_free_cb),
         );
         assert_eq!(world.context() as *const i32, &ctx_val as *const i32);
@@ -1729,7 +1729,7 @@ fn make_pair_of_pair_type() {
 #[test]
 fn delta_time() {
     thread_local! {
-        static DT: std::cell::Cell<f32> = std::cell::Cell::new(0.0);
+        static DT: core::cell::Cell<f32> = const { core::cell::Cell::new(0.0) };
     }
 
     let world = World::new();
@@ -1743,7 +1743,7 @@ fn delta_time() {
 
     world.progress_time(2.0);
 
-    DT.with(|dt| assert_eq!(dt.get(), 2.0));
+    DT.with(|dt| assert!((dt.get() - 2.0_f32).abs() < f32::EPSILON));
 }
 
 #[test]
@@ -1776,7 +1776,7 @@ fn register_nested_component_in_module() {
 #[test]
 fn atfini() {
     thread_local! {
-        static ATFINI_INVOKED: std::cell::Cell<i32> = std::cell::Cell::new(0);
+        static ATFINI_INVOKED: core::cell::Cell<i32> = const { core::cell::Cell::new(0) };
     }
     ATFINI_INVOKED.with(|c| c.set(0));
 
@@ -1795,7 +1795,7 @@ fn atfini() {
 #[test]
 fn atfini_w_ctx() {
     thread_local! {
-        static CALLED: std::cell::Cell<bool> = std::cell::Cell::new(false);
+        static CALLED: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
     }
     CALLED.with(|c| c.set(false));
 
@@ -1808,7 +1808,7 @@ fn atfini_w_ctx() {
         world.on_destroyed(fini_cb);
     }
 
-    assert!(CALLED.with(|c| c.get()));
+    assert!(CALLED.with(core::cell::Cell::get));
 }
 
 #[test]
@@ -1845,7 +1845,7 @@ fn get_mut_rel_type() {
 #[test]
 fn world_mini() {
     thread_local! {
-        static COUNT: std::cell::Cell<i32> = std::cell::Cell::new(0);
+        static COUNT: core::cell::Cell<i32> = const { core::cell::Cell::new(0) };
     }
     COUNT.with(|c| c.set(0));
 
@@ -1862,7 +1862,7 @@ fn world_mini() {
         assert!(world.try_lookup("flecs.meta").is_none());
     }
 
-    assert_eq!(COUNT.with(|c| c.get()), 1);
+    assert_eq!(COUNT.with(core::cell::Cell::get), 1);
 }
 
 #[test]
@@ -1968,8 +1968,8 @@ fn get_type_info_t() {
     let ti = world.type_info_from(c.id());
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
-    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
-    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.size, core::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, core::mem::align_of::<Position>() as i32);
     assert_eq!(ti.component, *world.component_id::<Position>());
 }
 
@@ -1979,8 +1979,8 @@ fn get_type_info_by_type() {
     let ti = world.type_info_from(world.component_id::<Position>());
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
-    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
-    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.size, core::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, core::mem::align_of::<Position>() as i32);
     assert_eq!(ti.component, *world.component_id::<Position>());
 }
 
@@ -1992,8 +1992,8 @@ fn get_type_info_r_t() {
     let ti = world.type_info_from((c.id(), tgt.id()));
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
-    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
-    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.size, core::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, core::mem::align_of::<Position>() as i32);
     assert_eq!(ti.component, *world.component_id::<Position>());
 }
 
@@ -2004,8 +2004,8 @@ fn get_type_info_rel_type_tgt_id() {
     let ti = world.type_info_from((world.component_id::<Position>(), tgt.id()));
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
-    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
-    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.size, core::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, core::mem::align_of::<Position>() as i32);
     assert_eq!(ti.component, *world.component_id::<Position>());
 }
 
@@ -2020,8 +2020,8 @@ fn get_type_info_rel_type_tgt_type() {
     ));
     assert!(ti.is_some());
     let ti = unsafe { &*ti.unwrap() };
-    assert_eq!(ti.size, std::mem::size_of::<Position>() as i32);
-    assert_eq!(ti.alignment, std::mem::align_of::<Position>() as i32);
+    assert_eq!(ti.size, core::mem::size_of::<Position>() as i32);
+    assert_eq!(ti.alignment, core::mem::align_of::<Position>() as i32);
     assert_eq!(ti.component, *world.component_id::<Position>());
 }
 
@@ -2309,8 +2309,8 @@ fn context_operations() {
     let world = World::new();
 
     let mut ctx_val: i32 = 42;
-    world.set_context(&mut ctx_val as *mut i32 as *mut std::ffi::c_void, None);
+    world.set_context(&mut ctx_val as *mut i32 as *mut core::ffi::c_void, None);
 
     let ctx = world.context();
-    assert_eq!(ctx as *const i32 as *const i32, &ctx_val as *const i32);
+    assert_eq!(ctx as *const i32, &ctx_val as *const i32);
 }

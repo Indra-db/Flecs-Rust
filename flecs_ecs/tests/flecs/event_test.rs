@@ -26,7 +26,7 @@ fn event_evt_1_id_entity() {
     let e1 = world.entity().add(id);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -51,8 +51,8 @@ fn event_evt_2_ids_entity() {
     let e1 = world.entity().add(id_a).add(id_b);
     let e1_id = e1.id();
 
-    let count_a = std::cell::Cell::new(0i32);
-    let count_b = std::cell::Cell::new(0i32);
+    let count_a = core::cell::Cell::new(0i32);
+    let count_b = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -86,7 +86,7 @@ fn event_evt_1_id_table() {
 
     let table = e1.table().unwrap();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -112,8 +112,8 @@ fn event_evt_2_ids_table() {
     let e1_id = e1.id();
     let table = e1.table().unwrap();
 
-    let count_a = std::cell::Cell::new(0i32);
-    let count_b = std::cell::Cell::new(0i32);
+    let count_a = core::cell::Cell::new(0i32);
+    let count_b = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -149,7 +149,7 @@ fn event_evt_type() {
     let e1 = world.entity().add(id);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer::<Evt, ()>()
@@ -169,7 +169,7 @@ fn event_evt_1_component() {
     let e1 = world.entity().add(IdA);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer::<Evt, ()>()
@@ -189,8 +189,8 @@ fn event_evt_2_components() {
     let e1 = world.entity().add(IdA).add(IdB);
     let e1_id = e1.id();
 
-    let count_a = std::cell::Cell::new(0i32);
-    let count_b = std::cell::Cell::new(0i32);
+    let count_a = core::cell::Cell::new(0i32);
+    let count_b = core::cell::Cell::new(0i32);
 
     world
         .observer::<Evt, ()>()
@@ -229,7 +229,7 @@ fn event_evt_void_ctx() {
     let e1 = world.entity().add(id);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -252,7 +252,7 @@ fn event_evt_typed_ctx() {
     let e1 = world.entity().add(id);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world.observer::<EvtData, ()>().with(id).run(move |mut it| {
         while it.next() {
@@ -277,7 +277,7 @@ fn event_evt_implicit_typed_ctx() {
     let e1 = world.entity().add(id);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world.observer::<EvtData, ()>().with(id).run(move |mut it| {
         while it.next() {
@@ -305,7 +305,7 @@ fn event_evt_1_id_pair_rel_id_obj_id_entity() {
     let e1 = world.entity().add((rel, obj));
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -330,7 +330,7 @@ fn event_evt_1_id_pair_rel_obj_id_entity() {
     let e1 = world.entity().add((IdA::id(), obj));
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -358,7 +358,7 @@ fn event_evt_1_id_pair_rel_obj_entity() {
     let e1 = world.entity().add((IdA::id(), IdB::id()));
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -385,7 +385,7 @@ fn event_emit_staged_from_world() {
     let e1 = world.entity().add(Tag);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -412,7 +412,7 @@ fn event_emit_staged_from_stage() {
     let e1 = world.entity().add(Tag);
     let e1_id = e1.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     world
         .observer_id::<()>(evt)
@@ -436,8 +436,8 @@ fn event_emit_staged_from_stage() {
 fn event_emit_custom_for_any() {
     let world = World::new();
 
-    let count_a = std::cell::Cell::new(0i32);
-    let count_b = std::cell::Cell::new(0i32);
+    let count_a = core::cell::Cell::new(0i32);
+    let count_b = core::cell::Cell::new(0i32);
 
     let e1 = world.entity().add(Tag);
     let e2 = world.entity().add(Tag);
@@ -489,7 +489,7 @@ fn event_entity_emit_event_id() {
     let e = world.entity().add(Tag);
     let _e_id = e.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     // C++: e.observe(evt, [&](entity src) { ... }) — runtime entity event with src callback
     // TODO: missing API: EntityView::observe_id(entity_event, fn_with_entity_src) — no observe for runtime entity event id
@@ -516,7 +516,7 @@ fn event_entity_emit_event_type() {
     let e = world.entity().add(Tag);
     let e_id = e.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe_entity::<Evt>(move |src| {
         assert_eq!(src.id(), e_id);
@@ -533,7 +533,7 @@ fn event_entity_emit_event_w_payload() {
     let e = world.entity().add(Tag);
     let e_id = e.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe_payload_entity::<Position>(move |src, p| {
         assert_eq!(src.id(), e_id);
@@ -553,7 +553,7 @@ fn event_entity_emit_event_id_no_src() {
 
     let e = world.entity().add(Tag);
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     // C++: e.observe(evt, [&]() { ... }) — runtime entity event no-src
     // TODO: missing API: EntityView::observe_id(entity_event, fn_no_src) — no observe for runtime entity event id
@@ -579,7 +579,7 @@ fn event_entity_emit_event_type_no_src() {
 
     let e = world.entity().add(Tag);
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe::<Evt>(move || {
         count.set(count.get() + 1);
@@ -594,7 +594,7 @@ fn event_entity_emit_event_w_payload_no_src() {
 
     let e = world.entity().add(Tag);
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe_payload::<Position>(move |p| {
         assert_eq!(p.x, 10);
@@ -614,7 +614,7 @@ fn event_entity_emit_event_w_payload_derived_event_type() {
     let e = world.entity().add(Tag);
     let e_id = e.id();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe_payload_entity::<Position>(move |src, p| {
         assert_eq!(src.id(), e_id);
@@ -634,7 +634,7 @@ fn event_entity_emit_event_w_payload_derived_event_type_no_src() {
 
     let e = world.entity().add(Tag);
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     e.observe_payload::<Position>(move |p| {
         assert_eq!(p.x, 10);
@@ -668,7 +668,7 @@ fn event_entity_observe_generic() {
 fn event_enqueue_event() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let evt = world.entity();
     let id_a = world.entity();
@@ -696,7 +696,7 @@ fn event_enqueue_event() {
 fn event_enqueue_entity_event() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let evt = world.entity();
     let id_a = world.entity();
@@ -728,7 +728,7 @@ fn event_enqueue_entity_event() {
 fn event_enqueue_event_w_payload() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let id_a = world.entity();
     let e1 = world.entity().add(id_a);
@@ -762,7 +762,7 @@ fn event_enqueue_event_w_payload() {
 fn event_enqueue_entity_event_w_payload() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let id_a = world.entity();
     let e1 = world.entity().add(id_a);
@@ -784,7 +784,7 @@ fn event_enqueue_entity_event_w_payload() {
 fn event_enqueue_entity_from_readonly_world() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let evt = world.entity();
     let id_a = world.entity();
@@ -816,7 +816,7 @@ fn event_enqueue_entity_from_readonly_world() {
 fn event_enqueue_entity_w_payload_from_readonly_world() {
     let world = World::new();
 
-    let count = std::cell::Cell::new(0i32);
+    let count = core::cell::Cell::new(0i32);
 
     let id_a = world.entity();
     let e1 = world.entity().add(id_a);
@@ -854,8 +854,8 @@ fn event_enum_event() {
     world.component::<Event>();
     world.component::<Data>();
 
-    let any_count = std::cell::Cell::new(0usize);
-    let data_count = std::cell::Cell::new(0usize);
+    let any_count = core::cell::Cell::new(0usize);
+    let data_count = core::cell::Cell::new(0usize);
 
     world
         .observer::<Event, ()>()

@@ -3565,8 +3565,8 @@ fn query_optional_pair_term() {
     q.each(|p| {
         if let Some(p) = p {
             with_pair += 1;
-            assert_eq!(p.x, 1.0f32);
-            assert_eq!(p.y, 2.0f32);
+            assert!((p.x - 1.0f32).abs() < f32::EPSILON);
+            assert!((p.y - 2.0f32).abs() < f32::EPSILON);
         } else {
             without_pair += 1;
         }

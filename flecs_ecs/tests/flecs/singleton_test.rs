@@ -383,24 +383,24 @@ fn singleton_get_target() {
     assert_eq!(p, obj1);
 
     // world.target<Tag>(i) for i in 0..3
-    for i in 0..3 {
+    for (i, entity) in entities.iter().enumerate() {
         let p = world.target(Tag::id(), Some(i));
         assert!(*p != 0);
-        assert_eq!(p, entities[i]);
+        assert_eq!(p, *entity);
     }
 
     // world.target<Tag>(Rel, i)
-    for i in 0..3 {
+    for (i, entity) in entities.iter().enumerate() {
         let p = world.target(*rel.id(), Some(i));
         assert!(*p != 0);
-        assert_eq!(p, entities[i]);
+        assert_eq!(p, *entity);
     }
 
     // world.target(Rel, i)
-    for i in 0..3 {
+    for (i, entity) in entities.iter().enumerate() {
         let p = world.target(*rel.id(), Some(i));
         assert!(*p != 0);
-        assert_eq!(p, entities[i]);
+        assert_eq!(p, *entity);
     }
 }
 

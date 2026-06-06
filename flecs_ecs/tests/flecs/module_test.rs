@@ -193,8 +193,8 @@ mod module_with_core_name_mod {
 }
 
 thread_local! {
-    static MODULE_CTOR_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
-    static MODULE_DTOR_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
+    static MODULE_CTOR_INVOKED: core::cell::RefCell<i32> = const { core::cell::RefCell::new(0) };
+    static MODULE_DTOR_INVOKED: core::cell::RefCell<i32> = const { core::cell::RefCell::new(0) };
 }
 
 fn reset_dtor_counts() {
@@ -259,7 +259,7 @@ impl Module for SystemAndExplicitComponent {
 }
 
 thread_local! {
-    static SINGLETON_TEST_INVOKED: std::cell::RefCell<i32> = const { std::cell::RefCell::new(0) };
+    static SINGLETON_TEST_INVOKED: core::cell::RefCell<i32> = const { core::cell::RefCell::new(0) };
 }
 
 #[derive(Component)]
@@ -784,9 +784,7 @@ fn module_delete_module_w_implicit_component_and_system() {
     assert_ne!(m.lookup("VelocitySys").id(), 0);
 
     m.destruct();
-
-    // verify no crash
-    assert!(true);
+    // verify no crash (if we reach this point, no panic occurred)
 }
 
 #[test]
@@ -799,9 +797,7 @@ fn module_delete_module_w_explicit_component_and_system() {
     assert_ne!(m.lookup("VelocitySys").id(), 0);
 
     m.destruct();
-
-    // verify no crash
-    assert!(true);
+    // verify no crash (if we reach this point, no panic occurred)
 }
 
 #[test]

@@ -5765,7 +5765,6 @@ fn query_builder_setup() {
     // the default build works — no external test param infrastructure.
     let world = World::new();
     let _q = world.query::<(&Position, &Velocity)>().build();
-    assert!(true);
 }
 
 // ─── builder_build_to_auto ───────────────────────────────────────────────────

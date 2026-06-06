@@ -4,7 +4,7 @@
 use crate::common_test::*;
 use core::cell::Cell;
 use flecs_ecs::prelude::*;
-use std::rc::Rc;
+use alloc::rc::Rc;
 
 #[test]
 fn system_builder_builder_assign_same_type() {

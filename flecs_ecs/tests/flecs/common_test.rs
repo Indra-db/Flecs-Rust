@@ -90,8 +90,8 @@ impl Drop for FlecsPanicAbortGuard {
     }
 }
 
-/// When the guard is active this is set to true so the abort() override knows
-/// to suppress the call (the panic from ecs_os_abort() is already in flight).
+/// When the guard is active this is set to true so the `abort()` override knows
+/// to suppress the call (the panic from `ecs_os_abort()` is already in flight).
 pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
     core::sync::atomic::AtomicBool::new(false);
 
@@ -442,7 +442,7 @@ pub mod ns {
     pub struct FooComp;
 
     thread_local! {
-        pub static SYSTEM_INVOKE_COUNT: std::cell::RefCell<u32> = std::cell::RefCell::new(0);
+        pub static SYSTEM_INVOKE_COUNT: core::cell::RefCell<u32> = const { core::cell::RefCell::new(0) };
     }
 
     pub fn increment_invoke_count() {
@@ -458,7 +458,7 @@ pub mod ns {
     }
 
     thread_local! {
-        pub static IMPORT_COUNT: std::cell::RefCell<i32> = std::cell::RefCell::new(0);
+        pub static IMPORT_COUNT: core::cell::RefCell<i32> = const { core::cell::RefCell::new(0) };
     }
 
     pub fn get_import_count() -> i32 {

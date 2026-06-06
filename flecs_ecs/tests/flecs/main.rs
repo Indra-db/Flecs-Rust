@@ -2,6 +2,7 @@
 //! integration tests for the public API of the `flecs_ecs` crate
 //! split into a single module due to the benefits it provides.
 //! see <`https://matklad.github.io/2021/02/27/delete-cargo-integration-tests.html/`> for more information.
+extern crate alloc;
 
 pub mod common_test;
 

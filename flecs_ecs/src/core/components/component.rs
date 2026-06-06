@@ -525,7 +525,7 @@ impl<'a, T> Component<'a, T> {
 
         unsafe {
             let ti_ptr =
-                sys::ecs_get_type_info((&self.base.entity.world).world_ptr() as *mut _, *self.id);
+                sys::ecs_get_type_info(self.base.entity.world.world_ptr() as *mut _, *self.id);
             if ti_ptr.is_null() {
                 return None;
             }
@@ -562,7 +562,7 @@ impl<'a, T> Component<'a, T> {
 
         unsafe {
             let ti_ptr =
-                sys::ecs_get_type_info((&self.base.entity.world).world_ptr() as *mut _, *self.id);
+                sys::ecs_get_type_info(self.base.entity.world.world_ptr() as *mut _, *self.id);
             if ti_ptr.is_null() {
                 return None;
             }

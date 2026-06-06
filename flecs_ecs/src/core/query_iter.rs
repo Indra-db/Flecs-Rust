@@ -203,7 +203,7 @@ pub struct ChainedIter<'a, P, T>
 where
     T: QueryTuple,
 {
-    /// Parent iter — wrapped in UnsafeCell so C can mutate it through `chain_it`.
+    /// Parent iter — wrapped in `UnsafeCell` so C can mutate it through `chain_it`.
     /// Must not be moved after `retrieve_iter` is called (enforced by `&self` borrow).
     parent: core::cell::UnsafeCell<sys::ecs_iter_t>,
     param1: i32,

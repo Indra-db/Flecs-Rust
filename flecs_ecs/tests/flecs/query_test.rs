@@ -1042,7 +1042,7 @@ fn query_each_from_component() {
 
 #[test]
 fn query_each_w_func_ptr() {
-    thread_local! { static INVOKED: std::cell::Cell<i32> = std::cell::Cell::new(0); }
+    thread_local! { static INVOKED: core::cell::Cell<i32> = const { core::cell::Cell::new(0) }; }
     fn each_func(_e: EntityView, p: &mut Position) {
         INVOKED.with(|c| c.set(c.get() + 1));
         p.x += 1;
@@ -1250,7 +1250,7 @@ fn query_iter_from_component() {
 
 #[test]
 fn query_iter_w_func_ptr() {
-    thread_local! { static INVOKED2: std::cell::Cell<i32> = std::cell::Cell::new(0); }
+    thread_local! { static INVOKED2: core::cell::Cell<i32> = const { core::cell::Cell::new(0) }; }
 
     let world = World::new();
     let e = world.entity().set(Position { x: 10, y: 20 });
@@ -1277,7 +1277,7 @@ fn query_iter_w_func_ptr() {
 
 #[test]
 fn query_each_w_func_no_ptr() {
-    thread_local! { static INVOKED3: std::cell::Cell<i32> = std::cell::Cell::new(0); }
+    thread_local! { static INVOKED3: core::cell::Cell<i32> = const { core::cell::Cell::new(0) }; }
     fn each_func_no_ptr(_e: EntityView, p: &mut Position) {
         INVOKED3.with(|c| c.set(c.get() + 1));
         p.x += 1;
@@ -1298,7 +1298,7 @@ fn query_each_w_func_no_ptr() {
 
 #[test]
 fn query_iter_w_func_no_ptr() {
-    thread_local! { static INVOKED4: std::cell::Cell<i32> = std::cell::Cell::new(0); }
+    thread_local! { static INVOKED4: core::cell::Cell<i32> = const { core::cell::Cell::new(0) }; }
 
     let world = World::new();
     let e = world.entity().set(Position { x: 10, y: 20 });
@@ -3330,7 +3330,7 @@ fn iter_pair_object() {
 
 #[test]
 fn iter_query_in_system() {
-    thread_local! { static COUNT: std::cell::Cell<i32> = std::cell::Cell::new(0); }
+    thread_local! { static COUNT: core::cell::Cell<i32> = const { core::cell::Cell::new(0) }; }
 
     let world = World::new();
 
@@ -3381,8 +3381,8 @@ fn optional_pair_term() {
     q.each(|p| {
         if let Some(p) = p {
             with_pair += 1;
-            assert_eq!(p.x, 1.0f32);
-            assert_eq!(p.y, 2.0f32);
+            assert!((p.x - 1.0f32).abs() < f32::EPSILON);
+            assert!((p.y - 2.0f32).abs() < f32::EPSILON);
         } else {
             without_pair += 1;
         }
@@ -3920,7 +3920,7 @@ fn add_to_match_from_staged_query() {
     world.readonly_begin(false);
 
     world.new_query::<&Position>().each_entity(|entity, _pos| {
-        let entity = entity.mut_current_stage(&stage);
+        let entity = entity.mut_current_stage(stage);
         entity.add(Velocity::id());
         assert!(!entity.has(Velocity::id()));
     });

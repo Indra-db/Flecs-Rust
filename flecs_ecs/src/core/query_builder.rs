@@ -726,7 +726,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    /// Associate this query with an existing entity (allows query_from retrieval).
+    /// Associate this query with an existing entity (allows `query_from` retrieval).
     /// Equivalent to C++ `query_builder(entity)` constructor.
     ///
     /// # Arguments

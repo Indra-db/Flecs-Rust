@@ -61,7 +61,7 @@ fn reset_count_no_default_counters() {
 #[track_caller]
 fn test_pod_ctor(value: i32) {
     assert_eq!(
-        POD_CTOR_INVOKED.with(|c| c.get()),
+        POD_CTOR_INVOKED.with(core::cell::Cell::get),
         value,
         "constructed count mismatch pod"
     );
@@ -69,7 +69,7 @@ fn test_pod_ctor(value: i32) {
 #[track_caller]
 fn test_pod_clone(value: i32) {
     assert_eq!(
-        POD_CLONE_INVOKED.with(|c| c.get()),
+        POD_CLONE_INVOKED.with(core::cell::Cell::get),
         value,
         "cloned count mismatch pod"
     );
@@ -77,7 +77,7 @@ fn test_pod_clone(value: i32) {
 #[track_caller]
 fn test_pod_drop(value: i32) {
     assert_eq!(
-        POD_DROP_INVOKED.with(|c| c.get()),
+        POD_DROP_INVOKED.with(core::cell::Cell::get),
         value,
         "dropped count mismatch pod"
     );
@@ -85,7 +85,7 @@ fn test_pod_drop(value: i32) {
 #[track_caller]
 fn test_string_ctor(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_CTOR_INVOKED.with(|c| c.get()),
+        STRUCT_W_STRING_CTOR_INVOKED.with(core::cell::Cell::get),
         value,
         "constructed count mismatch struct w/ string"
     );
@@ -93,7 +93,7 @@ fn test_string_ctor(value: i32) {
 #[track_caller]
 fn test_string_clone(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_CLONE_INVOKED.with(|c| c.get()),
+        STRUCT_W_STRING_CLONE_INVOKED.with(core::cell::Cell::get),
         value,
         "cloned count mismatch struct w/ string"
     );
@@ -101,7 +101,7 @@ fn test_string_clone(value: i32) {
 #[track_caller]
 fn test_string_drop(value: i32) {
     assert_eq!(
-        STRUCT_W_STRING_DROP_INVOKED.with(|c| c.get()),
+        STRUCT_W_STRING_DROP_INVOKED.with(core::cell::Cell::get),
         value,
         "dropped count mismatch struct w/ string"
     );
@@ -109,7 +109,7 @@ fn test_string_drop(value: i32) {
 #[track_caller]
 fn test_vector_ctor(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_CTOR_INVOKED.with(|c| c.get()),
+        STRUCT_W_VECTOR_CTOR_INVOKED.with(core::cell::Cell::get),
         value,
         "constructed count mismatch struct w/ vector"
     );
@@ -117,7 +117,7 @@ fn test_vector_ctor(value: i32) {
 #[track_caller]
 fn test_vector_clone(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_CLONE_INVOKED.with(|c| c.get()),
+        STRUCT_W_VECTOR_CLONE_INVOKED.with(core::cell::Cell::get),
         value,
         "cloned count mismatch struct w/ vector"
     );
@@ -125,7 +125,7 @@ fn test_vector_clone(value: i32) {
 #[track_caller]
 fn test_vector_drop(value: i32) {
     assert_eq!(
-        STRUCT_W_VECTOR_DROP_INVOKED.with(|c| c.get()),
+        STRUCT_W_VECTOR_DROP_INVOKED.with(core::cell::Cell::get),
         value,
         "dropped count mismatch struct w/ vector"
     );
@@ -133,7 +133,7 @@ fn test_vector_drop(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_ctor(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_CTOR_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_INVOKED_CTOR_INVOKED.with(core::cell::Cell::get),
         value,
         "constructed count mismatch no_default_invoked"
     );
@@ -141,7 +141,7 @@ fn test_no_default_invoked_ctor(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_clone(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_CLONE_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_INVOKED_CLONE_INVOKED.with(core::cell::Cell::get),
         value,
         "cloned count mismatch no_default_invoked"
     );
@@ -149,7 +149,7 @@ fn test_no_default_invoked_clone(value: i32) {
 #[track_caller]
 fn test_no_default_invoked_drop(value: i32) {
     assert_eq!(
-        NO_DEFAULT_INVOKED_DROP_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_INVOKED_DROP_INVOKED.with(core::cell::Cell::get),
         value,
         "dropped count mismatch no_default_invoked"
     );
@@ -157,7 +157,7 @@ fn test_no_default_invoked_drop(value: i32) {
 #[track_caller]
 fn test_no_default_ctor(value: i32) {
     assert_eq!(
-        NO_DEFAULT_CTOR_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_CTOR_INVOKED.with(core::cell::Cell::get),
         value,
         "constructed count mismatch no_default"
     );
@@ -165,7 +165,7 @@ fn test_no_default_ctor(value: i32) {
 #[track_caller]
 fn test_no_default_clone(value: i32) {
     assert_eq!(
-        NO_DEFAULT_CLONE_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_CLONE_INVOKED.with(core::cell::Cell::get),
         value,
         "cloned count mismatch no_default"
     );
@@ -173,7 +173,7 @@ fn test_no_default_clone(value: i32) {
 #[track_caller]
 fn test_no_default_drop(value: i32) {
     assert_eq!(
-        NO_DEFAULT_DROP_INVOKED.with(|c| c.get()),
+        NO_DEFAULT_DROP_INVOKED.with(core::cell::Cell::get),
         value,
         "dropped count mismatch no_default"
     );
@@ -3548,7 +3548,7 @@ fn component_lifecycle_on_set_hook_sparse_w_iter() {
 // compare hooks — test custom comparison hooks with structs implementing PartialOrd/PartialEq
 
 fn compare_WithGreaterThan() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithGreaterThan {
@@ -3583,7 +3583,7 @@ fn compare_WithGreaterThan() {
 }
 
 fn compare_WithLessThan() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithLessThan {
@@ -3610,7 +3610,7 @@ fn compare_WithLessThan() {
 }
 
 fn compare_WithLessAndGreaterThan() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithLessAndGreaterThan {
@@ -3637,7 +3637,7 @@ fn compare_WithLessAndGreaterThan() {
 }
 
 fn compare_WithEqualsAndGreaterThan() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithEqualsAndGreaterThan {
@@ -3666,7 +3666,7 @@ fn compare_WithEqualsAndGreaterThan() {
 }
 
 fn compare_WithEqualsAndLessThan() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[derive(Component, Clone, Copy, Debug, PartialEq)]
     struct WithEqualsAndLessThan {
@@ -3874,7 +3874,7 @@ fn component_lifecycle_no_default_ctor_add_second() {
 
 #[test]
 fn compare_uint8_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(u8)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -3917,7 +3917,7 @@ fn compare_uint8_enum() {
 
 #[test]
 fn compare_uint16_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(u16)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -3944,7 +3944,7 @@ fn compare_uint16_enum() {
 
 #[test]
 fn compare_uint32_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(u32)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -3971,7 +3971,7 @@ fn compare_uint32_enum() {
 
 #[test]
 fn compare_uint64_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(u64)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -3998,7 +3998,7 @@ fn compare_uint64_enum() {
 
 #[test]
 fn compare_int8_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(i8)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -4025,7 +4025,7 @@ fn compare_int8_enum() {
 
 #[test]
 fn compare_int16_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(i16)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -4052,7 +4052,7 @@ fn compare_int16_enum() {
 
 #[test]
 fn compare_int32_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(i32)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
@@ -4079,7 +4079,7 @@ fn compare_int32_enum() {
 
 #[test]
 fn compare_int64_enum() {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     #[repr(i64)]
     #[derive(Component, PartialOrd, PartialEq, Debug, Clone, Copy)]
