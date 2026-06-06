@@ -39,6 +39,14 @@ where
     fn get_id_second<'a>(self, _world: impl WorldProvider<'a>) -> Entity {
         Entity::new(0)
     }
+
+    /// This will return the id of the first and second part of a pair.
+    /// If this is called on a non_pair, it will return the same id for both first and second.
+    #[doc(hidden)]
+    #[inline]
+    fn get_id_first_second<'a>(&self, _world: impl WorldProvider<'a>) -> (Entity, Entity) {
+        (Entity(0), Entity(0))
+    }
 }
 
 impl<T: InternalIntoEntity> IntoId for T {

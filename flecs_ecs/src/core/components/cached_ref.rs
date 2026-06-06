@@ -26,14 +26,16 @@ impl<'a, T> CachedRef<'a, T> {
         entity: impl Into<Entity>,
         component: impl IntoId,
     ) -> CachedRef<'a, T> {
-        let world = world.world();
+        let stage_world = world.world();
         // the world we were called with may be a stage; convert it to a world
-        // here if that is the case
+        // here if that is the case — ecs_ref_* operations require the real world
         let world_ptr = unsafe {
-            sys::ecs_get_world(world.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
+            sys::ecs_get_world(stage_world.world_ptr_mut() as *const c_void)
+                as *mut sys::ecs_world_t
         };
+        let world = unsafe { WorldRef::from_ptr(world_ptr) };
 
-        let id = *component.into_id(world);
+        let id = *component.into_id(stage_world);
 
         debug_assert!(
             id != 0,

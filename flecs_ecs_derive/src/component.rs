@@ -1224,9 +1224,12 @@ pub(crate) fn impl_cached_component_data_enum(
             }
         }
 
-        fn __enum_data_mut() -> *mut u64 {
-            static mut ENUM_FIELD_ENTITY_ID: [u64; #size_variants as usize] = [0; #size_variants as usize];
-            unsafe { ENUM_FIELD_ENTITY_ID.as_mut_ptr() }
+        fn __enum_variant_index(variant_index: usize) -> u32 {
+            const UNINIT: ::core::sync::atomic::AtomicU32 =
+                ::core::sync::atomic::AtomicU32::new(u32::MAX);
+            static VARIANT_INDICES: [::core::sync::atomic::AtomicU32; #size_variants as usize] =
+                [UNINIT; #size_variants as usize];
+            <#name as flecs_ecs::core::ComponentId>::get_or_init_index(&VARIANT_INDICES[variant_index])
         }
 
         fn iter() -> Self::VariantIterator {

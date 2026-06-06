@@ -197,7 +197,9 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for Field<'_, T, LOCK> {
     fn drop(&mut self) {
-        if LOCK {
+        if LOCK && !self.slice_components.is_empty() {
+            // Only release lock if we actually acquired one (non-empty slice).
+            // Empty slices are returned for optional unset fields without lock acquisition.
             unsafe {
                 if let Some(stage_id) = self.stage_id {
                     table_column_lock_read_end::<true>(
@@ -253,6 +255,22 @@ impl<'a, T> Field<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
+    /// Create an empty Field for optional unset fields — no lock acquired regardless of LOCK.
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_empty(is_shared: bool) -> Self {
+        // SAFETY: Drop checks slice_components.is_empty() and skips unlock for empty fields.
+        // table is dangling but never accessed when slice is empty.
+        Self {
+            slice_components: &[],
+            is_shared,
+            table: NonNull::dangling(),
+            field_index: 0,
+            stage_id: None,
+            column_index: 0,
+        }
+    }
+
     #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new(slice_components: &'a [T], is_shared: bool) -> Self {
@@ -504,7 +522,7 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T, const LOCK: bool> Drop for FieldMut<'_, T, LOCK> {
     fn drop(&mut self) {
-        if LOCK {
+        if LOCK && !self.slice_components.is_empty() {
             if let Some(stage_id) = self.stage_id {
                 unsafe {
                     table_column_lock_write_end::<true>(
@@ -562,6 +580,20 @@ impl<'a, T> FieldMut<'a, T, false> {
 }
 
 impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
+    /// Create an empty `FieldMut` for optional unset fields — no lock acquired regardless of LOCK.
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_empty(is_shared: bool) -> Self {
+        Self {
+            slice_components: &mut [],
+            is_shared,
+            table: NonNull::dangling(),
+            field_index: 0,
+            stage_id: None,
+            column_index: 0,
+        }
+    }
+
     /// Create a new column from component array.
     ///
     /// # Arguments
@@ -847,8 +879,9 @@ impl<'a, T, const LOCK: bool> IndexMut<usize> for FieldMut<'a, T, LOCK> {
 /// - [`FieldAtMut`] for mutable sparse component access
 pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
+    // None means dense (no sparse lock needed); Some means sparse (lock acquired on construction)
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    pub(crate) idr: Option<NonNull<sys::ecs_component_record_t>>,
     #[cfg(feature = "flecs_safety_locks")]
     is_multithreaded: bool,
 }
@@ -865,13 +898,15 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
-        if self.is_multithreaded {
-            unsafe {
-                sparse_id_record_lock_read_end::<true>(self.idr.as_mut());
-            }
-        } else {
-            unsafe {
-                sparse_id_record_lock_read_end::<false>(self.idr.as_mut());
+        if let Some(mut idr) = self.idr {
+            if self.is_multithreaded {
+                unsafe {
+                    sparse_id_record_lock_read_end::<true>(idr.as_mut());
+                }
+            } else {
+                unsafe {
+                    sparse_id_record_lock_read_end::<false>(idr.as_mut());
+                }
             }
         }
     }
@@ -907,8 +942,24 @@ impl<'a, T> FieldAt<'a, T> {
 
         Self {
             component,
-            idr,
+            idr: Some(idr),
             is_multithreaded,
+        }
+    }
+
+    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    pub(crate) fn new_dense(component: &'a T) -> Self {
+        Self { component }
+    }
+
+    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    #[cfg(feature = "flecs_safety_locks")]
+    pub(crate) fn new_dense(component: &'a T) -> Self {
+        Self {
+            component,
+            idr: None,
+            is_multithreaded: false,
         }
     }
 }
@@ -936,8 +987,9 @@ impl<'a, T> FieldAt<'a, T> {
 /// - [`TableIter::field_at_mut()`](crate::core::TableIter::field_at_mut) to obtain `FieldAtMut`
 pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
+    // None means dense (no sparse lock needed); Some means sparse (lock acquired on construction)
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) idr: NonNull<sys::ecs_component_record_t>,
+    pub(crate) idr: Option<NonNull<sys::ecs_component_record_t>>,
     #[cfg(feature = "flecs_safety_locks")]
     is_multithreaded: bool,
 }
@@ -954,13 +1006,15 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
-        if self.is_multithreaded {
-            unsafe {
-                sparse_id_record_lock_write_end::<true>(self.idr.as_mut());
-            }
-        } else {
-            unsafe {
-                sparse_id_record_lock_write_end::<false>(self.idr.as_mut());
+        if let Some(mut idr) = self.idr {
+            if self.is_multithreaded {
+                unsafe {
+                    sparse_id_record_lock_write_end::<true>(idr.as_mut());
+                }
+            } else {
+                unsafe {
+                    sparse_id_record_lock_write_end::<false>(idr.as_mut());
+                }
             }
         }
     }
@@ -1005,8 +1059,26 @@ impl<'a, T> FieldAtMut<'a, T> {
 
         Self {
             component,
-            idr,
+            idr: Some(idr),
             is_multithreaded,
+        }
+    }
+
+    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    #[cfg(not(feature = "flecs_safety_locks"))]
+    #[inline(always)]
+    pub(crate) fn new_dense(component: &'a mut T) -> Self {
+        Self { component }
+    }
+
+    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    pub(crate) fn new_dense(component: &'a mut T) -> Self {
+        Self {
+            component,
+            idr: None,
+            is_multithreaded: false,
         }
     }
 }

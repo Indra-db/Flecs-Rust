@@ -426,7 +426,12 @@ where
 
     #[inline(always)]
     #[allow(clippy::extra_unused_type_parameters)] //release build clippy warning
-    fn field_safety_checks<T: ComponentId, const READONLY: bool, const TYPED: bool>(
+    fn field_safety_checks<
+        T: ComponentId,
+        const READONLY: bool,
+        const TYPED: bool,
+        const IS_FIELD_AT: bool,
+    >(
         &self,
         _index: i8,
     ) {
@@ -435,12 +440,14 @@ where
             FlecsErrorCode::InvalidParameter,
             _index
         );
-        ecs_assert!(
-            (self.iter.flags & sys::EcsIterCppEach == 0)
-                || unsafe { sys::ecs_field_src(self.iter, _index) != 0 },
-            FlecsErrorCode::InvalidOperation,
-            "cannot .field_handle from .each, use .field_at instead",
-        );
+        if !IS_FIELD_AT {
+            ecs_assert!(
+                (self.iter.flags & sys::EcsIterCppEach == 0)
+                    || unsafe { sys::ecs_field_src(self.iter, _index) != 0 },
+                FlecsErrorCode::InvalidOperation,
+                "cannot .field_handle from .each, use .field_at instead",
+            );
+        }
 
         if !READONLY {
             ecs_assert!(
@@ -505,7 +512,7 @@ where
     #[inline(always)]
     pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, false>(index);
         self.field_internal::<T::UnderlyingType, true>(index)
     }
 
@@ -562,7 +569,7 @@ where
         index: i8,
     ) -> Field<'a, T::UnderlyingType, false> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, false>(index);
         self.field_internal::<T::UnderlyingType, false>(index)
     }
 
@@ -621,7 +628,7 @@ where
         index: i8,
     ) -> Option<Field<'a, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, false>(index);
         self.get_field_internal::<T::UnderlyingType, true>(index)
     }
 
@@ -688,7 +695,7 @@ where
         index: i8,
     ) -> Option<Field<'a, T::UnderlyingType, false>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, false>(index);
         self.get_field_internal::<T::UnderlyingType, false>(index)
     }
 
@@ -735,7 +742,7 @@ where
     #[inline(always)]
     pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, false>(index);
         self.field_internal_mut::<T::UnderlyingType, true>(index)
     }
 
@@ -797,7 +804,7 @@ where
         index: i8,
     ) -> FieldMut<'a, T::UnderlyingType, false> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, false>(index);
         self.field_internal_mut::<T::UnderlyingType, false>(index)
     }
 
@@ -856,7 +863,7 @@ where
         index: i8,
     ) -> Option<FieldMut<'a, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, false>(index);
         self.get_field_internal_mut::<T::UnderlyingType, true>(index)
     }
 
@@ -926,7 +933,7 @@ where
         index: i8,
     ) -> Option<FieldMut<'a, T::UnderlyingType, false>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, false>(index);
         self.get_field_internal_mut::<T::UnderlyingType, false>(index)
     }
 
@@ -942,7 +949,7 @@ where
     #[inline(always)]
     pub fn field_untyped(&self, index: i8) -> FieldUntyped {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<(), true, false>(index);
+        self.field_safety_checks::<(), true, false, false>(index);
         self.field_untyped_internal(index)
     }
 
@@ -958,7 +965,7 @@ where
     #[inline(always)]
     pub fn get_field_untyped(&self, index: i8) -> Option<FieldUntyped> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<(), true, false>(index);
+        self.field_safety_checks::<(), true, false, false>(index);
         self.get_field_untyped_internal(index)
     }
 
@@ -974,7 +981,7 @@ where
     #[inline(always)]
     pub fn field_untyped_mut(&self, index: i8) -> FieldUntypedMut {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<(), false, false>(index);
+        self.field_safety_checks::<(), false, false, false>(index);
         self.field_untyped_internal_mut(index)
     }
 
@@ -990,7 +997,7 @@ where
     #[inline(always)]
     pub fn get_field_untyped_mut(&self, index: i8) -> Option<FieldUntypedMut> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<(), false, false>(index);
+        self.field_safety_checks::<(), false, false, false>(index);
         self.get_field_untyped_internal_mut(index)
     }
 
@@ -1018,8 +1025,7 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if the component at the specified field index is not sparse. Use this method
-    /// only for components marked with the `Sparse` trait.
+    /// Panics if the field is null or the row is out of bounds.
     ///
     /// # Example
     ///
@@ -1059,19 +1065,19 @@ where
         index: i8,
         row: impl Into<usize>,
     ) -> FieldAt<'a, T::UnderlyingType> {
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, true>(index);
         let row = row.into();
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
         #[cfg(feature = "flecs_term_count_64")]
         let val = 1u64 << (index as usize);
-        if self.iter.row_fields & val == 0 {
-            panic!(
-                "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
-                T::name()
-            )
+        if self.iter.row_fields & val != 0 {
+            // Sparse component: use per-row C accessor
+            self.field_at_sparse_internal::<T>(index, row)
+        } else {
+            // Dense component: index into the contiguous array (no sparse lock needed)
+            FieldAt::<T::UnderlyingType>::new_dense(self.field_at_dense_internal::<T>(index, row))
         }
-        self.field_at_sparse_internal::<T>(index, row)
     }
 
     /// Get the typed field data for the specified row
@@ -1090,19 +1096,25 @@ where
         index: i8,
         row: impl Into<usize>,
     ) -> Option<FieldAt<'a, T::UnderlyingType>> {
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, true>(index);
         let row = row.into();
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
         #[cfg(feature = "flecs_term_count_64")]
         let val = 1u64 << (index as usize);
-        if self.iter.row_fields & val == 0 {
-            panic!(
-                "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
-                T::name()
-            )
+        if self.iter.row_fields & val != 0 {
+            // Sparse component: use per-row C accessor
+            self.get_field_at_sparse_internal::<T>(index, row)
+        } else {
+            // Dense component: index into the contiguous array
+            let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
+            if array.is_null() || row >= count {
+                return None;
+            }
+            Some(FieldAt::<T::UnderlyingType>::new_dense(unsafe {
+                &*array.add(row)
+            }))
         }
-        self.get_field_at_sparse_internal::<T>(index, row)
     }
 
     /// Get mutable access to a sparse component at a specific row.
@@ -1122,7 +1134,7 @@ where
     ///
     /// # Panics
     ///
-    /// Panics if the component at the specified field index is not sparse.
+    /// Panics if the field is null or the row is out of bounds.
     ///
     /// # Example
     ///
@@ -1164,21 +1176,22 @@ where
         index: i8,
         row: impl Into<usize>,
     ) -> FieldAtMut<'a, T::UnderlyingType> {
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, true>(index);
         let row = row.into();
 
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
         #[cfg(feature = "flecs_term_count_64")]
         let val = 1u64 << (index as usize);
-        if self.iter.row_fields & val == 0 {
-            panic!(
-                "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
-                T::name()
+        if self.iter.row_fields & val != 0 {
+            // Sparse component: use per-row C accessor
+            self.field_at_sparse_internal_mut::<T>(index, row)
+        } else {
+            // Dense component: index into the contiguous array (no sparse lock needed)
+            FieldAtMut::<T::UnderlyingType>::new_dense(
+                self.field_at_dense_internal_mut::<T>(index, row),
             )
         }
-
-        self.field_at_sparse_internal_mut::<T>(index, row)
     }
 
     /// Get the mutable typed field data for the specified row
@@ -1189,27 +1202,32 @@ where
         index: i8,
         row: impl Into<usize>,
     ) -> Option<FieldAtMut<'a, T::UnderlyingType>> {
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, true>(index);
         let row = row.into();
 
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
         #[cfg(feature = "flecs_term_count_64")]
         let val = 1u64 << (index as usize);
-        if self.iter.row_fields & val == 0 {
-            panic!(
-                "using field_at is only allowed on components that are sparse, component {} at index {index} is not sparse",
-                T::name()
-            )
+        if self.iter.row_fields & val != 0 {
+            // Sparse component: use per-row C accessor
+            self.get_field_at_sparse_internal_mut::<T>(index, row)
+        } else {
+            // Dense component: index into the contiguous array
+            let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
+            if array.is_null() || row >= count {
+                return None;
+            }
+            Some(FieldAtMut::<T::UnderlyingType>::new_dense(unsafe {
+                &mut *array.add(row)
+            }))
         }
-
-        self.get_field_at_sparse_internal_mut::<T>(index, row)
     }
 
     /// Get the untyped field data for the specified row
     /// This function may be used to access shared fields when row is set to 0.
     pub fn field_at_untyped(&self, index: i8, row: usize) -> *const c_void {
-        self.field_safety_checks::<(), true, false>(index);
+        self.field_safety_checks::<(), true, false, false>(index);
 
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
@@ -1230,7 +1248,7 @@ where
     /// Get the mutable untyped field data for the specified row
     /// This function may be used to access shared fields when row is set to 0.
     pub fn field_at_untyped_mut(&self, index: i8, row: usize) -> *mut c_void {
-        self.field_safety_checks::<(), false, false>(index);
+        self.field_safety_checks::<(), false, false, false>(index);
 
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
@@ -1389,7 +1407,7 @@ where
         index: i8,
     ) -> Result<Field<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, true, true>(index);
+        self.field_safety_checks::<T, true, true, false>(index);
 
         self.field_result_internal::<T::UnderlyingType, true>(index)
     }
@@ -1400,7 +1418,7 @@ where
         index: i8,
     ) -> Result<FieldMut<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
-        self.field_safety_checks::<T, false, true>(index);
+        self.field_safety_checks::<T, false, true, false>(index);
 
         self.field_result_internal_mut::<T::UnderlyingType, true>(index)
     }
@@ -1555,14 +1573,15 @@ where
     #[inline(always)]
     pub(crate) fn field_internal<T, const LOCK: bool>(&self, index: i8) -> Field<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 || array.is_null() {
-            panic!(
-                "field_internal: no values at index {index} — ensure the field exists and has entries"
-            );
-        }
-
-        // SAFETY: we already validated index/type before calling
-        let slice = unsafe { core::slice::from_raw_parts(array as *const T, count) };
+        // Optional fields that are not set have null array / count=0.
+        // Return empty slice — caller must use it.is_set(index) before indexing.
+        // This matches C++ where it.field<Optional>() returns null for unset optionals.
+        let slice = if count == 0 || array.is_null() {
+            &[]
+        } else {
+            // SAFETY: array is non-null, count > 0, pointer is valid for 'a
+            unsafe { core::slice::from_raw_parts(array as *const T, count) }
+        };
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
@@ -1572,6 +1591,10 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
+            // Optional unset fields have empty slice — return without acquiring lock.
+            if slice.is_empty() {
+                return Field::<T, LOCK>::new_empty(is_shared);
+            }
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
             let world_ref = &self.world;
@@ -1693,13 +1716,13 @@ where
         index: i8,
     ) -> FieldMut<'a, T, LOCK> {
         let (array, is_shared, count) = self.field_internal_parts::<T>(index);
-        if count == 0 || array.is_null() {
-            panic!(
-                "field_internal: no values at index {index} — ensure the field exists and has entries"
-            );
-        }
-
-        let slice = unsafe { core::slice::from_raw_parts_mut(array, count) };
+        // Optional unset fields have null array / count=0 — return empty slice.
+        let slice = if count == 0 || array.is_null() {
+            &mut []
+        } else {
+            // SAFETY: array is non-null, count > 0, pointer is valid for 'a
+            unsafe { core::slice::from_raw_parts_mut(array, count) }
+        };
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
@@ -1708,6 +1731,9 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
+            if slice.is_empty() {
+                return FieldMut::<T, LOCK>::new_empty(is_shared);
+            }
             let tr = unsafe { *self.iter.trs.add(index as usize) };
             let table = unsafe { (*tr).hdr.table };
             let world_ref = &self.world;
@@ -1788,6 +1814,45 @@ where
     pub(crate) fn field_at_untyped_internal_mut(&self, index: i8, row: usize) -> *mut c_void {
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
         unsafe { sys::ecs_field_at_w_size(self.iter, size, index, row as i32) }
+    }
+
+    fn field_at_dense_internal<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: usize,
+    ) -> &'a T::UnderlyingType {
+        let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
+        assert!(
+            !array.is_null(),
+            "field_at_dense: null array at index {index}"
+        );
+        assert!(
+            row < count,
+            "field_at_dense: row {row} out of bounds (count={count})"
+        );
+        // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
+        // The pointer is valid for reads for the lifetime 'a which is bound to &'a self.
+        unsafe { &*array.add(row) }
+    }
+
+    #[allow(clippy::mut_from_ref)]
+    fn field_at_dense_internal_mut<T: ComponentId>(
+        &'a self,
+        index: i8,
+        row: usize,
+    ) -> &'a mut T::UnderlyingType {
+        let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
+        assert!(
+            !array.is_null(),
+            "field_at_dense_mut: null array at index {index}"
+        );
+        assert!(
+            row < count,
+            "field_at_dense_mut: row {row} out of bounds (count={count})"
+        );
+        // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
+        // Aliasing is the caller's responsibility, matching the contract of field_internal_mut.
+        unsafe { &mut *array.add(row) }
     }
 
     pub(crate) fn field_at_sparse_internal<T>(

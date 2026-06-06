@@ -1,6 +1,8 @@
 //! Registering and working with components
 
-use core::{ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr};
+use core::{
+    cmp::Ordering, ffi::c_void, fmt::Debug, fmt::Display, marker::PhantomData, ops::Deref, ptr,
+};
 
 use crate::core::*;
 #[cfg(feature = "flecs_meta")]
@@ -412,6 +414,167 @@ impl<'a, T> Component<'a, T> {
                 flecs_field_at::<T>(iter, 0, 0)
             };
             on_remove(entity, &mut *component);
+        }
+    }
+
+    /// Register compare hook with a custom function.
+    ///
+    /// For types that implement [`PartialOrd`], the hook is registered automatically.
+    /// Use this method for types that don't implement `PartialOrd` or need custom ordering.
+    ///
+    /// # Arguments
+    /// * `cmp`: pure function returning `Ordering` for two component references
+    pub fn on_compare(self, cmp: fn(&T, &T) -> core::cmp::Ordering) -> Self {
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
+
+        // Guard against double-registering a *custom* fn. Overriding the auto-registered
+        // panic stub (set when T does not impl PartialOrd) is allowed.
+        let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
+        let already_custom =
+            !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_compare.is_some() };
+        ecs_assert!(
+            !already_custom,
+            FlecsErrorCode::InvalidOperation,
+            "cmp hook already set for component {}",
+            core::any::type_name::<T>()
+        );
+
+        let binding_ctx = Self::get_binding_context(&mut type_hooks);
+        binding_ctx.on_compare = Some(cmp as *mut c_void);
+        type_hooks.cmp = Some(Self::run_compare::<T>);
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
+        self
+    }
+
+    /// Register equals hook with a custom function.
+    ///
+    /// For types that implement [`PartialEq`], the hook is registered automatically.
+    /// Use this method for types that don't implement `PartialEq` or need custom equality.
+    ///
+    /// # Arguments
+    /// * `eq`: pure function returning `bool` for two component references
+    pub fn on_equals(self, eq: fn(&T, &T) -> bool) -> Self {
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
+
+        // Guard against double-registering a *custom* fn. Overriding the auto-registered
+        // panic stub (set when T does not impl PartialEq) is allowed.
+        let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
+        let already_custom =
+            !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_equals.is_some() };
+        ecs_assert!(
+            !already_custom,
+            FlecsErrorCode::InvalidOperation,
+            "equals hook already set for component {}",
+            core::any::type_name::<T>()
+        );
+
+        let binding_ctx = Self::get_binding_context(&mut type_hooks);
+        binding_ctx.on_equals = Some(eq as *mut c_void);
+        type_hooks.equals = Some(Self::run_equals::<T>);
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
+        self
+    }
+
+    /// Trampoline for the custom compare hook.
+    #[extern_abi]
+    unsafe fn run_compare<U>(
+        a: *const c_void,
+        b: *const c_void,
+        type_info: *const sys::ecs_type_info_t,
+    ) -> i32 {
+        // SAFETY: binding_ctx is set in on_compare before this callback is registered
+        let ctx = unsafe { (*type_info).hooks.binding_ctx as *const ComponentBindingCtx };
+        let func_ptr = unsafe { (*ctx).on_compare.unwrap() };
+        let func: fn(&U, &U) -> core::cmp::Ordering = unsafe { core::mem::transmute(func_ptr) };
+        match func(unsafe { &*(a as *const U) }, unsafe { &*(b as *const U) }) {
+            core::cmp::Ordering::Less => -1,
+            core::cmp::Ordering::Equal => 0,
+            core::cmp::Ordering::Greater => 1,
+        }
+    }
+
+    /// Trampoline for the custom equals hook.
+    #[extern_abi]
+    unsafe fn run_equals<U>(
+        a: *const c_void,
+        b: *const c_void,
+        type_info: *const sys::ecs_type_info_t,
+    ) -> bool {
+        // SAFETY: binding_ctx is set in on_equals before this callback is registered
+        let ctx = unsafe { (*type_info).hooks.binding_ctx as *const ComponentBindingCtx };
+        let func_ptr = unsafe { (*ctx).on_equals.unwrap() };
+        let func: fn(&U, &U) -> bool = unsafe { core::mem::transmute(func_ptr) };
+        func(unsafe { &*(a as *const U) }, unsafe { &*(b as *const U) })
+    }
+
+    /// Compare two values using the registered comparison hook.
+    ///
+    /// Returns `Some(Ordering)` if a comparison hook is registered, `None` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - First value to compare
+    /// * `b` - Second value to compare
+    ///
+    /// # Returns
+    ///
+    /// `Some(Ordering::Less)` if `a < b`, `Some(Ordering::Equal)` if `a == b`,
+    /// `Some(Ordering::Greater)` if `a > b`, or `None` if no hook is registered.
+    pub fn compare(&self, a: &T, b: &T) -> Option<Ordering> {
+        use crate::core::WorldProvider;
+
+        unsafe {
+            let ti_ptr =
+                sys::ecs_get_type_info(self.base.entity.world.world_ptr() as *mut _, *self.id);
+            if ti_ptr.is_null() {
+                return None;
+            }
+            let ti = &*ti_ptr;
+
+            let cmp_fn = ti.hooks.cmp?;
+            let result = cmp_fn(
+                a as *const T as *const c_void,
+                b as *const T as *const c_void,
+                ti,
+            );
+            Some(match result {
+                r if r < 0 => Ordering::Less,
+                r if r > 0 => Ordering::Greater,
+                _ => Ordering::Equal,
+            })
+        }
+    }
+
+    /// Check equality using the registered equals hook.
+    ///
+    /// Returns `Some(bool)` if an equals hook is registered, `None` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - First value to compare
+    /// * `b` - Second value to compare
+    ///
+    /// # Returns
+    ///
+    /// `Some(true)` if `a == b`, `Some(false)` if `a != b`, or `None` if no hook is registered.
+    pub fn are_equal(&self, a: &T, b: &T) -> Option<bool> {
+        use crate::core::WorldProvider;
+
+        unsafe {
+            let ti_ptr =
+                sys::ecs_get_type_info(self.base.entity.world.world_ptr() as *mut _, *self.id);
+            if ti_ptr.is_null() {
+                return None;
+            }
+            let ti = &*ti_ptr;
+
+            let eq_fn = ti.hooks.equals?;
+            let result = eq_fn(
+                a as *const T as *const c_void,
+                b as *const T as *const c_void,
+                ti,
+            );
+            Some(result)
         }
     }
 }

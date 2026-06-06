@@ -205,7 +205,7 @@ impl World {
     ///
     /// let world_info = world.info();
     ///
-    /// assert_eq!(world_info.systems_ran_frame, 0);
+    /// assert_eq!(world_info.systems_ran_total, 0);
     ///
     /// let dt = world.frame_begin(0.0);
     ///
@@ -1309,17 +1309,13 @@ impl World {
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
-        })
+        self.try_lookup_recursive(name)
+            .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
     /// Lookup entity by name, only the current scope is searched
     ///
-    /// # Panics
-    ///
-    /// Ensure that the entity exists before using it.
-    /// Use the [`World::try_lookup()`] variant otherwise.
+    /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
     /// # Arguments
     ///
@@ -1327,7 +1323,7 @@ impl World {
     ///
     /// # Returns
     ///
-    /// The entity
+    /// The entity, or entity with id 0 if not found.
     ///
     /// # See also
     ///
@@ -1337,8 +1333,8 @@ impl World {
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
+        self.try_lookup_recursive(name)
+            .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].
@@ -1653,10 +1649,9 @@ impl World {
     /// * `alias` - The alias to create.
     #[inline(always)]
     pub fn set_alias_entity(&self, entity: impl Into<Entity>, alias: &str) {
-        let alias = compact_str::format_compact!("{}\0", alias);
-
         let entity = *entity.into();
         if alias.is_empty() {
+            // Empty alias = use the entity's own short name (matches C++ ecs.use(entity) with no alias)
             unsafe {
                 sys::ecs_set_alias(
                     self.raw_world.as_ptr(),
@@ -1665,6 +1660,7 @@ impl World {
                 );
             };
         } else {
+            let alias = compact_str::format_compact!("{}\0", alias);
             unsafe {
                 sys::ecs_set_alias(self.raw_world.as_ptr(), entity, alias.as_ptr() as *const _);
             };

@@ -50,6 +50,18 @@ impl World {
             let id_u64 = *id.id();
             let index = T::index() as usize;
             let components_array = self.components_array();
+            if index >= components_array.len() {
+                components_array.reserve(index + 1 - components_array.len());
+                let capacity = components_array.capacity();
+                unsafe {
+                    core::ptr::write_bytes(
+                        components_array.as_mut_ptr().add(components_array.len()),
+                        0,
+                        capacity - components_array.len(),
+                    );
+                    components_array.set_len(capacity);
+                }
+            }
             components_array[index] = id_u64;
             #[cfg(feature = "flecs_meta")]
             {

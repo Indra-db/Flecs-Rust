@@ -726,6 +726,17 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
+    /// Associate this query with an existing entity (allows `query_from` retrieval).
+    /// Equivalent to C++ `query_builder(entity)` constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - The entity to bind the query to.
+    fn entity_set(&mut self, entity: impl Into<Entity>) -> &mut Self {
+        self.query_desc_mut().entity = *entity.into();
+        self
+    }
+
     /// set querylags
     ///
     /// # Arguments
@@ -808,6 +819,7 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
 
         match access.mode {
             AccessMode::Read => {
+                // Set In for explicit read access in builder API (mirrors C++ with<const T>())
                 self.current_term_mut().inout = InOutKind::In as i16;
             }
             AccessMode::ReadWrite => {

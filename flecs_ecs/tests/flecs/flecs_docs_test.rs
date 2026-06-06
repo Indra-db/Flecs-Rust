@@ -170,10 +170,10 @@ fn flecs_system_docs_compile_test() {
     q.run(|mut it| {
         while it.next() {
             let mut p = it
-                .field_mut::<Position>(0)
+                .get_field_mut::<Position>(0)
                 .expect("query term changed and not at the same index anymore");
             let v = it
-                .field::<Velocity>(1)
+                .get_field::<Velocity>(1)
                 .expect("query term changed and not at the same index anymore");
             for i in it.iter() {
                 p[i].x += v[i].x;
@@ -188,10 +188,10 @@ fn flecs_system_docs_compile_test() {
         .run(|mut it| {
             while it.next() {
                 let mut p = it
-                    .field_mut::<Position>(0)
+                    .get_field_mut::<Position>(0)
                     .expect("query term changed and not at the same index anymore");
                 let v = it
-                    .field::<Velocity>(1)
+                    .get_field::<Velocity>(1)
                     .expect("query term changed and not at the same index anymore");
                 for i in it.iter() {
                     p[i].x += v[i].x;
@@ -258,11 +258,11 @@ fn flecs_system_docs_compile_test() {
     world
         .system_named::<&Game>("PrintTime")
         .term_at(0)
-        .singleton()
+        .set_src(Game::id())
         .kind(id::<flecs::pipeline::OnUpdate>())
         .run(|mut it| {
             while it.next() {
-                println!("Time: {}", it.field::<Game>(0)[9].time);
+                println!("Time: {}", it.get_field::<Game>(0).unwrap()[9].time);
             }
         });
 
@@ -596,7 +596,7 @@ fn flecs_query_docs_compile_test() {
         .build();
 
     q.each_iter(|it, index, _| {
-        let pair = it.pair(0).unwrap();
+        let pair = it.get_pair(0).unwrap();
         let second = pair.second_id();
         let e = it.get_entity(index).unwrap();
 
@@ -746,8 +746,8 @@ fn flecs_query_docs_compile_test() {
 
     q.run(|mut it| {
         while it.next() {
-            let p = it.field_mut::<Position>(0);
-            if let Some(v) = it.field::<Velocity>(1) {
+            let p = it.get_field_mut::<Position>(0);
+            if let Some(v) = it.get_field::<Velocity>(1) {
                 // iterate as usual
             }
         }
@@ -896,13 +896,13 @@ fn flecs_query_docs_compile_test() {
     let q = world
         .query::<(&Player, &Position)>()
         .with(Input::id())
-        .singleton() // match Input on itself
+        .set_src(Input::id()) // match Input on itself
         .build();
 
     let q = world
         .query::<(&Player, &Position, &Input)>()
         .term_at(2)
-        .singleton() // match Input on itself
+        .set_src(Input::id()) // match Input on itself
         .build();
 
     // These three queries are the same:
@@ -1498,7 +1498,7 @@ fn flecs_docs_relationships_compile_test() {
         index += 1;
     }
 
-    let parent = bob.target_for(Position::id(), flecs::ChildOf::ID);
+    let parent = bob.target_id_for(flecs::ChildOf::ID, Position::id());
 
     bob.each_component(|id| {
         if id.is_pair() {
@@ -1520,7 +1520,7 @@ fn flecs_docs_relationships_compile_test() {
         .with((eats, flecs::Wildcard::ID))
         .build()
         .each_iter(|it, i, _| {
-            let food = it.pair(0).unwrap().second_id(); // Apples, ...
+            let food = it.get_pair(0).unwrap().second_id(); // Apples, ...
             let e = it.get_entity(i).unwrap();
             // Iterate as usual
         });
@@ -1569,8 +1569,8 @@ fn flecs_docs_relationships_compile_test() {
         println!(
             "entity {} has relationship {} {}",
             it.get_entity(i).unwrap(),
-            it.pair(0).unwrap().first_id().name(),
-            it.pair(0).unwrap().second_id().name()
+            it.get_pair(0).unwrap().first_id().name(),
+            it.get_pair(0).unwrap().second_id().name()
         );
     });
 
@@ -1821,7 +1821,7 @@ fn flecs_docs_quick_start_compile_test() {
     world
         .query::<(&Velocity, &Gravity)>()
         .term_at(1)
-        .singleton()
+        .set_src(Gravity::id())
         .build();
 
     // For simple queries the world::each function can be used
@@ -2161,7 +2161,7 @@ fn flecs_docs_observers_compile_test() {
     world
         .observer::<flecs::OnSet, &TimeOfDay>()
         .term_at(0)
-        .singleton()
+        .set_src(TimeOfDay::id())
         .each_iter(|it, i, time| {
             // ...
         });
@@ -2578,7 +2578,7 @@ fn flecs_docs_component_traits_compile_test() {
     let e = world
         .entity()
         .set(Position { x: 10.0, y: 20.9 })
-        .add_trait::<(Serializable, Position)>(); // Because Serializable is a tag, the pair
+        .add((Serializable, Position::id())); // Because Serializable is a tag, the pair
     // has a value of type Position
 
     // Gets value from Position component

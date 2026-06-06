@@ -75,7 +75,6 @@ where
     T: ComponentId,
 {
     let world = world.world();
-    let world_ptr = world.world_ptr_mut();
 
     let id = if IS_NAMED {
         register_component_data_named::<COMPONENT_REGISTRATION, T>(world, name)
@@ -85,7 +84,7 @@ where
 
     if T::IS_ENUM {
         let underlying_enum_type_id = world.component_id::<T::UnderlyingTypeOfEnum>();
-        register_enum_data::<T>(world_ptr, id, *underlying_enum_type_id);
+        register_enum_data::<T>(world, id, *underlying_enum_type_id);
     }
     id
 }
@@ -132,15 +131,15 @@ where
 
 /// registers enum fields with the world.
 pub(crate) fn register_enum_data<T>(
-    world: *mut sys::ecs_world_t,
+    world: WorldRef<'_>,
     id: sys::ecs_entity_t,
     underlying_type_id: sys::ecs_entity_t,
 ) where
     T: ComponentId,
 {
     //TODO we should convert this ecs_cpp functions to rust so if it ever changes, our solution won't break
-    unsafe { sys::ecs_cpp_enum_init(world, id, underlying_type_id) };
-    let enum_array_ptr = T::UnderlyingEnumType::__enum_data_mut();
+    let world_ptr = world.world_ptr_mut();
+    unsafe { sys::ecs_cpp_enum_init(world_ptr, id, underlying_type_id) };
     let enum_size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
     for enum_item in T::UnderlyingEnumType::iter() {
         let name = enum_item.name_cstr();
@@ -148,27 +147,38 @@ pub(crate) fn register_enum_data<T>(
         let mut array_index = enum_index;
         let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
-                world,
+                world_ptr,
                 id,
-                T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_index),
+                // Pass current world's cached ID (0 = new registration, existing = re-registration)
+                T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_index, world),
                 name.as_ptr(),
                 &mut array_index as *mut usize as *mut c_void,
                 underlying_type_id,
                 enum_size,
             )
         };
-        store_enum_entity_if_needed::<T>(enum_array_ptr, array_index, entity_id);
+        store_enum_entity_if_needed::<T>(world, array_index, entity_id);
     }
 }
 
 #[inline(always)]
 fn store_enum_entity_if_needed<T: ComponentId>(
-    enum_array_ptr: *mut sys::ecs_entity_t,
+    world: WorldRef<'_>,
     index: usize,
     entity_id: sys::ecs_entity_t,
 ) {
-    if !T::UnderlyingEnumType::is_index_registered_as_entity(index) {
-        unsafe { *enum_array_ptr.add(index) = entity_id };
+    if !T::UnderlyingEnumType::is_index_registered_as_entity(index, world) {
+        let variant_idx = T::UnderlyingEnumType::__enum_variant_index(index) as usize;
+        let arr = world.components_array();
+        if variant_idx >= arr.len() {
+            arr.reserve(variant_idx + 1 - arr.len());
+            let capacity = arr.capacity();
+            unsafe {
+                core::ptr::write_bytes(arr.as_mut_ptr().add(arr.len()), 0, capacity - arr.len());
+                arr.set_len(capacity);
+            }
+        }
+        arr[variant_idx] = entity_id;
     }
 }
 
@@ -257,11 +267,12 @@ where
         implicit_name = true;
     }
 
-    /* If component is registered by module, ensure it's registered in
-     * the scope of the module. */
-    let module = unsafe { sys::ecs_get_scope(world) };
-
-    if module != 0 && implicit_name {
+    if implicit_name {
+        // Use only the short name (last segment of the Rust path).
+        // Inside a module scope this registers the component relative to the module.
+        // At root scope this matches C++ behavior: ecs_cpp_component_register uses
+        // ecs_cpp_trim_module which strips the namespace when no scope is active,
+        // effectively registering just "Position" not "myns::Position".
         user_name = type_name_without_scope.as_ptr() as *const c_char;
     }
 
@@ -285,16 +296,17 @@ where
     // TODO if it's valid. When two components with the same name, but different module get registered
     // this still gives id 0, so what's the point of this check?
 
-    // If no name was provided first check if a type with the provided
-    // symbol was already registered.
-    let id = if name.is_null() {
-        let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
-        let id = unsafe { sys::ecs_lookup_symbol(world, type_name_ptr as *const _, false, false) };
-        unsafe { sys::ecs_set_scope(world, prev_scope) };
-        id
-    } else {
-        0
-    };
+    // Always check if this type was already registered by looking up its symbol.
+    // The symbol is the full Rust type_name (unique per type), so this lookup only ever
+    // finds the same type's entity — safe to reuse unconditionally.
+    // This covers both the implicit-name path AND the explicit-name path
+    // (#[flecs(name = "...")] or module-qualified names). Without this, calling
+    // component::<T>() a second time from inside a hook/observer would skip the cache
+    // (arr[index] == 0 because finalize_component_registration doesn't write it back),
+    // attempt to create a duplicate entity with the same name, and SIGABRT.
+    let prev_scope = unsafe { sys::ecs_set_scope(world, 0) };
+    let id = unsafe { sys::ecs_lookup_symbol(world, type_name_ptr as *const _, false, false) };
+    unsafe { sys::ecs_set_scope(world, prev_scope) };
     if id != 0 {
         return id;
     }

@@ -1978,16 +1978,12 @@ impl<'a> EntityView<'a> {
     }
 
     /// Lookup an entity by name.
-    /// The entity is searched recursively recursively traversing
-    /// up the tree until found.
+    /// The entity is searched recursively traversing up the tree until found.
     ///
     /// The provided path may contain double colons as scope separators,
     /// for example: "`Foo::Bar`".
     ///
-    /// # Safety
-    ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
     /// # Arguments
     ///
@@ -1995,12 +1991,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity, entity id will be 0 if not found.
+    /// The entity, or entity with id 0 if not found.
     #[inline(always)]
     pub fn lookup_recursive(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
-        })
+        self.try_lookup_recursive(name)
+            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
     }
 
     /// Lookup an entity by name, only in the current scope of the entity.
@@ -2008,10 +2003,7 @@ impl<'a> EntityView<'a> {
     /// Lookup an entity in the scope of this entity. The provided path may
     /// contain double colons as scope separators, for example: "`Foo::Bar`".
     ///
-    /// # Safety
-    ///
-    /// This function can return an entity with id 0 if the entity is not found.
-    /// Ensure that the entity exists before using it.
+    /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
     /// # Arguments
     ///
@@ -2019,11 +2011,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity, entity id will be 0 if not found.
+    /// The entity, or entity with id 0 if not found. Use [`try_lookup`](Self::try_lookup) for an `Option` return.
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
+            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
     }
 
     /// Test if an entity has an id.

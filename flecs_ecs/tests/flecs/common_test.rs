@@ -18,6 +18,121 @@ fn init() {
     #[cfg(feature = "test-with-crash-handler")]
     test_crash_handler::register();
 }
+
+/// RAII guard that temporarily replaces the Flecs `abort_` OS API callback
+/// with a Rust panic shim for the duration of its lifetime.
+///
+/// This lets tests use `catch_unwind` or `#[should_panic]` for code paths
+/// that would otherwise call `ecs_abort()` → SIGABRT.
+///
+/// The guard holds a mutex to prevent concurrent tests from racing on the
+/// global OS API state. Drop restores the original handler.
+///
+/// # Example
+/// ```ignore
+/// let _guard = FlecsPanicAbortGuard::install();
+/// let result = std::panic::catch_unwind(|| { /* code that calls ecs_abort */ });
+/// // guard dropped here, original abort_ restored
+/// assert!(result.is_err());
+/// ```
+pub struct FlecsPanicAbortGuard {
+    original: flecs_ecs::sys::ecs_os_api_abort_t,
+    _lock: std::sync::MutexGuard<'static, ()>,
+}
+
+impl FlecsPanicAbortGuard {
+    pub fn install() -> Self {
+        use std::sync::{Mutex, OnceLock};
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        let mutex = LOCK.get_or_init(|| Mutex::new(()));
+        let lock = mutex
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+        unsafe extern "C-unwind" fn panic_shim() {
+            // Signal the abort() override to suppress the redundant libc abort()
+            // that Flecs calls immediately after ecs_os_abort().
+            ABORT_GUARD_ACTIVE.store(true, core::sync::atomic::Ordering::SeqCst);
+            // Guard against double-panic: if Rust is already unwinding (e.g. a
+            // Query drop fires another ecs_abort during catch_unwind unwinding),
+            // a second panic!() would cause an immediate SIGABRT. Instead, just
+            // return — ABORT_GUARD_ACTIVE=true ensures the C abort() call that
+            // follows is suppressed by our no_mangle override.
+            if std::thread::panicking() {
+                return;
+            }
+            panic!("flecs abort (ecs_assert / ecs_abort fired)");
+        }
+
+        // ecs_os_set_api() is guarded — it silently no-ops after World::new() has
+        // already called ecs_os_init(). Directly mutate ecs_os_api.abort_ instead.
+        let original = unsafe {
+            let orig = flecs_ecs::sys::ecs_os_api.abort_;
+            flecs_ecs::sys::ecs_os_api.abort_ = Some(panic_shim);
+            orig
+        };
+
+        FlecsPanicAbortGuard {
+            original,
+            _lock: lock,
+        }
+    }
+}
+
+impl Drop for FlecsPanicAbortGuard {
+    fn drop(&mut self) {
+        // Reset the flag so subsequent unguarded aborts still terminate.
+        ABORT_GUARD_ACTIVE.store(false, core::sync::atomic::Ordering::SeqCst);
+        // Directly restore ecs_os_api.abort_ (ecs_os_set_api is no-op after init).
+        unsafe {
+            flecs_ecs::sys::ecs_os_api.abort_ = self.original;
+        }
+    }
+}
+
+/// When the guard is active this is set to true so the `abort()` override knows
+/// to suppress the call (the panic from `ecs_os_abort()` is already in flight).
+pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
+    core::sync::atomic::AtomicBool::new(false);
+
+// Override libc abort() for the test binary only. When FlecsPanicAbortGuard is
+// active, ecs_abort expands to: ecs_os_abort() [→ panic_shim → panic!()]
+// followed immediately by abort() as a "satisfy compiler" no-op hint.
+// Without this override, abort() kills the process before Rust unwind completes.
+// This override makes abort() a no-op when the guard is active so the panic
+// started by panic_shim can propagate normally.
+//
+// On Windows MSVC, #[no_mangle] abort conflicts with ucrt.lib (LNK2005). This
+// override is not needed there: panic_shim is extern "C-unwind", so the Rust
+// unwind propagates through C frames and the abort() line in ecs_abort is never
+// reached.
+#[cfg(not(target_os = "windows"))]
+#[unsafe(no_mangle)]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe extern "C" fn abort() {
+    // Suppress if guard is active OR if a Rust panic is already unwinding (secondary abort).
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) || std::thread::panicking() {
+        return;
+    }
+    libc::raise(libc::SIGABRT);
+}
+
+// macOS: C assert(e) calls __assert_rtn, not abort() directly.
+// Override it so ecs_assert()'s trailing `assert(condition)` is suppressed when guard is active.
+#[cfg(target_os = "macos")]
+#[unsafe(no_mangle)]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe extern "C" fn __assert_rtn(
+    _func: *const core::ffi::c_char,
+    _file: *const core::ffi::c_char,
+    _line: core::ffi::c_int,
+    _expr: *const core::ffi::c_char,
+) {
+    if ABORT_GUARD_ACTIVE.load(core::sync::atomic::Ordering::SeqCst) || std::thread::panicking() {
+        return;
+    }
+    libc::raise(libc::SIGABRT);
+}
 #[derive(Debug, Component, Clone, Copy)]
 pub struct Count(pub i32);
 
@@ -155,7 +270,7 @@ pub struct Alice {}
 #[derive(Component)]
 pub struct Bob {}
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Tag;
 
 #[derive(Component)]
@@ -314,6 +429,68 @@ pub struct Template<T: Send + Sync + 'static> {
 #[derive(Component, Default)]
 pub struct Templatex {
     pub value: String,
+}
+
+#[derive(Component)]
+pub struct CompA {}
+
+pub mod a {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component)]
+    pub struct Comp {}
+}
+
+pub mod ns {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component)]
+    pub struct FooComp;
+
+    thread_local! {
+        pub static SYSTEM_INVOKE_COUNT: core::cell::RefCell<u32> = const { core::cell::RefCell::new(0) };
+    }
+
+    pub fn increment_invoke_count() {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow_mut() += 1);
+    }
+
+    pub fn get_invoke_count() -> u32 {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow())
+    }
+
+    pub fn reset_invoke_count() {
+        SYSTEM_INVOKE_COUNT.with(|c| *c.borrow_mut() = 0);
+    }
+
+    thread_local! {
+        pub static IMPORT_COUNT: core::cell::RefCell<i32> = const { core::cell::RefCell::new(0) };
+    }
+
+    pub fn get_import_count() -> i32 {
+        IMPORT_COUNT.with(|c| *c.borrow())
+    }
+
+    pub fn reset_import_count() {
+        IMPORT_COUNT.with(|c| *c.borrow_mut() = 0);
+    }
+
+    #[derive(Component)]
+    pub struct NamespaceModule;
+
+    impl Module for NamespaceModule {
+        fn module(world: &World) {
+            IMPORT_COUNT.with(|c| *c.borrow_mut() += 1);
+            world.module::<NamespaceModule>("NamespaceModule");
+            world.component::<FooComp>();
+
+            world.system::<&FooComp>().run(|mut it| {
+                while it.next() {
+                    increment_invoke_count();
+                }
+            });
+        }
+    }
 }
 
 pub fn create_world_with_flags<T: ComponentId + Default + DataComponent + ComponentType<Struct>>()
