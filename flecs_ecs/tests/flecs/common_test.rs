@@ -101,6 +101,12 @@ pub(crate) static ABORT_GUARD_ACTIVE: core::sync::atomic::AtomicBool =
 // Without this override, abort() kills the process before Rust unwind completes.
 // This override makes abort() a no-op when the guard is active so the panic
 // started by panic_shim can propagate normally.
+//
+// On Windows MSVC, #[no_mangle] abort conflicts with ucrt.lib (LNK2005). This
+// override is not needed there: panic_shim is extern "C-unwind", so the Rust
+// unwind propagates through C frames and the abort() line in ecs_abort is never
+// reached.
+#[cfg(not(target_os = "windows"))]
 #[unsafe(no_mangle)]
 #[allow(unsafe_op_in_unsafe_fn)]
 unsafe extern "C" fn abort() {
