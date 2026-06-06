@@ -1998,32 +1998,6 @@ impl<'a> EntityView<'a> {
             .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
     }
 
-    /// Lookup an entity by name.
-    /// The entity is searched recursively traversing up the tree until found.
-    /// Panics if entity not found.
-    ///
-    /// The provided path may contain double colons as scope separators,
-    /// for example: "`Foo::Bar`".
-    ///
-    /// # Panics
-    ///
-    /// Panics if the entity is not found.
-    /// Use [`EntityView::lookup_recursive()`] for non-panicking behavior.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the entity to lookup.
-    ///
-    /// # Returns
-    ///
-    /// The entity
-    #[inline(always)]
-    pub fn lookup_recursive_required(&self, name: &str) -> EntityView<'_> {
-        self.try_lookup_recursive(name).unwrap_or_else(|| {
-            panic!("Entity {name} not found, when unsure, use try_lookup_recursive")
-        })
-    }
-
     /// Lookup an entity by name, only in the current scope of the entity.
     ///
     /// Lookup an entity in the scope of this entity. The provided path may
