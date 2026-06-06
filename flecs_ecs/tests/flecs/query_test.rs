@@ -423,6 +423,7 @@ fn each_w_iter_no_this() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn invalid_each_w_no_this() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -1357,8 +1358,10 @@ fn query_each_w_iter() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn invalid_field_from_each_w_iter() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     world
         .entity()
@@ -1374,8 +1377,10 @@ fn invalid_field_from_each_w_iter() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn invalid_field_t_from_each_w_iter() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     world
         .entity()
@@ -1391,8 +1396,10 @@ fn invalid_field_t_from_each_w_iter() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn invalid_field_const_t_from_each_w_iter() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     world
         .entity()
@@ -3010,6 +3017,7 @@ fn compare_term_id() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn test_no_defer_each() {
     #[derive(Component)]
     struct Value {
@@ -3030,6 +3038,7 @@ fn test_no_defer_each() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn test_no_defer_iter() {
     #[derive(Component)]
     struct Value {
@@ -3475,8 +3484,10 @@ fn iter_targets_second_field() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn iter_targets_field_out_of_range() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     let likes = world.entity();
     let pizza = world.entity();
@@ -3497,8 +3508,10 @@ fn iter_targets_field_out_of_range() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn iter_targets_field_not_a_pair() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     let likes = world.entity();
     let pizza = world.entity();
@@ -3520,8 +3533,10 @@ fn iter_targets_field_not_a_pair() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn iter_targets_field_not_set() {
     let world = World::new();
+    let _guard = FlecsPanicAbortGuard::install();
 
     let likes = world.entity();
     let alice = world.entity().add(Position::id());

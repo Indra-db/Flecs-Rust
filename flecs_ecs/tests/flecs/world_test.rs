@@ -176,6 +176,7 @@ fn type_id() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn different_comp_same_name() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -1920,6 +1921,7 @@ fn exclusive_access_self_mutate() {
 }
 
 #[test]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn exclusive_access_other_mutate() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();

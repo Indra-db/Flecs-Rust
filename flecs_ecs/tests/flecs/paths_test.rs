@@ -110,6 +110,7 @@ fn paths_entity_lookup_depth_2() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn paths_entity_lookup_from_0() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -123,6 +124,7 @@ fn paths_entity_lookup_from_0() {
 
 #[test]
 #[should_panic]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn paths_entity_lookup_from_0_w_world() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();

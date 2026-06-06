@@ -49,6 +49,7 @@ fn table_each() {
 /// when safety locks are enabled (table is locked during iteration).
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn table_each_locked() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -85,6 +86,7 @@ fn table_each_without_entity() {
 /// Locked variant of `each_without_entity`.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn table_each_without_entity_locked() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -125,6 +127,7 @@ fn table_iter() {
 /// when safety locks are enabled.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn table_iter_locked() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -165,6 +168,7 @@ fn table_iter_without_components() {
 /// Locked variant of `iter_without_components`.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn table_iter_without_components_locked() {
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
@@ -960,6 +964,7 @@ fn table_get_records() {
 /// into a different table.
 #[test]
 #[cfg(feature = "flecs_safety_locks")]
+#[cfg_attr(not(debug_assertions), ignore)]
 fn table_lock() {
     // Use catch_unwind instead of #[should_panic] so we can unlock the table
     // before dropping the world — otherwise the world destructor aborts on the
