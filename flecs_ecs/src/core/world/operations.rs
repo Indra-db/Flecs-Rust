@@ -1333,9 +1333,8 @@ impl World {
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
-        // C++ world::lookup defaults to recursive=true — match that behavior.
         self.try_lookup_recursive(name)
-            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
+            .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
     /// Helper function for [`World::try_lookup()`] and [`World::try_lookup_recursive()`].

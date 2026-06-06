@@ -2011,11 +2011,11 @@ impl<'a> EntityView<'a> {
     ///
     /// # Returns
     ///
-    /// The entity. Panics if not found — use [`try_lookup`](Self::try_lookup) for fallible lookup.
+    /// The entity, or entity with id 0 if not found. Use [`try_lookup`](Self::try_lookup) for an `Option` return.
     #[inline(always)]
     pub fn lookup(&self, name: &str) -> EntityView<'_> {
         self.try_lookup(name)
-            .unwrap_or_else(|| panic!("Entity {name} not found, when unsure, use try_lookup"))
+            .unwrap_or_else(|| EntityView::new_from(self.world, Entity(0)))
     }
 
     /// Test if an entity has an id.
