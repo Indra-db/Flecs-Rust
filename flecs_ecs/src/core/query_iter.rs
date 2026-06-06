@@ -190,7 +190,7 @@ where
 ///
 /// Zero-allocation design: stores the parent `ecs_iter_t` inline (no heap).
 ///
-/// The parent is wrapped in [`UnsafeCell`] because `ecs_page_next`/`ecs_worker_next`
+/// The parent is wrapped in [`core::cell::UnsafeCell`] because `ecs_page_next`/`ecs_worker_next`
 /// mutate the parent through the `chain_it` raw pointer stored in the child iter.
 /// `UnsafeCell` is the correct primitive for this: it grants interior mutability
 /// through a raw pointer while the struct is borrowed via `&self`.

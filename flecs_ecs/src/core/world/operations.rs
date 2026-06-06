@@ -1331,7 +1331,7 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`World::lookup_required()`]
+    /// * `World::lookup_required()`
     /// * [`World::lookup_recursive()`] - Non-panicking version
     /// * [`World::try_lookup_recursive()`]
     #[inline(always)]

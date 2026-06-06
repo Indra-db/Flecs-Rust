@@ -2,9 +2,9 @@
 #![allow(clippy::float_cmp)]
 #![allow(unused_imports)]
 use crate::common_test::*;
+use alloc::rc::Rc;
 use core::cell::Cell;
 use flecs_ecs::prelude::*;
-use alloc::rc::Rc;
 
 #[test]
 fn system_builder_builder_assign_same_type() {
