@@ -38,10 +38,10 @@ impl UntypedComponent<'_> {
     /// Add member with unit.
     ///
     /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name : &'static str,),
-    /// (name: &'static str, count: i32),
-    /// (name: &'static str, count: i32, offset: i32)
-    pub fn member_unit<Meta: MetaMember>(
+    /// (name: &'a str,),
+    /// (name: &'a str, count: i32),
+    /// (name: &'a str, count: i32, offset: i32)
+    pub fn member_unit<'a , Meta: MetaMember<'a>>(
         self,
         type_id: impl IntoEntity,
         unit: impl IntoEntity,
@@ -82,20 +82,20 @@ impl UntypedComponent<'_> {
     /// Add member.
     ///
     /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name : &'static str,),
-    /// (name: &'static str, count: i32),
-    /// (name: &'static str, count: i32, offset: i32)
-    pub fn member(self, type_id: impl IntoEntity, data: impl MetaMember) -> Self {
+    /// (name: &'a str,),
+    /// (name: &'a str, count: i32),
+    /// (name: &'a str, count: i32, offset: i32)
+    pub fn member<'a>(self, type_id: impl IntoEntity, data: impl MetaMember<'a>) -> Self {
         self.member_unit(type_id, 0, data)
     }
 
     /// Add member with unit typed.
     ///
     /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name : &'static str,),
-    /// (name: &'static str, count: i32),
-    /// (name: &'static str, count: i32, offset: i32)
-    pub fn member_unit_type<T: ComponentId, U: ComponentId>(self, data: impl MetaMember) -> Self {
+    /// (name: &'satatic str,),
+    /// (name: &'a str, count: i32),
+    /// (name: &'a str, count: i32, offset: i32)
+    pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(self, data: impl MetaMember<'a>) -> Self {
         self.member_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
 
