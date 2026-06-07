@@ -92,7 +92,7 @@ impl UntypedComponent<'_> {
     /// Add member with unit typed.
     ///
     /// [`MetaMember`] is a trait that accepts the following options:
-    /// (name: &'satatic str,),
+    /// (name: &'a str,),
     /// (name: &'a str, count: i32),
     /// (name: &'a str, count: i32, offset: i32)
     pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(self, data: impl MetaMember<'a>) -> Self {
