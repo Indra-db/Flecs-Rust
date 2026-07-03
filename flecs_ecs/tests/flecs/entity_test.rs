@@ -4125,6 +4125,9 @@ fn on_replace_w_assign_existing() {
 
 #[test]
 fn defer_on_replace_w_set() {
+    // on_replace must NOT fire on the first deferred set of a new component.
+    // The entity has no previous value — prev would be uninitialized memory.
+    // Only fires when the component already existed in the entity's prior table.
     #[derive(Component, Default)]
     struct Flags {
         invoked: u32,
@@ -4142,12 +4145,6 @@ fn defer_on_replace_w_set() {
             e.world().get::<&mut Flags>(|flags| {
                 match flags.invoked {
                     0 => {
-                        assert_eq!(prev.x, 0);
-                        assert_eq!(prev.y, 0);
-                        assert_eq!(next.x, 10);
-                        assert_eq!(next.y, 20);
-                    }
-                    1 => {
                         assert_eq!(prev.x, 10);
                         assert_eq!(prev.y, 20);
                         assert_eq!(next.x, 11);
@@ -4162,16 +4159,23 @@ fn defer_on_replace_w_set() {
     let e = world.entity();
     world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
 
+    // First deferred set: component is new — on_replace must NOT fire.
     world.defer_begin();
     e.set(Position { x: 10, y: 20 });
     world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
     world.defer_end();
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
     });
+
+    // Second set: component exists — on_replace fires with valid prev.
+    world.defer_begin();
+    e.set(Position { x: 11, y: 21 });
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
 }
 
 #[test]

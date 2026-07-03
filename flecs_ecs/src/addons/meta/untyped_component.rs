@@ -185,10 +185,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.value.min = min;
         mr.value.max = max;
@@ -208,10 +208,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.warning.min = min;
         mr.warning.max = max;
@@ -231,10 +231,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.error.min = min;
         mr.error.max = max;

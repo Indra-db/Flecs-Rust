@@ -17,7 +17,7 @@ impl World {
         let world = self.world_ptr();
         unsafe {
             let json_ptr = sys::ecs_ptr_to_json(world, tid, value as *const core::ffi::c_void);
-            if DO_CHECKS && json_ptr.is_null() {
+            if json_ptr.is_null() {
                 return None;
             }
             let json = core::ffi::CStr::from_ptr(json_ptr)
@@ -108,6 +108,7 @@ impl World {
 
         unsafe {
             let json_ptr = sys::ecs_world_to_json(world, desc_ptr);
+            assert!(!json_ptr.is_null(), "world to JSON serialization failed");
             let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()

@@ -300,8 +300,16 @@ where
     /// # Returns
     ///
     /// Returns whether field is matched on self
+    /// # Panics
+    ///
+    /// Panics if `index` is negative or not smaller than the iterator's field count.
     #[inline(always)]
     pub fn is_self(&self, index: i8) -> bool {
+        assert!(
+            index >= 0 && index < self.iter.field_count,
+            "field index {index} out of range (field_count = {})",
+            self.iter.field_count
+        );
         self.iter.sources.is_null() || unsafe { (*self.iter.sources.add(index as usize)) == 0 }
     }
 
@@ -312,7 +320,15 @@ where
     /// # Returns
     ///
     /// Returns whether field is set
+    /// # Panics
+    ///
+    /// Panics if `index` is negative or not smaller than the iterator's field count.
     pub fn is_set(&self, index: i8) -> bool {
+        assert!(
+            index >= 0 && index < self.iter.field_count,
+            "field index {index} out of range (field_count = {})",
+            self.iter.field_count
+        );
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
         #[cfg(feature = "flecs_term_count_64")]
@@ -1336,7 +1352,7 @@ where
     ///
     /// The entity ids.
     pub fn entities(&self) -> &[Entity] {
-        unsafe { core::slice::from_raw_parts_mut(self.iter.entities as *mut Entity, self.count) }
+        unsafe { core::slice::from_raw_parts(self.iter.entities as *const Entity, self.count) }
     }
 
     /// Check if the current table has changed since the last iteration.

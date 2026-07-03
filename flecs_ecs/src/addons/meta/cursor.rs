@@ -58,12 +58,14 @@ impl<'a> Cursor<'a> {
     }
 
     /// Get member name
+    ///
+    /// # Panics
+    ///
+    /// Panics if the cursor is not inside a struct scope with a valid member.
     pub fn get_member(&self) -> &str {
-        unsafe {
-            core::ffi::CStr::from_ptr(sys::ecs_meta_get_member(&self.cursor))
-                .to_str()
-                .unwrap()
-        }
+        let member = unsafe { sys::ecs_meta_get_member(&self.cursor) };
+        assert!(!member.is_null(), "cursor has no current member");
+        unsafe { core::ffi::CStr::from_ptr(member).to_str().unwrap() }
     }
 
     /// Get type of value

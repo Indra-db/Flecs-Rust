@@ -6,14 +6,18 @@ use flecs_ecs_derive::extern_abi;
 
 #[extern_abi]
 unsafe fn c_run_post_frame(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
-    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
+    // ctx is a Box<fn(WorldRef)> created in run_post_frame. Flecs invokes this
+    // callback exactly once per registration, so the Box is reclaimed here.
+    let action: fn(WorldRef) = unsafe { *Box::from_raw(ctx as *mut fn(WorldRef)) };
     let world = unsafe { WorldRef::from_ptr(world) };
     (action)(world);
 }
 
 #[extern_abi]
 unsafe fn c_on_destroyed(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
-    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
+    // ctx is a Box<fn(WorldRef)> created in on_destroyed. Flecs invokes atfini
+    // callbacks exactly once when the world is destroyed, so reclaim the Box here.
+    let action: fn(WorldRef) = unsafe { *Box::from_raw(ctx as *mut fn(WorldRef)) };
     let world = unsafe { WorldRef::from_ptr(world) };
     (action)(world);
 }
@@ -159,7 +163,7 @@ impl World {
     /// * C++ API: `world::atfini`
     #[doc(alias = "ecs_atfini")]
     pub fn on_destroyed(&self, action: fn(WorldRef)) {
-        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
+        let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;
         unsafe {
             sys::ecs_atfini(self.raw_world.as_ptr(), Some(c_on_destroyed), ctx);
         }
@@ -988,23 +992,14 @@ impl World {
         unsafe { sys::ecs_get_binding_ctx(world) as *mut WorldCtx }
     }
 
-    #[expect(dead_code, reason = "possibly used in the future")]
-    pub(crate) fn get_components_map(world: *mut sys::ecs_world_t) -> &'static mut FlecsIdMap {
-        unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
-    }
-
     pub(crate) fn get_components_map_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsIdMap {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
     #[doc(hidden)]
-    pub fn components_map(&self) -> &'static mut FlecsIdMap {
+    #[allow(clippy::mut_from_ref)]
+    pub fn components_map(&self) -> &mut FlecsIdMap {
         unsafe { &mut (*(self.components.as_ptr())) }
-    }
-
-    #[expect(dead_code, reason = "possibly used in the future")]
-    pub(crate) fn get_components_array(world: *mut sys::ecs_world_t) -> &'static mut FlecsArray {
-        unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
     pub(crate) fn get_components_array_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsArray {
@@ -1012,7 +1007,8 @@ impl World {
     }
 
     #[doc(hidden)]
-    pub fn components_array(&self) -> &'static mut FlecsArray {
+    #[allow(clippy::mut_from_ref)]
+    pub fn components_array(&self) -> &mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
     }
 
@@ -2009,7 +2005,7 @@ impl World {
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
     pub fn run_post_frame(&self, action: fn(WorldRef)) {
-        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
+        let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;
         unsafe {
             sys::ecs_run_post_frame(self.raw_world.as_ptr(), Some(c_run_post_frame), ctx);
         }

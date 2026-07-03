@@ -38,6 +38,7 @@ mod refs_test;
 #[cfg(feature = "flecs_safety_locks")]
 mod safety;
 mod singleton_test;
+mod soundness_test;
 mod system_builder_test;
 mod system_test;
 mod table_test;

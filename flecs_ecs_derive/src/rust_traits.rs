@@ -261,7 +261,7 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             /// let shape = ShapesTrait::cast(entity, component_id);
             /// let result = shape.calculate();
             /// ```
-            pub fn cast<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
+            pub fn cast<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
                 // Get the raw pointer to the component data
                 let data_ptr = entity.get_untyped(derived_id) as usize;
 
@@ -306,7 +306,7 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             /// let shape = ShapesTrait::cast_mut(entity, component_id);
             /// shape.modify_internal_state();
             /// ```
-            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
+            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
                 // Get the raw mutable pointer to the component data
                 let data_ptr = entity.get_untyped_mut(derived_id) as usize;
 

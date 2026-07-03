@@ -120,7 +120,7 @@ use crate::sys;
 extern crate std;
 
 extern crate alloc;
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug, Clone, Copy, Eq)]
@@ -256,13 +256,12 @@ pub trait TableOperations<'a>: IntoTable {
                 return None;
             }
 
-            let len = CStr::from_ptr(raw_ptr).to_bytes().len();
-
-            Some(String::from_utf8_unchecked(Vec::from_raw_parts(
-                raw_ptr as *mut u8,
-                len,
-                len,
-            )))
+            // Copy into a Rust-allocated String, then free the C allocation
+            // with the flecs allocator; freeing it via Vec/String would use the
+            // Rust global allocator, which is UB when the allocators differ.
+            let string = CStr::from_ptr(raw_ptr).to_string_lossy().into_owned();
+            sys::ecs_os_api.free_.expect("os api is missing")(raw_ptr as *mut core::ffi::c_void);
+            Some(string)
         }
     }
 

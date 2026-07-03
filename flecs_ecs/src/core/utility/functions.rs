@@ -357,6 +357,10 @@ pub(crate) fn set_helper<T: ComponentId>(
             &value as *const _ as *const _,
             const { core::mem::size_of::<T>() },
         );
+        assert!(
+            !res.ptr.is_null(),
+            "set failed: entity is not alive or the world is invalid"
+        );
         let comp = res.ptr as *mut T;
 
         if T::NEEDS_DROP && !res.is_new {
@@ -397,6 +401,10 @@ pub(crate) fn assign_helper<T: ComponentId>(
         )
     };
 
+    assert!(
+        !res.ptr.is_null(),
+        "assign failed: entity is not alive, does not have the component, or the world is invalid"
+    );
     let dst = unsafe { &mut *(res.ptr as *mut T) };
     unsafe {
         core::ptr::drop_in_place(dst);

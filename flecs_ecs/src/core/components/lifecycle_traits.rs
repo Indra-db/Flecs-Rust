@@ -163,11 +163,12 @@ fn ctor<T: Default>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_ty
 fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t) {
     let size = const { core::mem::size_of::<T>() };
     if size == 0 {
-        let arr = ptr as *mut u8; // tags with drop are (usually) modules with size 1 and alignment 1 
-        for i in 0..count as isize {
+        // For a ZST the C storage pointer carries no alignment guarantee for T.
+        // drop_in_place requires an aligned pointer even for ZSTs, so drop the
+        // value at an aligned dangling address instead of through the C pointer.
+        for _ in 0..count {
             unsafe {
-                let item = arr.offset(i);
-                ptr::drop_in_place(item as *mut T);
+                ptr::drop_in_place(core::ptr::NonNull::<T>::dangling().as_ptr());
             }
         }
     } else {

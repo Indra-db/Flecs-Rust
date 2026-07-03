@@ -667,10 +667,12 @@ impl<'a> EntityView<'a> {
             )
         })
         .map(|s| unsafe {
-            let len = CStr::from_ptr(s.as_ptr()).to_bytes().len();
-            // Convert the C string to a Rust String without any new heap allocation.
-            // The String will de-allocate the C string when it goes out of scope.
-            String::from_utf8_unchecked(Vec::from_raw_parts(s.as_ptr() as *mut u8, len, len))
+            // Copy into a Rust-allocated String, then free the C allocation
+            // with the flecs allocator; freeing it via Vec/String would use the
+            // Rust global allocator, which is UB when the allocators differ.
+            let path = CStr::from_ptr(s.as_ptr()).to_string_lossy().into_owned();
+            sys::ecs_os_api.free_.expect("os api is missing")(s.as_ptr() as *mut c_void);
+            path
         })
     }
 
@@ -704,11 +706,12 @@ impl<'a> EntityView<'a> {
             )
         })
         .map(|s| unsafe {
-            let len = CStr::from_ptr(s.as_ptr()).to_bytes().len();
-
-            // Convert the C string to a Rust String without any new heap allocation.
-            // The String will de-allocate the C string when it goes out of scope.
-            String::from_utf8_unchecked(Vec::from_raw_parts(s.as_ptr() as *mut u8, len, len))
+            // Copy into a Rust-allocated String, then free the C allocation
+            // with the flecs allocator; freeing it via Vec/String would use the
+            // Rust global allocator, which is UB when the allocators differ.
+            let path = CStr::from_ptr(s.as_ptr()).to_string_lossy().into_owned();
+            sys::ecs_os_api.free_.expect("os api is missing")(s.as_ptr() as *mut c_void);
+            path
         })
     }
 
@@ -2444,7 +2447,7 @@ impl EntityView<'_> {
         let empty_static_ref = Box::leak(empty_func);
 
         binding_ctx.empty = Some(empty_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_empty = Some(Self::on_free_empty);
+        binding_ctx.free_empty = Some(Self::on_free_empty::<Func>);
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
@@ -2494,7 +2497,7 @@ impl EntityView<'_> {
         let empty_static_ref = Box::leak(empty_func);
 
         binding_ctx.empty_entity = Some(empty_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_empty_entity = Some(Self::on_free_empty_entity);
+        binding_ctx.free_empty_entity = Some(Self::on_free_empty_entity::<Func>);
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
@@ -2544,7 +2547,7 @@ impl EntityView<'_> {
         let empty_static_ref = Box::leak(empty_func);
 
         binding_ctx.payload = Some(empty_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_payload = Some(Self::on_free_payload::<C>);
+        binding_ctx.free_payload = Some(Self::on_free_payload::<Func>);
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
@@ -2594,7 +2597,7 @@ impl EntityView<'_> {
         let empty_static_ref = Box::leak(empty_func);
 
         binding_ctx.payload_entity = Some(empty_static_ref as *mut _ as *mut c_void);
-        binding_ctx.free_payload_entity = Some(Self::on_free_payload_entity::<C>);
+        binding_ctx.free_payload_entity = Some(Self::on_free_payload_entity::<Func>);
 
         Self::entity_observer_create(
             self.world.world_ptr_mut(),
@@ -2642,13 +2645,12 @@ impl EntityView<'_> {
             let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
             let empty = (*ctx).empty.unwrap();
             let empty = &mut *(empty as *mut Func);
-            let iter_count = (*iter).count as usize;
 
             sys::ecs_table_lock((*iter).world, (*iter).table);
 
-            for _i in 0..iter_count {
-                empty();
-            }
+            // Entity observers match on a non-$this source, so iter.count is
+            // 0; invoke once per event instead of once per table row.
+            empty();
 
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -2668,17 +2670,16 @@ impl EntityView<'_> {
             let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
             let empty = (*ctx).empty_entity.unwrap();
             let empty = &mut *(empty as *mut Func);
-            let iter_count = (*iter).count as usize;
 
             sys::ecs_table_lock((*iter).world, (*iter).table);
 
-            for _i in 0..iter_count {
-                let world = WorldRef::from_ptr((*iter).world);
-                empty(&mut EntityView::new_from(
-                    world,
-                    sys::ecs_field_src(iter, 0),
-                ));
-            }
+            // Entity observers match on a non-$this source, so iter.count is
+            // 0; invoke once per event instead of once per table row.
+            let world = WorldRef::from_ptr((*iter).world);
+            empty(&mut EntityView::new_from(
+                world,
+                sys::ecs_field_src(iter, 0),
+            ));
 
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -2698,15 +2699,14 @@ impl EntityView<'_> {
             let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
             let empty = (*ctx).payload.unwrap();
             let empty = &mut *(empty as *mut Func);
-            let iter_count = (*iter).count as usize;
 
             sys::ecs_table_lock((*iter).world, (*iter).table);
 
-            for _i in 0..iter_count {
-                let data = (*iter).param as *mut C;
-                let data_ref = &mut *data;
-                empty(data_ref);
-            }
+            // Entity observers match on a non-$this source, so iter.count is
+            // 0; invoke once per event instead of once per table row.
+            let data = (*iter).param as *mut C;
+            let data_ref = &mut *data;
+            empty(data_ref);
 
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -2726,19 +2726,18 @@ impl EntityView<'_> {
             let ctx: *mut ObserverEntityBindingCtx = (*iter).callback_ctx as *mut _;
             let empty = (*ctx).payload_entity.unwrap();
             let empty = &mut *(empty as *mut Func);
-            let iter_count = (*iter).count as usize;
 
             sys::ecs_table_lock((*iter).world, (*iter).table);
 
-            for _i in 0..iter_count {
-                let data = (*iter).param as *mut C;
-                let data_ref = &mut *data;
-                let world = WorldRef::from_ptr((*iter).world);
-                empty(
-                    &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
-                    data_ref,
-                );
-            }
+            // Entity observers match on a non-$this source, so iter.count is
+            // 0; invoke once per event instead of once per table row.
+            let data = (*iter).param as *mut C;
+            let data_ref = &mut *data;
+            let world = WorldRef::from_ptr((*iter).world);
+            empty(
+                &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
+                data_ref,
+            );
 
             sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
@@ -2746,37 +2745,33 @@ impl EntityView<'_> {
 
     /// Callback to free the memory of the `empty` callback
     #[extern_abi]
-    pub(crate) fn on_free_empty(ptr: *mut c_void) {
-        let ptr_func: *mut fn() = ptr as *mut fn();
+    pub(crate) fn on_free_empty<Func>(ptr: *mut c_void) {
         unsafe {
-            ptr::drop_in_place(ptr_func);
+            drop(Box::from_raw(ptr as *mut Func));
         }
     }
 
     /// Callback to free the memory of the `empty_entity` callback
     #[extern_abi]
-    pub(crate) fn on_free_empty_entity(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut EntityView) = ptr as *mut fn(&mut EntityView);
+    pub(crate) fn on_free_empty_entity<Func>(ptr: *mut c_void) {
         unsafe {
-            ptr::drop_in_place(ptr_func);
+            drop(Box::from_raw(ptr as *mut Func));
         }
     }
 
     /// Callback to free the memory of the `payload` callback
     #[extern_abi]
-    pub(crate) fn on_free_payload<C>(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut C) = ptr as *mut fn(&mut C);
+    pub(crate) fn on_free_payload<Func>(ptr: *mut c_void) {
         unsafe {
-            ptr::drop_in_place(ptr_func);
+            drop(Box::from_raw(ptr as *mut Func));
         }
     }
 
     /// Callback to free the memory of the `payload_entity` callback
     #[extern_abi]
-    pub(crate) fn on_free_payload_entity<C>(ptr: *mut c_void) {
-        let ptr_func: *mut fn(&mut EntityView, &mut C) = ptr as *mut fn(&mut EntityView, &mut C);
+    pub(crate) fn on_free_payload_entity<Func>(ptr: *mut c_void) {
         unsafe {
-            ptr::drop_in_place(ptr_func);
+            drop(Box::from_raw(ptr as *mut Func));
         }
     }
 

@@ -171,9 +171,22 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
         desc.ids = ids;
         desc.observable = world.real_world().world_ptr_mut() as *mut c_void;
         unsafe {
-            sys::ecs_enqueue(world.world_ptr_mut(), desc);
+            let world_ptr = world.world_ptr_mut();
+            let deferred = sys::ecs_is_deferred(world_ptr);
+            sys::ecs_enqueue(world_ptr, desc);
             if !T::IS_TAG {
-                dealloc(desc.param as *mut u8, Layout::new::<T>());
+                if deferred {
+                    // Deferred: flecs copied the value into the command queue
+                    // and runs the registered dtor on that copy at flush.
+                    // Ownership moved to C, so free only the heap slot without
+                    // dropping (dropping here would double-drop at flush).
+                    dealloc(desc.param as *mut u8, Layout::new::<T>());
+                } else {
+                    // Not deferred: ecs_enqueue fell through to ecs_emit, which
+                    // used the value synchronously without taking ownership.
+                    // Reclaim the Box so T's destructor runs.
+                    drop(Box::from_raw(desc.param as *mut T));
+                }
             }
         };
     }

@@ -266,7 +266,7 @@ error:
 
 /* Rust-optimized set: like ecs_cpp_set but skips ctor for new components.
  * In C++, ctor + assignment operator is the pattern. In Rust, there's no
- * assignment operator, so the ctor output would just be dropped — wasted work.
+ * assignment operator, so the ctor output would just be dropped, wasted work.
  * Both deferred and non-deferred paths skip construction for new components. */
 ecs_rust_set_t ecs_rust_set(
     ecs_world_t *world,
@@ -308,7 +308,7 @@ ecs_rust_set_t ecs_rust_set(
 
     if (!result.is_new && dst.ti->hooks.on_replace) {
         flecs_invoke_replace_hook(
-            world, r->table, entity, id, dst.ptr, new_ptr, dst.ti);
+            world, prev_table, entity, id, dst.ptr, new_ptr, dst.ti);
     }
 
 done:

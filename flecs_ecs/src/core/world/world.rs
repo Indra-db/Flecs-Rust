@@ -107,7 +107,7 @@ impl Drop for World {
             if unsafe { sys::ecs_stage_get_id(world_ptr) } == -1 {
                 unsafe { sys::ecs_stage_free(world_ptr) };
             } else {
-                let ctx = self.world_ctx_mut();
+                let ctx = self.world_ctx();
 
                 unsafe {
                     // before we call ecs_fini(), we increment the reference count back to 1
@@ -123,7 +123,7 @@ impl Drop for World {
                         Please ensure that all `Query` objects are out of scope before the world is destroyed.");
                 }
 
-                let ctx = unsafe { Box::from_raw(ctx as *mut WorldCtx) };
+                let ctx = unsafe { Box::from_raw(ctx as *const WorldCtx as *mut WorldCtx) };
                 drop(ctx);
             }
         }

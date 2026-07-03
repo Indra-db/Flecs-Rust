@@ -124,13 +124,6 @@ impl<'a> From<&'a mut World> for WorldRef<'a> {
     }
 }
 
-impl<'a> From<&'a *mut sys::ecs_world_t> for &WorldRef<'a> {
-    #[inline(always)]
-    fn from(value: &'a *mut sys::ecs_world_t) -> Self {
-        unsafe { core::mem::transmute::<&'a *mut sys::ecs_world_t, &WorldRef>(value) }
-    }
-}
-
 impl Deref for WorldRef<'_> {
     type Target = World;
 

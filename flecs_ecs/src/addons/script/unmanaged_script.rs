@@ -221,6 +221,7 @@ impl<'a> Script<'a> {
         let id = *id_of_value.into_entity(world);
         let world = world.world_ptr_mut();
         let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value as *const core::ffi::c_void) };
+        assert!(!expr.is_null(), "value to expression serialization failed");
         let c_str = unsafe { CStr::from_ptr(expr) };
         let str = c_str.to_str().unwrap().to_owned();
         unsafe {
@@ -295,6 +296,7 @@ impl<'a> Script<'a> {
 
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
         let c_str = unsafe { sys::ecs_meta_get_string(&cur) };
+        assert!(!c_str.is_null(), "value is not a string");
 
         unsafe { CStr::from_ptr(c_str) }
             .to_str()

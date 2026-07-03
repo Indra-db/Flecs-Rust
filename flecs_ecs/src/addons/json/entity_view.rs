@@ -52,6 +52,7 @@ impl EntityView<'_> {
 
         unsafe {
             let json_ptr = sys::ecs_entity_to_json(world, id, desc_ptr);
+            assert!(!json_ptr.is_null(), "entity to JSON serialization failed");
             let json = core::ffi::CStr::from_ptr(json_ptr)
                 .to_str()
                 .unwrap()
