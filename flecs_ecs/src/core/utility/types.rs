@@ -112,3 +112,5 @@ pub struct ImplementsClone<T>(core::marker::PhantomData<T>);
 pub struct ImplementsDefault<T>(core::marker::PhantomData<T>);
 pub struct ImplementsPartialEq<T>(core::marker::PhantomData<T>);
 pub struct ImplementsPartialOrd<T>(core::marker::PhantomData<T>);
+pub struct ImplementsSend<T>(core::marker::PhantomData<T>);
+pub struct ImplementsSync<T>(core::marker::PhantomData<T>);

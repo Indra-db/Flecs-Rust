@@ -722,6 +722,7 @@ where
     fn par_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.each(func)
@@ -784,6 +785,7 @@ where
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         unsafe { self.each_unchecked(func) }
@@ -800,6 +802,7 @@ where
     fn par_each_entity<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.each_entity(func)
@@ -856,6 +859,7 @@ where
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         unsafe { self.each_entity_unchecked(func) }
@@ -872,6 +876,7 @@ where
     fn par_each_iter<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.each_iter(func)
@@ -927,6 +932,7 @@ where
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         unsafe { self.each_iter_unchecked(func) }
@@ -936,6 +942,7 @@ where
     fn par_run<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.run(func)
@@ -950,6 +957,7 @@ where
     where
         Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
         FuncEach: Fn(T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.run_each(func, func_each)
@@ -964,6 +972,7 @@ where
     where
         Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
         FuncEachEntity: Fn(EntityView, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.run_each_entity(func, func_each_entity)
@@ -978,6 +987,7 @@ where
     where
         Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
         FuncEachIter: Fn(TableIter<true, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+        for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);
         self.run_each_iter(func, func_each_iter)

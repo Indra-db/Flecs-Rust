@@ -43,8 +43,6 @@ impl Clone for World {
     }
 }
 
-unsafe impl Send for World {}
-
 impl Default for World {
     fn default() -> Self {
         ecs_os_api::ensure_initialized();

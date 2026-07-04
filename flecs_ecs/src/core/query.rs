@@ -472,9 +472,25 @@ where
     _phantom: PhantomData<T>,
 }
 
-unsafe impl<T> Send for Query<T> where T: QueryTuple {}
+// SAFETY: a `Query` handle may only cross threads when every component
+// reference it can hand out (`TupleType`) is itself `Send`: `&T` requires
+// `T: Sync`, `&mut T` requires `T: Send`. Queries over thread-bound
+// (`!Send`/`!Sync`) components stay pinned to the world's owning thread.
+unsafe impl<T> Send for Query<T>
+where
+    T: QueryTuple,
+    for<'w> T::TupleType<'w>: Send,
+{
+}
 
-unsafe impl<T> Sync for Query<T> where T: QueryTuple {}
+// SAFETY: sharing `&Query` lets any thread iterate it, which materializes
+// `TupleType` references on that thread; see the `Send` impl above.
+unsafe impl<T> Sync for Query<T>
+where
+    T: QueryTuple,
+    for<'w> T::TupleType<'w>: Send,
+{
+}
 
 impl<T> Clone for Query<T>
 where

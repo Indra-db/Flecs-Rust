@@ -930,6 +930,24 @@ pub(crate) fn impl_cached_component_data_struct(
         }
     };
 
+    let send_sync_bound = if !contains_any_generic_type {
+        quote! {
+            const IMPLS_SEND: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsSend::<#name #type_generics>::IMPLS
+            };
+            const IMPLS_SYNC: bool = {
+                use flecs_ecs::core::utility::traits::DoesNotImpl;
+                flecs_ecs::core::utility::types::ImplementsSync::<#name #type_generics>::IMPLS
+            };
+        }
+    } else {
+        quote! {
+            const IMPLS_SEND: bool = true;
+            const IMPLS_SYNC: bool = true;
+        }
+    };
+
     // Common trait implementation for ComponentType and ComponentId
     let common_traits = {
         quote! {
@@ -943,17 +961,23 @@ pub(crate) fn impl_cached_component_data_struct(
                 #clone_default
                 #partial_ord_bound
                 #partial_eq_bound
+                #send_sync_bound
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
         }
     };
+    let send_sync_predicate = if contains_any_generic_type {
+        quote! { , Self: core::marker::Send + core::marker::Sync }
+    } else {
+        quote! {}
+    };
     let where_clause_quote = if contains_where_bound {
-        quote! { #where_clause Self: 'static }
+        quote! { #where_clause Self: 'static #send_sync_predicate }
     } else {
         quote! {
             where
-            Self: 'static
+            Self: 'static #send_sync_predicate
         }
     };
 
@@ -1051,7 +1075,7 @@ pub(crate) fn impl_cached_component_data_struct(
             quote! {}
         };
         quote! {
-        impl #impl_generics flecs_ecs::core::component_registration::InternalComponentHooks for #name #type_generics {
+        impl #impl_generics flecs_ecs::core::component_registration::InternalComponentHooks for #name #type_generics #where_clause_quote {
             #pre_name
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
@@ -1069,7 +1093,7 @@ pub(crate) fn impl_cached_component_data_struct(
         quote! {}
     } else {
         quote! {
-            impl #impl_generics flecs_ecs::core::component_registration::OnComponentRegistration for #name #type_generics {
+            impl #impl_generics flecs_ecs::core::component_registration::OnComponentRegistration for #name #type_generics #where_clause_quote {
                 #[inline(always)]
                 fn on_component_registration(_world: flecs_ecs::core::WorldRef, _component_id: flecs_ecs::core::Entity) {}
             }
@@ -1351,6 +1375,14 @@ pub(crate) fn impl_cached_component_data_enum(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsPartialEq::<#name #type_generics>::IMPLS
                 };
+                const IMPLS_SEND: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsSend::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_SYNC: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsSync::<#name #type_generics>::IMPLS
+                };
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -1378,6 +1410,14 @@ pub(crate) fn impl_cached_component_data_enum(
                 const IMPLS_PARTIAL_EQ: bool = {
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsPartialEq::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_SEND: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsSend::<#name #type_generics>::IMPLS
+                };
+                const IMPLS_SYNC: bool = {
+                    use flecs_ecs::core::utility::traits::DoesNotImpl;
+                    flecs_ecs::core::utility::types::ImplementsSync::<#name #type_generics>::IMPLS
                 };
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;

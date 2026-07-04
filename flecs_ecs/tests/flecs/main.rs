@@ -6,6 +6,8 @@ extern crate alloc;
 
 pub mod common_test;
 
+#[cfg(feature = "flecs_app")]
+mod app_test;
 mod clone_default_impl_test;
 mod component_lifecycle_test;
 mod component_test;
@@ -25,6 +27,7 @@ mod meta_macro_test;
 mod meta_test;
 mod meta_trait_test;
 mod module_test;
+mod non_send_component_test;
 mod observer_rust_test;
 mod observer_test;
 mod ordered_children_test;

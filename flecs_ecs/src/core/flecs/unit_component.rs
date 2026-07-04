@@ -57,6 +57,8 @@ impl flecs_ecs::core::component_registration::ComponentInfo for () {
         { flecs_ecs::core::utility::types::ImplementsPartialEq::<()>::IMPLS };
     const IMPLS_PARTIAL_ORD: bool =
         { flecs_ecs::core::utility::types::ImplementsPartialOrd::<()>::IMPLS };
+    const IMPLS_SEND: bool = { flecs_ecs::core::utility::types::ImplementsSend::<()>::IMPLS };
+    const IMPLS_SYNC: bool = { flecs_ecs::core::utility::types::ImplementsSync::<()>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     type TagType = flecs_ecs::core::component_registration::FlecsIsATag;

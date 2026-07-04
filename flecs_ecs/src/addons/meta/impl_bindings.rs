@@ -23,6 +23,10 @@ impl<T: ComponentId> ComponentInfo for Opaque<'static, T> {
     const IMPLS_DEFAULT: bool = true;
     const IMPLS_PARTIAL_EQ: bool = false;
     const IMPLS_PARTIAL_ORD: bool = false;
+    const IMPLS_SEND: bool =
+        { flecs_ecs::core::utility::types::ImplementsSend::<Opaque<'static, T>>::IMPLS };
+    const IMPLS_SYNC: bool =
+        { flecs_ecs::core::utility::types::ImplementsSync::<Opaque<'static, T>>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = true;

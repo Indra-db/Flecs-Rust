@@ -371,6 +371,7 @@ pub trait TableOperations<'a>: IntoTable {
     /// Some(Pointer) to the column, or `None` if not found
     //TODO this should return a field IMO
     fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
+        self.world().check_thread_affinity_exclusive::<T>();
         self.get_mut_untyped(T::entity_id(self.world()))
             .map(|ptr| unsafe {
                 core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)

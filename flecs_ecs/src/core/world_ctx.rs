@@ -14,6 +14,7 @@ pub(crate) struct WorldCtx {
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
     is_panicking: Cell<bool>,
+    owning_thread: std::thread::ThreadId,
 }
 
 impl WorldCtx {
@@ -23,7 +24,12 @@ impl WorldCtx {
             components: Default::default(),
             components_array: vec![0; 500],
             is_panicking: Cell::new(false),
+            owning_thread: std::thread::current().id(),
         }
+    }
+
+    pub(crate) fn owning_thread(&self) -> std::thread::ThreadId {
+        self.owning_thread
     }
 
     pub(crate) fn inc_query_ref_count(&self) {
@@ -72,6 +78,54 @@ impl World {
     pub(crate) fn world_ctx(&self) -> &WorldCtx {
         unsafe { &*(sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) as *const WorldCtx) }
     }
+
+    // XAI: thread-affinity model. `World`/`WorldRef` are !Send, so all safe
+    // handles stay on the thread that created the world (`owning_thread`).
+    // Component data can still reach worker threads through two doors:
+    // 1. `par_*` systems — guarded statically (`TupleType: Send` bounds +
+    //    conditional `Query` Send/Sync impls).
+    // 2. Views handed to par callbacks (`EntityView`, `TableIter`,
+    //    `WorldRef::from_ptr` in trampolines) — guarded by the runtime checks
+    //    below at every typed materialization/move choke point.
+    // This relies on the flecs C scheduler invariant that non-multi_threaded
+    // systems only execute on the thread calling progress() (flecs.c
+    // flecs_run_pipeline_ops: assert(!stage_index || op->multi_threaded)).
+    // Re-verify on every vendored flecs C upgrade.
+
+    /// Asserts that a shared reference (`&T`) to component data may be
+    /// materialized on the current thread. Compiles to nothing for `Sync`
+    /// component types.
+    #[inline(always)]
+    pub(crate) fn check_thread_affinity_shared<T: crate::core::ComponentInfo>(&self) {
+        if !T::IMPLS_SYNC {
+            self.assert_owning_thread::<T>();
+        }
+    }
+
+    /// Asserts that an exclusive reference (`&mut T`) to component data may be
+    /// materialized, or a `T` value moved in/out of storage, on the current
+    /// thread. Compiles to nothing for `Send` component types.
+    #[inline(always)]
+    pub(crate) fn check_thread_affinity_exclusive<T: crate::core::ComponentInfo>(&self) {
+        if !T::IMPLS_SEND {
+            self.assert_owning_thread::<T>();
+        }
+    }
+
+    #[inline(always)]
+    fn assert_owning_thread<T>(&self) {
+        if std::thread::current().id() != self.world_ctx().owning_thread() {
+            thread_affinity_violation(core::any::type_name::<T>());
+        }
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn thread_affinity_violation(type_name: &str) -> ! {
+    panic!(
+        "component `{type_name}` is thread-bound (!Send or !Sync) and can only be accessed from the thread that owns the world"
+    );
 }
 
 #[test]

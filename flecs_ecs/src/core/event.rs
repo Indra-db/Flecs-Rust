@@ -158,6 +158,7 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     }
 
     pub fn enqueue(&mut self, data: T) {
+        self.world.check_thread_affinity_exclusive::<T>();
         let ids = &mut self.ids;
         let ids_array = &mut self.ids_array;
         let desc = &mut self.desc;

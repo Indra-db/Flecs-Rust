@@ -185,6 +185,8 @@ pub trait ClonedTuple: Sized {
         index: usize,
         #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_lock_target_t],
     ) {
+        world.check_thread_affinity_shared::<<T::OnlyType as ComponentOrPairId>::CastType>();
+
         let get_ptr = unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
         let component_ptr = get_ptr.ptr;
 

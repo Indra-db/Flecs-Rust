@@ -266,6 +266,10 @@ macro_rules! create_pre_registered_extern_component {
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_ORD: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
+            const IMPLS_SEND: bool =
+                { flecs_ecs::core::utility::types::ImplementsSend::<$struct_name>::IMPLS };
+            const IMPLS_SYNC: bool =
+                { flecs_ecs::core::utility::types::ImplementsSync::<$struct_name>::IMPLS };
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
             type TagType = flecs_ecs::core::component_registration::FlecsIsATag;
@@ -340,6 +344,10 @@ macro_rules! impl_component_traits_primitive_type {
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_ORD: bool = true;
             const IMPLS_PARTIAL_EQ: bool = true;
+            const IMPLS_SEND: bool =
+                { flecs_ecs::core::utility::types::ImplementsSend::<$name>::IMPLS };
+            const IMPLS_SYNC: bool =
+                { flecs_ecs::core::utility::types::ImplementsSync::<$name>::IMPLS };
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }

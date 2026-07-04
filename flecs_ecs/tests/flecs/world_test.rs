@@ -1923,14 +1923,22 @@ fn exclusive_access_self_mutate() {
 #[test]
 #[cfg_attr(not(debug_assertions), ignore)]
 fn exclusive_access_other_mutate() {
+    struct SendPtr(*mut flecs_ecs::sys::ecs_world_t);
+    // SAFETY: the pointer is only used to reconstruct a world handle on the
+    // other thread; the test asserts that flecs' exclusive access guard
+    // aborts that access at runtime.
+    unsafe impl Send for SendPtr {}
+
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
 
     world.exclusive_access_begin(None);
 
-    let world_clone = world.clone();
+    let world_ptr = SendPtr(world.ptr_mut());
     let thread = std::thread::spawn(move || {
-        world_clone.entity();
+        let world_ptr = world_ptr;
+        let world_ref = unsafe { WorldRef::from_ptr(world_ptr.0) };
+        world_ref.entity();
     });
 
     assert!(thread.join().is_err());

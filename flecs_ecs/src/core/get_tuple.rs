@@ -260,6 +260,12 @@ pub trait GetTuple: Sized {
         index: usize,
         #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [SafetyInfo],
     ) {
+        if T::IS_IMMUTABLE {
+            world.check_thread_affinity_shared::<<T::OnlyType as ComponentOrPairId>::CastType>();
+        } else {
+            world.check_thread_affinity_exclusive::<<T::OnlyType as ComponentOrPairId>::CastType>();
+        }
+
         if <T::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(
                 {

@@ -283,6 +283,9 @@ where
             );
         }
 
+        self.world()
+            .check_thread_affinity_shared::<P::UnderlyingType>();
+
         let ptr = self.iter.param as *const P::UnderlyingType;
 
         assert!(
@@ -529,6 +532,8 @@ where
     pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
+        self.world()
+            .check_thread_affinity_shared::<T::UnderlyingType>();
         self.field_internal::<T::UnderlyingType, true>(index)
     }
 
@@ -645,6 +650,8 @@ where
     ) -> Option<Field<'a, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
+        self.world()
+            .check_thread_affinity_shared::<T::UnderlyingType>();
         self.get_field_internal::<T::UnderlyingType, true>(index)
     }
 
@@ -759,6 +766,8 @@ where
     pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
+        self.world()
+            .check_thread_affinity_exclusive::<T::UnderlyingType>();
         self.field_internal_mut::<T::UnderlyingType, true>(index)
     }
 
@@ -880,6 +889,8 @@ where
     ) -> Option<FieldMut<'a, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
+        self.world()
+            .check_thread_affinity_exclusive::<T::UnderlyingType>();
         self.get_field_internal_mut::<T::UnderlyingType, true>(index)
     }
 
@@ -1082,6 +1093,8 @@ where
         row: impl Into<usize>,
     ) -> FieldAt<'a, T::UnderlyingType> {
         self.field_safety_checks::<T, true, true, true>(index);
+        self.world()
+            .check_thread_affinity_shared::<T::UnderlyingType>();
         let row = row.into();
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
@@ -1113,6 +1126,8 @@ where
         row: impl Into<usize>,
     ) -> Option<FieldAt<'a, T::UnderlyingType>> {
         self.field_safety_checks::<T, true, true, true>(index);
+        self.world()
+            .check_thread_affinity_shared::<T::UnderlyingType>();
         let row = row.into();
         #[cfg(not(feature = "flecs_term_count_64"))]
         let val = 1u32 << (index as usize);
@@ -1193,6 +1208,8 @@ where
         row: impl Into<usize>,
     ) -> FieldAtMut<'a, T::UnderlyingType> {
         self.field_safety_checks::<T, false, true, true>(index);
+        self.world()
+            .check_thread_affinity_exclusive::<T::UnderlyingType>();
         let row = row.into();
 
         #[cfg(not(feature = "flecs_term_count_64"))]
@@ -1219,6 +1236,8 @@ where
         row: impl Into<usize>,
     ) -> Option<FieldAtMut<'a, T::UnderlyingType>> {
         self.field_safety_checks::<T, false, true, true>(index);
+        self.world()
+            .check_thread_affinity_exclusive::<T::UnderlyingType>();
         let row = row.into();
 
         #[cfg(not(feature = "flecs_term_count_64"))]
@@ -1424,6 +1443,8 @@ where
     ) -> Result<Field<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
+        self.world()
+            .check_thread_affinity_shared::<T::UnderlyingType>();
 
         self.field_result_internal::<T::UnderlyingType, true>(index)
     }
@@ -1435,6 +1456,8 @@ where
     ) -> Result<FieldMut<'_, T::UnderlyingType, true>, FieldError> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
+        self.world()
+            .check_thread_affinity_exclusive::<T::UnderlyingType>();
 
         self.field_result_internal_mut::<T::UnderlyingType, true>(index)
     }

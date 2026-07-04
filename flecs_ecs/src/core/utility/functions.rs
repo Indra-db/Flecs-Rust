@@ -349,6 +349,8 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
+    unsafe { WorldRef::from_ptr(world) }.check_thread_affinity_exclusive::<T>();
+
     unsafe {
         let res = sys::ecs_rust_set(
             world,
@@ -390,6 +392,8 @@ pub(crate) fn assign_helper<T: ComponentId>(
         FlecsErrorCode::InvalidParameter,
         "operation invalid for empty type"
     );
+
+    unsafe { WorldRef::from_ptr(world) }.check_thread_affinity_exclusive::<T>();
 
     let res = unsafe {
         sys::ecs_cpp_assign(

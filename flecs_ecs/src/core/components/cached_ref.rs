@@ -100,6 +100,7 @@ impl<'a, T> CachedRef<'a, T> {
 impl<'a, T: ComponentId> CachedRef<'a, T> {
     /// Try to get component from ref.
     pub fn try_get<R>(&mut self, callback: impl FnOnce(&mut T) -> R) -> Option<R> {
+        self.world.check_thread_affinity_exclusive::<T>();
         NonNull::new(unsafe {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
@@ -112,6 +113,7 @@ impl<'a, T: ComponentId> CachedRef<'a, T> {
     }
 
     pub fn get<R>(&mut self, callback: impl FnOnce(&mut T) -> R) -> R {
+        self.world.check_thread_affinity_exclusive::<T>();
         let mut ref_comp = NonNull::new(unsafe {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
