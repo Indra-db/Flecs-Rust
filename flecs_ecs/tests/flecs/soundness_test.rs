@@ -14,9 +14,11 @@
 use crate::common_test::*;
 use flecs_ecs::prelude::*;
 
+extern crate alloc;
+
+use alloc::sync::Arc;
 use core::cell::Cell;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// A zero-sized component with alignment > 1 and a Drop impl.
 /// The dtor used to run `drop_in_place` through the (unaligned) C storage
@@ -136,9 +138,13 @@ fn enqueue_deferred_drops_payload_exactly_once() {
     let e1 = world.entity().add(id_a);
 
     world.defer_begin();
-    world.event::<ArcPayload>().add(id_a).entity(e1).enqueue(ArcPayload {
-        tracker: Arc::clone(&tracker),
-    });
+    world
+        .event::<ArcPayload>()
+        .add(id_a)
+        .entity(e1)
+        .enqueue(ArcPayload {
+            tracker: Arc::clone(&tracker),
+        });
     assert_eq!(
         Arc::strong_count(&tracker),
         2,
@@ -165,9 +171,13 @@ fn enqueue_non_deferred_drops_payload() {
     let id_a = world.entity();
     let e1 = world.entity().add(id_a);
 
-    world.event::<ArcPayload>().add(id_a).entity(e1).enqueue(ArcPayload {
-        tracker: Arc::clone(&tracker),
-    });
+    world
+        .event::<ArcPayload>()
+        .add(id_a)
+        .entity(e1)
+        .enqueue(ArcPayload {
+            tracker: Arc::clone(&tracker),
+        });
 
     assert_eq!(
         Arc::strong_count(&tracker),

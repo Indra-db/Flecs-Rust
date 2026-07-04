@@ -41,7 +41,7 @@ impl UntypedComponent<'_> {
     /// (name: &'a str,),
     /// (name: &'a str, count: i32),
     /// (name: &'a str, count: i32, offset: i32)
-    pub fn member_unit<'a , Meta: MetaMember<'a>>(
+    pub fn member_unit<'a, Meta: MetaMember<'a>>(
         self,
         type_id: impl IntoEntity,
         unit: impl IntoEntity,
@@ -95,7 +95,10 @@ impl UntypedComponent<'_> {
     /// (name: &'satatic str,),
     /// (name: &'a str, count: i32),
     /// (name: &'a str, count: i32, offset: i32)
-    pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(self, data: impl MetaMember<'a>) -> Self {
+    pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(
+        self,
+        data: impl MetaMember<'a>,
+    ) -> Self {
         self.member_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
 

@@ -1390,7 +1390,8 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         //     return None;
         // }
 
-        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
+        // SAFETY: record was just looked up for self.id on this world.
+        let tuple_data = unsafe { T::create_ptrs::<false>(self.world, self.id, record) };
         let has_all_components = tuple_data.has_all_components();
 
         if has_all_components {
@@ -1435,7 +1436,8 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         //     panic!("Entity does not have any components");
         // }
 
-        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
+        // SAFETY: record was just looked up for self.id on this world.
+        let tuple_data = unsafe { T::create_ptrs::<true>(self.world, self.id, record) };
         let tuple = tuple_data.get_tuple();
 
         #[cfg(feature = "flecs_safety_locks")]
