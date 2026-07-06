@@ -61,8 +61,16 @@ macro_rules! impl_stats_component {
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_ORD: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
-            const IMPLS_SEND: bool = { flecs_ecs::core::utility::types::ImplementsSend::<$type>::IMPLS };
-            const IMPLS_SYNC: bool = { flecs_ecs::core::utility::types::ImplementsSync::<$type>::IMPLS };
+            const IMPLS_SEND: bool = {
+                #[allow(unused_imports)]
+                use flecs_ecs::core::DoesNotImpl as _;
+                flecs_ecs::core::utility::types::ImplementsSend::<$type>::IMPLS
+            };
+            const IMPLS_SYNC: bool = {
+                #[allow(unused_imports)]
+                use flecs_ecs::core::DoesNotImpl as _;
+                flecs_ecs::core::utility::types::ImplementsSync::<$type>::IMPLS
+            };
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }

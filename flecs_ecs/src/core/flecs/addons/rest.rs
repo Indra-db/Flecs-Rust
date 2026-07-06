@@ -69,6 +69,8 @@ impl Default for Rest {
     }
 }
 
+// XAI: `Rest` wraps raw pointers (`ipaddr`, `impl_`, the latter a live server
+// handle owned by flecs C), so it is correctly `!Send`/`!Sync`. It is treated as
+// a thread-bound component and guarded by the world's thread-affinity checks;
+// no `unsafe impl Send/Sync` is asserted.
 impl_component_traits_binding_type_w_id!(Rest, ECS_REST);
-unsafe impl Send for Rest {}
-unsafe impl Sync for Rest {}
