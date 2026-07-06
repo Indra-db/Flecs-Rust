@@ -127,6 +127,16 @@ impl Deref for WorldRef<'_> {
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
+        // Both `WorldRef` and `World` are `#[repr(C)]` with the same three
+        // leading `NonNull` fields; `WorldRef`'s trailing `PhantomData` is a
+        // ZST. This assertion fails to compile if that ever stops holding.
+        const {
+            assert!(
+                core::mem::size_of::<WorldRef<'_>>() == core::mem::size_of::<World>()
+                    && core::mem::align_of::<WorldRef<'_>>() == core::mem::align_of::<World>(),
+                "WorldRef and World layout diverged; WorldRef: Deref<World> transmute is unsound"
+            );
+        }
         unsafe { core::mem::transmute::<&WorldRef, &World>(self) }
     }
 }

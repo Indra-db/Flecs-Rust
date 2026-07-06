@@ -25,6 +25,11 @@ use crate::core::{
 /// # See also
 ///
 /// * [`addons::app`](crate::addons::app)
+// XAI: repr(C) so the field order matches `WorldRef` (also repr(C)). The
+// `WorldRef: Deref<Target = World>` impl transmutes `&WorldRef -> &World`; that
+// is only sound if both types share layout. A static assertion in the `Deref`
+// impl pins size/align.
+#[repr(C)]
 #[derive(Debug, Eq, PartialEq)]
 pub struct World {
     pub(crate) raw_world: NonNull<sys::ecs_world_t>,
