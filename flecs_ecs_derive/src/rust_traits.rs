@@ -293,20 +293,25 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             ///
             /// # Safety
             ///
-            /// This method uses unsafe operations to reconstruct the trait object.
-            /// It is safe as long as:
+            /// This mints a `&'a mut dyn` from a raw pointer; `EntityView` is `Copy`
+            /// and the returned lifetime is tied to the world borrow, not to a unique
+            /// borrow of the component, so the compiler cannot prevent aliasing. The
+            /// caller must ensure:
             /// - The entity actually has the component indicated by `derived_id`
             /// - The vtable was registered correctly for the component's type
-            /// - No other references to the component data exist (Rust's borrowing rules still apply)
+            /// - No other reference (shared or mutable) to the same component data is
+            ///   live for the duration of the returned reference. In particular, do
+            ///   not call `cast`/`cast_mut` again for the same entity + `derived_id`
+            ///   while the result is alive.
             /// - The component data is valid for the lifetime `'a`
             ///
             /// # Example
             ///
             /// ```ignore
-            /// let shape = ShapesTrait::cast_mut(entity, component_id);
+            /// let shape = unsafe { ShapesTrait::cast_mut(entity, component_id) };
             /// shape.modify_internal_state();
             /// ```
-            pub fn cast_mut<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
+            pub unsafe fn cast_mut<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
                 // Get the raw mutable pointer to the component data
                 let data_ptr = entity.get_untyped_mut(derived_id) as usize;
 
