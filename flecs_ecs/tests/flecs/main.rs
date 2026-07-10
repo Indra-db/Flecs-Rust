@@ -16,6 +16,7 @@ mod derive_attr_component_traits;
 mod entity_bulk_rust_test;
 mod entity_rust_test;
 mod entity_test;
+mod entity_view_soundness_test;
 mod enum_test;
 mod eq_test;
 mod event_test;

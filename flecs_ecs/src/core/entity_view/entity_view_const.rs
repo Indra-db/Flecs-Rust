@@ -542,11 +542,12 @@ impl<'a> EntityView<'a> {
     }
 
     /// Returns the entity symbol.
+    ///
+    /// Returns an empty string if the entity has no symbol.
     pub fn symbol(self) -> String {
-        //self.symbol_cstr().to_str().unwrap()
-        let cstr = unsafe { CStr::from_ptr(sys::ecs_get_symbol(self.world.world_ptr(), *self.id)) };
-        cstr.to_str()
-            .ok()
+        NonNull::new(unsafe { sys::ecs_get_symbol(self.world.world_ptr(), *self.id) } as *mut _)
+            .map(|s| unsafe { CStr::from_ptr(s.as_ptr()) })
+            .and_then(|s| s.to_str().ok())
             .map(ToString::to_string)
             .unwrap_or_default()
     }
@@ -857,14 +858,21 @@ impl<'a> EntityView<'a> {
     /// * [`TableRange::count()`] - Get number of rows in range
     #[inline]
     pub fn range(self) -> Option<TableRange<'a>> {
-        NonNull::new(unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) }).map(
-            |record| unsafe {
-                TableRange::new_raw(
-                    self.world,
-                    NonNull::new_unchecked((*record.as_ptr()).table),
-                    ecs_record_to_row((*record.as_ptr()).row),
-                    1,
-                )
+        if !self.is_alive() {
+            return None;
+        }
+
+        NonNull::new(unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) }).and_then(
+            |record| {
+                let table = NonNull::new(unsafe { (*record.as_ptr()).table })?;
+                Some(unsafe {
+                    TableRange::new_raw(
+                        self.world,
+                        table,
+                        ecs_record_to_row((*record.as_ptr()).row),
+                        1,
+                    )
+                })
             },
         )
     }
@@ -1337,6 +1345,9 @@ pub trait EntityViewGet<'a, Return>: WorldProvider<'a> + Sized {
     ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_get` function instead.
     ///   `try_get` does not run the callback if the entity does not have the component that isn't marked `Option`.
     ///
+    /// - This will panic if the entity does not exist in the world (e.g. it was deleted).
+    ///   `try_get` returns `None` in that case instead.
+    ///
     /// # Example
     ///
     /// ```
@@ -1385,12 +1396,15 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
         self,
         callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return,
     ) -> Option<Return> {
+        if !self.is_alive() {
+            return None;
+        }
+
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        //entity now belongs to a table, even if it has no components
-        // if unsafe { (*record).table.is_null() } {
-        //     return None;
-        // }
+        if record.is_null() {
+            return None;
+        }
 
         // SAFETY: record was just looked up for self.id on this world.
         let tuple_data = unsafe { T::create_ptrs::<false>(self.world, self.id, record) };
@@ -1421,9 +1435,8 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
 
             #[cfg(not(feature = "flecs_safety_locks"))]
             {
-                self.world.defer_begin();
+                let _defer_guard = DeferGuard::new(self.world);
                 let ret = callback(tuple);
-                self.world.defer_end();
                 return Some(ret);
             }
         }
@@ -1431,12 +1444,19 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
     }
 
     fn get<T: GetTuple>(self, callback: impl for<'e> FnOnce(T::TupleType<'e>) -> Return) -> Return {
+        assert!(
+            self.is_alive(),
+            "Entity {} does not exist in the world. Use `try_get` if the entity may not be alive.",
+            self.id
+        );
+
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        //entity now belongs to a table, even if it has no components
-        // if unsafe { (*record).table.is_null() } {
-        //     panic!("Entity does not have any components");
-        // }
+        assert!(
+            !record.is_null(),
+            "Entity {} does not exist in the world. Use `try_get` if the entity may not be alive.",
+            self.id
+        );
 
         // SAFETY: record was just looked up for self.id on this world.
         let tuple_data = unsafe { T::create_ptrs::<true>(self.world, self.id, record) };
@@ -1454,10 +1474,8 @@ impl<'a, Return> EntityViewGet<'a, Return> for EntityView<'a> {
 
         #[cfg(not(feature = "flecs_safety_locks"))]
         {
-            self.world.defer_begin();
-            let ret = callback(tuple);
-            self.world.defer_end();
-            ret
+            let _defer_guard = DeferGuard::new(self.world);
+            callback(tuple)
         }
     }
 }
@@ -1478,6 +1496,8 @@ impl<'a> EntityView<'a> {
     /// - `cloned` assumes when not using `Option` wrapper, that the entity has the component.
     ///   This will panic if the entity does not have the component. If unsure, use `Option` wrapper or `try_cloned` function instead.
     ///   `try_cloned` will return a `None` tuple instead if the entity does not have the component that isn't marked `Option`.
+    /// - This will panic if the entity does not exist in the world (e.g. it was deleted).
+    ///   `try_cloned` returns `None` in that case instead.
     ///
     /// # Example
     ///
@@ -1519,12 +1539,19 @@ impl<'a> EntityView<'a> {
     /// ```
     #[must_use]
     pub fn cloned<T: ClonedTuple>(self) -> T::TupleType<'a> {
+        assert!(
+            self.is_alive(),
+            "Entity {} does not exist in the world. Use `try_cloned` if the entity may not be alive.",
+            self.id
+        );
+
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        //entity now belongs to a table, even if it has no components
-        // if unsafe { (*record).table.is_null() } {
-        //     panic!("Entity does not have any components");
-        // }
+        assert!(
+            !record.is_null(),
+            "Entity {} does not exist in the world. Use `try_cloned` if the entity may not be alive.",
+            self.id
+        );
 
         let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
 
@@ -1605,12 +1632,15 @@ impl<'a> EntityView<'a> {
     /// assert_eq!(tag_pos_rel.x, 30.0);
     /// ```
     pub fn try_cloned<T: ClonedTuple>(self) -> Option<T::TupleType<'a>> {
+        if !self.is_alive() {
+            return None;
+        }
+
         let record = unsafe { sys::ecs_record_find(self.world.world_ptr(), *self.id) };
 
-        //entity now belongs to a table, even if it has no components
-        // if unsafe { (*record).table.is_null() } {
-        //     return None;
-        // }
+        if record.is_null() {
+            return None;
+        }
 
         let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
 
@@ -2048,7 +2078,21 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    // this is pub(crate) because it's used for development purposes only
+    /// Check if the entity has the provided enum constant.
+    ///
+    /// This checks for the pair `(Enum, Constant)`, where the enum type is the
+    /// relationship and the constant entity is the target. Use this to test for a
+    /// specific enum variant. To test whether the entity has any variant of the
+    /// enum, use [`EntityView::has()`] with the enum type instead. For enums used
+    /// as the second element of a pair, see [`EntityView::has_pair_enum()`].
+    ///
+    /// # Arguments
+    ///
+    /// * `constant` - The enum constant to check.
+    ///
+    /// # Returns
+    ///
+    /// True if the entity has the provided enum constant, false otherwise.
     pub fn has_enum<T>(self, constant: T) -> bool
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
@@ -2121,23 +2165,32 @@ impl<'a> EntityView<'a> {
                     }
          */
 
+    /// Converts the entity to an enum constant of type `T`.
+    ///
+    /// The entity must be a constant entity of the enum `T`, such as the ones
+    /// returned by [`EntityView::target()`] for an enum relationship.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not a constant of enum `T`.
     pub fn to_constant<T>(&self) -> T
     where
         T: ComponentId + ComponentType<Enum> + EnumComponentInfo,
     {
-        let id_underlying_type = self.world.component_id::<i32>();
+        let id_underlying_type = self.world.component_id::<T::UnderlyingTypeOfEnum>();
         let pair_id = ecs_pair(flecs::Constant::ID, *id_underlying_type);
         let constant_value =
-            unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *mut c_void;
+            unsafe { sys::ecs_get_id(self.world.ptr_mut(), *self.id, pair_id) } as *const T;
 
-        ecs_assert!(
+        assert!(
             !constant_value.is_null(),
-            FlecsErrorCode::InternalError,
-            "missing enum constant value {}",
+            "entity is not a constant of enum `{}`",
             core::any::type_name::<T>()
         );
 
-        unsafe { (constant_value.add(0) as *mut T).read() }
+        // SAFETY: constant_value is non-null and points to the enum constant's
+        // underlying value, registered with the same underlying type as `T`.
+        unsafe { constant_value.read() }
     }
 
     /// Check if the entity owns the provided entity (pair, component, entity).
@@ -2199,6 +2252,26 @@ impl<'a> EntityView<'a> {
         dest_entity
     }
 
+    /// Creates a new entity that is a child of this entity.
+    ///
+    /// Shorthand for `world.entity().child_of(self)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity();
+    /// let child = parent.child();
+    ///
+    /// assert_eq!(child.parent(), Some(parent));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::child_named()`] - Create a named child entity
+    /// * [`EntityView::child_of()`] - Make an existing entity a child of another
     #[inline(always)]
     pub fn child(self) -> EntityView<'a> {
         let w = self.world();
@@ -2206,6 +2279,30 @@ impl<'a> EntityView<'a> {
         EntityView::new_from(w, e)
     }
 
+    /// Creates a new named entity that is a child of this entity.
+    ///
+    /// Shorthand for `world.entity_named(name).child_of(self)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the child entity.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use flecs_ecs::prelude::*;
+    /// let world = World::new();
+    ///
+    /// let parent = world.entity_named("Parent");
+    /// let child = parent.child_named("Child");
+    ///
+    /// assert_eq!(child.path(), Some("::Parent::Child".to_string()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`EntityView::child()`] - Create an unnamed child entity
+    /// * [`EntityView::child_of()`] - Make an existing entity a child of another
     #[inline(always)]
     pub fn child_named(self, name: &str) -> EntityView<'a> {
         let w = self.world();
@@ -2650,13 +2747,13 @@ impl EntityView<'_> {
             let empty = (*ctx).empty.unwrap();
             let empty = &mut *(empty as *mut Func);
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            // SAFETY: iter's world and table pointers are valid for the duration of the callback.
+            let _table_lock = TableLockGuard::lock((*iter).world, (*iter).table);
 
             // Entity observers match on a non-$this source, so iter.count is
             // 0; invoke once per event instead of once per table row.
             empty();
 
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
     }
 
@@ -2675,7 +2772,8 @@ impl EntityView<'_> {
             let empty = (*ctx).empty_entity.unwrap();
             let empty = &mut *(empty as *mut Func);
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            // SAFETY: iter's world and table pointers are valid for the duration of the callback.
+            let _table_lock = TableLockGuard::lock((*iter).world, (*iter).table);
 
             // Entity observers match on a non-$this source, so iter.count is
             // 0; invoke once per event instead of once per table row.
@@ -2685,7 +2783,6 @@ impl EntityView<'_> {
                 sys::ecs_field_src(iter, 0),
             ));
 
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
     }
 
@@ -2704,7 +2801,8 @@ impl EntityView<'_> {
             let empty = (*ctx).payload.unwrap();
             let empty = &mut *(empty as *mut Func);
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            // SAFETY: iter's world and table pointers are valid for the duration of the callback.
+            let _table_lock = TableLockGuard::lock((*iter).world, (*iter).table);
 
             // Entity observers match on a non-$this source, so iter.count is
             // 0; invoke once per event instead of once per table row.
@@ -2712,7 +2810,6 @@ impl EntityView<'_> {
             let data_ref = &mut *data;
             empty(data_ref);
 
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
     }
 
@@ -2731,7 +2828,8 @@ impl EntityView<'_> {
             let empty = (*ctx).payload_entity.unwrap();
             let empty = &mut *(empty as *mut Func);
 
-            sys::ecs_table_lock((*iter).world, (*iter).table);
+            // SAFETY: iter's world and table pointers are valid for the duration of the callback.
+            let _table_lock = TableLockGuard::lock((*iter).world, (*iter).table);
 
             // Entity observers match on a non-$this source, so iter.count is
             // 0; invoke once per event instead of once per table row.
@@ -2743,7 +2841,6 @@ impl EntityView<'_> {
                 data_ref,
             );
 
-            sys::ecs_table_unlock((*iter).world, (*iter).table);
         }
     }
 
@@ -2786,5 +2883,51 @@ impl EntityView<'_> {
         unsafe {
             ptr::drop_in_place(ptr_struct);
         }
+    }
+}
+
+/// Calls `defer_begin` on construction and `defer_end` on drop, so the defer
+/// block is closed even when the user callback unwinds.
+#[cfg(not(feature = "flecs_safety_locks"))]
+struct DeferGuard<'w> {
+    world: WorldRef<'w>,
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+impl<'w> DeferGuard<'w> {
+    fn new(world: WorldRef<'w>) -> Self {
+        world.defer_begin();
+        Self { world }
+    }
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+impl Drop for DeferGuard<'_> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+    }
+}
+
+/// Locks a table on construction and unlocks it on drop, so the table is
+/// unlocked even when the user callback unwinds.
+struct TableLockGuard {
+    world: *mut sys::ecs_world_t,
+    table: *mut sys::ecs_table_t,
+}
+
+impl TableLockGuard {
+    /// # Safety
+    ///
+    /// `world` and `table` must be valid pointers for the lifetime of the guard.
+    unsafe fn lock(world: *mut sys::ecs_world_t, table: *mut sys::ecs_table_t) -> Self {
+        unsafe { sys::ecs_table_lock(world, table) };
+        Self { world, table }
+    }
+}
+
+impl Drop for TableLockGuard {
+    fn drop(&mut self) {
+        // SAFETY: the caller of `lock` guaranteed the pointers outlive the guard.
+        unsafe { sys::ecs_table_unlock(self.world, self.table) };
     }
 }
