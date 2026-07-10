@@ -141,10 +141,27 @@ pub(crate) fn register_enum_data<T>(
     let world_ptr = world.world_ptr_mut();
     unsafe { sys::ecs_cpp_enum_init(world_ptr, id, underlying_type_id) };
     let enum_size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
+    const {
+        assert!(core::mem::size_of::<T::UnderlyingTypeOfEnum>() <= core::mem::size_of::<u64>());
+    }
     for enum_item in T::UnderlyingEnumType::iter() {
         let name = enum_item.name_cstr();
         let enum_index = enum_item.enum_index();
-        let mut array_index = enum_index;
+        let mut constant_value = 0u64;
+        let constant_value_ptr = &mut constant_value as *mut u64;
+        // SAFETY: `constant_value` is an 8-byte, 8-aligned local, so writing any
+        // integer of `enum_size` (1, 2, 4 or 8) bytes at its address is in bounds
+        // and sufficiently aligned.
+        unsafe {
+            match enum_size {
+                1 => (constant_value_ptr as *mut u8).write(enum_index as u8),
+                2 => (constant_value_ptr as *mut u16).write(enum_index as u16),
+                4 => (constant_value_ptr as *mut u32).write(enum_index as u32),
+                _ => constant_value_ptr.write(enum_index as u64),
+            }
+        }
+        // SAFETY: C reads `enum_size` bytes from `constant_value`, which is at
+        // least `enum_size` bytes large (const-asserted above).
         let entity_id: sys::ecs_entity_t = unsafe {
             sys::ecs_cpp_enum_constant_register(
                 world_ptr,
@@ -152,12 +169,12 @@ pub(crate) fn register_enum_data<T>(
                 // Pass current world's cached ID (0 = new registration, existing = re-registration)
                 T::UnderlyingEnumType::id_variant_of_index_unchecked(enum_index, world),
                 name.as_ptr(),
-                &mut array_index as *mut usize as *mut c_void,
+                constant_value_ptr as *mut c_void,
                 underlying_type_id,
                 enum_size,
             )
         };
-        store_enum_entity_if_needed::<T>(world, array_index, entity_id);
+        store_enum_entity_if_needed::<T>(world, enum_index, entity_id);
     }
 }
 

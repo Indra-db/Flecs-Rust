@@ -10,6 +10,7 @@ mod aliasing_test;
 #[cfg(feature = "flecs_app")]
 mod app_test;
 mod clone_default_impl_test;
+mod component_index_growth_test;
 mod component_lifecycle_test;
 mod component_test;
 mod derive_attr_component_traits;

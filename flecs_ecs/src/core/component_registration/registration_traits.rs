@@ -201,7 +201,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration
                 }
                 components_array[index]
             } else {
-                components_array.reserve(len);
+                components_array.reserve(index + 1 - len);
                 let capacity = components_array.capacity();
                 unsafe {
                     core::ptr::write_bytes(
@@ -219,6 +219,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration
                 };
 
                 components_array[index] = id;
+                #[cfg(feature = "flecs_meta")]
+                {
+                    world
+                        .components_map()
+                        .insert(core::any::TypeId::of::<Self>(), id);
+                }
 
                 Self::internal_on_component_registration(world, Entity::new(id));
 
@@ -334,7 +340,7 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration
                 }
                 components_array[index]
             } else {
-                components_array.reserve(len);
+                components_array.reserve(index + 1 - len);
                 let capacity = components_array.capacity();
                 unsafe {
                     core::ptr::write_bytes(
@@ -348,6 +354,12 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration
                     try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name);
 
                 components_array[index] = id;
+                #[cfg(feature = "flecs_meta")]
+                {
+                    world
+                        .components_map()
+                        .insert(core::any::TypeId::of::<Self>(), id);
+                }
 
                 Self::internal_on_component_registration(world, Entity::new(id));
 

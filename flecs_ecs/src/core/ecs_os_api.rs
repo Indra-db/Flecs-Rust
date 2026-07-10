@@ -13,10 +13,7 @@ use alloc::{boxed::Box, vec::Vec};
 use std::sync::LazyLock;
 use std::sync::Mutex;
 
-struct OsApiHook(Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t)>);
-
-/// SAFETY: the OS API hooks are only ever used once, from behind a [`Mutex`]
-unsafe impl Send for OsApiHook {}
+struct OsApiHook(Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t) + Send>);
 
 /// List of hooks to run during initialization of the Flecs OS API from Rust.
 ///
@@ -85,7 +82,7 @@ pub fn ensure_initialized() {
 ///     api.abort_ = Some(abort_);
 /// }));
 /// ```
-pub fn add_init_hook(f: Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t)>) {
+pub fn add_init_hook(f: Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t) + Send>) {
     if let Err(e) = try_add_init_hook(f) {
         panic!("{e}");
     }
@@ -121,7 +118,7 @@ impl core::error::Error for AddInitHookError {}
 ///
 /// See also: [`add_init_hook`]
 pub fn try_add_init_hook(
-    f: Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t)>,
+    f: Box<dyn FnOnce(&mut flecs_ecs::sys::ecs_os_api_t) + Send>,
 ) -> Result<(), AddInitHookError> {
     OS_API_HOOKS
         .lock()

@@ -57,6 +57,28 @@ extern crate alloc;
 use alloc::boxed::Box;
 use flecs_ecs_derive::extern_abi;
 
+/// Runs a lifecycle hook body, aborting the process if it panics.
+///
+/// Lifecycle hooks are invoked by the flecs C library while component storage
+/// is mid-mutation. Unwinding out of a hook would hand control back to C with
+/// partially constructed or destroyed component memory, which is undefined
+/// behavior once that memory is later read or dropped. Aborting instead keeps
+/// the invariant that a hook either completes for the whole range or the
+/// process ends.
+fn abort_on_hook_panic<R>(hook_kind: &str, type_name: &str, f: impl FnOnce() -> R) -> R {
+    match std::panic::catch_unwind(core::panic::AssertUnwindSafe(f)) {
+        Ok(val) => val,
+        Err(_) => {
+            std::eprintln!(
+                "flecs_ecs: panic in `{hook_kind}` lifecycle hook of component `{type_name}`; \
+                 aborting: unwinding out of a lifecycle hook would leave component storage in an \
+                 undefined state"
+            );
+            std::process::abort()
+        }
+    }
+}
+
 #[expect(dead_code, reason = "possibly used in the future")]
 #[derive(Default)]
 pub(crate) struct RegistersPanicHooks {
@@ -144,12 +166,14 @@ fn ctor<T: Default>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_ty
     );
 
     let arr = ptr as *mut MaybeUninit<T>;
-    for i in 0..count as usize {
-        unsafe {
-            // Default construct the value in place
-            MaybeUninit::write(&mut *arr.add(i), T::default());
+    abort_on_hook_panic("ctor", core::any::type_name::<T>(), || {
+        for i in 0..count as usize {
+            unsafe {
+                // Default construct the value in place
+                MaybeUninit::write(&mut *arr.add(i), T::default());
+            }
         }
-    }
+    });
 }
 
 /// Runs the destructor for the type.
@@ -166,11 +190,13 @@ fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t
         // For a ZST the C storage pointer carries no alignment guarantee for T.
         // drop_in_place requires an aligned pointer even for ZSTs, so drop the
         // value at an aligned dangling address instead of through the C pointer.
-        for _ in 0..count {
-            unsafe {
-                ptr::drop_in_place(core::ptr::NonNull::<T>::dangling().as_ptr());
+        abort_on_hook_panic("dtor", core::any::type_name::<T>(), || {
+            for _ in 0..count {
+                unsafe {
+                    ptr::drop_in_place(core::ptr::NonNull::<T>::dangling().as_ptr());
+                }
             }
-        }
+        });
     } else {
         ecs_assert!(
             check_type_info::<T>(_type_info),
@@ -178,12 +204,14 @@ fn dtor<T>(ptr: *mut c_void, count: i32, _type_info: *const sys::ecs_type_info_t
         );
 
         let arr = ptr as *mut T;
-        for i in 0..count as isize {
-            unsafe {
-                let item = arr.offset(i);
-                ptr::drop_in_place(item);
+        abort_on_hook_panic("dtor", core::any::type_name::<T>(), || {
+            for i in 0..count as isize {
+                unsafe {
+                    let item = arr.offset(i);
+                    ptr::drop_in_place(item);
+                }
             }
-        }
+        });
     }
 }
 
@@ -202,15 +230,17 @@ fn copy<T: Clone>(
     );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *const T;
-    for i in 0..count as isize {
-        //this is safe because C manages the memory and we're cloning the internal data
-        unsafe {
-            let src_value = &*(src_arr.offset(i)); //get value of src
-            let dst_value = dst_arr.offset(i); // get ptr to dest
-            core::ptr::drop_in_place(dst_value); //calls destructor
-            core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+    abort_on_hook_panic("copy", core::any::type_name::<T>(), || {
+        for i in 0..count as isize {
+            //this is safe because C manages the memory and we're cloning the internal data
+            unsafe {
+                let src_value = &*(src_arr.offset(i)); //get value of src
+                let dst_value = dst_arr.offset(i); // get ptr to dest
+                core::ptr::drop_in_place(dst_value); //calls destructor
+                core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+            }
         }
-    }
+    });
 }
 
 /// This is the generic copy for trivial types
@@ -228,14 +258,16 @@ fn copy_ctor<T: Clone>(
     );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *const T;
-    for i in 0..count as isize {
-        //this is safe because C manages the memory and we're cloning the internal data
-        unsafe {
-            let src_value = &*(src_arr.offset(i)); //get value of src
-            let dst_value = dst_arr.offset(i); // get ptr to dest
-            core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+    abort_on_hook_panic("copy_ctor", core::any::type_name::<T>(), || {
+        for i in 0..count as isize {
+            //this is safe because C manages the memory and we're cloning the internal data
+            unsafe {
+                let src_value = &*(src_arr.offset(i)); //get value of src
+                let dst_value = dst_arr.offset(i); // get ptr to dest
+                core::ptr::write(dst_value, src_value.clone()); //overwrite the memory of dest with new value
+            }
         }
-    }
+    });
 }
 
 #[extern_abi]
@@ -274,19 +306,21 @@ fn move_dtor<T>(
     );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *mut T;
-    for i in 0..count as isize {
-        //this is safe because C manages the memory and we are just moving the internal data around
-        unsafe {
-            let src_value = src_arr.offset(i); //get value of src
-            let dst_value = dst_arr.offset(i); // get ptr to dest
+    abort_on_hook_panic("move_dtor", core::any::type_name::<T>(), || {
+        for i in 0..count as isize {
+            //this is safe because C manages the memory and we are just moving the internal data around
+            unsafe {
+                let src_value = src_arr.offset(i); //get value of src
+                let dst_value = dst_arr.offset(i); // get ptr to dest
 
-            core::ptr::drop_in_place(dst_value); //calls destructor on dest
+                core::ptr::drop_in_place(dst_value); //calls destructor on dest
 
-            //memcpy the bytes of src to dest
-            //src value and dest value point to the same thing
-            core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+                //memcpy the bytes of src to dest
+                //src value and dest value point to the same thing
+                core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+            }
         }
-    }
+    });
 }
 
 /// This is the generic move for non-trivial types
@@ -304,19 +338,21 @@ fn move_dtor_impls_default<T: Default>(
     );
     let dst_arr = dst_ptr as *mut T;
     let src_arr = src_ptr as *mut T;
-    for i in 0..count as isize {
-        //this is safe because C manages the memory and we are just moving the internal data around
-        unsafe {
-            let src_value = src_arr.offset(i); //get value of src
-            let dst_value = dst_arr.offset(i); // get ptr to dest
+    abort_on_hook_panic("move_dtor", core::any::type_name::<T>(), || {
+        for i in 0..count as isize {
+            //this is safe because C manages the memory and we are just moving the internal data around
+            unsafe {
+                let src_value = src_arr.offset(i); //get value of src
+                let dst_value = dst_arr.offset(i); // get ptr to dest
 
-            core::ptr::drop_in_place(dst_value); //calls destructor on dest
+                core::ptr::drop_in_place(dst_value); //calls destructor on dest
 
-            //memcpy the bytes of src to dest
-            //src value and dest value point to the same thing
-            core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+                //memcpy the bytes of src to dest
+                //src value and dest value point to the same thing
+                core::ptr::copy_nonoverlapping(src_value, dst_value, 1);
+            }
         }
-    }
+    });
 }
 
 /// a move to from src to dest where src will not be used anymore and dest is in control of the drop.
@@ -383,13 +419,15 @@ fn compare<T: core::cmp::PartialOrd>(
     let lhs = unsafe { &*(a as *const T) };
     let rhs = unsafe { &*(b as *const T) };
 
-    if lhs == rhs {
-        0
-    } else if lhs < rhs {
-        -1 //less
-    } else {
-        1 //greater
-    }
+    abort_on_hook_panic("cmp", core::any::type_name::<T>(), || {
+        if lhs == rhs {
+            0
+        } else if lhs < rhs {
+            -1 //less
+        } else {
+            1 //greater
+        }
+    })
 }
 
 #[extern_abi]
@@ -417,7 +455,7 @@ fn equals<T: core::cmp::PartialEq>(
     let lhs = unsafe { &*(a as *const T) };
     let rhs = unsafe { &*(b as *const T) };
 
-    lhs == rhs
+    abort_on_hook_panic("equals", core::any::type_name::<T>(), || lhs == rhs)
 }
 
 #[extern_abi]
