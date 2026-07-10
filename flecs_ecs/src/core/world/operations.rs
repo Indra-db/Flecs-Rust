@@ -1413,7 +1413,7 @@ impl World {
     /// # Safety
     ///
     /// Caller must ensure that `First` and `second` pair id data type is the one provided.
-    pub fn set_first<First>(&self, second: impl Into<Entity>, first: First)
+    pub fn set_first<First>(&self, second: impl IntoEntity, first: First)
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
@@ -1426,7 +1426,7 @@ impl World {
     /// # Safety
     ///
     /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
-    pub fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub fn set_second<Second>(&self, first: impl IntoEntity, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
@@ -1495,7 +1495,7 @@ impl World {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_first<First>(&self, first: First, second: impl Into<Entity>)
+    pub fn assign_first<First>(&self, first: First, second: impl IntoEntity)
     where
         First: ComponentId + DataComponent,
     {
@@ -1506,7 +1506,7 @@ impl World {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub fn assign_second<Second>(&self, first: impl IntoEntity, second: Second)
     where
         Second: ComponentId + DataComponent,
     {

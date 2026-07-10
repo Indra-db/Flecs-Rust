@@ -320,3 +320,43 @@ fn bulk_entity_builder_set_same_component_multiple_times() {
         assert_eq!(position.y, 2);
     }
 }
+
+#[test]
+fn bulk_entity_builder_with_entity_ids_accepts_entity_views() {
+    let world = World::new();
+
+    let ids: [u64; 3] = [100_000, 100_001, 100_002];
+    let views: Vec<EntityView> = ids.iter().map(|&id| world.entity_from_id(id)).collect();
+
+    let created = world
+        .entity_bulk_w_entity_ids(&views)
+        .add::<Position>()
+        .build();
+
+    assert_eq!(created.len(), 3);
+    for (created_id, &expected) in created.iter().zip(ids.iter()) {
+        assert_eq!(**created_id, expected);
+        let entity = world.entity_from_id(*created_id);
+        assert!(entity.is_alive());
+        assert!(entity.has(Position::id()));
+    }
+}
+
+#[test]
+fn bulk_entity_builder_entity_ids_owned_by_builder() {
+    let world = World::new();
+
+    let ids: [u64; 3] = [200_000, 200_001, 200_002];
+    let mut builder = {
+        let temp: Vec<Entity> = ids.iter().map(|&id| Entity(id)).collect();
+        world.entity_bulk_w_entity_ids(&temp)
+    };
+
+    let created = builder.add::<Position>().build();
+
+    assert_eq!(created.len(), 3);
+    for (created_id, &expected) in created.iter().zip(ids.iter()) {
+        assert_eq!(**created_id, expected);
+        assert!(world.entity_from_id(*created_id).has(Position::id()));
+    }
+}

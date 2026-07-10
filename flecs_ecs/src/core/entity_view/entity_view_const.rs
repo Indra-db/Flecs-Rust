@@ -947,8 +947,8 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::each_target()`] - Iterate over relationship targets
     pub fn each_pair(
         &self,
-        first: impl Into<Entity>,
-        second: impl Into<Entity>,
+        first: impl IntoEntity,
+        second: impl IntoEntity,
         mut func: impl FnMut(IdView),
     ) {
         // this is safe because we are only reading the world
@@ -963,8 +963,8 @@ impl<'a> EntityView<'a> {
         // SAFETY: ecs_get_table returns a live table owned by the real world.
         let table = unsafe { Table::new(real_world, table) };
 
-        let mut pattern: sys::ecs_id_t = *first.into();
-        let second_id = *second.into();
+        let mut pattern: sys::ecs_id_t = *first.into_entity(self.world);
+        let second_id = *second.into_entity(self.world);
         if second_id != 0 {
             pattern = ecs_pair(pattern, second_id);
         }

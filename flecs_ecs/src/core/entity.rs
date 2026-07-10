@@ -246,6 +246,7 @@ mod from_operations {
     {
         #[inline]
         fn from(query: Query<T>) -> Self {
+            // SAFETY: `query.query` is a NonNull pointer to a live ecs_query_t that the Query keeps alive.
             Entity(unsafe { query.query.as_ref().entity })
         }
     }

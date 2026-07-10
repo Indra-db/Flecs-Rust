@@ -62,6 +62,7 @@ impl<'a> EntityView<'a> {
             check_add_id_validity(world, id);
         }
 
+        // SAFETY: the world pointer is valid for 'a; id validity (tag/entity or ctor hook for sized components) was verified by the const and runtime checks above.
         unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
     }
@@ -84,6 +85,7 @@ impl<'a> EntityView<'a> {
         let id = *id.into_id(self.world);
         let world = self.world.world_ptr_mut();
 
+        // SAFETY: the world pointer is valid for 'a; the caller upholds this function's contract that the id is valid and initialized if sized.
         unsafe { sys::ecs_add_id(world, *self.id, id) }
         self
     }
@@ -95,6 +97,7 @@ impl<'a> EntityView<'a> {
         T::First: FlecsComponentTrait,
     {
         let world = self.world;
+        // SAFETY: flecs component traits are tags, so the id adds no component data.
         unsafe { self.add_id_unchecked(T::get_id(world)) }
     }
 
@@ -111,9 +114,11 @@ impl<'a> EntityView<'a> {
         let id = T::get_id(self.world);
         let world_ptr = self.world.world_ptr_mut();
 
+        // SAFETY: the world pointer is valid for 'a; ecs_get_target_for_id accepts any entity/id values.
         if unsafe { sys::ecs_get_target_for_id(world_ptr, *self.id, EcsIsA, id) } == 0 {
             panic!("Entity does not have the component to override");
         }
+        // SAFETY: the entity inherits `id` (checked above), so the override copies the base component data.
         unsafe { self.add_id_unchecked(id) }
     }
 
@@ -132,6 +137,7 @@ impl<'a> EntityView<'a> {
         }
         let world = self.world;
         let enum_id = enum_value.id_variant(world);
+        // SAFETY: First is a tag or implements Default (const-checked above) and the enum variant id is a tag.
         unsafe { self.add_id_unchecked((First::entity_id(world), enum_id)) }
     }
 
@@ -160,6 +166,7 @@ impl<'a> EntityView<'a> {
             FlecsErrorCode::InvalidParameter,
             "Component was not found in reflection data."
         );
+        // SAFETY: the variant id comes from flecs' enum reflection data and was asserted valid above.
         unsafe { self.add_id_unchecked((first, second)) }
     }
 
@@ -184,6 +191,7 @@ impl<'a> EntityView<'a> {
                 let first = id.get_id_first(self.world);
                 let mut second = id.get_id_second(self.world);
                 if second == 0
+                    // SAFETY: the world pointer is valid for 'a; ecs_has_id accepts any entity/id values.
                     || unsafe { sys::ecs_has_id(self.world.world_ptr(), *first, ECS_EXCLUSIVE) }
                 {
                     second = ECS_WILDCARD.into();
@@ -233,6 +241,7 @@ impl<'a> EntityView<'a> {
             id
         };
 
+        // SAFETY: the world pointer is valid for 'a; ecs_remove_id accepts any entity/id values.
         unsafe { sys::ecs_remove_id(self.world.world_ptr_mut(), *self.id, id) }
 
         self
@@ -244,6 +253,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `second`: The second element of the pair.
     pub fn is_a(self, second: impl IntoEntity) -> Self {
+        // SAFETY: IsA is a builtin tag relationship (PairIsTag), so the pair adds no component data.
         unsafe { self.add_id_unchecked((ECS_IS_A, second.into_entity(self.world))) }
     }
 
@@ -254,6 +264,7 @@ impl<'a> EntityView<'a> {
     /// * `parent`: The parent entity to establish the relationship with.
     #[inline(always)]
     pub fn child_of(self, parent: impl IntoEntity) -> Self {
+        // SAFETY: ChildOf is a builtin tag relationship (PairIsTag), so the pair adds no component data.
         unsafe { self.add_id_unchecked((ECS_CHILD_OF, parent.into_entity(self.world))) }
     }
 
@@ -263,6 +274,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `second`: The second element of the pair.
     pub fn depends_on(self, second: impl IntoEntity) -> Self {
+        // SAFETY: DependsOn is a builtin tag relationship (PairIsTag), so the pair adds no component data.
         unsafe { self.add_id_unchecked((ECS_DEPENDS_ON, second.into_entity(self.world))) }
     }
 
@@ -289,6 +301,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `second`: The second element of the pair.
     pub fn slot_of(self, second: impl IntoEntity) -> Self {
+        // SAFETY: SlotOf is a builtin tag relationship (PairIsTag), so the pair adds no component data.
         unsafe { self.add_id_unchecked((ECS_SLOT_OF, second.into_entity(self.world))) }
     }
 
@@ -313,6 +326,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * `id`: The id to mark for overriding.
     pub fn auto_override(self, id: impl IntoId) -> Self {
+        // SAFETY: AUTO_OVERRIDE only marks the id for overriding; data is copied from the base on instantiation.
         unsafe { self.add_id_unchecked(ECS_AUTO_OVERRIDE | id.into_id(self.world)) }
     }
 
@@ -347,12 +361,12 @@ impl<'a> EntityView<'a> {
     pub unsafe fn set_auto_override_first<First>(
         self,
         first: First,
-        second: impl Into<Entity>,
+        second: impl IntoEntity,
     ) -> Self
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let second_id = *second.into();
+        let second_id = *second.into_entity(self.world);
         let first_id = First::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         self.auto_override(pair_id).set_id(first, pair_id)
@@ -362,16 +376,16 @@ impl<'a> EntityView<'a> {
     ///
     /// # Safety
     ///
-    /// Caller must ensure that `Sirst` and `fecond` pair id data type is the one provided.
+    /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
     pub unsafe fn set_auto_override_second<Second>(
         self,
         second: Second,
-        first: impl Into<Entity>,
+        first: impl IntoEntity,
     ) -> Self
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let first_id = first.into();
+        let first_id = first.into_entity(self.world);
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(*first_id, second_id);
         self.auto_override(pair_id).set_id(second, pair_id)
@@ -385,6 +399,7 @@ impl<'a> EntityView<'a> {
     pub fn set<T: ComponentId>(self, component: T) -> Self {
         let id = T::entity_id(self.world);
         if T::IS_TAG {
+            // SAFETY: T is a tag (zero-sized), so no component data needs initialization.
             unsafe { self.add_id_unchecked(id) };
         } else {
             set_helper(
@@ -444,6 +459,7 @@ impl<'a> EntityView<'a> {
         let world = self.world.world_ptr_mut();
         let id = *id.into_id(self.world);
         let data_id = T::entity_id(self.world);
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let id_data_id = unsafe { sys::ecs_get_typeid(world, id) };
 
         if data_id != id_data_id {
@@ -503,6 +519,7 @@ impl<'a> EntityView<'a> {
         let pair_id = ecs_pair(First::entity_id(self.world), Second::entity_id(self.world));
 
         ecs_assert!(
+            // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
             unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
             FlecsErrorCode::InvalidOperation,
             "Pair is not a (data) component. Possible cause: PairIsTag trait"
@@ -522,6 +539,7 @@ impl<'a> EntityView<'a> {
         let first_id = First::entity_id(self.world);
         let second_id = *second.into_entity(world);
         let pair_id = ecs_pair(first_id, second_id);
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
         if data_id != first_id {
@@ -549,6 +567,7 @@ impl<'a> EntityView<'a> {
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
@@ -608,6 +627,7 @@ impl<'a> EntityView<'a> {
         size: usize,
         ptr: *const c_void,
     ) -> Self {
+        // SAFETY: the world pointer is valid for 'a; the caller guarantees `ptr` points to `size` bytes valid as the type of `id`.
         unsafe {
             sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
             self
@@ -617,7 +637,12 @@ impl<'a> EntityView<'a> {
     /// Sets a pointer to a component of an entity with a given component ID.
     ///
     /// # Safety
-    /// Caller must ensure that `ptr` points to data that can be accessed as the type associated with `id`
+    /// Caller must ensure that `id` refers to a registered, sized (non-tag) component and that
+    /// `ptr` points to data that can be accessed as the type associated with `id`
+    ///
+    /// # Panics
+    ///
+    /// Panics if `id` is not a registered component (does not have the `EcsComponent` component).
     ///
     /// # Arguments
     ///
@@ -625,6 +650,7 @@ impl<'a> EntityView<'a> {
     /// * `component_id` - The ID of the component to set the pointer to.
     /// * `ptr` - A pointer to the component.
     pub unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
+        // SAFETY: the world pointer is valid for 'a; `cptr` is checked non-null before reading, and the caller guarantees `ptr` matches the type of `id`.
         unsafe {
             let id = id.into();
             let cptr: *const sys::EcsComponent = sys::ecs_get_id(
@@ -633,12 +659,7 @@ impl<'a> EntityView<'a> {
                 sys::FLECS_IDEcsComponentID_,
             ) as *const sys::EcsComponent;
 
-            ecs_assert!(
-                !cptr.is_null(),
-                FlecsErrorCode::InvalidParameter,
-                "invalid component id: {:?}",
-                id
-            );
+            assert!(!cptr.is_null(), "invalid component id: {id:?}");
 
             self.set_ptr_w_size(id, (*cptr).size as usize, ptr)
         }
@@ -688,6 +709,7 @@ impl<'a> EntityView<'a> {
         let pair_id = ecs_pair(First::entity_id(self.world), Second::entity_id(self.world));
 
         ecs_assert!(
+            // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
             unsafe { sys::ecs_get_typeid(self.world.ptr_mut(), pair_id) } != 0,
             FlecsErrorCode::InvalidOperation,
             "Pair is not a (data) component. Possible cause: PairIsTag trait"
@@ -700,14 +722,15 @@ impl<'a> EntityView<'a> {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_first<First>(self, first: First, second: impl Into<Entity>) -> Self
+    pub fn assign_first<First>(self, first: First, second: impl IntoEntity) -> Self
     where
         First: ComponentId + DataComponent,
     {
         let world_ptr = self.world.world_ptr_mut();
         let first_id = First::entity_id(self.world);
-        let second_id = *second.into();
+        let second_id = *second.into_entity(self.world);
         let pair_id = ecs_pair(first_id, second_id);
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
 
         if data_id != first_id {
@@ -723,15 +746,16 @@ impl<'a> EntityView<'a> {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_second<Second>(self, first: impl Into<Entity>, second: Second) -> Self
+    pub fn assign_second<Second>(self, first: impl IntoEntity, second: Second) -> Self
     where
         Second: ComponentId + DataComponent,
     {
         let world = self.world.world_ptr_mut();
-        let first_id = *first.into();
+        let first_id = *first.into_entity(self.world);
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let data_id = unsafe { sys::ecs_get_typeid(world, pair_id) };
 
         if data_id != second_id {
@@ -764,6 +788,109 @@ impl<'a> EntityView<'a> {
         self
     }
 
+    fn try_assign_helper<T: ComponentId>(self, value: T, id: u64) -> bool {
+        let world_ptr = self.world.world_ptr_mut();
+        // SAFETY: the world pointer is valid for 'a and `ecs_owns_id` accepts any id value.
+        if !unsafe { sys::ecs_owns_id(world_ptr, *self.id, id) } {
+            return false;
+        }
+        assign_helper(world_ptr, *self.id, value, id);
+        true
+    }
+
+    /// Non-panicking counterpart of [`EntityView::assign()`].
+    /// Sets the component value and returns `true` if the entity already has the component,
+    /// otherwise does nothing and returns `false`.
+    pub fn try_assign<T: ComponentId + DataComponent>(self, value: T) -> bool {
+        let id = T::entity_id(self.world);
+        self.try_assign_helper(value, id)
+    }
+
+    /// Non-panicking counterpart of [`EntityView::assign_id()`].
+    /// Sets the component value and returns `true` if the entity already has the component,
+    /// otherwise does nothing and returns `false`.
+    pub fn try_assign_id<T: ComponentId + DataComponent>(self, value: T, id: impl IntoId) -> bool {
+        let id = *id.into_id(self.world);
+        self.try_assign_helper(value, id)
+    }
+
+    /// Non-panicking counterpart of [`EntityView::assign_pair()`].
+    /// Sets the pair value and returns `true` if the entity already has the pair,
+    /// otherwise does nothing and returns `false`.
+    pub fn try_assign_pair<First, Second>(
+        self,
+        value: <(First, Second) as ComponentOrPairId>::CastType,
+    ) -> bool
+    where
+        First: ComponentId,
+        Second: ComponentId,
+        (First, Second): ComponentOrPairId,
+    {
+        const {
+            assert!(
+                !<(First, Second) as ComponentOrPairId>::IS_TAGS,
+                "assigning tag relationships is not possible with `try_assign_pair`. use `add::<(Tag1, Tag2)>()` instead."
+            );
+        };
+
+        let pair_id = ecs_pair(First::entity_id(self.world), Second::entity_id(self.world));
+        self.try_assign_helper(value, pair_id)
+    }
+
+    /// Non-panicking counterpart of [`EntityView::assign_first()`].
+    /// Sets the pair value and returns `true` if the entity already has the pair,
+    /// otherwise does nothing and returns `false`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `First` does not match the data type of the pair.
+    pub fn try_assign_first<First>(self, first: First, second: impl IntoEntity) -> bool
+    where
+        First: ComponentId + DataComponent,
+    {
+        let world_ptr = self.world.world_ptr_mut();
+        let first_id = First::entity_id(self.world);
+        let second_id = *second.into_entity(self.world);
+        let pair_id = ecs_pair(first_id, second_id);
+        // SAFETY: the world pointer is valid for 'a and `ecs_get_typeid` accepts any id value.
+        let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
+
+        if data_id != first_id {
+            panic!(
+                "First type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        self.try_assign_helper(first, pair_id)
+    }
+
+    /// Non-panicking counterpart of [`EntityView::assign_second()`].
+    /// Sets the pair value and returns `true` if the entity already has the pair,
+    /// otherwise does nothing and returns `false`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `Second` does not match the data type of the pair.
+    pub fn try_assign_second<Second>(self, first: impl IntoEntity, second: Second) -> bool
+    where
+        Second: ComponentId + DataComponent,
+    {
+        let world_ptr = self.world.world_ptr_mut();
+        let first_id = *first.into_entity(self.world);
+        let second_id = Second::entity_id(self.world);
+        let pair_id = ecs_pair(first_id, second_id);
+        // SAFETY: the world pointer is valid for 'a and `ecs_get_typeid` accepts any id value.
+        let data_id = unsafe { sys::ecs_get_typeid(world_ptr, pair_id) };
+
+        if data_id != second_id {
+            panic!(
+                "Second type does not match id data type. For pairs this is the first element occurrence that is not a zero-sized type (ZST)."
+            );
+        }
+
+        self.try_assign_helper(second, pair_id)
+    }
+
     /// Sets the name of the entity.
     ///
     /// # Arguments
@@ -772,6 +899,7 @@ impl<'a> EntityView<'a> {
     pub fn set_name(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
+        // SAFETY: the world pointer is valid for 'a and `name` is a NUL-terminated buffer that outlives the call.
         unsafe {
             sys::ecs_set_name(
                 self.world.world_ptr_mut(),
@@ -784,6 +912,7 @@ impl<'a> EntityView<'a> {
 
     /// Removes the name of the entity.
     pub fn remove_name(self) -> Self {
+        // SAFETY: the world pointer is valid for 'a; a null name pointer clears the entity's name.
         unsafe {
             sys::ecs_set_name(self.world.world_ptr_mut(), *self.id, core::ptr::null());
         }
@@ -798,6 +927,7 @@ impl<'a> EntityView<'a> {
     pub fn set_alias(self, name: &str) -> Self {
         let name = compact_str::format_compact!("{}\0", name);
 
+        // SAFETY: the world pointer is valid for 'a and `name` is a NUL-terminated buffer that outlives the call.
         unsafe {
             sys::ecs_set_alias(
                 self.world.world_ptr_mut(),
@@ -812,6 +942,7 @@ impl<'a> EntityView<'a> {
     ///
     /// Enabled entities are matched with systems and can be searched with queries.
     pub fn enable_self(self) -> Self {
+        // SAFETY: the world pointer is valid for 'a; ecs_enable accepts any entity value.
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, true) }
         self
     }
@@ -825,6 +956,7 @@ impl<'a> EntityView<'a> {
     /// - `component_id`: The ID to enable.
     /// - `toggle`: True to enable, false to disable (default = true).
     pub fn enable(self, id: impl IntoId) -> Self {
+        // SAFETY: the world pointer is valid for 'a; ecs_enable_id accepts any entity/id values.
         unsafe {
             sys::ecs_enable_id(
                 self.world.world_ptr_mut(),
@@ -841,6 +973,7 @@ impl<'a> EntityView<'a> {
     /// Disabled entities are not matched with systems and cannot be searched with queries,
     /// unless explicitly specified in the query expression.
     pub fn disable_self(self) -> Self {
+        // SAFETY: the world pointer is valid for 'a; ecs_enable accepts any entity value.
         unsafe { sys::ecs_enable(self.world.world_ptr_mut(), *self.id, false) }
         self
     }
@@ -854,6 +987,7 @@ impl<'a> EntityView<'a> {
     ///
     /// - `component_id`: The ID to disable.
     pub fn disable(self, id: impl IntoId) -> Self {
+        // SAFETY: the world pointer is valid for 'a; ecs_enable_id accepts any entity/id values.
         unsafe {
             sys::ecs_enable_id(
                 self.world.world_ptr_mut(),
@@ -872,11 +1006,14 @@ impl<'a> EntityView<'a> {
     ///
     /// - `func`: The function to call.
     pub fn with(self, func: impl FnOnce()) -> Self {
-        unsafe {
-            let prev = sys::ecs_set_with(self.world.world_ptr_mut(), *self.id);
-            func();
-            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
-        }
+        let world = self.world.world_ptr_mut();
+        // SAFETY: the world pointer is valid for 'a; the guard restores the previous
+        // with id even if `func` unwinds.
+        let _guard = RestoreWithGuard {
+            world,
+            prev: unsafe { sys::ecs_set_with(world, *self.id) },
+        };
+        func();
         self
     }
 
@@ -888,14 +1025,15 @@ impl<'a> EntityView<'a> {
     /// - `first`: The first element of the pair.
     /// - `func`: The function to call.///
     pub fn with_first(self, first: impl IntoEntity, func: impl FnOnce()) -> Self {
-        unsafe {
-            let prev = sys::ecs_set_with(
-                self.world.world_ptr_mut(),
-                ecs_pair(*first.into_entity(self.world), *self.id),
-            );
-            func();
-            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
-        }
+        let world = self.world.world_ptr_mut();
+        let pair = ecs_pair(*first.into_entity(self.world), *self.id);
+        // SAFETY: the world pointer is valid for 'a; the guard restores the previous
+        // with id even if `func` unwinds.
+        let _guard = RestoreWithGuard {
+            world,
+            prev: unsafe { sys::ecs_set_with(world, pair) },
+        };
+        func();
         self
     }
 
@@ -907,14 +1045,15 @@ impl<'a> EntityView<'a> {
     /// - `second`: The second element of the pair.
     /// - `func`: The function to call.
     pub fn with_second(self, second: impl IntoEntity, func: impl FnOnce()) -> Self {
-        unsafe {
-            let prev = sys::ecs_set_with(
-                self.world.world_ptr_mut(),
-                ecs_pair(*self.id, *second.into_entity(self.world)),
-            );
-            func();
-            sys::ecs_set_with(self.world.world_ptr_mut(), prev);
-        }
+        let world = self.world.world_ptr_mut();
+        let pair = ecs_pair(*self.id, *second.into_entity(self.world));
+        // SAFETY: the world pointer is valid for 'a; the guard restores the previous
+        // with id even if `func` unwinds.
+        let _guard = RestoreWithGuard {
+            world,
+            prev: unsafe { sys::ecs_set_with(world, pair) },
+        };
+        func();
         self
     }
 
@@ -924,11 +1063,14 @@ impl<'a> EntityView<'a> {
     ///
     /// - `func`: The function to call.
     pub fn run_in_scope(self, func: impl FnOnce()) -> Self {
-        unsafe {
-            let prev = sys::ecs_set_scope(self.world.world_ptr_mut(), *self.id);
-            func();
-            sys::ecs_set_scope(self.world.world_ptr_mut(), prev);
-        }
+        let world = self.world.world_ptr_mut();
+        // SAFETY: the world pointer is valid for 'a; the guard restores the previous
+        // scope even if `func` unwinds.
+        let _guard = RestoreScopeGuard {
+            world,
+            prev: unsafe { sys::ecs_set_scope(world, *self.id) },
+        };
+        func();
         self
     }
 
@@ -956,6 +1098,7 @@ impl<'a> EntityView<'a> {
             }
         }
 
+        // SAFETY: the world pointer is valid for 'a; T was const-checked to not be a tag.
         unsafe {
             sys::ecs_modified_id(
                 self.world.world_ptr_mut(),
@@ -1005,6 +1148,7 @@ impl<'a> EntityView<'a> {
     /// This operation removes all components from an entity without recycling
     /// the entity id.
     pub fn clear(&self) {
+        // SAFETY: the world pointer is valid for 'a; ecs_clear accepts any entity value.
         unsafe { sys::ecs_clear(self.world.world_ptr_mut(), *self.id) }
     }
 
@@ -1013,6 +1157,7 @@ impl<'a> EntityView<'a> {
     /// Entities have to be deleted explicitly, and are not deleted when the
     /// entity object goes out of scope.
     pub fn destruct(self) {
+        // SAFETY: the world pointer is valid for 'a; ecs_delete accepts any entity value.
         unsafe { sys::ecs_delete(self.world.world_ptr_mut(), *self.id) }
     }
 
@@ -1068,9 +1213,40 @@ impl<'a> EntityView<'a> {
             core::ptr::null()
         };
 
+        // SAFETY: the world pointer is valid for 'a; `children_ptr` points to `child_count` ids (Entity is repr(transparent) over u64) borrowed for this call.
         unsafe {
             sys::ecs_set_child_order(world_ptr, *self.id, children_ptr, child_count);
         }
         self
+    }
+}
+
+struct RestoreWithGuard {
+    world: *mut sys::ecs_world_t,
+    prev: sys::ecs_id_t,
+}
+
+impl Drop for RestoreWithGuard {
+    fn drop(&mut self) {
+        // SAFETY: `world` is a live world pointer captured from the `WorldRef` of the
+        // function that created this guard, which is still borrowed for 'a.
+        unsafe {
+            sys::ecs_set_with(self.world, self.prev);
+        }
+    }
+}
+
+struct RestoreScopeGuard {
+    world: *mut sys::ecs_world_t,
+    prev: sys::ecs_entity_t,
+}
+
+impl Drop for RestoreScopeGuard {
+    fn drop(&mut self) {
+        // SAFETY: `world` is a live world pointer captured from the `WorldRef` of the
+        // function that created this guard, which is still borrowed for 'a.
+        unsafe {
+            sys::ecs_set_scope(self.world, self.prev);
+        }
     }
 }

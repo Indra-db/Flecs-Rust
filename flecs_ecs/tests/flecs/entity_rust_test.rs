@@ -726,3 +726,111 @@ mod cloned_tests {
         }
     }
 }
+
+mod panic_and_assign_tests {
+    use super::*;
+
+    #[test]
+    fn with_restores_previous_with_state_on_panic() {
+        let world = World::new();
+        let tag = world.entity();
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            tag.with(|| {
+                panic!("panic inside with");
+            });
+        }));
+        assert!(result.is_err());
+
+        let e = world.entity();
+        assert!(!e.has(tag));
+    }
+
+    #[test]
+    fn run_in_scope_restores_previous_scope_on_panic() {
+        let world = World::new();
+        let parent = world.entity();
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            parent.run_in_scope(|| {
+                panic!("panic inside run_in_scope");
+            });
+        }));
+        assert!(result.is_err());
+
+        let e = world.entity();
+        assert!(!e.has((flecs::ChildOf::ID, parent)));
+    }
+
+    #[test]
+    fn try_assign_returns_false_without_component() {
+        let world = World::new();
+        let e = world.entity();
+
+        assert!(!e.try_assign(Position { x: 1, y: 2 }));
+        assert!(!e.has(Position::id()));
+    }
+
+    #[test]
+    fn try_assign_sets_value_when_component_present() {
+        let world = World::new();
+        let e = world.entity().set(Position { x: 1, y: 2 });
+
+        assert!(e.try_assign(Position { x: 3, y: 4 }));
+        let pos = e.cloned::<&Position>();
+        assert_eq!(pos.x, 3);
+        assert_eq!(pos.y, 4);
+    }
+
+    #[test]
+    fn try_assign_id_and_pair_variants() {
+        let world = World::new();
+        let e = world.entity();
+
+        assert!(!e.try_assign_id(Position { x: 1, y: 2 }, Position::id()));
+        assert!(!e.try_assign_pair::<Position, Likes>(Position { x: 1, y: 2 }));
+        assert!(!e.try_assign_first::<Position>(Position { x: 1, y: 2 }, id::<Likes>()));
+        assert!(!e.try_assign_second::<Position>(id::<Likes>(), Position { x: 1, y: 2 }));
+
+        e.set(Position { x: 0, y: 0 });
+        assert!(e.try_assign_id(Position { x: 5, y: 6 }, Position::id()));
+        assert_eq!(e.cloned::<&Position>().x, 5);
+
+        e.set_pair::<Position, Likes>(Position { x: 0, y: 0 });
+        assert!(e.try_assign_pair::<Position, Likes>(Position { x: 7, y: 8 }));
+        assert_eq!(e.cloned::<&(Position, Likes)>().x, 7);
+    }
+
+    #[test]
+    fn assign_first_accepts_component_id_wrapper() {
+        let world = World::new();
+        let e = world
+            .entity()
+            .set_first::<Position>(Position { x: 1, y: 2 }, id::<Likes>());
+
+        e.assign_first::<Position>(Position { x: 3, y: 4 }, id::<Likes>());
+
+        let pos = e.cloned::<&(Position, Likes)>();
+        assert_eq!(pos.x, 3);
+        assert_eq!(pos.y, 4);
+    }
+
+    #[test]
+    fn set_ptr_panics_on_unregistered_component_id() {
+        let world = World::new();
+        let e = world.entity();
+        let not_a_component = world.entity();
+        let pos = Position { x: 1, y: 2 };
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            // SAFETY: `ptr` is valid; the call must panic because `id` is not a registered component.
+            unsafe {
+                e.set_ptr(
+                    not_a_component.id(),
+                    &pos as *const Position as *const core::ffi::c_void,
+                );
+            }
+        }));
+        assert!(result.is_err());
+    }
+}

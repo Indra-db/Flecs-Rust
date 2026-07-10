@@ -146,6 +146,7 @@ impl<'a> IdView<'a> {
     ///
     /// * C API: `ecs_id_is_pair`
     pub fn is_pair(self) -> bool {
+        // SAFETY: ecs_id_is_pair is a pure bit check on the id value.
         unsafe { sys::ecs_id_is_pair(*self.id) }
     }
 
@@ -156,6 +157,7 @@ impl<'a> IdView<'a> {
 
     /// checks if entity is valid
     pub fn is_valid(self) -> bool {
+        // SAFETY: the world pointer is valid for 'a; ecs_is_valid accepts any id value.
         unsafe { sys::ecs_is_valid(self.world.world_ptr(), *self.id) }
     }
 
@@ -266,6 +268,7 @@ impl<'a> IdView<'a> {
     /// * C API: `ecs_get_typeid`
     #[inline(always)]
     pub fn get_type_id(self) -> Option<EntityView<'a>> {
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let type_id = unsafe { sys::ecs_get_typeid(self.world.world_ptr(), *self.id) };
         if type_id == 0 {
             None
@@ -298,6 +301,7 @@ impl<'a> IdView<'a> {
     /// * C API: `ecs_get_typeid`
     #[inline(always)]
     pub fn type_id(self) -> EntityView<'a> {
+        // SAFETY: the world pointer is valid for 'a; ecs_get_typeid accepts any id value.
         let type_id = unsafe { sys::ecs_get_typeid(self.world.world_ptr(), *self.id) };
         EntityView::new_from(self.world, Entity(type_id))
     }
@@ -335,6 +339,7 @@ impl<'a> IdOperations<'a> for IdView<'a> {
     /// * `expr` - The expression to wrap
     fn new_from_str(world: impl WorldProvider<'a>, expr: &str) -> Self {
         let expr = compact_str::format_compact!("{}\0", expr);
+        // SAFETY: the world pointer is valid and `expr` is NUL-terminated.
         let id = unsafe { sys::ecs_id_from_str(world.world_ptr(), expr.as_ptr() as *const _) };
         Self {
             world: world.world(),
