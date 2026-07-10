@@ -178,15 +178,7 @@ macro_rules! create_typed_query {
 /// This function is called at the end of each iteration to do this reset.
 #[inline(always)]
 pub fn reset_world_arrays(world: &World) {
-    let components_array = world.components_array();
-    for mut id in components_array {
-        *id = 0;
-    }
-
-    let components_map = world.components_map();
-    for (_, id) in components_map.iter_mut() {
-        *id = 0;
-    }
+    world.reset_cached_component_ids();
 }
 
 macro_rules! vec_of_ids {

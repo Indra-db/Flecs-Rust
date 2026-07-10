@@ -3,7 +3,7 @@ use core::ptr::NonNull;
 use flecs_ecs_sys as sys;
 
 use crate::core::{
-    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, ecs_os_api, flecs,
+    FlecsArray, FlecsIdMap, QueryBuilderImpl, SystemAPI, WorldCtx, WorldRef, ecs_os_api, flecs,
     has_default_hook,
 };
 
@@ -220,5 +220,52 @@ impl World {
             //     comp.opaque_func(crate::prelude::meta::flecs_entity_support);
             // });
         }
+    }
+}
+
+/// Owning handle to an asynchronous stage created with [`World::async_stage()`].
+///
+/// The underlying stage is freed when this handle is dropped. See
+/// [`World::create_async_stage()`] for the semantics of asynchronous stages.
+#[derive(Debug)]
+pub struct AsyncStage<'a> {
+    stage: WorldRef<'a>,
+}
+
+impl<'a> AsyncStage<'a> {
+    pub(crate) fn new(world: &'a World) -> Self {
+        let stage_ptr = unsafe { sys::ecs_stage_new(world.raw_world.as_ptr()) };
+        Self {
+            // SAFETY: `ecs_stage_new` returns a valid stage pointer for a live world.
+            stage: unsafe { WorldRef::from_ptr(stage_ptr) },
+        }
+    }
+
+    /// Returns the stage as a [`WorldRef`] to enqueue commands on.
+    ///
+    /// The returned [`WorldRef`] cannot outlive a borrow of this handle, so it
+    /// cannot be used after the stage is freed.
+    pub fn stage(&self) -> WorldRef<'_> {
+        self.stage
+    }
+
+    /// Merges the commands enqueued on this stage into the world.
+    ///
+    /// # See also
+    ///
+    /// * [`World::merge()`]
+    pub fn merge(&self) {
+        unsafe { sys::ecs_merge(self.stage.raw_world.as_ptr()) };
+    }
+}
+
+impl Drop for AsyncStage<'_> {
+    fn drop(&mut self) {
+        if std::thread::panicking() {
+            return;
+        }
+        // SAFETY: this handle exclusively owns the stage and the lifetime `'a`
+        // guarantees the world the stage belongs to is still alive.
+        unsafe { sys::ecs_stage_free(self.stage.raw_world.as_ptr()) };
     }
 }

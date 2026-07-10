@@ -181,8 +181,8 @@ impl World {
     /// function needs to sleep to ensure it does not exceed the `target_fps`, when
     /// it is set. When 0 is provided for `delta_time`, the time will be measured.
     ///
-    /// # Safety
-    /// This function should only be ran from the main thread.
+    /// # Thread Safety
+    /// This function should only be run from the main thread.
     ///
     /// # Arguments
     /// * `delta_time`: Time elapsed since the last frame.
@@ -233,7 +233,7 @@ impl World {
     /// This operation must be called at the end of the frame, and always after
     /// [`World::frame_begin()`].
     ///
-    /// # Safety
+    /// # Thread Safety
     /// The function should only be run from the main thread.
     ///
     /// # See also
@@ -295,7 +295,7 @@ impl World {
     /// `readonly_end()` should always happen from a context where the code has
     /// exclusive access to the world. The functions themselves are not thread safe.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
@@ -348,7 +348,7 @@ impl World {
     /// By default, this operation also merges data back into the world, unless auto-merging
     /// was disabled explicitly.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
@@ -410,7 +410,7 @@ impl World {
     /// [`World::defer_begin()`] and [`World::defer_end()`] are executed at the
     /// end of the frame.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This operation is thread safe.
     ///
     /// # Returns
@@ -455,7 +455,7 @@ impl World {
     ///
     /// This should follow a [`World::defer_begin()`] call.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This operation is thread safe.
     ///
     /// # Returns
@@ -860,7 +860,10 @@ impl World {
     /// The application must ensure that no commands are added to the stage while the
     /// stage is being merged.
     ///
-    /// An asynchronous stage will be cleaned up when it is dropped.
+    /// The returned [`WorldRef`] does not own the stage: the underlying stage is
+    /// **not** freed when the [`WorldRef`] is dropped and stays allocated until the
+    /// process exits. Use [`World::async_stage()`] instead to get an owning handle
+    /// that frees the stage when dropped.
     ///
     /// # Returns
     ///
@@ -893,6 +896,47 @@ impl World {
     /// ```
     pub fn create_async_stage(&self) -> WorldRef<'_> {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
+    }
+
+    /// Create an asynchronous stage that is freed when the returned handle is dropped.
+    ///
+    /// Same semantics as [`World::create_async_stage()`], except the returned
+    /// [`AsyncStage`] owns the stage and frees it on drop, so the stage does not leak.
+    /// Use [`AsyncStage::stage()`] to enqueue commands on the stage and
+    /// [`AsyncStage::merge()`] to merge them into the world.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity();
+    ///
+    /// let stage = world.async_stage();
+    ///
+    /// e.mut_current_stage(stage.stage()).set(Position { x: 10, y: 20 });
+    ///
+    /// assert!(!e.has(Position::id()));
+    ///
+    /// stage.merge();
+    ///
+    /// assert!(e.has(Position::id()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::create_async_stage()`]
+    /// * [`World::merge()`]
+    pub fn async_stage(&self) -> AsyncStage<'_> {
+        AsyncStage::new(self)
     }
 
     /// Get actual world.
@@ -996,9 +1040,7 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
-    #[doc(hidden)]
-    #[allow(clippy::mut_from_ref)]
-    pub fn components_map(&self) -> &mut FlecsIdMap {
+    pub(crate) fn components_map(&self) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(self.components.as_ptr())) }
     }
 
@@ -1006,10 +1048,23 @@ impl World {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
-    #[doc(hidden)]
-    #[allow(clippy::mut_from_ref)]
-    pub fn components_array(&self) -> &mut FlecsArray {
+    pub(crate) fn components_array(&self) -> &'static mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
+    }
+
+    /// Resets all cached component ids for this world to zero.
+    ///
+    /// Intended for benchmarks and tests that repeatedly measure component
+    /// registration on the same world. After this call, component ids are
+    /// resolved again (or re-registered) on next use.
+    #[doc(hidden)]
+    pub fn reset_cached_component_ids(&self) {
+        for id in self.components_map().values_mut() {
+            *id = 0;
+        }
+        for id in self.components_array().iter_mut() {
+            *id = 0;
+        }
     }
 
     /// Set world binding context
@@ -1309,7 +1364,11 @@ impl World {
             .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
-    /// Lookup entity by name, only the current scope is searched
+    /// Lookup an entity by name.
+    /// The entity is searched recursively, traversing up the tree from the
+    /// current scope until found. This matches the C++ `world::lookup`, which
+    /// searches recursively by default. Use [`World::try_lookup()`] to search
+    /// only the current scope.
     ///
     /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
@@ -1408,11 +1467,11 @@ impl World {
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
 
-    /// Set a singleton pair using the second element type and a first id.
+    /// Set a singleton pair using the first element type and a second id.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
+    /// Panics if the data type of the `(First, second)` pair id is not `First`.
     pub fn set_first<First>(&self, second: impl IntoEntity, first: First)
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
@@ -1423,9 +1482,9 @@ impl World {
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
+    /// Panics if the data type of the `(first, Second)` pair id is not `Second`.
     pub fn set_second<Second>(&self, first: impl IntoEntity, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
