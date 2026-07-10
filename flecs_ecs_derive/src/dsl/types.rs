@@ -214,10 +214,7 @@ impl Parse for TermIdent {
                 input.parse::<Token![self]>()?;
                 Ok(TermIdent::SelfVar)
             } else {
-                panic!(
-                    "unexpected token after `self`, token: {:?}",
-                    input.cursor().token_stream()
-                );
+                Err(input.error("expected an identifier, string literal, or `self` after `$`"))
             }
         } else if input.peek(LitStr) {
             Ok(TermIdent::Literal(input.parse::<LitStr>()?))

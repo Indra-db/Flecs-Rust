@@ -15,8 +15,18 @@ fn expand_pair_builder_calls(
     iter_term: bool,
     ops: &mut Vec<TokenStream>,
 ) {
-    let first_id = first.ident.as_ref().expect("Pair with no first.");
-    let second_id = second.ident.as_ref().expect("Pair with no second.");
+    let Some(first_id) = first.ident.as_ref() else {
+        ops.push(quote_spanned! {
+            first.span => .set_id(compile_error!("pair is missing its first component identifier; traversal modifiers belong after the pair, e.g. `(ChildOf, Parent)(up)`"))
+        });
+        return;
+    };
+    let Some(second_id) = second.ident.as_ref() else {
+        ops.push(quote_spanned! {
+            second.span => .set_id(compile_error!("pair is missing its second component identifier; traversal modifiers belong after the pair, e.g. `(ChildOf, Parent)(up)`"))
+        });
+        return;
+    };
 
     // Expand first component
     ops.extend(expand_pair_component(
@@ -53,7 +63,12 @@ fn expand_component_builder_calls(
     needs_accessor: &mut bool,
     ops: &mut Vec<TokenStream>,
 ) {
-    let id = term.ident.as_ref().expect("Term with no component.");
+    let Some(id) = term.ident.as_ref() else {
+        ops.push(quote_spanned! {
+            term.span => .set_id(compile_error!("term is missing a component identifier before its traversal modifiers, e.g. `Position(up ChildOf)`"))
+        });
+        return;
+    };
     let ty = expand_type(id);
 
     match id {

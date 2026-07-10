@@ -19,7 +19,7 @@ pub(crate) fn collect_flecs_traits_calls(
         Single(Path),
         Pair(Path, Path),
         Name(LitStr),
-        Meta,
+        Meta(Span),
         OnRegistration,
         Add(Vec<Type>),
         Set(Vec<Expr>),
@@ -63,10 +63,8 @@ pub(crate) fn collect_flecs_traits_calls(
                     while !inner.is_empty() {
                         let ty: Type = inner.parse()?;
                         tys.push(ty);
-                        if inner.peek(Comma) {
+                        if !inner.is_empty() {
                             inner.parse::<Comma>()?;
-                        } else {
-                            break;
                         }
                     }
                     Ok(Item::Add(tys))
@@ -77,10 +75,8 @@ pub(crate) fn collect_flecs_traits_calls(
                     while !inner.is_empty() {
                         let expr: Expr = inner.parse()?;
                         exprs.push(expr);
-                        if inner.peek(Comma) {
+                        if !inner.is_empty() {
                             inner.parse::<Comma>()?;
-                        } else {
-                            break;
                         }
                     }
                     Ok(Item::Set(exprs))
@@ -101,8 +97,8 @@ pub(crate) fn collect_flecs_traits_calls(
                             let ident_peek: Ident = fork.parse()?;
                             if ident_peek == "meta" {
                                 // consume the ident
-                                let _ = inner.parse::<Ident>()?;
-                                items.push(Item::Meta);
+                                let meta_ident = inner.parse::<Ident>()?;
+                                items.push(Item::Meta(meta_ident.span()));
                             } else {
                                 let p: Path = inner.parse()?;
                                 items.push(Item::Single(p));
@@ -111,10 +107,8 @@ pub(crate) fn collect_flecs_traits_calls(
                             let p: Path = inner.parse()?;
                             items.push(Item::Single(p));
                         }
-                        if inner.peek(Comma) {
+                        if !inner.is_empty() {
                             inner.parse::<Comma>()?;
-                        } else {
-                            break;
                         }
                     }
                     Ok(Item::Traits(items))
@@ -184,8 +178,8 @@ pub(crate) fn collect_flecs_traits_calls(
                     let fork = input.fork();
                     let ident_peek: Ident = fork.parse()?;
                     if ident_peek == "meta" {
-                        let _ = input.parse::<Ident>()?;
-                        Ok(Item::Meta)
+                        let meta_ident = input.parse::<Ident>()?;
+                        Ok(Item::Meta(meta_ident.span()))
                     } else if ident_peek == "on_registration" {
                         let _ = input.parse::<Ident>()?;
                         Ok(Item::OnRegistration)
@@ -233,18 +227,55 @@ pub(crate) fn collect_flecs_traits_calls(
             .unwrap_or(false)
     }
 
+    /// Returns an error for single-segment pair-first paths in `traits(...)` that
+    /// don't name a builtin flecs trait relationship, since those would otherwise
+    /// be silently qualified as `flecs_ecs::core::flecs::<ident>` and fail with an
+    /// unrelated resolution error inside macro-generated code.
+    fn validate_traits_pair_first(p: &Path) -> Option<TokenStream> {
+        const BUILTIN_PAIR_FIRST: &[&str] = &[
+            "With",
+            "OneOf",
+            "IsA",
+            "ChildOf",
+            "DependsOn",
+            "SlotOf",
+            "OnInstantiate",
+            "OnDelete",
+            "OnDeleteTarget",
+        ];
+        if p.segments.len() != 1 {
+            return None;
+        }
+        let ident = &p.segments.first().unwrap().ident;
+        if BUILTIN_PAIR_FIRST.iter().any(|name| ident == name) {
+            return None;
+        }
+        Some(
+            syn::Error::new(
+                ident.span(),
+                format!(
+                    "`{ident}` is not a builtin flecs trait relationship; use a qualified path (e.g. `flecs::{ident}`) in traits(...), or add a custom relationship pair via #[flecs(add(({ident}, Target)))]"
+                ),
+            )
+            .to_compile_error(),
+        )
+    }
+
     let mut out = TokenStream::new();
     let mut has_flecs_meta = false;
     let mut has_on_registration = false;
     let mut flecs_name: Option<LitStr> = None;
     // Track ordering across all #[flecs(...)] attributes as encountered
     let mut position: usize = 0;
-    let mut name_pos: Option<usize> = None;
-    let mut meta_pos: Option<usize> = None;
+    let mut name_pos: Option<(usize, Span)> = None;
+    let mut meta_pos: Option<(usize, Span)> = None;
     for attr in &input.attrs {
         if attr.path().is_ident("flecs") {
             let args: Result<Punctuated<Item, Token![,]>> =
                 attr.parse_args_with(Punctuated::<Item, Token![,]>::parse_terminated);
+            if let Err(e) = &args {
+                out.extend(e.to_compile_error());
+            }
             if let Ok(args) = args {
                 for item in args.iter() {
                     position += 1;
@@ -257,6 +288,10 @@ pub(crate) fn collect_flecs_traits_calls(
                                         out.extend(quote! { _component.add_trait::<#q>(); });
                                     }
                                     Item::Pair(p1, p2) => {
+                                        if let Some(err) = validate_traits_pair_first(p1) {
+                                            out.extend(err);
+                                            continue;
+                                        }
                                         let q1 = qualify(p1);
                                         // For special relationship traits (With, OneOf, IsA, ChildOf, DependsOn),
                                         // the second element is always a user component/entity and should not be qualified.
@@ -270,10 +305,10 @@ pub(crate) fn collect_flecs_traits_calls(
                                             quote! { _component.add_trait::<(#q1, #q2)>(); },
                                         );
                                     }
-                                    Item::Meta => {
+                                    Item::Meta(span) => {
                                         has_flecs_meta = true;
                                         if meta_pos.is_none() {
-                                            meta_pos = Some(position);
+                                            meta_pos = Some((position, *span));
                                         }
                                     }
                                     _ => {}
@@ -299,10 +334,10 @@ pub(crate) fn collect_flecs_traits_calls(
                                 }
                             }
                         }
-                        Item::Meta => {
+                        Item::Meta(span) => {
                             has_flecs_meta = true;
                             if meta_pos.is_none() {
-                                meta_pos = Some(position);
+                                meta_pos = Some((position, *span));
                             }
                         }
                         Item::OnRegistration => {
@@ -362,7 +397,7 @@ pub(crate) fn collect_flecs_traits_calls(
                             // capture name; if multiple provided, raise a compile-time error later
                             if flecs_name.is_none() {
                                 flecs_name = Some(name.clone());
-                                name_pos = Some(position);
+                                name_pos = Some((position, name.span()));
                             } else {
                                 out.extend(quote! { compile_error!("Duplicate `name` in #[flecs(...)] attribute"); });
                             }
@@ -379,35 +414,44 @@ pub(crate) fn collect_flecs_traits_calls(
         }
     }
     // Validate ordering: if name/meta are provided, they must occupy the first two positions in any order.
-    let mut ordering_error: Option<String> = None;
+    let mut ordering_error: Option<(String, Span)> = None;
     match (name_pos, meta_pos) {
-        (Some(n), Some(m)) => {
+        (Some((n, n_span)), Some((m, m_span))) => {
             if !(n == 1 && m == 2 || n == 2 && m == 1) {
-                ordering_error = Some(format!(
-                    "`name` and `meta` must be the first two items of #[flecs(...)] (found at positions {n} and {m})",
+                let span = if n > 2 { n_span } else { m_span };
+                ordering_error = Some((
+                    format!(
+                        "`name` and `meta` must be the first two items of #[flecs(...)] (found at positions {n} and {m})",
+                    ),
+                    span,
                 ));
             }
         }
-        (Some(n), None) => {
+        (Some((n, n_span)), None) => {
             if n != 1 {
-                ordering_error = Some(format!(
-                    "`name` must be the first item of #[flecs(...)] when present (found at position {n})",
+                ordering_error = Some((
+                    format!(
+                        "`name` must be the first item of #[flecs(...)] when present (found at position {n})",
+                    ),
+                    n_span,
                 ));
             }
         }
-        (None, Some(m)) => {
+        (None, Some((m, m_span))) => {
             if m != 1 {
-                ordering_error = Some(format!(
-                    "`meta` must be the first item of #[flecs(...)] when present (found at position {m})",
+                ordering_error = Some((
+                    format!(
+                        "`meta` must be the first item of #[flecs(...)] when present (found at position {m})",
+                    ),
+                    m_span,
                 ));
             }
         }
         (None, None) => {}
     }
 
-    if let Some(msg) = ordering_error {
-        let lit = LitStr::new(&msg, Span::call_site());
-        out.extend(quote! { compile_error!(#lit); });
+    if let Some((msg, span)) = ordering_error {
+        out.extend(syn::Error::new(span, msg).to_compile_error());
     }
 
     // If meta was requested, ensure we invoke it during registration.

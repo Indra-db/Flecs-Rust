@@ -23,6 +23,23 @@
 //! This expands to:
 //! - `extern "C" fn my_callback() { ... }` on WASM targets
 //! - `extern "C-unwind" fn my_callback() { ... }` on other targets
+//!
+//! # Panic behavior divergence between targets
+//!
+//! The two ABIs give panics inside the wrapped function different behavior:
+//!
+//! - On non-WASM targets, `extern "C-unwind"` lets a panic unwind out of the
+//!   callback and across the flecs C frames (which are built with unwind
+//!   tables), so it behaves like a regular Rust panic and can be caught with
+//!   `std::panic::catch_unwind`.
+//! - On WASM targets, unwinding out of a plain `extern "C"` function is
+//!   defined by Rust to abort the process immediately. The same panic (e.g. a
+//!   lifecycle hook panicking because a component type is missing `Clone` or
+//!   `Default`, or a panicking user callback in a system/observer/query) hard
+//!   aborts the whole WASM instance with no opportunity to recover.
+//!
+//! Code that relies on recovering from panics raised inside flecs callbacks
+//! must account for this difference when targeting WASM.
 
 use proc_macro2::TokenStream;
 use quote::quote;
