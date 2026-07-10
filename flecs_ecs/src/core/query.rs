@@ -509,7 +509,7 @@ where
         f.debug_struct("Query")
             .field("entity", &self.entity().id())
             .field("term_count", &self.term_count())
-            .field("expr", &QueryAPI::to_string(self))
+            .field("expr", &query_expr_string(IterOperations::query_ptr(self)))
             .finish()
     }
 }

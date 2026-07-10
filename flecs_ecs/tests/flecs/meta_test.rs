@@ -2081,3 +2081,29 @@ void Meta_script_to_std_vector_std_string(void) {
     test_str(v.at(1).c_str(), "World");
 }
 */
+
+#[test]
+fn meta_opaque_is_not_sync() {
+    trait AmbiguousIfImpl<A> {
+        fn some_item() {}
+    }
+    impl<T: ?Sized> AmbiguousIfImpl<()> for T {}
+    #[allow(dead_code)]
+    struct InvalidSync;
+    impl<T: ?Sized + Sync> AmbiguousIfImpl<InvalidSync> for T {}
+
+    let _ = <Opaque<'static, u32> as AmbiguousIfImpl<_>>::some_item;
+}
+
+#[test]
+fn meta_opaque_send_follows_component_type() {
+    trait AmbiguousIfImpl<A> {
+        fn some_item() {}
+    }
+    impl<T: ?Sized> AmbiguousIfImpl<()> for T {}
+    #[allow(dead_code)]
+    struct InvalidSend;
+    impl<T: ?Sized + Send> AmbiguousIfImpl<InvalidSend> for T {}
+
+    let _ = <Opaque<'static, std::rc::Rc<u32>> as AmbiguousIfImpl<_>>::some_item;
+}

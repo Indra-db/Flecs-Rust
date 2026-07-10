@@ -618,3 +618,64 @@ fn meta_ser_deser_option() {
         assert_eq!(json, "{\"0\":{\"Some\":42}}");
     }
 }
+
+#[test]
+fn meta_ser_deser_option_none_multi_threaded() {
+    let handles: Vec<_> = (0..4)
+        .map(|_| {
+            std::thread::spawn(|| {
+                let world = World::new();
+
+                #[derive(Component, Default, Debug, PartialEq)]
+                struct OptComponent(Option<u32>);
+
+                component!(&world, #[auto] Option<u32>);
+                component!(&world, OptComponent(Option<u32>));
+
+                for _ in 0..100 {
+                    let mut v = OptComponent(Some(7));
+                    let json = "{\"0\":{\"None\":false}}".to_string();
+                    world.from_json::<OptComponent>(&mut v, &json, None);
+                    assert_eq!(v, OptComponent(None));
+                    let json = world.to_json::<OptComponent>(&v);
+                    assert_eq!(json, "{\"0\":{\"None\":false}}");
+                }
+            })
+        })
+        .collect();
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+
+#[test]
+fn meta_macro_numeric_field_indices_for_large_tuple_struct() {
+    let world = World::new();
+
+    #[derive(Component, Default)]
+    struct Big(u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8);
+
+    component!(
+        &world,
+        Big {
+            0: u8,
+            1: u8,
+            2: u8,
+            3: u8,
+            4: u8,
+            5: u8,
+            6: u8,
+            7: u8,
+            8: u8,
+            9: u8,
+            10: u8,
+            11: u8,
+            12: u8
+        }
+    );
+
+    let v = Big(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+    let json = world.to_json::<Big>(&v);
+    assert!(json.contains("\"12\":13"), "json was: {json}");
+}

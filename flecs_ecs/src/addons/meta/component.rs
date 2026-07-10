@@ -9,7 +9,7 @@ impl<'a, T: 'static> Component<'a, T> {
     {
         let mut opaque = func(self.world());
         opaque.desc.entity = self.world().component_id_map::<T>();
-        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
+        drop(opaque);
         self
     }
 
@@ -19,7 +19,7 @@ impl<'a, T: 'static> Component<'a, T> {
     {
         let mut opaque = func(self.world());
         opaque.desc.entity = *id.into();
-        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
+        drop(opaque);
         self
     }
 
@@ -125,6 +125,7 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
             let size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
             let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair, size)
                 as *mut T::UnderlyingTypeOfEnum;
+            assert!(!ptr.is_null(), "failed to ensure enum constant value");
             *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }
