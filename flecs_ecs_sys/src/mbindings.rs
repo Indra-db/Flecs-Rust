@@ -276,7 +276,7 @@ impl Default for ecs_get_ptr_t {
     fn default() -> Self {
         ecs_get_ptr_t {
             ptr: core::ptr::null_mut(),
-            ..Default::default()
+            lock_target: ecs_lock_target_t::default(),
         }
     }
 }

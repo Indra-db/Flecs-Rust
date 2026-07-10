@@ -43,10 +43,14 @@ mod query_builder_test;
 mod query_rust_test;
 mod query_test;
 mod refs_test;
+#[cfg(feature = "flecs_query_rust_traits")]
+mod rust_trait_test;
 #[cfg(feature = "flecs_safety_locks")]
 mod safety;
 mod singleton_test;
 mod soundness_test;
+#[cfg(feature = "flecs_safety_locks")]
+mod sys_bindings_test;
 mod system_builder_test;
 mod system_test;
 mod table_test;

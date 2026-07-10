@@ -96,7 +96,7 @@
 //!             let e = it.get_entity(i).unwrap();
 //!             let id = it.id(0);
 //!             // 6. Cast to trait object and use it
-//!             let shape = ShapesTrait::cast(e, id);
+//!             let shape = unsafe { ShapesTrait::cast(e, id) };
 //!             let calc = shape.calculate();
 //!             println!("{} - calc: {}", e.name(), calc);
 //!         }
@@ -161,6 +161,13 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             vtable: usize,
         }
 
+        const _: () = assert!(
+            core::mem::size_of::<core::ptr::NonNull<dyn #name>>()
+                == core::mem::size_of::<(usize, usize)>(),
+            "trait-object fat pointers are expected to be two pointer-sized words (data, vtable); \
+             this rustc uses a different representation, which breaks vtable extraction"
+        );
+
         impl flecs_ecs::core::component_registration::RustTrait for #struct_name {}
 
         impl #struct_name {
@@ -219,7 +226,8 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
                 // This gives us access to the vtable without needing an actual instance
                 let trait_obj_ptr = std::ptr::NonNull::<T>::dangling() as std::ptr::NonNull<dyn #name>;
 
-                // Extract the vtable from the fat pointer (data_ptr, vtable)
+                // SAFETY: the const assertion generated alongside this component guarantees
+                // `NonNull<dyn Trait>` is two pointer-sized words (data, vtable).
                 let (_, vtable): (usize, usize) = unsafe { core::mem::transmute(trait_obj_ptr) };
 
                 // Set up the inheritance relationship: T is_a TraitComponent
@@ -247,23 +255,31 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             ///
             /// An immutable reference to the trait object.
             ///
+            /// # Panics
+            ///
+            /// Panics if the entity does not have the component indicated by `derived_id`.
+            ///
             /// # Safety
             ///
-            /// This method uses unsafe operations to reconstruct the trait object.
-            /// It is safe as long as:
-            /// - The entity actually has the component indicated by `derived_id`
-            /// - The vtable was registered correctly for the component's type
-            /// - The component data is valid for the lifetime `'a`
+            /// The caller must guarantee that:
+            /// - The vtable for the component's concrete type was registered via `register_vtable::<T>()`
+            /// - `derived_id` identifies that same concrete component type
+            /// - The component data is valid and not mutated for the lifetime `'a`
             ///
             /// # Example
             ///
             /// ```ignore
-            /// let shape = ShapesTrait::cast(entity, component_id);
+            /// let shape = unsafe { ShapesTrait::cast(entity, component_id) };
             /// let result = shape.calculate();
             /// ```
-            pub fn cast<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
+            pub unsafe fn cast<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a dyn #name {
                 // Get the raw pointer to the component data
-                let data_ptr = entity.get_untyped(derived_id) as usize;
+                let data_ptr = entity.get_untyped(derived_id);
+                assert!(
+                    !data_ptr.is_null(),
+                    "entity does not have the component identified by `derived_id`"
+                );
+                let data_ptr = data_ptr as usize;
 
                 // Retrieve the stored vtable from the component's trait data
                 let vtable_ptr = entity
@@ -272,7 +288,9 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
                     .cloned::<&(Self, Self)>()
                     .vtable;
 
-                // Reconstruct the trait object from the data pointer and vtable
+                // SAFETY: `data_ptr` is non-null and, per the caller's contract, points to a live
+                // component whose concrete type registered `vtable_ptr` via `register_vtable`.
+                // The generated const assertion guarantees the (data, vtable) fat-pointer layout.
                 unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
             }
 
@@ -290,6 +308,10 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             /// # Returns
             ///
             /// A mutable reference to the trait object.
+            ///
+            /// # Panics
+            ///
+            /// Panics if the entity does not have the component indicated by `derived_id`.
             ///
             /// # Safety
             ///
@@ -313,7 +335,12 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
             /// ```
             pub unsafe fn cast_mut<'a>(entity: flecs_ecs::core::EntityView<'a>, derived_id: flecs_ecs::core::IdView) -> &'a mut dyn #name {
                 // Get the raw mutable pointer to the component data
-                let data_ptr = entity.get_untyped_mut(derived_id) as usize;
+                let data_ptr = entity.get_untyped_mut(derived_id);
+                assert!(
+                    !data_ptr.is_null(),
+                    "entity does not have the component identified by `derived_id`"
+                );
+                let data_ptr = data_ptr as usize;
 
                 // Retrieve the stored vtable from the component's trait data
                 let vtable_ptr = entity
@@ -322,7 +349,10 @@ pub(crate) fn expand_ecs_rust_trait(name: Ident) -> TokenStream {
                     .cloned::<&(Self, Self)>()
                     .vtable;
 
-                // Reconstruct the mutable trait object from the data pointer and vtable
+                // SAFETY: `data_ptr` is non-null and, per the caller's contract, points to a live,
+                // uniquely-borrowed component whose concrete type registered `vtable_ptr` via
+                // `register_vtable`. The generated const assertion guarantees the (data, vtable)
+                // fat-pointer layout.
                 unsafe { core::mem::transmute((data_ptr, vtable_ptr)) }
             }
         }

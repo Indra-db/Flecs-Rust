@@ -272,7 +272,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///             let e = it.get_entity(i).unwrap();
 ///             let id = it.id(0);
 ///             // 6. Cast to trait object and use it
-///             let shape = ShapesTrait::cast(e, id);
+///             let shape = unsafe { ShapesTrait::cast(e, id) };
 ///             let calc = shape.calculate();
 ///             println!("{} - calc: {}", e.name(), calc);
 ///         }
