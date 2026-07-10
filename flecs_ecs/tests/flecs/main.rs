@@ -18,6 +18,7 @@ mod entity_test;
 mod enum_test;
 mod eq_test;
 mod event_test;
+mod field_safety_rust_test;
 mod flecs_docs_test;
 mod flecs_ids;
 mod implicit_components_test;

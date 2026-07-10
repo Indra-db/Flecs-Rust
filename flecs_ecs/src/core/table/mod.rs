@@ -77,7 +77,7 @@
 //!
 //! ## Type-Safe Indexing
 //!
-//! [`FieldIndex`] provides bounds-check-free indexing when iterating:
+//! [`FieldIndex`] provides type-safe indexing when iterating:
 //!
 //! ```rust,no_run
 //! # use flecs_ecs::prelude::*;
@@ -90,9 +90,9 @@
 //!     while it.next() {
 //!         let pos = it.field::<Position>(0);
 //!
-//!         // iter() returns FieldIndex, which allows unchecked access
+//!         // iter() returns FieldIndex
 //!         for i in it.iter() {
-//!             let position = &pos[i]; // No bounds check
+//!             let position = &pos[i];
 //!         }
 //!     }
 //! });
@@ -111,7 +111,7 @@ pub(crate) use field::{flecs_field, flecs_field_w_size};
 pub use multi_src_get::*;
 
 pub use flags::TableFlags;
-pub use iter::TableIter;
+pub use iter::{FieldError, TableIter};
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 pub(crate) use iter::{table_lock, table_unlock};
 

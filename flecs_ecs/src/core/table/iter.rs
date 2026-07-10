@@ -5,16 +5,40 @@ use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 use crate::core::*;
 use crate::sys;
 
-/// Field fetching errors when using [`TableIter::get()`]
+/// Errors returned by the fallible field accessors [`TableIter::try_field()`] and
+/// [`TableIter::try_field_mut()`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FieldError {
+    /// The field index is out of bounds for the query.
     InvalidIndex,
+    /// The field at the given index does not match the requested component type.
     WrongType,
+    /// The field's column is already locked for conflicting access.
+    /// Only returned when the `flecs_safety_locks` feature is enabled.
     Locked,
+    /// The field has no data for the current table: the field is not set or matched zero entities.
     NoMatchesCount0,
 }
 
+impl core::fmt::Display for FieldError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            FieldError::InvalidIndex => write!(f, "field index is out of bounds for the query"),
+            FieldError::WrongType => {
+                write!(f, "field does not match the requested component type")
+            }
+            FieldError::Locked => {
+                write!(f, "field column is already locked for conflicting access")
+            }
+            FieldError::NoMatchesCount0 => write!(f, "field has no data for the current table"),
+        }
+    }
+}
+
+impl core::error::Error for FieldError {}
+
 pub struct TableIter<'a, const IS_RUN: bool = true, P = ()> {
-    pub iter: &'a mut sys::ecs_iter_t,
+    pub(crate) iter: &'a mut sys::ecs_iter_t,
     pub(crate) count: usize,
     pub(crate) world: WorldRef<'a>,
     #[cfg(feature = "flecs_safety_locks")]
@@ -34,6 +58,16 @@ where
     /// Actual world. Never points to a stage.
     pub fn real_world(&self) -> WorldRef<'a> {
         unsafe { WorldRef::from_ptr(self.iter.real_world) }
+    }
+
+    /// Returns the raw flecs iterator pointer for direct C API interop.
+    ///
+    /// # Safety
+    ///
+    /// Mutating the iterator through this pointer bypasses the safety bookkeeping
+    /// (table locking, field validation) that the safe accessors maintain.
+    pub fn raw_iter_ptr(&mut self) -> *mut sys::ecs_iter_t {
+        self.iter
     }
 
     /// Constructs iterator from C iterator object.
@@ -526,18 +560,53 @@ where
     /// });
     /// ```
     ///
+    /// # Panics
+    ///
+    /// When the `flecs_safety_locks` feature is enabled (default), panics if the field's column
+    /// is already locked for conflicting access (e.g. a [`FieldMut`] for the same field is still
+    /// alive). Use [`TableIter::try_field()`] to handle this case without panicking.
+    ///
     /// # See also
+    /// * [`TableIter::try_field`]
     /// * [`TableIter::get_field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field_mut`]
     /// * [`TableIter::field_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
-    pub fn field<T: ComponentId>(&self, index: i8) -> Field<'a, T::UnderlyingType, true> {
+    pub fn field<T: ComponentId>(&self, index: i8) -> Field<'_, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
         self.world()
             .check_thread_affinity_shared::<T::UnderlyingType>();
         self.field_internal::<T::UnderlyingType, true>(index)
+    }
+
+    /// Fallible variant of [`TableIter::field()`].
+    ///
+    /// Unlike [`TableIter::field()`]/[`TableIter::get_field()`], this never panics on a
+    /// safety-lock conflict when the `flecs_safety_locks` feature is enabled; it returns
+    /// [`FieldError::Locked`] instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Errors
+    ///
+    /// * [`FieldError::NoMatchesCount0`] - the field is not set for the current table or
+    ///   matched zero entities.
+    /// * [`FieldError::Locked`] - the field's column is already locked for conflicting access
+    ///   (only with the `flecs_safety_locks` feature).
+    ///
+    /// # See also
+    /// * [`TableIter::field`]
+    /// * [`TableIter::try_field_mut`]
+    #[inline(always)]
+    pub fn try_field<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Result<Field<'_, T::UnderlyingType, true>, FieldError> {
+        self.field_result::<T>(index)
     }
 
     /// Get immutable access to field data without aliasing checks.
@@ -591,7 +660,7 @@ where
     pub unsafe fn field_unchecked<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Field<'a, T::UnderlyingType, false> {
+    ) -> Field<'_, T::UnderlyingType, false> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
         self.field_internal::<T::UnderlyingType, false>(index)
@@ -641,8 +710,15 @@ where
     /// });
     /// ```
     ///
+    /// # Panics
+    ///
+    /// When the `flecs_safety_locks` feature is enabled (default), panics if the field's column
+    /// is already locked for conflicting access (e.g. a [`FieldMut`] for the same field is still
+    /// alive). Use [`TableIter::try_field()`] to handle this case without panicking.
+    ///
     /// # See also
     /// * [`TableIter::field`]
+    /// * [`TableIter::try_field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field_mut`]
     /// * [`TableIter::get_field_unchecked`] - Unsafe variant without aliasing checks
@@ -650,7 +726,7 @@ where
     pub fn get_field<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Option<Field<'a, T::UnderlyingType, true>> {
+    ) -> Option<Field<'_, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
         self.world()
@@ -719,7 +795,7 @@ where
     pub unsafe fn get_field_unchecked<T: ComponentId>(
         &self,
         index: i8,
-    ) -> Option<Field<'a, T::UnderlyingType, false>> {
+    ) -> Option<Field<'_, T::UnderlyingType, false>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, true, true, false>(index);
         self.get_field_internal::<T::UnderlyingType, false>(index)
@@ -760,18 +836,53 @@ where
     /// });
     /// ```
     ///
+    /// # Panics
+    ///
+    /// When the `flecs_safety_locks` feature is enabled (default), panics if the field's column
+    /// is already locked (e.g. another [`Field`] or [`FieldMut`] for the same field is still
+    /// alive). Use [`TableIter::try_field_mut()`] to handle this case without panicking.
+    ///
     /// # See also
     /// * [`TableIter::field`]
+    /// * [`TableIter::try_field_mut`]
     /// * [`TableIter::get_field`]
     /// * [`TableIter::get_field_mut`]
     /// * [`TableIter::field_mut_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
-    pub fn field_mut<T: ComponentId>(&'a self, index: i8) -> FieldMut<'a, T::UnderlyingType, true> {
+    pub fn field_mut<T: ComponentId>(&self, index: i8) -> FieldMut<'_, T::UnderlyingType, true> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
         self.world()
             .check_thread_affinity_exclusive::<T::UnderlyingType>();
         self.field_internal_mut::<T::UnderlyingType, true>(index)
+    }
+
+    /// Fallible variant of [`TableIter::field_mut()`].
+    ///
+    /// Unlike [`TableIter::field_mut()`]/[`TableIter::get_field_mut()`], this never panics on a
+    /// safety-lock conflict when the `flecs_safety_locks` feature is enabled; it returns
+    /// [`FieldError::Locked`] instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The field index.
+    ///
+    /// # Errors
+    ///
+    /// * [`FieldError::NoMatchesCount0`] - the field is not set for the current table or
+    ///   matched zero entities.
+    /// * [`FieldError::Locked`] - the field's column is already locked
+    ///   (only with the `flecs_safety_locks` feature).
+    ///
+    /// # See also
+    /// * [`TableIter::field_mut`]
+    /// * [`TableIter::try_field`]
+    #[inline(always)]
+    pub fn try_field_mut<T: ComponentId>(
+        &self,
+        index: i8,
+    ) -> Result<FieldMut<'_, T::UnderlyingType, true>, FieldError> {
+        self.field_result_mut::<T>(index)
     }
 
     /// Get mutable access to field data without aliasing checks.
@@ -828,9 +939,9 @@ where
     /// * [`TableIter::get_field_mut_unchecked`]
     #[inline(always)]
     pub unsafe fn field_mut_unchecked<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
-    ) -> FieldMut<'a, T::UnderlyingType, false> {
+    ) -> FieldMut<'_, T::UnderlyingType, false> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
         self.field_internal_mut::<T::UnderlyingType, false>(index)
@@ -880,16 +991,23 @@ where
     /// });
     /// ```
     ///
+    /// # Panics
+    ///
+    /// When the `flecs_safety_locks` feature is enabled (default), panics if the field's column
+    /// is already locked (e.g. another [`Field`] or [`FieldMut`] for the same field is still
+    /// alive). Use [`TableIter::try_field_mut()`] to handle this case without panicking.
+    ///
     /// # See also
     /// * [`TableIter::field`]
     /// * [`TableIter::field_mut`]
     /// * [`TableIter::get_field`]
+    /// * [`TableIter::try_field_mut`]
     /// * [`TableIter::get_field_mut_unchecked`] - Unsafe variant without aliasing checks
     #[inline(always)]
     pub fn get_field_mut<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
-    ) -> Option<FieldMut<'a, T::UnderlyingType, true>> {
+    ) -> Option<FieldMut<'_, T::UnderlyingType, true>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
         self.world()
@@ -959,9 +1077,9 @@ where
     /// * [`TableIter::field_mut_unchecked`]
     #[inline(always)]
     pub unsafe fn get_field_mut_unchecked<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
-    ) -> Option<FieldMut<'a, T::UnderlyingType, false>> {
+    ) -> Option<FieldMut<'_, T::UnderlyingType, false>> {
         #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
         self.field_safety_checks::<T, false, true, false>(index);
         self.get_field_internal_mut::<T::UnderlyingType, false>(index)
@@ -1091,10 +1209,10 @@ where
     /// - [`field()`](Self::field) for dense component access
     /// - [`FieldAt`] for the returned accessor type
     pub fn field_at<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: impl Into<usize>,
-    ) -> FieldAt<'a, T::UnderlyingType> {
+    ) -> FieldAt<'_, T::UnderlyingType> {
         self.field_safety_checks::<T, true, true, true>(index);
         self.world()
             .check_thread_affinity_shared::<T::UnderlyingType>();
@@ -1107,8 +1225,23 @@ where
             // Sparse component: use per-row C accessor
             self.field_at_sparse_internal::<T>(index, row)
         } else {
-            // Dense component: index into the contiguous array (no sparse lock needed)
-            FieldAt::<T::UnderlyingType>::new_dense(self.field_at_dense_internal::<T>(index, row))
+            let component = self.field_at_dense_internal::<T>(index, row);
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                FieldAt::<T::UnderlyingType>::new_dense(component)
+            }
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                FieldAt::<T::UnderlyingType>::new_dense(
+                    component,
+                    &self.world,
+                    // SAFETY: the field is set (asserted in field_at_dense_internal), so the
+                    // table record and its table pointer are valid.
+                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
+                    unsafe { (*tr).column },
+                )
+            }
         }
     }
 
@@ -1124,10 +1257,10 @@ where
     ///
     /// An option containing a reference to the field data
     pub fn get_field_at<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: impl Into<usize>,
-    ) -> Option<FieldAt<'a, T::UnderlyingType>> {
+    ) -> Option<FieldAt<'_, T::UnderlyingType>> {
         self.field_safety_checks::<T, true, true, true>(index);
         self.world()
             .check_thread_affinity_shared::<T::UnderlyingType>();
@@ -1145,9 +1278,24 @@ where
             if array.is_null() || row >= count {
                 return None;
             }
-            Some(FieldAt::<T::UnderlyingType>::new_dense(unsafe {
-                &*array.add(row)
-            }))
+            // SAFETY: array is non-null and row < count, checked above.
+            let component = unsafe { &*array.add(row) };
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                Some(FieldAt::<T::UnderlyingType>::new_dense(component))
+            }
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                Some(FieldAt::<T::UnderlyingType>::new_dense(
+                    component,
+                    &self.world,
+                    // SAFETY: the field is set (array is non-null), so the table record and
+                    // its table pointer are valid.
+                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
+                    unsafe { (*tr).column },
+                ))
+            }
         }
     }
 
@@ -1206,10 +1354,10 @@ where
     /// - [`FieldAtMut`] for the returned accessor type
     #[allow(clippy::mut_from_ref)]
     pub fn field_at_mut<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: impl Into<usize>,
-    ) -> FieldAtMut<'a, T::UnderlyingType> {
+    ) -> FieldAtMut<'_, T::UnderlyingType> {
         self.field_safety_checks::<T, false, true, true>(index);
         self.world()
             .check_thread_affinity_exclusive::<T::UnderlyingType>();
@@ -1223,10 +1371,23 @@ where
             // Sparse component: use per-row C accessor
             self.field_at_sparse_internal_mut::<T>(index, row)
         } else {
-            // Dense component: index into the contiguous array (no sparse lock needed)
-            FieldAtMut::<T::UnderlyingType>::new_dense(
-                self.field_at_dense_internal_mut::<T>(index, row),
-            )
+            let component = self.field_at_dense_internal_mut::<T>(index, row);
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                FieldAtMut::<T::UnderlyingType>::new_dense(component)
+            }
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                FieldAtMut::<T::UnderlyingType>::new_dense(
+                    component,
+                    &self.world,
+                    // SAFETY: the field is set (asserted in field_at_dense_internal_mut), so
+                    // the table record and its table pointer are valid.
+                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
+                    unsafe { (*tr).column },
+                )
+            }
         }
     }
 
@@ -1234,10 +1395,10 @@ where
     /// This function may be used to access shared fields when row is set to 0.
     #[allow(clippy::mut_from_ref)]
     pub fn get_field_at_mut<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: impl Into<usize>,
-    ) -> Option<FieldAtMut<'a, T::UnderlyingType>> {
+    ) -> Option<FieldAtMut<'_, T::UnderlyingType>> {
         self.field_safety_checks::<T, false, true, true>(index);
         self.world()
             .check_thread_affinity_exclusive::<T::UnderlyingType>();
@@ -1256,14 +1417,33 @@ where
             if array.is_null() || row >= count {
                 return None;
             }
-            Some(FieldAtMut::<T::UnderlyingType>::new_dense(unsafe {
-                &mut *array.add(row)
-            }))
+            // SAFETY: array is non-null and row < count, checked above.
+            let component = unsafe { &mut *array.add(row) };
+            #[cfg(not(feature = "flecs_safety_locks"))]
+            {
+                Some(FieldAtMut::<T::UnderlyingType>::new_dense(component))
+            }
+            #[cfg(feature = "flecs_safety_locks")]
+            {
+                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                Some(FieldAtMut::<T::UnderlyingType>::new_dense(
+                    component,
+                    &self.world,
+                    // SAFETY: the field is set (array is non-null), so the table record and
+                    // its table pointer are valid.
+                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
+                    unsafe { (*tr).column },
+                ))
+            }
         }
     }
 
     /// Get the untyped field data for the specified row
     /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row` is out of bounds for the field.
     pub fn field_at_untyped(&self, index: i8, row: usize) -> *const c_void {
         self.field_safety_checks::<(), true, false, false>(index);
 
@@ -1279,12 +1459,22 @@ where
                 return core::ptr::null();
             }
             let field = field.unwrap();
+            assert!(
+                row < field.count,
+                "field_at_untyped: row {row} out of bounds (count={})",
+                field.count
+            );
+            // SAFETY: row < count is checked above, so the offset stays within the column.
             unsafe { field.array.add(row * field.size) }
         }
     }
 
     /// Get the mutable untyped field data for the specified row
     /// This function may be used to access shared fields when row is set to 0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row` is out of bounds for the field.
     pub fn field_at_untyped_mut(&self, index: i8, row: usize) -> *mut c_void {
         self.field_safety_checks::<(), false, false, false>(index);
 
@@ -1301,6 +1491,12 @@ where
                 return core::ptr::null_mut();
             }
             let field = field.unwrap();
+            assert!(
+                row < field.count,
+                "field_at_untyped_mut: row {row} out of bounds (count={})",
+                field.count
+            );
+            // SAFETY: row < count is checked above, so the offset stays within the column.
             unsafe { field.array.add(row * field.size) }
         }
     }
@@ -1359,7 +1555,13 @@ where
     }
 
     /// Get readonly access to entity ids of the sources.
+    ///
+    /// Returns an empty slice when the iterator has no sources array.
     pub fn sources(&self) -> &[Entity] {
+        if self.iter.sources.is_null() {
+            return &[];
+        }
+        // SAFETY: sources is non-null (checked above) and contains field_count entries.
         unsafe {
             core::slice::from_raw_parts(
                 self.iter.sources as *const Entity,
@@ -1372,8 +1574,12 @@ where
     ///
     /// # Returns
     ///
-    /// The entity ids.
+    /// The entity ids. Returns an empty slice when the iterator has no entities array.
     pub fn entities(&self) -> &[Entity] {
+        if self.iter.entities.is_null() {
+            return &[];
+        }
+        // SAFETY: entities is non-null (checked above) and contains count entries.
         unsafe { core::slice::from_raw_parts(self.iter.entities as *const Entity, self.count) }
     }
 
@@ -1863,10 +2069,10 @@ where
     }
 
     fn field_at_dense_internal<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> &'a T::UnderlyingType {
+    ) -> &T::UnderlyingType {
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
         assert!(
             !array.is_null(),
@@ -1877,16 +2083,16 @@ where
             "field_at_dense: row {row} out of bounds (count={count})"
         );
         // SAFETY: `array` is non-null (asserted above), `row < count` (asserted above).
-        // The pointer is valid for reads for the lifetime 'a which is bound to &'a self.
+        // The pointer is valid for reads for the duration of the borrow of `self`.
         unsafe { &*array.add(row) }
     }
 
     #[allow(clippy::mut_from_ref)]
     fn field_at_dense_internal_mut<T: ComponentId>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> &'a mut T::UnderlyingType {
+    ) -> &mut T::UnderlyingType {
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
         assert!(
             !array.is_null(),
@@ -1902,10 +2108,10 @@ where
     }
 
     pub(crate) fn field_at_sparse_internal<T>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> FieldAt<'a, T::UnderlyingType>
+    ) -> FieldAt<'_, T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -1947,10 +2153,10 @@ where
     }
 
     pub(crate) fn get_field_at_sparse_internal<T>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> Option<FieldAt<'a, T::UnderlyingType>>
+    ) -> Option<FieldAt<'_, T::UnderlyingType>>
     where
         T: ComponentId,
     {
@@ -1989,10 +2195,10 @@ where
     }
 
     pub(crate) fn field_at_sparse_internal_mut<T>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> FieldAtMut<'a, T::UnderlyingType>
+    ) -> FieldAtMut<'_, T::UnderlyingType>
     where
         T: ComponentId,
     {
@@ -2035,10 +2241,10 @@ where
     }
 
     pub(crate) fn get_field_at_sparse_internal_mut<T>(
-        &'a self,
+        &self,
         index: i8,
         row: usize,
-    ) -> Option<FieldAtMut<'a, T::UnderlyingType>>
+    ) -> Option<FieldAtMut<'_, T::UnderlyingType>>
     where
         T: ComponentId,
     {

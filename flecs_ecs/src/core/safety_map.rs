@@ -671,18 +671,23 @@ pub(crate) fn get_table_column_lock_read_begin<const MULTITHREADED: bool>(
 }
 
 #[inline(always)]
-/// returning true, means write is already set
+/// Returns `true` when a write is already set, in which case no read lock is held:
+/// the counter increment performed by the failed attempt is rolled back.
 pub(crate) fn table_column_lock_read_begin<const MULTITHREADED: bool>(
     _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
     _stage_id: i32,
 ) -> bool {
-    if MULTITHREADED {
+    let locked = if MULTITHREADED {
         unsafe { sys::flecs_table_column_lock_read_begin_multithreaded(table, column, _stage_id) }
     } else {
         unsafe { sys::flecs_table_column_lock_read_begin(table, column) }
+    };
+    if locked {
+        table_column_lock_read_end::<MULTITHREADED>(table, column, _stage_id);
     }
+    locked
 }
 
 #[inline(always)]
@@ -703,18 +708,23 @@ pub(crate) fn table_column_lock_read_end<const MULTITHREADED: bool>(
 }
 
 #[inline(always)]
-/// returning true means a read or write is already set
+/// Returns `true` when a read or write is already set, in which case no write lock is held:
+/// the counter decrement performed by the failed attempt is rolled back.
 pub(crate) fn table_column_lock_write_begin<const MULTITHREADED: bool>(
     _world: &WorldRef,
     table: *mut sys::ecs_table_t,
     column: i16,
     _stage_id: i32,
 ) -> bool {
-    if MULTITHREADED {
+    let locked = if MULTITHREADED {
         unsafe { sys::flecs_table_column_lock_write_begin_multithreaded(table, column, _stage_id) }
     } else {
         unsafe { sys::flecs_table_column_lock_write_begin(table, column) }
+    };
+    if locked {
+        table_column_lock_write_end::<MULTITHREADED>(table, column, _stage_id);
     }
+    locked
 }
 
 pub(crate) fn get_table_column_lock_write_begin<const MULTITHREADED: bool>(
