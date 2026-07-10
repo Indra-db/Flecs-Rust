@@ -63,6 +63,41 @@ impl<'a> TermRef<'a> {
     }
 }
 
+/// Formats the initialized terms of a query descriptor for `Debug` output.
+pub(crate) fn debug_term_list(terms: &[sys::ecs_term_t]) -> alloc::vec::Vec<alloc::string::String> {
+    let mut term_list = alloc::vec::Vec::new();
+    for t in terms.iter() {
+        if t.id == 0 && t.first.id == 0 && t.first.name.is_null() {
+            break;
+        }
+        let first_name = if t.first.name.is_null() {
+            None
+        } else {
+            // SAFETY: `first.name` is non-null and set by the builder to a NUL-terminated string.
+            Some(unsafe {
+                core::ffi::CStr::from_ptr(t.first.name)
+                    .to_str()
+                    .unwrap_or("?")
+            })
+        };
+        let src_name = if t.src.name.is_null() {
+            None
+        } else {
+            // SAFETY: `src.name` is non-null and set by the builder to a NUL-terminated string.
+            Some(unsafe {
+                core::ffi::CStr::from_ptr(t.src.name)
+                    .to_str()
+                    .unwrap_or("?")
+            })
+        };
+        term_list.push(format!(
+            "{{ id={:#x}, first.id={:#x}, first.name={:?}, src.id={:#x}, src.name={:?}, inout={}, oper={} }}",
+            t.id, t.first.id, first_name, t.src.id, src_name, t.inout, t.oper
+        ));
+    }
+    term_list
+}
+
 #[doc(hidden)]
 pub mod internals {
     use crate::core::*;
@@ -322,7 +357,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `name` - The name to set.
-    fn name(&mut self, name: &'a str) -> &mut Self {
+    fn name(&mut self, name: &str) -> &mut Self {
         let name = core::mem::ManuallyDrop::new(format!("{name}\0"));
         let term_ref = self.term_ref_mut();
         term_ref.name = name.as_ptr() as *mut _;
@@ -336,7 +371,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `var_name` - The name of the variable.
-    fn set_var(&mut self, var_name: &'a str) -> &mut Self {
+    fn set_var(&mut self, var_name: &str) -> &mut Self {
         check_term_access_validity(self);
 
         let var_name = core::mem::ManuallyDrop::new(format!("{var_name}\0"));
@@ -393,9 +428,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// # Arguments
     ///
     /// * `id` - The id to set.
-    fn set_src<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    fn set_src<'s, T: SingleAccessArg<'s>>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
         let access = Access::from_access_arg(id, self.world());
 
@@ -423,9 +458,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * initialize with id or
     /// * initialize it with name. If name starts with a $
     ///   the name is interpreted as a variable.
-    fn set_first<Q: SingleAccessArg>(&mut self, id: Q) -> &mut Self
+    fn set_first<'s, Q: SingleAccessArg<'s>>(&mut self, id: Q) -> &mut Self
     where
-        Access: FromAccessArg<Q>,
+        Access<'s>: FromAccessArg<Q>,
     {
         check_term_access_validity(self);
         let access = Access::from_access_arg(id, self.world());
@@ -459,9 +494,9 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// * initialize with id or
     /// * initialize it with name. If name starts with a $
     ///   the name is interpreted as a variable.
-    fn set_second<T: SingleAccessArg>(&mut self, id: T) -> &mut Self
+    fn set_second<'s, T: SingleAccessArg<'s>>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
         check_term_access_validity(self);
         let access = Access::from_access_arg(id, self.world());

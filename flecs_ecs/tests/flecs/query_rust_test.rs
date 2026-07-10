@@ -26,6 +26,46 @@ fn query_cached_destruction_lingering_references_panic() {
 }
 
 #[test]
+fn query_cached_destruction_sole_owner_no_use_after_free() {
+    let world = World::new();
+
+    for _ in 0..64 {
+        let query = world.query::<()>().with(&Tag::id()).set_cached().build();
+        query.destruct();
+    }
+
+    let e = world.entity().add(Tag::id());
+    let e_id = e.id();
+    let query = world.query::<()>().with(&Tag::id()).set_cached().build();
+    let count = core::cell::Cell::new(0);
+    query.each_entity(|entity, _| {
+        assert_eq!(entity.id(), e_id);
+        count.set(count.get() + 1);
+    });
+    assert_eq!(count.get(), 1);
+    query.destruct();
+}
+
+#[test]
+fn query_with_dynamically_built_name_string() {
+    let world = World::new();
+
+    let tag = world.entity_named("DynTag");
+    let e = world.entity().add(tag);
+    let e_id = e.id();
+
+    let name = String::from("Dyn") + "Tag";
+    let query = world.query::<()>().with(name.as_str()).build();
+
+    let count = core::cell::Cell::new(0);
+    query.each_entity(|entity, _| {
+        assert_eq!(entity.id(), e_id);
+        count.set(count.get() + 1);
+    });
+    assert_eq!(count.get(), 1);
+}
+
+#[test]
 fn query_iter_stage() {
     #[derive(Component, Debug)]
     struct Comp(usize);

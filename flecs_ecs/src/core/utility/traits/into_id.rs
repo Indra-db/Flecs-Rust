@@ -92,29 +92,29 @@ pub enum AccessSingleTarget {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AccessTarget {
+pub enum AccessTarget<'s> {
     /// A single `Entity`
     Entity(Entity),
     /// A single name
-    Name(&'static str),
+    Name(&'s str),
     /// Two Entities
     Pair(Entity, Entity),
     /// Two names
-    PairName(&'static str, &'static str),
+    PairName(&'s str, &'s str),
     /// Name + Entity
-    PairNameEntity(&'static str, Entity),
+    PairNameEntity(&'s str, Entity),
     /// Entity + Name
-    PairEntityName(Entity, &'static str),
+    PairEntityName(Entity, &'s str),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Access {
+pub struct Access<'s> {
     pub mode: AccessMode,
-    pub target: AccessTarget,
+    pub target: AccessTarget<'s>,
 }
 
-impl From<Access> for Id {
-    fn from(access: Access) -> Id {
+impl From<Access<'_>> for Id {
+    fn from(access: Access<'_>) -> Id {
         match access.target {
             AccessTarget::Entity(entity) => entity.into(),
             AccessTarget::Pair(first, second) => Id(ecs_pair(*first, *second)),
@@ -123,38 +123,38 @@ impl From<Access> for Id {
     }
 }
 
-pub trait FromAccessArg<T> {
-    fn from_access_arg<'a>(value: T, world: impl WorldProvider<'a>) -> Access;
+pub trait FromAccessArg<T>: Sized {
+    fn from_access_arg<'a>(value: T, world: impl WorldProvider<'a>) -> Self;
 }
 
 /// “Only single‐target inputs” (Entity, &str, `Id<T>`, …)
-pub trait SingleAccessArg: Sized
+pub trait SingleAccessArg<'s>: Sized
 where
-    Access: FromAccessArg<Self>,
+    Access<'s>: FromAccessArg<Self>,
 {
 }
 
 /// for single or pair inputs
-pub trait AccessArg: Sized
+pub trait AccessArg<'s>: Sized
 where
-    Access: FromAccessArg<Self>,
+    Access<'s>: FromAccessArg<Self>,
 {
 }
 
-impl SingleAccessArg for &'static str {}
-impl<T: IntoEntity> SingleAccessArg for T where Access: FromAccessArg<T> {}
+impl<'s> SingleAccessArg<'s> for &'s str {}
+impl<'s, T: IntoEntity> SingleAccessArg<'s> for T where Access<'s>: FromAccessArg<T> {}
 
-impl AccessArg for &'static str {}
-impl<T: IntoId> AccessArg for T where Access: FromAccessArg<T> {}
-impl AccessArg for (&'static str, &'static str) {}
-impl<T: IntoId> AccessArg for (&'static str, T) {}
-impl<T: IntoId> AccessArg for (T, &'static str) {}
+impl<'s> AccessArg<'s> for &'s str {}
+impl<'s, T: IntoId> AccessArg<'s> for T where Access<'s>: FromAccessArg<T> {}
+impl<'s> AccessArg<'s> for (&'s str, &'s str) {}
+impl<'s, T: IntoId> AccessArg<'s> for (&'s str, T) {}
+impl<'s, T: IntoId> AccessArg<'s> for (T, &'s str) {}
 
-impl<T: ComponentId> FromAccessArg<&crate::core::utility::id::Id<T>> for Access {
+impl<'s, T: ComponentId> FromAccessArg<&crate::core::utility::id::Id<T>> for Access<'s> {
     fn from_access_arg<'a>(
         id: &crate::core::utility::id::Id<T>,
         world: impl WorldProvider<'a>,
-    ) -> Access {
+    ) -> Access<'s> {
         let entity = IntoId::into_id(*id, world);
         Access {
             mode: AccessMode::Read,
@@ -163,11 +163,11 @@ impl<T: ComponentId> FromAccessArg<&crate::core::utility::id::Id<T>> for Access 
     }
 }
 
-impl<T: ComponentId> FromAccessArg<&mut crate::core::utility::id::Id<T>> for Access {
+impl<'s, T: ComponentId> FromAccessArg<&mut crate::core::utility::id::Id<T>> for Access<'s> {
     fn from_access_arg<'a>(
         id: &mut crate::core::utility::id::Id<T>,
         world: impl WorldProvider<'a>,
-    ) -> Access {
+    ) -> Access<'s> {
         let entity = IntoId::into_id(*id, world);
         Access {
             mode: AccessMode::ReadWrite,
@@ -176,8 +176,8 @@ impl<T: ComponentId> FromAccessArg<&mut crate::core::utility::id::Id<T>> for Acc
     }
 }
 
-impl FromAccessArg<&'static str> for Access {
-    fn from_access_arg<'a>(name: &'static str, _world: impl WorldProvider<'a>) -> Access {
+impl<'s> FromAccessArg<&'s str> for Access<'s> {
+    fn from_access_arg<'a>(name: &'s str, _world: impl WorldProvider<'a>) -> Access<'s> {
         Access {
             mode: AccessMode::Read,
             target: AccessTarget::Name(name),
@@ -185,11 +185,11 @@ impl FromAccessArg<&'static str> for Access {
     }
 }
 
-impl FromAccessArg<(&'static str, &'static str)> for Access {
+impl<'s> FromAccessArg<(&'s str, &'s str)> for Access<'s> {
     fn from_access_arg<'a>(
-        names: (&'static str, &'static str),
+        names: (&'s str, &'s str),
         _world: impl WorldProvider<'a>,
-    ) -> Access {
+    ) -> Access<'s> {
         Access {
             mode: AccessMode::Read,
             target: AccessTarget::PairName(names.0, names.1),
@@ -197,11 +197,11 @@ impl FromAccessArg<(&'static str, &'static str)> for Access {
     }
 }
 
-impl<T> FromAccessArg<(&'static str, T)> for Access
+impl<'s, T> FromAccessArg<(&'s str, T)> for Access<'s>
 where
     T: IntoId,
 {
-    fn from_access_arg<'a>(names: (&'static str, T), world: impl WorldProvider<'a>) -> Access {
+    fn from_access_arg<'a>(names: (&'s str, T), world: impl WorldProvider<'a>) -> Access<'s> {
         let id = names.1.into_id(world);
         Access {
             mode: AccessMode::Read,
@@ -210,11 +210,11 @@ where
     }
 }
 
-impl<T> FromAccessArg<(T, &'static str)> for Access
+impl<'s, T> FromAccessArg<(T, &'s str)> for Access<'s>
 where
     T: IntoId,
 {
-    fn from_access_arg<'a>(names: (T, &'static str), world: impl WorldProvider<'a>) -> Access {
+    fn from_access_arg<'a>(names: (T, &'s str), world: impl WorldProvider<'a>) -> Access<'s> {
         let id = names.0.into_id(world);
         Access {
             mode: AccessMode::Read,
@@ -223,8 +223,8 @@ where
     }
 }
 
-impl<T: IntoId> FromAccessArg<T> for Access {
-    fn from_access_arg<'a>(id: T, world: impl WorldProvider<'a>) -> Access {
+impl<'s, T: IntoId> FromAccessArg<T> for Access<'s> {
+    fn from_access_arg<'a>(id: T, world: impl WorldProvider<'a>) -> Access<'s> {
         let world = world.world();
         let id = id.into_id(world);
         if T::IS_PAIR {

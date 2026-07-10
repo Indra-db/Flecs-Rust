@@ -87,11 +87,22 @@ impl<'a, T: ComponentId> EventBuilder<'a, T> {
     /// # Arguments
     ///
     /// * `id` - The id of the component to add to the event
+    ///
+    /// # Panics
+    ///
+    /// Panics if more than [`sys::FLECS_EVENT_DESC_MAX`] ids are added.
     pub fn add(&mut self, id: impl IntoId) -> &mut Self {
         let id = *id.into_id(self.world);
         let ids = &mut self.ids;
         let ids_array = &mut self.ids_array;
+        assert!(
+            (ids.count as usize) < ids_array.len(),
+            "EventBuilder can hold at most {} ids",
+            sys::FLECS_EVENT_DESC_MAX
+        );
         ids.array = ids_array.as_mut_ptr();
+        // SAFETY: `ids.count` is bounds-checked against `ids_array.len()` above and
+        // `ids.array` points at `ids_array`.
         unsafe {
             *ids.array.add(ids.count as usize) = id;
         }

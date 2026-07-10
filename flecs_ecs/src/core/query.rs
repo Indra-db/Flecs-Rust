@@ -501,6 +501,19 @@ where
     }
 }
 
+impl<T> core::fmt::Debug for Query<T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Query")
+            .field("entity", &self.entity().id())
+            .field("term_count", &self.term_count())
+            .field("expr", &QueryAPI::to_string(self))
+            .finish()
+    }
+}
+
 impl<T> Drop for Query<T>
 where
     T: QueryTuple,
@@ -514,7 +527,7 @@ where
                 return;
             }
 
-            // fn [`destruct`](crate::core::query::destruct) does not decrease the ref count, because it still calls drop.
+            // fn [`destruct`](crate::core::query::Query::destruct) decreases the ref count itself and forgets `self`, so drop never runs for destructed queries.
             self.world().world_ctx().dec_query_ref_count();
 
             // Only free if query is not associated with entity. Queries are associated with entities
@@ -736,6 +749,10 @@ where
     ///
     /// If the query is used as the parent of subqueries, those subqueries will be
     /// orphaned and must be deinitialized as well.
+    ///
+    /// # Panics
+    ///
+    /// Panics if other `Query` handles (clones/copies) to the same query still exist.
     pub fn destruct(self) {
         ecs_assert!(
             unsafe { (*self.query.as_ptr()).entity } != 0,
@@ -748,10 +765,13 @@ where
             if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
                 world_ctx.set_is_panicking_true();
                 unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
-                panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
-                Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one.");
+                panic!(
+                    "The code base still has lingering references to `Query` objects. This is a bug in the user code. Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one."
+                );
             } else {
+                world_ctx.dec_query_ref_count();
                 unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
+                core::mem::forget(self);
             }
         }
     }
