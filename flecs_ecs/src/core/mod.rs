@@ -32,6 +32,7 @@ pub use builder::*;
 #[doc(hidden)]
 pub use c_types::*;
 pub(crate) use cloned_tuple::*;
+pub use cloned_tuple::ClonedTuple;
 #[doc(hidden)]
 pub use component_registration::*;
 #[doc(inline)]

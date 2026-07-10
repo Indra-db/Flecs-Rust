@@ -606,6 +606,9 @@ macro_rules! impl_iterable {
                 let mut index : usize = 0;
                 let mut any_ref = false;
                 let mut any_row = false;
+                let mut _mut_flags = [false; { tuple_count!($($t),*) }];
+                let mut _row_ids = [0u64; { tuple_count!($($t),*) }];
+                let mut _row_srcs = [0u64; { tuple_count!($($t),*) }];
                 #[cfg(feature = "flecs_safety_locks")]
                 let mut index_immutable : usize = 0;
                 #[cfg(feature = "flecs_safety_locks")]
@@ -636,6 +639,7 @@ macro_rules! impl_iterable {
                         *idx += 1;
                     }
 
+                    _mut_flags[index] = !$t::IS_IMMUTABLE;
                     #[cfg(not(feature = "flecs_term_count_64"))]
                     let val = 1u32 << index;
                     #[cfg(feature = "flecs_term_count_64")]
@@ -647,9 +651,25 @@ macro_rules! impl_iterable {
                         indexes[index] = index as i8;
                         any_ref |= true;
                         any_row |= true;
+                        let row_id = unsafe { *it.ids.add(index) };
+                        let row_src = unsafe { *it.sources.add(index) };
+                        _row_ids[index] = row_id;
+                        _row_srcs[index] = row_src;
+                        let mut _j: usize = 0;
+                        while _j < index {
+                            assert!(
+                                _row_ids[_j] != row_id
+                                    || _row_srcs[_j] != row_src
+                                    || ($t::IS_IMMUTABLE && !_mut_flags[_j]),
+                                "query tuple `{}` has multiple terms resolving to the same sparse component `{}` on the same source, which would alias mutable access",
+                                core::any::type_name::<Self>(),
+                                core::any::type_name::<$t::OnlyPairType>()
+                            );
+                            _j += 1;
+                        }
                         #[cfg(feature = "flecs_safety_locks")]
                         {
-                            tr.component_id = unsafe { *it.ids.add(index) };
+                            tr.component_id = row_id;
                         }
                     } else {
                         components[index] =
@@ -657,6 +677,19 @@ macro_rules! impl_iterable {
                         let is_ref_val = unsafe { *it.sources.add(index ) != 0 };
                         is_ref[index] = is_ref_val;
                         any_ref |= is_ref_val;
+                        let _ptr = components[index];
+                        if !_ptr.is_null() {
+                            let mut _j: usize = 0;
+                            while _j < index {
+                                assert!(
+                                    components[_j] != _ptr || ($t::IS_IMMUTABLE && !_mut_flags[_j]),
+                                    "query tuple `{}` has multiple terms resolving to the same component data for `{}`, which would alias mutable access",
+                                    core::any::type_name::<Self>(),
+                                    core::any::type_name::<$t::OnlyPairType>()
+                                );
+                                _j += 1;
+                            }
+                        }
                     }
                     index += 1;
                 )*
@@ -674,6 +707,7 @@ macro_rules! impl_iterable {
                 #[cfg(feature = "flecs_safety_locks")] table_records: &mut [TableColumnSafety],
             ) {
                 let mut index : usize = 0;
+                let mut _mut_flags = [false; { tuple_count!($($t),*) }];
                 #[cfg(feature = "flecs_safety_locks")]
                 let mut index_immutable : usize = 0;
                 #[cfg(feature = "flecs_safety_locks")]
@@ -685,6 +719,20 @@ macro_rules! impl_iterable {
                 $(
                     components[index] =
                         flecs_field::<$t::OnlyPairType>(it, index as i8) as *mut u8;
+                    _mut_flags[index] = !$t::IS_IMMUTABLE;
+                    let _ptr = components[index];
+                    if !_ptr.is_null() {
+                        let mut _j: usize = 0;
+                        while _j < index {
+                            assert!(
+                                components[_j] != _ptr || ($t::IS_IMMUTABLE && !_mut_flags[_j]),
+                                "query tuple `{}` has multiple terms resolving to the same component data for `{}`, which would alias mutable access",
+                                core::any::type_name::<Self>(),
+                                core::any::type_name::<$t::OnlyPairType>()
+                            );
+                            _j += 1;
+                        }
+                    }
                     #[cfg(feature = "flecs_safety_locks")]
                     {
                         let idx = match ($t::IS_IMMUTABLE, $t::IS_OPTIONAL) {
