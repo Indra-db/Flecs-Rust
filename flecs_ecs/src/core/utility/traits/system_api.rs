@@ -681,7 +681,7 @@ where
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: FnMut(TableIter<true, P>) + 'static,
-        FuncEachIter: FnMut(TableIter<true, P>, FieldIndex, T::TupleType<'_>) + 'static,
+        FuncEachIter: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + 'static,
     {
         let run_func = Box::new(func);
         let run_static_ref = Box::leak(run_func);
@@ -698,7 +698,7 @@ where
         self.set_callback_binding_context_free(Some(Self::free_callback::<FuncEachIter>));
 
         self.set_desc_callback(Some(
-            Self::execute_each_iter::<true, FuncEachIter> as ExternIterFn,
+            Self::execute_each_iter::<false, FuncEachIter> as ExternIterFn,
         ));
 
         self.build()
@@ -986,7 +986,7 @@ where
     ) -> <Self as builder::Builder<'a>>::BuiltType
     where
         Func: Fn(TableIter<true, P>) + Send + Sync + 'static,
-        FuncEachIter: Fn(TableIter<true, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
+        FuncEachIter: Fn(TableIter<false, P>, FieldIndex, T::TupleType<'_>) + Send + Sync + 'static,
         for<'w> T::TupleType<'w>: Send,
     {
         self.set_multi_threaded(true);

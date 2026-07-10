@@ -1518,3 +1518,71 @@ fn filter_does_not_panic() {
         let _ = entity.cloned::<&Foo>();
     });
 }
+
+mod dense_field_at_locks {
+    use super::*;
+
+    #[test]
+    fn filter_dense_read_read() {
+        let world = World::new();
+        world.entity().set(Foo(0));
+        query!(world, Foo).build().run(|mut iter| {
+            while iter.next() {
+                for _ in iter.iter() {
+                    let _x1 = iter.field_at::<Foo>(0, 0usize);
+                    let _x2 = iter.field_at::<Foo>(0, 0usize);
+                }
+            }
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn filter_double_field_at_mut_dense() {
+        let world = World::new();
+        world.entity().set(Foo(0));
+        query!(world, Foo).build().run(|mut iter| {
+            while iter.next() {
+                for _ in iter.iter() {
+                    let _x = iter.field_at_mut::<Foo>(0, 0usize);
+                    let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                }
+            }
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn filter_field_at_read_write_dense() {
+        let world = World::new();
+        world.entity().set(Foo(0));
+        query!(world, Foo).build().run(|mut iter| {
+            while iter.next() {
+                for _ in iter.iter() {
+                    let _x = iter.field_at::<Foo>(0, 0usize);
+                    let _y = iter.field_at_mut::<Foo>(0, 0usize);
+                }
+            }
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn each_iter_field_at_mut_aliases_tuple_dense() {
+        let world = World::new();
+        world.entity().set(Foo(0));
+        query!(world, &mut Foo).build().each_iter(|iter, index, _foo| {
+            let _aliased = iter.field_at_mut::<Foo>(0, index);
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn each_iter_field_mut_aliases_tuple_dense() {
+        let world = World::new();
+        world.entity().set(Foo(0));
+        query!(world, &mut Foo).build().each_iter(|iter, _index, _foo| {
+            let _aliased = iter.field_mut::<Foo>(0);
+        });
+    }
+}

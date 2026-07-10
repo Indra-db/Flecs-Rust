@@ -387,11 +387,12 @@ pub(crate) fn assign_helper<T: ComponentId>(
     value: T,
     id: sys::ecs_id_t,
 ) {
-    ecs_assert!(
-        core::mem::size_of::<T>() != 0,
-        FlecsErrorCode::InvalidParameter,
-        "operation invalid for empty type"
-    );
+    const {
+        assert!(
+            core::mem::size_of::<T>() != 0,
+            "cannot assign zero-sized-type / tag components"
+        );
+    };
 
     unsafe { WorldRef::from_ptr(world) }.check_thread_affinity_exclusive::<T>();
 

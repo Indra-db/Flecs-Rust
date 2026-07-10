@@ -147,6 +147,17 @@ where
     }
 }
 
+/// Formats the query as a string expression using `ecs_query_str`.
+/// The resulting expression can be parsed to create the same query.
+impl<P, T> core::fmt::Display for QueryIter<'_, P, T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", query_expr_string(IterOperations::query_ptr(self)))
+    }
+}
+
 impl<'a, P, T> WorldProvider<'a> for QueryIter<'a, P, T>
 where
     T: QueryTuple,
@@ -283,6 +294,17 @@ where
         EntityView::new_from(world, unsafe {
             sys::ecs_get_entity((*self.parent.get()).query as *const core::ffi::c_void)
         })
+    }
+}
+
+/// Formats the query as a string expression using `ecs_query_str`.
+/// The resulting expression can be parsed to create the same query.
+impl<P, T> core::fmt::Display for ChainedIter<'_, P, T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", query_expr_string(IterOperations::query_ptr(self)))
     }
 }
 

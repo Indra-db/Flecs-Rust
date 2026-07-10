@@ -9,8 +9,6 @@ extern crate std;
 extern crate alloc;
 use alloc::string::String;
 
-#[cfg(feature = "flecs_json")]
-use alloc::string::ToString;
 use flecs_ecs_derive::extern_abi;
 
 /// Custom error type for `try_first_only` failures.
@@ -18,6 +16,38 @@ use flecs_ecs_derive::extern_abi;
 pub enum FirstOnlyError {
     NoEntities,
     MoreThanOneEntity,
+}
+
+impl core::fmt::Display for FirstOnlyError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            FirstOnlyError::NoEntities => write!(f, "no entities matched the query"),
+            FirstOnlyError::MoreThanOneEntity => {
+                write!(f, "more than one entity matched the query")
+            }
+        }
+    }
+}
+
+impl core::error::Error for FirstOnlyError {}
+
+/// Convert a query to a string expression using `ecs_query_str`.
+/// The resulting expression can be parsed to create the same query.
+pub(crate) fn query_expr_string(query: *const sys::ecs_query_t) -> String {
+    let result: *mut c_char = unsafe { sys::ecs_query_str(query) };
+    if result.is_null() {
+        return String::new();
+    }
+
+    let rust_string = unsafe { core::ffi::CStr::from_ptr(result) }
+        .to_string_lossy()
+        .into_owned();
+    unsafe {
+        if let Some(free_func) = sys::ecs_os_api.free_ {
+            free_func(result as *mut _);
+        }
+    }
+    rust_string
 }
 
 pub trait IterOperations {
@@ -906,34 +936,6 @@ where
         unsafe { (*query).term_count as u32 }
     }
 
-    /// Convert query to string expression. Convert query terms to a string expression.
-    /// The resulting expression can be parsed to create the same query.
-    ///
-    /// # Arguments
-    ///
-    /// * `query`: the query to convert to a string
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the query
-    #[allow(clippy::inherent_to_string)] // this is a wrapper around a c function
-    fn to_string(&self) -> String {
-        let query = self.query_ptr();
-        let result: *mut c_char = unsafe { sys::ecs_query_str(query as *const _) };
-        if result.is_null() {
-            return String::new();
-        }
-
-        let rust_string =
-            String::from(unsafe { core::ffi::CStr::from_ptr(result).to_str().unwrap() });
-        unsafe {
-            if let Some(free_func) = sys::ecs_os_api.free_ {
-                free_func(result as *mut _);
-            }
-        }
-        rust_string
-    }
-
     fn find_var(&self, name: &str) -> Option<i32> {
         let name = compact_str::format_compact!("{}\0", name);
 
@@ -1043,14 +1045,17 @@ where
     fn try_first_entity(&self) -> Option<EntityView<'a>> {
         let it = &mut self.retrieve_iter();
 
-        if self.iter_next(it) && it.count > 0 {
-            let ent = Some(EntityView::new_from(self.world(), unsafe {
-                *it.entities.add(0)
-            }));
+        if self.iter_next(it) {
+            let ent = if it.count > 0 {
+                Some(EntityView::new_from(self.world(), unsafe {
+                    *it.entities.add(0)
+                }))
+            } else {
+                None
+            };
             unsafe { sys::ecs_iter_fini(it) };
             ent
         } else {
-            //unsafe { sys::ecs_iter_fini(it) };
             None
         }
     }
@@ -1337,7 +1342,7 @@ where
     }
 
     /// Returns true if iterator yields at least once result.
-    fn is_true(&mut self) -> bool {
+    fn is_true(&self) -> bool {
         let mut it = self.retrieve_iter();
 
         let result = self.iter_next(&mut it);
@@ -1438,9 +1443,8 @@ where
                 return None;
             }
             let json = core::ffi::CStr::from_ptr(json_ptr)
-                .to_str()
-                .unwrap()
-                .to_string();
+                .to_string_lossy()
+                .into_owned();
             sys::ecs_os_api.free_.expect("os api is missing")(json_ptr as *mut core::ffi::c_void);
             Some(json)
         }

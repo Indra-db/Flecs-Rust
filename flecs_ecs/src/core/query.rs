@@ -578,6 +578,17 @@ where
     }
 }
 
+/// Formats the query as a string expression using `ecs_query_str`.
+/// The resulting expression can be parsed to create the same query.
+impl<T> core::fmt::Display for Query<T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", query_expr_string(IterOperations::query_ptr(self)))
+    }
+}
+
 impl<'a, T> WorldProvider<'a> for Query<T>
 where
     T: QueryTuple,

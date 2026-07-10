@@ -1225,21 +1225,21 @@ where
             // Sparse component: use per-row C accessor
             self.field_at_sparse_internal::<T>(index, row)
         } else {
-            let component = self.field_at_dense_internal::<T>(index, row);
             #[cfg(not(feature = "flecs_safety_locks"))]
             {
-                FieldAt::<T::UnderlyingType>::new_dense(component)
+                FieldAt::<T::UnderlyingType>::new_dense(
+                    self.field_at_dense_internal::<T>(index, row),
+                )
             }
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                let component = self.field_at_dense_internal::<T>(index, row);
+                let (table, column_index) = self.field_table_column(index);
                 FieldAt::<T::UnderlyingType>::new_dense(
                     component,
                     &self.world,
-                    // SAFETY: the field is set (asserted in field_at_dense_internal), so the
-                    // table record and its table pointer are valid.
-                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
-                    unsafe { (*tr).column },
+                    table,
+                    column_index,
                 )
             }
         }
@@ -1278,22 +1278,20 @@ where
             if array.is_null() || row >= count {
                 return None;
             }
-            // SAFETY: array is non-null and row < count, checked above.
-            let component = unsafe { &*array.add(row) };
             #[cfg(not(feature = "flecs_safety_locks"))]
             {
-                Some(FieldAt::<T::UnderlyingType>::new_dense(component))
+                Some(FieldAt::<T::UnderlyingType>::new_dense(unsafe {
+                    &*array.add(row)
+                }))
             }
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                let (table, column_index) = self.field_table_column(index);
                 Some(FieldAt::<T::UnderlyingType>::new_dense(
-                    component,
+                    unsafe { &*array.add(row) },
                     &self.world,
-                    // SAFETY: the field is set (array is non-null), so the table record and
-                    // its table pointer are valid.
-                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
-                    unsafe { (*tr).column },
+                    table,
+                    column_index,
                 ))
             }
         }
@@ -1371,21 +1369,21 @@ where
             // Sparse component: use per-row C accessor
             self.field_at_sparse_internal_mut::<T>(index, row)
         } else {
-            let component = self.field_at_dense_internal_mut::<T>(index, row);
             #[cfg(not(feature = "flecs_safety_locks"))]
             {
-                FieldAtMut::<T::UnderlyingType>::new_dense(component)
+                FieldAtMut::<T::UnderlyingType>::new_dense(
+                    self.field_at_dense_internal_mut::<T>(index, row),
+                )
             }
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                let component = self.field_at_dense_internal_mut::<T>(index, row);
+                let (table, column_index) = self.field_table_column(index);
                 FieldAtMut::<T::UnderlyingType>::new_dense(
                     component,
                     &self.world,
-                    // SAFETY: the field is set (asserted in field_at_dense_internal_mut), so
-                    // the table record and its table pointer are valid.
-                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
-                    unsafe { (*tr).column },
+                    table,
+                    column_index,
                 )
             }
         }
@@ -1417,22 +1415,20 @@ where
             if array.is_null() || row >= count {
                 return None;
             }
-            // SAFETY: array is non-null and row < count, checked above.
-            let component = unsafe { &mut *array.add(row) };
             #[cfg(not(feature = "flecs_safety_locks"))]
             {
-                Some(FieldAtMut::<T::UnderlyingType>::new_dense(component))
+                Some(FieldAtMut::<T::UnderlyingType>::new_dense(unsafe {
+                    &mut *array.add(row)
+                }))
             }
             #[cfg(feature = "flecs_safety_locks")]
             {
-                let tr = unsafe { *self.iter.trs.add(index as usize) };
+                let (table, column_index) = self.field_table_column(index);
                 Some(FieldAtMut::<T::UnderlyingType>::new_dense(
-                    component,
+                    unsafe { &mut *array.add(row) },
                     &self.world,
-                    // SAFETY: the field is set (array is non-null), so the table record and
-                    // its table pointer are valid.
-                    unsafe { NonNull::new_unchecked((*tr).hdr.table) },
-                    unsafe { (*tr).column },
+                    table,
+                    column_index,
                 ))
             }
         }
@@ -2066,6 +2062,17 @@ where
     pub(crate) fn field_at_untyped_internal_mut(&self, index: i8, row: usize) -> *mut c_void {
         let size = unsafe { sys::ecs_field_size(self.iter, index) };
         unsafe { sys::ecs_field_at_w_size(self.iter, size, index, row as i32) }
+    }
+
+    #[cfg(feature = "flecs_safety_locks")]
+    #[inline(always)]
+    fn field_table_column(&self, index: i8) -> (NonNull<sys::ecs_table_t>, i16) {
+        // SAFETY: callers only invoke this for a set, dense (non-sparse) field,
+        // so the table record for `index` is non-null, matching field_internal.
+        unsafe {
+            let tr = *self.iter.trs.add(index as usize);
+            (NonNull::new_unchecked((*tr).hdr.table), (*tr).column)
+        }
     }
 
     fn field_at_dense_internal<T: ComponentId>(
