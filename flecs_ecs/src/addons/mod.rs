@@ -240,6 +240,14 @@ macro_rules! create_pre_registered_extern_component {
             type Target = u64;
             #[inline(always)]
             fn deref(&self) -> &Self::Target {
+                // SAFETY: `$static_id` is an extern global that the flecs C library
+                // writes exactly once, while its owning module (e.g. metrics/units) is
+                // imported into a world. Importing that module before using this type is
+                // a documented requirement of these pre-registered components; after
+                // import the global is never written again, so no write can alias the
+                // shared reference created here. Reading it before the module is
+                // imported yields 0 (a wrong id), but is still a read of initialized,
+                // non-aliased memory.
                 unsafe { &*core::ptr::addr_of!($static_id) }
             }
         }

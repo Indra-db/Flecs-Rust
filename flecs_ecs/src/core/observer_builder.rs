@@ -123,6 +123,26 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
         T::populate(&mut obj);
         obj
     }
+
+    /// Attempts to build the observer, returning `None` if observer creation fails.
+    ///
+    /// This is the fallible counterpart of [`build()`](Builder::build): it returns
+    /// `None` instead of a handle to an invalid entity when the underlying
+    /// `ecs_observer_init` call fails, most commonly due to an invalid query
+    /// expression passed to `expr()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if neither a callback nor a run function was set, like
+    /// [`build()`](Builder::build). Use `.each*` / `.run*` to set one.
+    ///
+    /// # See also
+    ///
+    /// * [`QueryBuilder::try_build()`]
+    pub fn try_build(&mut self) -> Option<Observer<'a>> {
+        let observer = self.build();
+        if *observer.id() == 0 { None } else { Some(observer) }
+    }
 }
 
 impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {

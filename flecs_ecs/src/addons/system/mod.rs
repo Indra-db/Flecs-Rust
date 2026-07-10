@@ -21,6 +21,27 @@ pub struct System<'a> {
     pub(crate) entity: EntityView<'a>,
 }
 
+impl core::fmt::Debug for System<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Debug::fmt(&self.entity, f)
+    }
+}
+
+impl core::fmt::Display for System<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Display::fmt(&self.entity, f)
+    }
+}
+
+impl PartialEq for System<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.entity == other.entity
+    }
+}
+
+impl Eq for System<'_> {}
+
 impl<'a> Deref for System<'a> {
     type Target = EntityView<'a>;
 

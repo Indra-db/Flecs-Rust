@@ -19,19 +19,11 @@ use alloc::{borrow::ToOwned, string::String};
 #[repr(C)]
 pub struct Script<'a> {
     script: *mut sys::ecs_script_t,
-    ast: *mut core::ffi::c_char,
     _phantom: core::marker::PhantomData<&'a ()>,
 }
 
 impl Drop for Script<'_> {
     fn drop(&mut self) {
-        if !self.ast.is_null() {
-            unsafe {
-                sys::ecs_os_api.free_.expect("os api is missing")(
-                    self.ast as *mut core::ffi::c_void,
-                );
-            }
-        }
         if !self.script.is_null() {
             unsafe { sys::ecs_script_free(self.script) }
         }
@@ -86,7 +78,6 @@ impl<'a> Script<'a> {
         } else {
             Some(Script {
                 script: ptr,
-                ast: core::ptr::null_mut(),
                 _phantom: core::marker::PhantomData::<&'a ()>,
             })
         }
@@ -177,30 +168,16 @@ impl<'a> Script<'a> {
     pub fn ast(&mut self) -> Option<String> {
         let ast = unsafe { sys::ecs_script_ast_to_str(self.script, false) };
 
-        if !ast.is_null() {
-            if self.ast.is_null() {
-                self.ast = ast;
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "Script AST already exists"
-                );
-                unsafe {
-                    sys::ecs_os_api.free_.expect("os api is missing")(
-                        ast as *mut core::ffi::c_void,
-                    );
-                }
-            }
-            let c_str = unsafe { CStr::from_ptr(ast) };
-            let str = c_str.to_str().unwrap().to_owned();
-            unsafe {
-                sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut core::ffi::c_void);
-            };
-            Some(str)
-        } else {
-            None
+        if ast.is_null() {
+            return None;
         }
+
+        let c_str = unsafe { CStr::from_ptr(ast) };
+        let str = c_str.to_str().unwrap().to_owned();
+        unsafe {
+            sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut core::ffi::c_void);
+        };
+        Some(str)
     }
 
     /// Serialize value into a String.

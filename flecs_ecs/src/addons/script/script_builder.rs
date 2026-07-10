@@ -85,8 +85,11 @@ impl<'a> ScriptBuilder<'a> {
         let world = self.world.world_ptr_mut();
 
         self.script.filename = filename.as_ptr() as *const _;
+        self.script.code = core::ptr::null();
 
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
+
+        self.script.filename = core::ptr::null();
 
         ScriptEntityView::new_from(self.world, result)
     }
@@ -113,8 +116,11 @@ impl<'a> ScriptBuilder<'a> {
         let world = self.world.world_ptr_mut();
 
         self.script.code = code.as_ptr() as *const _;
+        self.script.filename = core::ptr::null();
 
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
+
+        self.script.code = core::ptr::null();
 
         ScriptEntityView::new_from(self.world, result)
     }

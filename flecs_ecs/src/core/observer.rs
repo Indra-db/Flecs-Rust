@@ -15,6 +15,27 @@ pub struct Observer<'a> {
     entity: EntityView<'a>,
 }
 
+impl core::fmt::Debug for Observer<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Debug::fmt(&self.entity, f)
+    }
+}
+
+impl core::fmt::Display for Observer<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Display::fmt(&self.entity, f)
+    }
+}
+
+impl PartialEq for Observer<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.entity == other.entity
+    }
+}
+
+impl Eq for Observer<'_> {}
+
 impl<'a> Deref for Observer<'a> {
     type Target = EntityView<'a>;
 
