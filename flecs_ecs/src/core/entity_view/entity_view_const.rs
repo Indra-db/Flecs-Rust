@@ -817,7 +817,8 @@ impl<'a> EntityView<'a> {
     #[inline(always)]
     pub fn table(self) -> Option<Table<'a>> {
         let table = unsafe { sys::ecs_get_table(self.world.world_ptr(), *self.id) };
-        NonNull::new(table).map(|t| Table::new(self.world, t))
+        // SAFETY: ecs_get_table returns a live table owned by this world.
+        NonNull::new(table).map(|t| unsafe { Table::new(self.world, t) })
     }
 
     /// Get table range for the entity.
@@ -951,7 +952,8 @@ impl<'a> EntityView<'a> {
             return;
         };
 
-        let table = Table::new(real_world, table);
+        // SAFETY: ecs_get_table returns a live table owned by the real world.
+        let table = unsafe { Table::new(real_world, table) };
 
         let mut pattern: sys::ecs_id_t = *first.into();
         let second_id = *second.into();

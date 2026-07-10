@@ -101,11 +101,13 @@
 mod field;
 mod flags;
 mod iter;
+#[cfg(feature = "flecs_safety_locks")]
 mod multi_src_get;
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 pub use field::{Field, FieldAt, FieldAtMut, FieldIndex, FieldMut, FieldUntyped, FieldUntypedMut};
 pub(crate) use field::{flecs_field, flecs_field_w_size};
+#[cfg(feature = "flecs_safety_locks")]
 pub use multi_src_get::*;
 
 pub use flags::TableFlags;
@@ -143,7 +145,15 @@ impl<'a> Table<'a> {
     ///
     /// * `world` - The world the table is in
     /// * `table` - The table to wrap
-    pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+    ///
+    /// # Safety
+    ///
+    /// `table` must point to a table that is currently alive and owned by
+    /// `world`, and must remain alive for the lifetime `'a`. Passing a stale
+    /// pointer (e.g. one obtained from [`Table::raw_table_ptr()`] after the
+    /// table was deleted) results in undefined behavior when the returned
+    /// `Table` is used.
+    pub unsafe fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         Self {
             world: world.world(),
             table,
@@ -206,9 +216,153 @@ impl<'a> TableRange<'a> {
         count: i32,
     ) -> Self {
         Self {
-            table: Table::new(world, table),
+            // SAFETY: caller upholds this function's contract that the world
+            // and table pointers are valid.
+            table: unsafe { Table::new(world, table) },
             offset,
             count,
+        }
+    }
+}
+
+/// RAII guard providing read access to the entity ids of a table (range).
+///
+/// While the guard is alive, the world is kept in deferred mode: structural
+/// changes (creating, deleting or moving entities) are queued and applied when
+/// the guard is dropped, so the entity array cannot be reallocated or freed
+/// while it is borrowed.
+///
+/// Dereferences to `&[Entity]`.
+pub struct TableEntities<'a> {
+    slice: &'a [Entity],
+    world: WorldRef<'a>,
+}
+
+impl core::ops::Deref for TableEntities<'_> {
+    type Target = [Entity];
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.slice
+    }
+}
+
+impl Drop for TableEntities<'_> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+    }
+}
+
+/// RAII guard providing mutable access to a table column (component array).
+///
+/// While the guard is alive, the world is kept in deferred mode: structural
+/// changes (creating, deleting or moving entities) are queued and applied when
+/// the guard is dropped, so the column storage cannot be reallocated or freed
+/// while it is borrowed. When the `flecs_safety_locks` feature (part of the
+/// default features) is enabled, a write lock is additionally held on the
+/// column for the lifetime of the guard: constructing a second guard (or
+/// field accessor) for the same column while one is alive panics instead of
+/// aliasing the `&mut` data.
+///
+/// Dereferences to `&[T]` / `&mut [T]`.
+pub struct TableColumnMut<'a, T> {
+    slice: &'a mut [T],
+    world: WorldRef<'a>,
+    #[cfg(feature = "flecs_safety_locks")]
+    table: NonNull<sys::ecs_table_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    column_index: i16,
+    #[cfg(feature = "flecs_safety_locks")]
+    stage_id: i32,
+    #[cfg(feature = "flecs_safety_locks")]
+    multithreaded: bool,
+}
+
+impl<'a, T> TableColumnMut<'a, T> {
+    /// # Safety
+    ///
+    /// `table` must be a live table owned by `world`, `column_index` must be a
+    /// valid column index of that table, and `ptr`/`count` must describe that
+    /// column's component array of type `T`.
+    unsafe fn new(
+        world: WorldRef<'a>,
+        _table: NonNull<sys::ecs_table_t>,
+        _column_index: i16,
+        ptr: *mut T,
+        count: usize,
+    ) -> Self {
+        #[cfg(feature = "flecs_safety_locks")]
+        let (stage_id, multithreaded) = {
+            let stage_id = world.stage_id();
+            let multithreaded = world.is_currently_multithreaded();
+            if multithreaded {
+                get_table_column_lock_write_begin::<true>(
+                    &world,
+                    _table.as_ptr(),
+                    _column_index,
+                    stage_id,
+                );
+            } else {
+                get_table_column_lock_write_begin::<false>(
+                    &world,
+                    _table.as_ptr(),
+                    _column_index,
+                    stage_id,
+                );
+            }
+            (stage_id, multithreaded)
+        };
+        world.defer_begin();
+        // SAFETY: caller guarantees ptr/count describe the column array. The
+        // world stays in deferred mode until this guard is dropped, so the
+        // array cannot be reallocated or freed while the slice is alive, and
+        // the column write lock prevents aliased access through other guards.
+        let slice = unsafe { core::slice::from_raw_parts_mut(ptr, count) };
+        Self {
+            slice,
+            world,
+            #[cfg(feature = "flecs_safety_locks")]
+            table: _table,
+            #[cfg(feature = "flecs_safety_locks")]
+            column_index: _column_index,
+            #[cfg(feature = "flecs_safety_locks")]
+            stage_id,
+            #[cfg(feature = "flecs_safety_locks")]
+            multithreaded,
+        }
+    }
+}
+
+impl<T> core::ops::Deref for TableColumnMut<'_, T> {
+    type Target = [T];
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.slice
+    }
+}
+
+impl<T> core::ops::DerefMut for TableColumnMut<'_, T> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.slice
+    }
+}
+
+impl<T> Drop for TableColumnMut<'_, T> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if self.multithreaded {
+                table_column_lock_write_end::<true>(
+                    self.table.as_ptr(),
+                    self.column_index,
+                    self.stage_id,
+                );
+            } else {
+                table_column_lock_write_end::<false>(self.table.as_ptr(), self.column_index, 0);
+            }
         }
     }
 }
@@ -230,15 +384,33 @@ pub trait TableOperations<'a>: IntoTable {
         unsafe { sys::ecs_table_size(table) }
     }
 
-    /// Get array with entity ids
-    fn entities(&self) -> &[Entity] {
+    /// Get array with entity ids.
+    ///
+    /// For a [`TableRange`] this returns the entities within
+    /// `[offset, offset + count)`.
+    ///
+    /// The returned guard keeps the world in deferred mode: structural changes
+    /// are queued and applied when the guard is dropped, so the entity array
+    /// stays valid while it is borrowed.
+    fn entities(&self) -> TableEntities<'a> {
+        let world = self.world();
+        world.defer_begin();
         let table = self.table_ptr_mut();
         let entities = unsafe { sys::ecs_table_entities(table) };
         if entities.is_null() {
-            return &[];
+            return TableEntities { slice: &[], world };
         }
-        let count = self.count();
-        unsafe { core::slice::from_raw_parts(entities as *const Entity, count as usize) }
+        let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
+        let offset = (self.offset().max(0) as usize).min(table_count);
+        let count = (self.count().max(0) as usize).min(table_count - offset);
+        // SAFETY: entities points to `table_count` valid entity ids and
+        // offset + count <= table_count. The world stays in deferred mode
+        // until the guard is dropped, so the array cannot be reallocated or
+        // freed while the slice is alive.
+        let slice = unsafe {
+            core::slice::from_raw_parts((entities as *const Entity).add(offset), count)
+        };
+        TableEntities { slice, world }
     }
 
     fn clear_entities(&self) {
@@ -360,7 +532,16 @@ pub trait TableOperations<'a>: IntoTable {
         if ptr.is_null() { None } else { Some(ptr) }
     }
 
-    /// Get column, components array ptr from table by component type.
+    /// Get mutable access to a components array from the table by component type.
+    ///
+    /// The returned guard dereferences to `&mut [T]`. While it is alive the
+    /// world is kept in deferred mode (structural changes are queued) and,
+    /// when the `flecs_safety_locks` feature (part of the default features)
+    /// is enabled, a write lock is held on the column: obtaining a second
+    /// mutable guard or field accessor for the same column panics instead of
+    /// aliasing.
+    ///
+    /// For a [`TableRange`] the slice covers `[offset, offset + count)`.
     ///
     /// # Type parameters
     ///
@@ -368,14 +549,29 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or `None` if not found
-    //TODO this should return a field IMO
-    fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
-        self.world().check_thread_affinity_exclusive::<T>();
-        self.get_mut_untyped(T::entity_id(self.world()))
-            .map(|ptr| unsafe {
-                core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
-            })
+    /// Some(guard) for the column, or `None` if not found
+    fn get_mut<T: ComponentId>(&mut self) -> Option<TableColumnMut<'a, T>> {
+        let world = self.world();
+        world.check_thread_affinity_exclusive::<T>();
+        let id = T::entity_id(world);
+        let index = self.find_column_index(id)?;
+        let ptr = self.column_untyped(index)?;
+        let table = self.table_ptr_mut();
+        let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
+        let offset = (self.offset().max(0) as usize).min(table_count);
+        let count = (self.count().max(0) as usize).min(table_count - offset);
+        // SAFETY: table_ptr_mut is non-null, index is a valid column index for
+        // this table and ptr/count describe that column's array of T starting
+        // at this range's offset (applied by column_untyped).
+        Some(unsafe {
+            TableColumnMut::new(
+                world,
+                NonNull::new_unchecked(table),
+                index as i16,
+                ptr as *mut T,
+                count,
+            )
+        })
     }
 
     /// Get column, components array ptr from table by component type.
@@ -557,10 +753,6 @@ impl<'a> TableLock<'a> {
 
 impl Drop for TableLock<'_> {
     fn drop(&mut self) {
-        if std::thread::panicking() {
-            return;
-        }
-
         unsafe {
             sys::ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
         }

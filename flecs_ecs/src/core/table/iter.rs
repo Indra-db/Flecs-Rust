@@ -196,11 +196,14 @@ where
     }
 
     pub fn table(&self) -> Option<Table<'a>> {
-        NonNull::new(self.iter.table).map(|ptr| Table::new(self.real_world(), ptr))
+        // SAFETY: the iterator holds a live table owned by the real world.
+        NonNull::new(self.iter.table).map(|ptr| unsafe { Table::new(self.real_world(), ptr) })
     }
 
     pub fn other_table(&self) -> Option<Table<'a>> {
-        NonNull::new(self.iter.other_table).map(|ptr| Table::new(self.real_world(), ptr))
+        // SAFETY: the iterator holds a live table owned by the real world.
+        NonNull::new(self.iter.other_table)
+            .map(|ptr| unsafe { Table::new(self.real_world(), ptr) })
     }
 
     pub fn range(&self) -> Option<TableRange<'a>> {
@@ -1436,6 +1439,7 @@ where
         unsafe { sys::ecs_iter_get_group(self.iter) }
     }
 
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result<T: ComponentId>(
         &self,
@@ -1449,6 +1453,7 @@ where
         self.field_result_internal::<T::UnderlyingType, true>(index)
     }
 
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_mut<T: ComponentId>(
         &self,
@@ -1462,6 +1467,7 @@ where
         self.field_result_internal_mut::<T::UnderlyingType, true>(index)
     }
 
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_internal<T, const LOCK: bool>(
         &self,
@@ -1511,6 +1517,7 @@ where
         }
     }
 
+    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_internal_mut<T, const LOCK: bool>(
         &self,
