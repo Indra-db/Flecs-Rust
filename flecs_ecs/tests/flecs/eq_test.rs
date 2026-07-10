@@ -116,6 +116,111 @@ fn entity_eq_test() {
 }
 
 #[test]
+fn entity_view_and_id_view_hash_test() {
+    use std::collections::{HashMap, HashSet};
+
+    let world = World::new();
+
+    let e1 = world.entity();
+    let e2 = world.entity();
+
+    let mut set: HashSet<EntityView<'_>> = HashSet::new();
+    set.insert(e1);
+    set.insert(e1);
+    set.insert(e2);
+    assert_eq!(set.len(), 2);
+    assert!(set.contains(&e1));
+    assert!(set.contains(&e2));
+
+    let mut map: HashMap<EntityView<'_>, i32> = HashMap::new();
+    map.insert(e1, 10);
+    map.insert(e1, 20);
+    assert_eq!(map.len(), 1);
+    assert_eq!(map[&e1], 20);
+
+    let id1 = e1.id_view();
+    let id2 = e2.id_view();
+
+    let mut id_set: HashSet<IdView<'_>> = HashSet::new();
+    id_set.insert(id1);
+    id_set.insert(id1);
+    id_set.insert(id2);
+    assert_eq!(id_set.len(), 2);
+    assert!(id_set.contains(&id1));
+    assert!(id_set.contains(&id2));
+}
+
+#[test]
+fn newtype_of_entity_view_derives_eq_ord_hash_test() {
+    use std::collections::HashSet;
+
+    flecs_ecs::newtype_of_entity_view!(pub struct MyEntityViewHashTest(EntityView));
+
+    let world = World::new();
+    let e1 = world.entity();
+    let e2 = world.entity();
+
+    let w1 = MyEntityViewHashTest::new(e1);
+    let w1_dup = MyEntityViewHashTest::new(e1);
+    let w2 = MyEntityViewHashTest::new(e2);
+
+    assert_eq!(w1, w1_dup);
+    assert_ne!(w1, w2);
+    assert!(w1 < w2 || w2 < w1);
+
+    let mut set = HashSet::new();
+    set.insert(w1);
+    set.insert(w1_dup);
+    set.insert(w2);
+    assert_eq!(set.len(), 2);
+}
+
+#[test]
+fn newtype_of_entity_derives_eq_ord_hash_test() {
+    use std::collections::HashSet;
+
+    flecs_ecs::newtype_of_entity!(pub struct MyEntityHashTest(pub Entity));
+
+    let e1 = Entity::new(100);
+    let e1_dup = Entity::new(100);
+    let e2 = Entity::new(200);
+
+    let w1 = MyEntityHashTest(e1);
+    let w1_dup = MyEntityHashTest(e1_dup);
+    let w2 = MyEntityHashTest(e2);
+
+    assert_eq!(w1, w1_dup);
+    assert_ne!(w1, w2);
+    assert!(w1 < w2);
+
+    let mut set = HashSet::new();
+    set.insert(w1);
+    set.insert(w1_dup);
+    set.insert(w2);
+    assert_eq!(set.len(), 2);
+}
+
+#[test]
+fn id_view_try_first_second_id_matches_get_variant_test() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let target = world.entity();
+    let pair_id = world.id_view_from((rel, target));
+
+    assert_eq!(pair_id.try_first_id(), pair_id.get_first_id());
+    assert_eq!(pair_id.try_second_id(), pair_id.get_second_id());
+    assert_eq!(pair_id.try_first_id().unwrap(), pair_id.first_id());
+    assert_eq!(pair_id.try_second_id().unwrap(), pair_id.second_id());
+
+    let non_pair_id = world.id_view_from(rel);
+    assert_eq!(non_pair_id.try_first_id(), None);
+    assert_eq!(non_pair_id.try_second_id(), None);
+    assert_eq!(non_pair_id.get_first_id(), None);
+    assert_eq!(non_pair_id.get_second_id(), None);
+}
+
+#[test]
 fn table_eq_test() {
     let world = World::new();
 

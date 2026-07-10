@@ -130,6 +130,13 @@ impl Ord for IdView<'_> {
     }
 }
 
+impl core::hash::Hash for IdView<'_> {
+    #[inline]
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
 impl core::ops::Deref for IdView<'_> {
     type Target = u64;
 
@@ -187,18 +194,30 @@ impl<'a> IdView<'a> {
         self.world.get_alive(entity)
     }
 
-    /// Get first element from a pair.
+    /// Get first element from a pair, returning `None` instead of panicking if the id is not a pair.
     ///
-    /// If the id is not a pair, this operation will fail. When the id has a
-    /// world, the operation will ensure that the returned id has the correct generation count.
+    /// This is the `Option`-returning counterpart to [`first_id`][Self::first_id], following the
+    /// crate's `try_` convention for fallible reads. When the id has a world, the operation will
+    /// ensure that the returned id has the correct generation count.
     #[inline(always)]
-    pub fn get_first_id(&self) -> Option<EntityView<'_>> {
+    pub fn try_first_id(&self) -> Option<EntityView<'_>> {
         if !self.is_pair() {
             None
         } else {
             let entity = ecs_first(self.id, self.world);
             self.world.try_get_alive(entity)
         }
+    }
+
+    /// Get first element from a pair.
+    ///
+    /// If the id is not a pair, this operation will fail. When the id has a
+    /// world, the operation will ensure that the returned id has the correct generation count.
+    ///
+    /// This is an alias for [`try_first_id`][Self::try_first_id].
+    #[inline(always)]
+    pub fn get_first_id(&self) -> Option<EntityView<'_>> {
+        self.try_first_id()
     }
 
     /// Get second element from a pair.
@@ -212,17 +231,28 @@ impl<'a> IdView<'a> {
         self.world.get_alive(entity)
     }
 
-    /// Get second element from a pair.
+    /// Get second element from a pair, returning `None` instead of panicking if the id is not a pair.
     ///
-    /// If the id is not a pair, this operation will fail. When the id has a
-    /// world, the operation will ensure that the returned id has the correct generation count.
-    pub fn get_second_id(&self) -> Option<EntityView<'_>> {
+    /// This is the `Option`-returning counterpart to [`second_id`][Self::second_id], following the
+    /// crate's `try_` convention for fallible reads. When the id has a world, the operation will
+    /// ensure that the returned id has the correct generation count.
+    pub fn try_second_id(&self) -> Option<EntityView<'_>> {
         if !self.is_pair() {
             None
         } else {
             let entity = ecs_second(self.id, self.world);
             self.world.try_get_alive(entity)
         }
+    }
+
+    /// Get second element from a pair.
+    ///
+    /// If the id is not a pair, this operation will fail. When the id has a
+    /// world, the operation will ensure that the returned id has the correct generation count.
+    ///
+    /// This is an alias for [`try_second_id`][Self::try_second_id].
+    pub fn get_second_id(&self) -> Option<EntityView<'_>> {
+        self.try_second_id()
     }
 
     /// Return id as entity (only allowed when id is valid entity)

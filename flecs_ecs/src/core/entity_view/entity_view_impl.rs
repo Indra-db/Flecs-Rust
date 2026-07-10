@@ -133,6 +133,13 @@ mod eq_operations {
     }
 
     impl Eq for EntityView<'_> {}
+
+    impl core::hash::Hash for EntityView<'_> {
+        #[inline]
+        fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+            self.id.hash(state);
+        }
+    }
 }
 
 mod ord_operations {

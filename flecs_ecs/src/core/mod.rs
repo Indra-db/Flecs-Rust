@@ -1,3 +1,32 @@
+//! The core ECS API: worlds, entities, ids, components, queries and tables.
+//!
+//! This is the primary module of the crate. It contains everything needed to create a
+//! [`World`], spawn and inspect entities, register and query components, and build
+//! relationships between entities.
+//!
+//! # Where to start
+//!
+//! - **[`world::World`]** - The container for all ECS data. Create one with `World::new()`.
+//! - **[`entity_view::EntityView`]** - A lightweight, `Copy`able handle to an entity, used to
+//!   add/remove/get components, build relationships and traverse hierarchies.
+//! - **[`entity_view::EntityViewGet`]** - Extension trait for reading component data off an
+//!   `EntityView`.
+//! - **[`id::Id`]** / **[`id_view::IdView`]** - Identifiers for anything that can be added to an
+//!   entity: components, tags, pair (relationship) ids and id flags.
+//! - **[`query::Query`]** / **[`query_builder`]** - Build and iterate queries over entities that
+//!   match a set of components/relationships.
+//! - **[`component_registration`]** - Traits and machinery for registering Rust types as ECS
+//!   components.
+//! - **[`table`]** - Direct access to the underlying archetype storage for advanced iteration.
+//! - **[`observer`]** / **[`observer_builder`]** - React to entity/component lifecycle events.
+//! - **[`event`]** - Emit and handle custom events.
+//!
+//! # See also
+//!
+//! - The [addons][crate::addons] module for optional, feature-gated functionality (systems,
+//!   reflection, JSON, scripting, and more).
+//! - [`prelude`][crate::prelude] for the recommended `use flecs_ecs::prelude::*;` glob import.
+
 pub mod archetype;
 pub mod builder;
 pub mod c_types;
