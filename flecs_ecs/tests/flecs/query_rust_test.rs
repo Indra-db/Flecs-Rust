@@ -724,8 +724,8 @@ fn query_get_is_true_direct() {
     world.entity().add(A::id());
     world.entity().add(A::id());
 
-    let mut q1 = world.new_query::<&A>();
-    let mut q2 = world.new_query::<&B>();
+    let q1 = world.new_query::<&A>();
+    let q2 = world.new_query::<&B>();
 
     assert!(q1.is_true());
     assert!(!q2.is_true());

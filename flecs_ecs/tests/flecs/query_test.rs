@@ -336,8 +336,8 @@ fn get_is_true_direct() {
     let _e2 = world.entity().set(Position { x: 3, y: 4 });
     let _e3 = world.entity().set(Position { x: 5, y: 6 });
 
-    let mut q_1 = world.new_query::<&Position>();
-    let mut q_2 = world.new_query::<&Velocity>();
+    let q_1 = world.new_query::<&Position>();
+    let q_2 = world.new_query::<&Velocity>();
 
     assert!(q_1.is_true());
     assert!(!q_2.is_true());
@@ -4097,8 +4097,8 @@ fn is_true() {
 
     let _e = world.entity().set(Position { x: 1, y: 2 });
 
-    let mut q1 = world.new_query::<&Position>();
-    let mut q2 = world.new_query::<&Velocity>();
+    let q1 = world.new_query::<&Position>();
+    let q2 = world.new_query::<&Velocity>();
 
     assert!(q1.is_true());
     assert!(!q2.is_true());
@@ -4158,7 +4158,7 @@ fn find_multiple_results() {
 fn on_empty_world() {
     let world = World::new();
 
-    let mut q = world.new_query::<&Position>();
+    let q = world.new_query::<&Position>();
 
     assert_eq!(q.count(), 0);
     assert!(!q.is_true());
@@ -4371,7 +4371,7 @@ fn is_true_non_empty() {
 
     let _e = world.entity().set(Position { x: 1, y: 2 });
 
-    let mut q = world.new_query::<&Position>();
+    let q = world.new_query::<&Position>();
 
     assert!(q.is_true());
 }

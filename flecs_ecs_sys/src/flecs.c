@@ -24408,9 +24408,14 @@ char* flecs_log_get_captured_log(void) {
 
 void ecs_log_start_capture(bool try) {
     flecs_log_prev_color = ecs_log_enable_colors(false);
-    flecs_log_prev_log = ecs_os_api.log_;
+    /* Never record the capture hook itself as the previous logger: nested or
+     * concurrent captures would otherwise make flecs_log_capture_log call
+     * itself recursively until the stack overflows. */
+    if (ecs_os_api.log_ != flecs_log_capture_log) {
+        flecs_log_prev_log = ecs_os_api.log_;
+        flecs_set_prev_log(ecs_os_api.log_, try);
+    }
     flecs_log_prev_level = ecs_os_api.log_level_;
-    flecs_set_prev_log(ecs_os_api.log_, try);
     ecs_os_api.log_ = flecs_log_capture_log;
     ecs_os_api.log_level_ = -1; /* Ignore debug tracing, log warnings/errors */
 }
