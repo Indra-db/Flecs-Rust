@@ -363,8 +363,3 @@ impl Default for crate::ecs_iter_to_json_desc_t {
         }
     }
 }
-
-unsafe impl Sync for crate::EcsIdentifier {}
-unsafe impl Send for crate::EcsIdentifier {}
-unsafe impl Send for crate::EcsPoly {}
-unsafe impl Sync for crate::EcsPoly {}
