@@ -4396,3 +4396,131 @@ fn clone_consistency() {
     assert_eq!(q1.first_entity(), e);
     assert_eq!(q2.first_entity(), e);
 }
+
+// ── sparse queries ──
+// C++ `world.query<T...>()` returns flecs::sparse_query at compile time when
+// all components are DontFragment; Rust uses an explicit
+// `world.sparse_query::<T>()` since trait-based return-type dispatch is not
+// possible. Query_sparse_query_type is covered by the explicit API.
+
+#[derive(Component)]
+#[flecs(traits(DontFragment, (OnInstantiate, Override)))]
+struct PositionDfOr {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Component)]
+#[flecs(traits(DontFragment, (OnInstantiate, Override)))]
+struct VelocityDfOr {
+    x: i32,
+    y: i32,
+}
+
+#[test]
+fn sparse_query_each() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    let e3 = world.entity().set(VelocityDfOr { x: 3, y: 4 });
+
+    let q = world.sparse_query::<(&mut PositionDfOr, &VelocityDfOr)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p, v)| {
+        assert_eq!(e, e1);
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        p.x += v.x;
+        p.y += v.y;
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    assert!(e2.is_alive());
+    assert!(e3.is_alive());
+}
+
+#[test]
+fn sparse_query_empty() {
+    let world = World::new();
+
+    world.component::<PositionDfOr>();
+    world.component::<VelocityDfOr>();
+
+    let q = world.sparse_query::<(&PositionDfOr, &VelocityDfOr)>();
+
+    let mut count = 0;
+    q.each(|(_p, _v)| {
+        count += 1;
+    });
+
+    assert_eq!(count, 0);
+    assert_eq!(q.count(), 0);
+}
+
+#[test]
+fn sparse_query_recycled_entity() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    e1.destruct();
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    assert!(e1 != e2);
+    assert_eq!(*e1.id() as u32, *e2.id() as u32);
+
+    let q = world.sparse_query::<(&PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        assert_eq!(e, e2);
+        assert_eq!(p.x, 30);
+        assert_eq!(p.y, 40);
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+}
+
+#[test]
+fn sparse_query_skip_prefab_disabled() {
+    let world = World::new();
+
+    let e = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    world
+        .entity()
+        .add(flecs::Prefab::ID)
+        .set(PositionDfOr { x: 1, y: 2 });
+    world
+        .entity()
+        .add(flecs::Disabled::ID)
+        .set(PositionDfOr { x: 3, y: 4 });
+    world
+        .entity()
+        .add(flecs::NotQueryable::ID)
+        .set(PositionDfOr { x: 5, y: 6 });
+
+    let q = world.sparse_query::<(&PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|ent, (pos,)| {
+        assert_eq!(ent, e);
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+}
