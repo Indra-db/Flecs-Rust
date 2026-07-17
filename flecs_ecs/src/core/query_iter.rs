@@ -4,6 +4,30 @@ use core::ffi::c_void;
 use crate::core::*;
 use crate::sys;
 
+/// An iterator over a query, bound to the world or stage it was created with.
+///
+/// `QueryIter` holds raw world/iterator pointers and is therefore
+/// `!Send`/`!Sync` — it cannot cross threads, even scoped ones:
+///
+/// ```compile_fail,E0277
+/// use flecs_ecs::prelude::*;
+///
+/// #[derive(Component)]
+/// struct Position {
+///     x: f32,
+/// }
+///
+/// let world = World::new();
+/// world.entity().set(Position { x: 0.0 });
+///
+/// let query = world.new_query::<&Position>();
+/// let iter = query.iterable();
+/// std::thread::scope(|s| {
+///     s.spawn(move || {
+///         drop(iter);
+///     });
+/// });
+/// ```
 pub struct QueryIter<'a, P, T>
 where
     T: QueryTuple,
