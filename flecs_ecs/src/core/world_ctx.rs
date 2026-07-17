@@ -1,6 +1,8 @@
 use super::{FlecsArray, FlecsIdMap, World};
 use crate::sys;
 
+use core::cell::Cell;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -8,74 +10,122 @@ extern crate alloc;
 use alloc::vec;
 
 pub(crate) struct WorldCtx {
-    query_ref_count: i32,
+    query_ref_count: Cell<i32>,
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
-    is_panicking: bool,
+    is_panicking: Cell<bool>,
+    owning_thread: std::thread::ThreadId,
 }
 
 impl WorldCtx {
     pub(crate) fn new() -> Self {
         Self {
-            query_ref_count: 0,
+            query_ref_count: Cell::new(0),
             components: Default::default(),
             components_array: vec![0; 500],
-            is_panicking: false,
+            is_panicking: Cell::new(false),
+            owning_thread: std::thread::current().id(),
         }
     }
 
-    pub(crate) fn inc_query_ref_count(&mut self) {
+    pub(crate) fn owning_thread(&self) -> std::thread::ThreadId {
+        self.owning_thread
+    }
+
+    pub(crate) fn inc_query_ref_count(&self) {
         unsafe {
             if sys::ecs_os_has_threading() {
                 if let Some(ainc) = sys::ecs_os_api.ainc_ {
-                    ainc(&mut self.query_ref_count);
+                    ainc(self.query_ref_count.as_ptr());
                 }
             } else {
-                self.query_ref_count += 1;
+                self.query_ref_count.set(self.query_ref_count.get() + 1);
             }
         }
     }
 
-    pub(crate) fn dec_query_ref_count(&mut self) {
+    pub(crate) fn dec_query_ref_count(&self) {
         unsafe {
             if sys::ecs_os_has_threading() {
                 if let Some(adec) = sys::ecs_os_api.adec_ {
-                    adec(&mut self.query_ref_count);
+                    adec(self.query_ref_count.as_ptr());
                 }
             } else {
-                self.query_ref_count -= 1;
+                self.query_ref_count.set(self.query_ref_count.get() - 1);
             }
         }
     }
 
     #[allow(dead_code)] //used in tests
     pub(crate) fn query_ref_count(&self) -> i32 {
-        self.query_ref_count
+        self.query_ref_count.get()
     }
 
     pub(crate) fn is_ref_count_zero(&self) -> bool {
-        self.query_ref_count == 0
+        self.query_ref_count.get() == 0
     }
 
-    pub(crate) fn set_is_panicking_true(&mut self) {
-        self.is_panicking = true;
+    pub(crate) fn set_is_panicking_true(&self) {
+        self.is_panicking.set(true);
     }
 
     pub(crate) fn is_panicking(&self) -> bool {
-        self.is_panicking || std::thread::panicking()
+        self.is_panicking.get() || std::thread::panicking()
     }
 }
 
 impl World {
-    #[allow(dead_code)] //used in tests
     pub(crate) fn world_ctx(&self) -> &WorldCtx {
         unsafe { &*(sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) as *const WorldCtx) }
     }
 
-    #[allow(clippy::mut_from_ref)]
-    pub(crate) fn world_ctx_mut(&self) -> &mut WorldCtx {
-        unsafe { &mut *(sys::ecs_get_binding_ctx(self.raw_world.as_ptr()) as *mut WorldCtx) }
+    // XAI: thread-affinity model. `World`/`WorldRef` are !Send, so all safe
+    // handles stay on the thread that created the world (`owning_thread`).
+    // Component data can still reach worker threads through two doors:
+    // 1. `par_*` systems — guarded statically (`TupleType: Send` bounds +
+    //    conditional `Query` Send/Sync impls).
+    // 2. Views handed to par callbacks (`EntityView`, `TableIter`,
+    //    `WorldRef::from_ptr` in trampolines) — guarded by the runtime checks
+    //    below at every typed materialization/move choke point.
+    // This relies on the flecs C scheduler invariant that non-multi_threaded
+    // systems only execute on the thread calling progress() (flecs.c
+    // flecs_run_pipeline_ops: assert(!stage_index || op->multi_threaded)).
+    // Re-verify on every vendored flecs C upgrade.
+
+    /// Asserts that a shared reference (`&T`) to component data may be
+    /// materialized on the current thread. Compiles to nothing for `Sync`
+    /// component types.
+    #[inline(always)]
+    pub(crate) fn check_thread_affinity_shared<T: crate::core::ComponentInfo>(&self) {
+        if !T::IMPLS_SYNC {
+            self.assert_owning_thread::<T>();
+        }
     }
+
+    /// Asserts that an exclusive reference (`&mut T`) to component data may be
+    /// materialized, or a `T` value moved in/out of storage, on the current
+    /// thread. Compiles to nothing for `Send` component types.
+    #[inline(always)]
+    pub(crate) fn check_thread_affinity_exclusive<T: crate::core::ComponentInfo>(&self) {
+        if !T::IMPLS_SEND {
+            self.assert_owning_thread::<T>();
+        }
+    }
+
+    #[inline(always)]
+    fn assert_owning_thread<T>(&self) {
+        if std::thread::current().id() != self.world_ctx().owning_thread() {
+            thread_affinity_violation(core::any::type_name::<T>());
+        }
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn thread_affinity_violation(type_name: &str) -> ! {
+    panic!(
+        "component `{type_name}` is thread-bound (!Send or !Sync) and can only be accessed from the thread that owns the world"
+    );
 }
 
 #[test]

@@ -20,7 +20,8 @@ pub use world_provider::*;
 
 use crate::core::{
     ComponentId, ComponentPointers, EntityView, FieldIndex, ImplementsClone, ImplementsDefault,
-    ImplementsPartialEq, ImplementsPartialOrd, QueryTuple, TableIter, ecs_assert,
+    ImplementsPartialEq, ImplementsPartialOrd, ImplementsSend, ImplementsSync, QueryTuple,
+    TableIter, ecs_assert,
 };
 #[cfg(feature = "flecs_safety_locks")]
 use crate::core::{DECREMENT, INCREMENT, do_read_write_locks};
@@ -417,6 +418,14 @@ impl<T: PartialEq> ImplementsPartialEq<T> {
 }
 
 impl<T: PartialOrd> ImplementsPartialOrd<T> {
+    pub const IMPLS: bool = true;
+}
+
+impl<T: Send> ImplementsSend<T> {
+    pub const IMPLS: bool = true;
+}
+
+impl<T: Sync> ImplementsSync<T> {
     pub const IMPLS: bool = true;
 }
 

@@ -422,6 +422,26 @@ where
     }
 }
 
+impl<'a, T> AlertBuilder<'a, T>
+where
+    T: QueryTuple,
+{
+    /// Attempts to build the alert, returning `None` if alert creation fails.
+    ///
+    /// This is the fallible counterpart of [`build()`](Builder::build): it returns
+    /// `None` instead of a handle to an invalid entity when the underlying
+    /// `ecs_alert_init` call fails, for example due to an invalid query
+    /// expression passed to `expr()` or a filter without a `$this` term.
+    ///
+    /// # See also
+    ///
+    /// * [`QueryBuilder::try_build()`]
+    pub fn try_build(&mut self) -> Option<Alert<'a>> {
+        let alert = self.build();
+        if *alert.id() == 0 { None } else { Some(alert) }
+    }
+}
+
 impl<'a, T: QueryTuple> WorldProvider<'a> for AlertBuilder<'a, T> {
     fn world(&self) -> WorldRef<'a> {
         self.world

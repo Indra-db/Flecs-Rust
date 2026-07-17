@@ -22,10 +22,6 @@ impl FlecsConstantId for EntityView<'static> {
     const ID: u64 = ECS_ENTITY_T;
 }
 
-unsafe impl Send for EntityView<'static> {}
-
-unsafe impl Sync for EntityView<'static> {}
-
 impl DataComponent for EntityView<'static> {}
 
 impl ComponentType<flecs_ecs::core::Struct> for EntityView<'static> {}
@@ -41,6 +37,10 @@ impl ComponentInfo for EntityView<'static> {
         { flecs_ecs::core::utility::types::ImplementsPartialEq::<EntityView<'static>>::IMPLS };
     const IMPLS_PARTIAL_ORD: bool =
         { flecs_ecs::core::utility::types::ImplementsPartialOrd::<EntityView<'static>>::IMPLS };
+    const IMPLS_SEND: bool =
+        { flecs_ecs::core::utility::types::ImplementsSend::<EntityView<'static>>::IMPLS };
+    const IMPLS_SYNC: bool =
+        { flecs_ecs::core::utility::types::ImplementsSync::<EntityView<'static>>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = false;
@@ -108,6 +108,8 @@ impl flecs_ecs::core::component_registration::ComponentInfo for String {
         { flecs_ecs::core::utility::types::ImplementsDefault::<String>::IMPLS };
     const IMPLS_PARTIAL_EQ: bool = true;
     const IMPLS_PARTIAL_ORD: bool = true;
+    const IMPLS_SEND: bool = { flecs_ecs::core::utility::types::ImplementsSend::<String>::IMPLS };
+    const IMPLS_SYNC: bool = { flecs_ecs::core::utility::types::ImplementsSync::<String>::IMPLS };
     const IS_REF: bool = false;
     const IS_MUT: bool = false;
     const IS_GENERIC: bool = false;

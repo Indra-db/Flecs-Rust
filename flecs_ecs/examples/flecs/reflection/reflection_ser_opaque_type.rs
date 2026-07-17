@@ -38,6 +38,8 @@ fn main() {
         })
         // Return address for requested member
         .ensure_member(|dst: &mut Sum, member: *const c_char| {
+            // SAFETY: member is a null-terminated C string pointer passed in
+            // by the flecs meta serializer for the member name being resolved.
             let member = unsafe { core::ffi::CStr::from_ptr(member) };
             if member != c"a" {
                 &mut dst.a as *mut i32 as *mut core::ffi::c_void

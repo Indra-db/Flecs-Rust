@@ -483,6 +483,41 @@ fn async_stage_add() {
 }
 
 #[test]
+fn async_stage_owning_handle() {
+    let world = World::new();
+    world.component::<Position>();
+
+    let e = world.entity();
+    let stage = world.async_stage();
+
+    e.mut_current_stage(stage.stage()).add(Position::id());
+
+    assert!(!e.has(Position::id()));
+
+    stage.merge();
+
+    assert!(e.has(Position::id()));
+
+    drop(stage);
+
+    assert!(e.has(Position::id()));
+
+    let e2 = world.entity();
+    assert_ne!(e2.id(), 0u64);
+}
+
+#[test]
+fn reset_cached_component_ids_reregisters() {
+    let world = World::new();
+
+    let id_before = world.component::<Position>().id();
+    world.reset_cached_component_ids();
+    let id_after = world.component::<Position>().id();
+
+    assert_eq!(id_before, id_after);
+}
+
+#[test]
 fn with_tag() {
     let world = World::new();
 
@@ -844,6 +879,21 @@ fn recursive_lookup() {
 
         assert_eq!(world.lookup("B"), b.id());
         assert_eq!(world.lookup("::B"), b.id());
+    });
+}
+
+#[test]
+fn lookup_is_recursive_try_lookup_is_scope_only() {
+    let world = World::new();
+
+    let root = world.entity_named("LookupRoot");
+
+    let parent = world.entity_named("LookupParent");
+    parent.scope(|world| {
+        assert_eq!(world.lookup("LookupRoot"), root.id());
+        assert_eq!(world.lookup_recursive("LookupRoot"), root.id());
+        assert!(world.try_lookup("LookupRoot").is_none());
+        assert!(world.try_lookup_recursive("LookupRoot").is_some());
     });
 }
 
@@ -1923,14 +1973,22 @@ fn exclusive_access_self_mutate() {
 #[test]
 #[cfg_attr(not(debug_assertions), ignore)]
 fn exclusive_access_other_mutate() {
+    struct SendPtr(*mut flecs_ecs::sys::ecs_world_t);
+    // SAFETY: the pointer is only used to reconstruct a world handle on the
+    // other thread; the test asserts that flecs' exclusive access guard
+    // aborts that access at runtime.
+    unsafe impl Send for SendPtr {}
+
     let world = World::new();
     let _guard = FlecsPanicAbortGuard::install();
 
     world.exclusive_access_begin(None);
 
-    let world_clone = world.clone();
+    let world_ptr = SendPtr(world.ptr_mut());
     let thread = std::thread::spawn(move || {
-        world_clone.entity();
+        let world_ptr = world_ptr;
+        let world_ref = unsafe { WorldRef::from_ptr(world_ptr.0) };
+        world_ref.entity();
     });
 
     assert!(thread.join().is_err());

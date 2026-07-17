@@ -41,7 +41,7 @@ impl UntypedComponent<'_> {
     /// (name: &'a str,),
     /// (name: &'a str, count: i32),
     /// (name: &'a str, count: i32, offset: i32)
-    pub fn member_unit<'a , Meta: MetaMember<'a>>(
+    pub fn member_unit<'a, Meta: MetaMember<'a>>(
         self,
         type_id: impl IntoEntity,
         unit: impl IntoEntity,
@@ -50,8 +50,8 @@ impl UntypedComponent<'_> {
         let name = compact_str::format_compact!("{}\0", data.name());
         let world = self.world_ptr_mut();
         let id = *self.id;
-        let type_id = *type_id.into_entity(world);
-        let unit = *unit.into_entity(world);
+        let type_id = *type_id.into_entity(self.world());
+        let unit = *unit.into_entity(self.world());
 
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr() as *const _,
@@ -95,7 +95,10 @@ impl UntypedComponent<'_> {
     /// (name: &'satatic str,),
     /// (name: &'a str, count: i32),
     /// (name: &'a str, count: i32, offset: i32)
-    pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(self, data: impl MetaMember<'a>) -> Self {
+    pub fn member_unit_type<'a, T: ComponentId, U: ComponentId>(
+        self,
+        data: impl MetaMember<'a>,
+    ) -> Self {
         self.member_unit(T::get_id(self.world()), U::get_id(self.world()), data)
     }
 
@@ -185,10 +188,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.value.min = min;
         mr.value.max = max;
@@ -208,10 +211,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.warning.min = min;
         mr.warning.max = max;
@@ -231,10 +234,10 @@ impl UntypedComponent<'_> {
         let me = w.entity_from_id(unsafe { (*m).member });
 
         let size = const { core::mem::size_of::<flecs::meta::MemberRanges>() };
-        let mr = unsafe {
-            &mut *(sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size)
-                as *mut flecs::meta::MemberRanges)
-        };
+        let ptr =
+            unsafe { sys::ecs_ensure_id(world_ptr, *me.id, flecs::meta::MemberRanges::ID, size) };
+        assert!(!ptr.is_null(), "failed to ensure MemberRanges component");
+        let mr = unsafe { &mut *(ptr as *mut flecs::meta::MemberRanges) };
 
         mr.error.min = min;
         mr.error.max = max;

@@ -2,7 +2,7 @@ name: CI
 
 env:
   # When changing this, also update the `rust-version` in the workspace `Cargo.toml`
-  RUST_MIN_VER: "1.93.0"
+  RUST_MIN_VER: "1.97.1"
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
-    name: cargo fmt (1.93)
+    name: cargo fmt (1.97)
     steps: 
       - uses: actions/checkout@v6
       - name: install MSRV toolchain
@@ -39,14 +39,14 @@ jobs:
     strategy:
       matrix:
         os: [macos-14, macos-15, ubuntu-22.04, windows-2022]
-    name: cargo clippy + test (1.93)
+    name: cargo clippy + test (1.97)
     steps:
       - uses: actions/checkout@v6
       - name: install MSRV toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_MIN_VER }}
-          components: clippy
+          components: clippy, rust-src
       - name: rustc/cargo versions
         run: rustc -V && cargo -V
       - name: cargo clippy
@@ -74,7 +74,7 @@ jobs:
 
   build-ios:
     runs-on: macos-latest
-    name: cargo build + clippy (iOS, 1.93)
+    name: cargo build + clippy (iOS, 1.97)
     env:
       RUSTFLAGS: -Dwarnings
       IPHONEOS_DEPLOYMENT_TARGET: "15.0"
@@ -93,7 +93,7 @@ jobs:
 
   build-musl:
     runs-on: ubuntu-latest
-    name: cargo build + test (musl, 1.93)
+    name: cargo build + test (musl, 1.97)
     env:
       RUSTFLAGS: -Dwarnings
     steps:
@@ -102,7 +102,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_MIN_VER }}
-          components: clippy
+          components: clippy, rust-src
           targets: x86_64-unknown-linux-musl
       - name: Install musl tools
         run: sudo apt-get install -y musl-tools
@@ -115,7 +115,7 @@ jobs:
 
   build-msrv:
     runs-on: ubuntu-latest
-    name: cargo build (MSRV 1.93)
+    name: cargo build (MSRV 1.97)
     env:
       RUSTFLAGS: -Dwarnings
     steps:

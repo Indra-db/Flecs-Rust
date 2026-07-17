@@ -1,3 +1,9 @@
+//! The [`World`] type: the container for all entities, components and queries.
+//!
+//! Start with [`World::new()`] (or [`World::new_mini()`] for a world without any builtin
+//! modules registered) to create a world, then use it to spawn entities, register components
+//! and build queries.
+
 use crate::core::*;
 use crate::sys;
 

@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-" - OnSet: examples.observers.observer_two_components.Velocity: e: p: { 10, 20 }, v: { 1, 2 }\n"
+" - OnSet: Velocity: e: p: { 10, 20 }, v: { 1, 2 }\n"

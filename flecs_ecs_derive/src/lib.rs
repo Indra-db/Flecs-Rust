@@ -272,7 +272,7 @@ pub fn observer(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 ///             let e = it.get_entity(i).unwrap();
 ///             let id = it.id(0);
 ///             // 6. Cast to trait object and use it
-///             let shape = ShapesTrait::cast(e, id);
+///             let shape = unsafe { ShapesTrait::cast(e, id) };
 ///             let calc = shape.calculate();
 ///             println!("{} - calc: {}", e.name(), calc);
 ///         }
@@ -299,7 +299,12 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
     #[cfg(not(feature = "flecs_query_rust_traits"))]
     {
         let _ = input;
-        ProcMacroTokenStream::new()
+        quote::quote! {
+            compile_error!(
+                "`ecs_rust_trait!` requires the `flecs_query_rust_traits` feature to be enabled"
+            );
+        }
+        .into()
     }
 }
 
@@ -322,6 +327,14 @@ pub fn ecs_rust_trait(input: ProcMacroTokenStream) -> ProcMacroTokenStream {
 /// This will expand to:
 /// - `extern "C" fn my_function() { ... }` on WASM targets
 /// - `extern "C-unwind" fn my_function() { ... }` on other targets
+///
+/// # Panic behavior divergence between targets
+///
+/// A panic inside the wrapped function behaves differently per target: on
+/// non-WASM targets it unwinds across the FFI boundary like a regular Rust
+/// panic (catchable with `std::panic::catch_unwind`), while on WASM targets
+/// unwinding out of a plain `extern "C"` function immediately aborts the
+/// process, with no opportunity for the host or embedder to recover.
 #[proc_macro_attribute]
 pub fn extern_abi(
     _args: ProcMacroTokenStream,

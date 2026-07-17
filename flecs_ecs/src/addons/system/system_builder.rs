@@ -156,6 +156,30 @@ where
         self.desc.immediate = value;
         self
     }
+
+    /// Attempts to build the system, returning `None` if system creation fails.
+    ///
+    /// This is the fallible counterpart of [`build()`](Builder::build): it returns
+    /// `None` instead of a handle to an invalid entity when the underlying
+    /// `ecs_system_init` call fails, most commonly due to an invalid query
+    /// expression passed to `expr()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if neither a callback nor a run function was set, like
+    /// [`build()`](Builder::build). Use `.each*` / `.run*` to set one.
+    ///
+    /// # See also
+    ///
+    /// * [`QueryBuilder::try_build()`]
+    pub fn try_build(&mut self) -> Option<System<'a>> {
+        let system = self.build();
+        if *system.id() == 0 {
+            None
+        } else {
+            Some(system)
+        }
+    }
 }
 
 #[doc(hidden)]

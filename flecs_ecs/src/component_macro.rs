@@ -439,7 +439,13 @@
 //! ```
 //!
 //! #### `on_replace`
-//! Called when component data is replaced (receives both old and new values):
+//! Called when existing component data is replaced (receives both old and new values).
+//!
+//! The hook only fires when the component already existed on the entity before the
+//! operation, so `old` is always a valid value. Setting a component for the first
+//! time does not fire it. Inside a deferred batch, "already existed" is evaluated
+//! against the entity's state before the batch started: a component added earlier
+//! in the same batch does not count, and none of the batched sets fire the hook.
 //!
 //! ```rust
 //! # use flecs_ecs::prelude::*;

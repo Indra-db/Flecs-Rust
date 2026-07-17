@@ -253,6 +253,17 @@ impl<'a, T> Component<'a, T> {
     }
 
     /// Register on replace hook.
+    ///
+    /// The callback receives `(entity, prev, next)` and is invoked before `next`
+    /// is written over `prev`. It only fires when the component already existed
+    /// on the entity, so `prev` is always a valid value:
+    ///
+    /// - Setting a component for the first time does not fire the hook.
+    /// - Inside a deferred batch, "already existed" is evaluated against the
+    ///   entity's state before the batch started. A component added earlier in
+    ///   the same batch does not count, and none of the batched sets fire the hook.
+    /// - Registering an `on_replace` hook prevents using operations that return
+    ///   a mutable pointer to the component, like `get_mut`, `ensure` and `emplace`.
     pub fn on_replace<Func>(self, func: Func) -> Self
     where
         Func: FnMut(EntityView, &mut T, &mut T) + 'static,
@@ -375,6 +386,20 @@ impl<'a, T> Component<'a, T> {
         Func: FnMut(EntityView, &mut T, &mut T) + 'static,
     {
         let iter = unsafe { &*iter };
+
+        // other_table is the entity's pre-operation table, set by
+        // flecs_invoke_replace_hook. The component existed before the
+        // operation only if other_table contains it (upstream flecs contract:
+        // "to find out whether the component existed before the operation,
+        // call ecs_table_has_id() on other_table"). If it did not exist,
+        // `prev` points to unconstructed memory — not a valid Rust value —
+        // so the hook is skipped entirely.
+        let existed = !iter.other_table.is_null()
+            && unsafe { sys::ecs_table_has_id(iter.real_world, iter.other_table, iter.event_id) };
+        if !existed {
+            return;
+        }
+
         let ctx: *mut ComponentBindingCtx = iter.callback_ctx as *mut _;
         let on_replace = unsafe { (*ctx).on_replace.unwrap() };
         let on_replace = on_replace as *mut Func;

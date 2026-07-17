@@ -420,6 +420,14 @@ where
     _phantom: core::marker::PhantomData<T>,
 }
 
+impl<T: QueryTuple> core::fmt::Debug for QueryBuilder<'_, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("QueryBuilder")
+            .field("terms", &debug_term_list(&self.desc.terms))
+            .finish()
+    }
+}
+
 bitflags::bitflags! {
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub struct QueryFlags: u32 {
@@ -786,11 +794,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
         self
     }
 
-    fn with<T>(&mut self, id: T) -> &mut Self
+    fn with<'s, T>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
-        let access = <Access as FromAccessArg<T>>::from_access_arg(id, self.world());
+        let access = <Access<'s> as FromAccessArg<T>>::from_access_arg(id, self.world());
         self.term();
 
         match access.target {
@@ -801,18 +809,17 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
                 self.init_current_term(ecs_pair(*rel, *target));
             }
             AccessTarget::Name(name) => {
-                self.set_first::<&'static str>(name);
+                self.set_first::<&str>(name);
             }
             AccessTarget::PairName(rel, target) => {
-                self.set_first::<&'static str>(rel)
-                    .set_second::<&'static str>(target);
+                self.set_first::<&str>(rel).set_second::<&str>(target);
             }
             AccessTarget::PairEntityName(rel, target) => {
                 self.init_current_term(rel);
-                self.set_second::<&'static str>(target);
+                self.set_second::<&str>(target);
             }
             AccessTarget::PairNameEntity(rel, target) => {
-                self.set_first::<&'static str>(rel);
+                self.set_first::<&str>(rel);
                 self.set_second::<Entity>(target);
             }
         }
@@ -854,9 +861,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /* Without methods, shorthand for .with(...).not() */
 
     /// set term without Id
-    fn without<T>(&mut self, id: T) -> &mut Self
+    fn without<'s, T>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
         self.with(id).not()
     }
@@ -903,7 +910,21 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     /// Sets the current term to the one with the provided type.
     /// This loops over all terms to find the one with the provided type.
     /// For performance-critical paths, use `term_at(index: u32)` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no term with the provided type exists in the query.
+    /// See [`try_term_at_type()`](Self::try_term_at_type) for a fallible variant.
     fn term_at_type<T: ComponentId>(&mut self) -> &mut Self {
+        self.try_term_at_type::<T>()
+            .expect("term_at_type() called with type that is not in query")
+    }
+
+    /// Sets the current term to the one with the provided type, returning `None`
+    /// if no term with the provided type exists in the query.
+    /// This loops over all terms to find the one with the provided type.
+    /// For performance-critical paths, use `term_at(index: u32)` instead.
+    fn try_term_at_type<T: ComponentId>(&mut self) -> Option<&mut Self> {
         let term_id = T::entity_id(self.world());
         let world_ptr = self.world_ptr_mut();
 
@@ -920,11 +941,11 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
                     || (cur_term_pair != 0
                         && term_id == unsafe { sys::ecs_get_typeid(world_ptr, cur_term_pair) }))
             {
-                return self.term_at(i as u32);
+                return Some(self.term_at(i as u32));
             }
         }
 
-        panic!("term_at_type() called with type that is not in query",);
+        None
     }
 
     /// Sets the current term to the one at the provided index.
@@ -1008,9 +1029,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the id as current term and in mode out
-    fn write<T>(&mut self, id: T) -> &mut Self
+    fn write<'s, T>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
         self.with(id);
         TermBuilderImpl::write_curr(self)
@@ -1026,9 +1047,9 @@ pub trait QueryBuilderImpl<'a>: TermBuilderImpl<'a> {
     }
 
     /// Set the id as current term and in mode in
-    fn read<T>(&mut self, id: T) -> &mut Self
+    fn read<'s, T>(&mut self, id: T) -> &mut Self
     where
-        Access: FromAccessArg<T>,
+        Access<'s>: FromAccessArg<T>,
     {
         self.with(id);
         TermBuilderImpl::read_curr(self)

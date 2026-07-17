@@ -417,3 +417,34 @@ mod component_hooks_attributes {
         assert_eq!(c_replace.count, 2, "Expected 2 OnReplaceHook calls");
     }
 }
+
+mod multi_item_and_trailing_comma_attributes {
+    use super::*;
+
+    #[derive(Component)]
+    struct TTrail;
+
+    #[derive(Component, Default)]
+    struct CTrail {
+        value: u32,
+    }
+
+    #[derive(Component)]
+    #[flecs(
+        traits(Transitive, flecs::Sparse,),
+        add(TTrail,),
+        set(CTrail { value: 7 },)
+    )]
+    struct TrailingCommas;
+
+    #[test]
+    fn der_attr_multi_item_and_trailing_commas() {
+        let world = World::new();
+
+        let c = world.component::<TrailingCommas>();
+        assert!(c.has(flecs::Transitive));
+        assert!(c.has(flecs::Sparse));
+        assert!(c.has(TTrail::id()));
+        c.get::<&CTrail>(|v| assert_eq!(v.value, 7));
+    }
+}

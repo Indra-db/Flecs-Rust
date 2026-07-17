@@ -17,7 +17,11 @@ pub struct ComponentsData<T: ClonedTuple, const LEN: usize> {
 }
 
 pub trait ClonedComponentPointers<T: ClonedTuple> {
-    fn new<'a, const SHOULD_PANIC: bool>(
+    /// # Safety
+    ///
+    /// The caller must ensure that `record` is the entity record for `entity`
+    /// as returned by `ecs_record_find` on the same world.
+    unsafe fn new<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
@@ -36,7 +40,7 @@ pub trait ClonedComponentPointers<T: ClonedTuple> {
 }
 
 impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for ComponentsData<T, LEN> {
-    fn new<'a, const SHOULD_PANIC: bool>(
+    unsafe fn new<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
@@ -46,14 +50,18 @@ impl<T: ClonedTuple, const LEN: usize> ClonedComponentPointers<T> for Components
         #[cfg(feature = "flecs_safety_locks")]
         let mut safety_info = [sys::ecs_lock_target_t::default(); LEN];
 
-        let has_all_components = T::populate_array_ptrs::<SHOULD_PANIC>(
-            world,
-            entity,
-            record,
-            &mut array_components[..],
-            #[cfg(feature = "flecs_safety_locks")]
-            &mut safety_info,
-        );
+        // SAFETY: same contract as this function — record is the entity's
+        // record from the same world, guaranteed by the caller.
+        let has_all_components = unsafe {
+            T::populate_array_ptrs::<SHOULD_PANIC>(
+                world,
+                entity,
+                record,
+                &mut array_components[..],
+                #[cfg(feature = "flecs_safety_locks")]
+                &mut safety_info,
+            )
+        };
 
         Self {
             array_components,
@@ -159,12 +167,17 @@ pub trait ClonedTuple: Sized {
     type Pointers: ClonedComponentPointers<Self>;
     type TupleType<'a>;
 
-    fn create_ptrs<'a, const SHOULD_PANIC: bool>(
+    /// # Safety
+    ///
+    /// The caller must ensure that `record` is the entity record for `entity`
+    /// as returned by `ecs_record_find` on the same world.
+    unsafe fn create_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
     ) -> Self::Pointers {
-        Self::Pointers::new::<'a, SHOULD_PANIC>(world, entity, record)
+        // SAFETY: same contract as this function, guaranteed by the caller.
+        unsafe { Self::Pointers::new::<'a, SHOULD_PANIC>(world, entity, record) }
     }
 
     fn create_ptrs_singleton<'a, const SHOULD_PANIC: bool>(
@@ -173,8 +186,17 @@ pub trait ClonedTuple: Sized {
         Self::Pointers::new_singleton::<'a, SHOULD_PANIC>(world)
     }
 
+    /// # Safety
+    ///
+    /// The caller must ensure that `world_ptr` points to a valid world and
+    /// that `record` is the (non-null) entity record for `entity` obtained
+    /// from that same world.
     #[inline(always)]
-    fn internal_populate_array_ptrs<'a, const SHOULD_PANIC: bool, T: ClonedTupleTypeOperation>(
+    unsafe fn internal_populate_array_ptrs<
+        'a,
+        const SHOULD_PANIC: bool,
+        T: ClonedTupleTypeOperation,
+    >(
         world: &WorldRef<'a>,
         world_ptr: *mut sys::ecs_world_t,
         entity: u64,
@@ -185,6 +207,8 @@ pub trait ClonedTuple: Sized {
         index: usize,
         #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_lock_target_t],
     ) {
+        world.check_thread_affinity_shared::<<T::OnlyType as ComponentOrPairId>::CastType>();
+
         let get_ptr = unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
         let component_ptr = get_ptr.ptr;
 
@@ -240,7 +264,11 @@ pub trait ClonedTuple: Sized {
         }
     }
 
-    fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
+    /// # Safety
+    ///
+    /// The caller must ensure that `record` is the entity record for `entity`
+    /// as returned by `ecs_record_find` on the same world.
+    unsafe fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
@@ -269,7 +297,7 @@ where
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'e> = A::ActualType;
 
-    fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
+    unsafe fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
         world: impl WorldProvider<'a>,
         entity: Entity,
         record: *const ecs_record_t,
@@ -285,18 +313,22 @@ where
 
         let id = <A::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-        Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
-            &world_ref,
-            world_ptr,
-            entity,
-            record,
-            id,
-            components,
-            &mut has_all_components,
-            0,
-            #[cfg(feature = "flecs_safety_locks")]
-            safety_info,
-        );
+        // SAFETY: world_ptr comes from the live world above; record is
+        // the caller-provided record for entity from that world.
+        unsafe {
+            Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
+                &world_ref,
+                world_ptr,
+                entity,
+                record,
+                id,
+                components,
+                &mut has_all_components,
+                0,
+                #[cfg(feature = "flecs_safety_locks")]
+                safety_info,
+            );
+        }
 
         has_all_components
     }
@@ -316,18 +348,22 @@ where
         let mut has_all_components = true;
 
 
-        Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
-            &world_ref,
-            world_ptr,
-            entity,
-            record,
-            id,
-            components,
-            &mut has_all_components,
-            0,
-            #[cfg(feature = "flecs_safety_locks")]
-            safety_info,
-        );
+        // SAFETY: world_ptr comes from the live world above; record was
+        // just looked up for entity in that same world.
+        unsafe {
+            Self::internal_populate_array_ptrs::<SHOULD_PANIC, A>(
+                &world_ref,
+                world_ptr,
+                entity,
+                record,
+                id,
+                components,
+                &mut has_all_components,
+                0,
+                #[cfg(feature = "flecs_safety_locks")]
+                safety_info,
+            );
+        }
 
         has_all_components
     }
@@ -388,7 +424,7 @@ macro_rules! impl_cloned_tuple {
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
 
             #[allow(unused)]
-            fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
+            unsafe fn populate_array_ptrs<'a, const SHOULD_PANIC: bool>(
                 world: impl WorldProvider<'a>, entity: Entity, record: *const ecs_record_t, components: &mut [*mut c_void],
                 #[cfg(feature = "flecs_safety_locks")] safety_info: &mut [sys::ecs_lock_target_t]
             ) -> bool {
@@ -402,9 +438,13 @@ macro_rules! impl_cloned_tuple {
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
-                        #[cfg(feature = "flecs_safety_locks")]
-                        safety_info);
+                    // SAFETY: world_ptr comes from the live world above; record is
+                    // the caller-provided record for entity from that world.
+                    unsafe {
+                        Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
+                            #[cfg(feature = "flecs_safety_locks")]
+                            safety_info);
+                    }
 
                     index += 1;
                 )*
@@ -427,9 +467,13 @@ macro_rules! impl_cloned_tuple {
                     let record = unsafe { sys::ecs_record_find(world_ptr, entity) };
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
 
-                    Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
-                        #[cfg(feature = "flecs_safety_locks")]
-                        safety_info);
+                    // SAFETY: world_ptr comes from the live world above; record was
+                    // just looked up for entity in that same world.
+                    unsafe {
+                        Self::internal_populate_array_ptrs::<SHOULD_PANIC, $t>(&world_ref, world_ptr, entity, record, id, components, &mut has_all_components, index,
+                            #[cfg(feature = "flecs_safety_locks")]
+                            safety_info);
+                    }
 
                     index += 1;
                 )*

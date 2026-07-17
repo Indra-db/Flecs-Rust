@@ -51,14 +51,10 @@ use core::ptr::NonNull;
 // TODO I can probably return two different field types, one for shared and one for non-shared
 // then I can customize the index behavior
 
-/// Type-safe index for accessing field rows without bounds checks.
+/// Type-safe index for accessing field rows.
 ///
-/// `FieldIndex` is returned by [`TableIter::iter()`](crate::core::TableIter::iter) and provides
-/// unchecked access to field elements. This is safe because the index can only be constructed
-/// from the iterator itself, guaranteeing it's within bounds.
-///
-/// Using `FieldIndex` eliminates bounds checking overhead during iteration, making it
-/// significantly faster than using `usize` indexing in hot loops.
+/// `FieldIndex` is returned by [`TableIter::iter()`](crate::core::TableIter::iter) and is used
+/// to index [`Field`]/[`FieldMut`] elements during iteration.
 ///
 /// # Example
 ///
@@ -73,31 +69,31 @@ use core::ptr::NonNull;
 ///     while it.next() {
 ///         let pos = it.field::<Position>(0);
 ///
-///         // iter() returns FieldIndex - no bounds checks
+///         // iter() returns FieldIndex
 ///         for i in it.iter() {
-///             let position = &pos[i]; // Unchecked access
+///             let position = &pos[i];
 ///         }
 ///     }
 /// });
 /// ```
 ///
-/// # Safety
+/// # Panics
 ///
-/// While indexing with `FieldIndex` is unchecked, it's safe because:
-/// - `FieldIndex` can only be obtained from `TableIter::iter()`
-/// - The iterator guarantees all indices are within the valid range
-/// - Manual construction requires `unsafe` and proper validation
+/// Indexing a field with a `FieldIndex` is bounds-checked against the field's length and
+/// panics when out of bounds. This matters for shared fields (see [`Field::is_shared()`]),
+/// which only contain a single element even though the iterator yields one index per entity:
+/// indexing a shared field above index 0 panics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FieldIndex(pub(crate) usize);
 
 impl FieldIndex {
     /// Constructs a new `FieldIndex` from a `usize` value.
     ///
-    /// This is useful when you need a more efficient indexing mechanism for fields than usize as it avoids unnecessary bounds checks.
+    /// This function does *not* perform any bounds or validity checks; indexing a field with
+    /// an out-of-bounds `FieldIndex` panics.
     ///
     /// # Safety
     /// The caller must ensure that `value` is a valid field index.
-    /// This function does *not* perform any bounds or validity checks.
     #[inline(always)]
     pub unsafe fn new(value: usize) -> Self {
         Self(value)
@@ -427,12 +423,18 @@ impl<'a, T, const LOCK: bool> Index<FieldIndex> for Field<'a, T, LOCK> {
 
     #[inline(always)]
     fn index(&self, idx: FieldIndex) -> &'a Self::Output {
-        // Safety: This index can only be obtained from `it.iter` or unsafe FieldIndex::new
-        ecs_assert!(
-            !(self.is_shared && idx.0 > 0),
-            FlecsErrorCode::InvalidParameter,
-            "Field is shared, cannot index above index 0"
+        assert!(
+            idx.0 < self.slice_components.len(),
+            "FieldIndex {} out of bounds for field of length {}{}",
+            idx.0,
+            self.slice_components.len(),
+            if self.is_shared {
+                " (field is shared, only index 0 is valid)"
+            } else {
+                ""
+            }
         );
+        // SAFETY: idx.0 < slice_components.len() is checked above
         unsafe { self.slice_components.get_unchecked(idx.0) }
     }
 }
@@ -773,12 +775,18 @@ impl<'a, T, const LOCK: bool> Index<FieldIndex> for FieldMut<'a, T, LOCK> {
 
     #[inline(always)]
     fn index(&self, idx: FieldIndex) -> &T {
-        // Safety: This index can only be obtained from `it.iter` or unsafe FieldIndex::new
-        ecs_assert!(
-            !(self.is_shared && idx.0 > 0),
-            FlecsErrorCode::InvalidParameter,
-            "Field is shared, cannot index above index 0"
+        assert!(
+            idx.0 < self.slice_components.len(),
+            "FieldIndex {} out of bounds for field of length {}{}",
+            idx.0,
+            self.slice_components.len(),
+            if self.is_shared {
+                " (field is shared, only index 0 is valid)"
+            } else {
+                ""
+            }
         );
+        // SAFETY: idx.0 < slice_components.len() is checked above
         unsafe { self.slice_components.get_unchecked(idx.0) }
     }
 }
@@ -786,12 +794,18 @@ impl<'a, T, const LOCK: bool> Index<FieldIndex> for FieldMut<'a, T, LOCK> {
 impl<'a, T, const LOCK: bool> IndexMut<FieldIndex> for FieldMut<'a, T, LOCK> {
     #[inline(always)]
     fn index_mut(&mut self, idx: FieldIndex) -> &mut T {
-        // Safety: This index can only be obtained from `it.iter`
-        ecs_assert!(
-            !(self.is_shared && idx.0 > 0),
-            FlecsErrorCode::InvalidParameter,
-            "Field is shared, cannot index above index 0"
+        assert!(
+            idx.0 < self.slice_components.len(),
+            "FieldIndex {} out of bounds for field of length {}{}",
+            idx.0,
+            self.slice_components.len(),
+            if self.is_shared {
+                " (field is shared, only index 0 is valid)"
+            } else {
+                ""
+            }
         );
+        // SAFETY: idx.0 < slice_components.len() is checked above
         unsafe { &mut *self.slice_components.get_unchecked_mut(idx.0) }
     }
 }
@@ -879,11 +893,26 @@ impl<'a, T, const LOCK: bool> IndexMut<usize> for FieldMut<'a, T, LOCK> {
 /// - [`FieldAtMut`] for mutable sparse component access
 pub struct FieldAt<'a, T> {
     pub(crate) component: &'a T,
-    // None means dense (no sparse lock needed); Some means sparse (lock acquired on construction)
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) idr: Option<NonNull<sys::ecs_component_record_t>>,
-    #[cfg(feature = "flecs_safety_locks")]
-    is_multithreaded: bool,
+    pub(crate) lock: FieldAtLock,
+}
+
+/// Lock bookkeeping for [`FieldAt`]/[`FieldAtMut`]. The lock is acquired on construction and
+/// released on drop.
+#[cfg(feature = "flecs_safety_locks")]
+pub(crate) enum FieldAtLock {
+    /// Sparse / non-fragmenting component: per-component-record lock.
+    Sparse {
+        idr: NonNull<sys::ecs_component_record_t>,
+        multithreaded: bool,
+    },
+    /// Dense component: table column lock, same lock [`Field`]/[`FieldMut`] use.
+    /// `stage_id` is `Some` when the world is currently multithreaded.
+    DenseColumn {
+        table: NonNull<sys::ecs_table_t>,
+        column: i16,
+        stage_id: Option<i32>,
+    },
 }
 
 impl<T> core::fmt::Debug for FieldAt<'_, T>
@@ -898,14 +927,34 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAt<'_, T> {
     fn drop(&mut self) {
-        if let Some(mut idr) = self.idr {
-            if self.is_multithreaded {
-                unsafe {
-                    sparse_id_record_lock_read_end::<true>(idr.as_mut());
+        match self.lock {
+            FieldAtLock::Sparse {
+                mut idr,
+                multithreaded,
+            } => {
+                if multithreaded {
+                    unsafe {
+                        sparse_id_record_lock_read_end::<true>(idr.as_mut());
+                    }
+                } else {
+                    unsafe {
+                        sparse_id_record_lock_read_end::<false>(idr.as_mut());
+                    }
                 }
-            } else {
-                unsafe {
-                    sparse_id_record_lock_read_end::<false>(idr.as_mut());
+            }
+            FieldAtLock::DenseColumn {
+                mut table,
+                column,
+                stage_id,
+            } => {
+                if let Some(stage_id) = stage_id {
+                    unsafe {
+                        table_column_lock_read_end::<true>(table.as_mut(), column, stage_id);
+                    }
+                } else {
+                    unsafe {
+                        table_column_lock_read_end::<false>(table.as_mut(), column, 0);
+                    }
                 }
             }
         }
@@ -942,24 +991,42 @@ impl<'a, T> FieldAt<'a, T> {
 
         Self {
             component,
-            idr: Some(idr),
-            is_multithreaded,
+            lock: FieldAtLock::Sparse {
+                idr,
+                multithreaded: is_multithreaded,
+            },
         }
     }
 
-    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    /// Construct for dense (non-sparse) components — no lock is acquired.
     #[cfg(not(feature = "flecs_safety_locks"))]
     pub(crate) fn new_dense(component: &'a T) -> Self {
         Self { component }
     }
 
-    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    /// Construct for dense (non-sparse) components — takes the same table column read lock
+    /// that [`Field`] uses, released on drop.
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) fn new_dense(component: &'a T) -> Self {
+    pub(crate) fn new_dense(
+        component: &'a T,
+        world: &WorldRef,
+        table: NonNull<sys::ecs_table_t>,
+        column: i16,
+    ) -> Self {
+        let stage_id = world.stage_id();
+        let multithreaded = world.is_currently_multithreaded();
+        if multithreaded {
+            get_table_column_lock_read_begin::<true>(world, table.as_ptr(), column, stage_id);
+        } else {
+            get_table_column_lock_read_begin::<false>(world, table.as_ptr(), column, stage_id);
+        }
         Self {
             component,
-            idr: None,
-            is_multithreaded: false,
+            lock: FieldAtLock::DenseColumn {
+                table,
+                column,
+                stage_id: if multithreaded { Some(stage_id) } else { None },
+            },
         }
     }
 }
@@ -987,11 +1054,8 @@ impl<'a, T> FieldAt<'a, T> {
 /// - [`TableIter::field_at_mut()`](crate::core::TableIter::field_at_mut) to obtain `FieldAtMut`
 pub struct FieldAtMut<'a, T> {
     pub(crate) component: &'a mut T,
-    // None means dense (no sparse lock needed); Some means sparse (lock acquired on construction)
     #[cfg(feature = "flecs_safety_locks")]
-    pub(crate) idr: Option<NonNull<sys::ecs_component_record_t>>,
-    #[cfg(feature = "flecs_safety_locks")]
-    is_multithreaded: bool,
+    pub(crate) lock: FieldAtLock,
 }
 
 impl<T> core::fmt::Debug for FieldAtMut<'_, T>
@@ -1006,14 +1070,34 @@ where
 #[cfg(feature = "flecs_safety_locks")]
 impl<T> Drop for FieldAtMut<'_, T> {
     fn drop(&mut self) {
-        if let Some(mut idr) = self.idr {
-            if self.is_multithreaded {
-                unsafe {
-                    sparse_id_record_lock_write_end::<true>(idr.as_mut());
+        match self.lock {
+            FieldAtLock::Sparse {
+                mut idr,
+                multithreaded,
+            } => {
+                if multithreaded {
+                    unsafe {
+                        sparse_id_record_lock_write_end::<true>(idr.as_mut());
+                    }
+                } else {
+                    unsafe {
+                        sparse_id_record_lock_write_end::<false>(idr.as_mut());
+                    }
                 }
-            } else {
-                unsafe {
-                    sparse_id_record_lock_write_end::<false>(idr.as_mut());
+            }
+            FieldAtLock::DenseColumn {
+                mut table,
+                column,
+                stage_id,
+            } => {
+                if let Some(stage_id) = stage_id {
+                    unsafe {
+                        table_column_lock_write_end::<true>(table.as_mut(), column, stage_id);
+                    }
+                } else {
+                    unsafe {
+                        table_column_lock_write_end::<false>(table.as_mut(), column, 0);
+                    }
                 }
             }
         }
@@ -1059,26 +1143,44 @@ impl<'a, T> FieldAtMut<'a, T> {
 
         Self {
             component,
-            idr: Some(idr),
-            is_multithreaded,
+            lock: FieldAtLock::Sparse {
+                idr,
+                multithreaded: is_multithreaded,
+            },
         }
     }
 
-    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    /// Construct for dense (non-sparse) components — no lock is acquired.
     #[cfg(not(feature = "flecs_safety_locks"))]
     #[inline(always)]
     pub(crate) fn new_dense(component: &'a mut T) -> Self {
         Self { component }
     }
 
-    /// Construct for dense (non-sparse) components — no sparse lock is acquired.
+    /// Construct for dense (non-sparse) components — takes the same table column write lock
+    /// that [`FieldMut`] uses, released on drop.
     #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
-    pub(crate) fn new_dense(component: &'a mut T) -> Self {
+    pub(crate) fn new_dense(
+        component: &'a mut T,
+        world: &WorldRef,
+        table: NonNull<sys::ecs_table_t>,
+        column: i16,
+    ) -> Self {
+        let stage_id = world.stage_id();
+        let multithreaded = world.is_currently_multithreaded();
+        if multithreaded {
+            get_table_column_lock_write_begin::<true>(world, table.as_ptr(), column, stage_id);
+        } else {
+            get_table_column_lock_write_begin::<false>(world, table.as_ptr(), column, stage_id);
+        }
         Self {
             component,
-            idr: None,
-            is_multithreaded: false,
+            lock: FieldAtLock::DenseColumn {
+                table,
+                column,
+                stage_id: if multithreaded { Some(stage_id) } else { None },
+            },
         }
     }
 }
@@ -1093,8 +1195,9 @@ impl<'a, T> FieldAtMut<'a, T> {
 ///
 /// Since this class provides untyped access, the caller must ensure:
 /// - The returned pointers are cast to the correct type
-/// - Indices are within bounds (`< count`)
 /// - The component size matches expectations
+///
+/// Indexing via [`at()`](Self::at) is bounds-checked and panics when out of bounds.
 ///
 /// # Example
 ///
@@ -1144,22 +1247,27 @@ impl FieldUntyped {
         }
     }
 
+    /// Get a pointer to the element at the specified index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index` is out of bounds (`>= count`) or if the field is shared and
+    /// `index` is not 0.
     #[inline(always)]
     pub fn at(&self, index: usize) -> *const c_void {
-        ecs_assert!(
+        assert!(
             index < self.count,
-            FlecsErrorCode::OutOfRange,
             "Index {} is out of range {}",
             index,
             self.count
         );
 
-        ecs_assert!(
+        assert!(
             !self.is_shared || index == 0,
-            FlecsErrorCode::InvalidParameter,
-            "Column is shared, cannot index"
+            "Column is shared, cannot index above index 0"
         );
 
+        // SAFETY: index < count is checked above, so the offset stays within the column.
         unsafe { self.array.add(index * self.size) }
     }
 }
@@ -1174,10 +1282,12 @@ impl FieldUntyped {
 ///
 /// Since this class provides untyped mutable access, the caller must ensure:
 /// - The returned pointers are cast to the correct type
-/// - Indices are within bounds (`< count`)
 /// - The component size matches expectations
 /// - Proper alignment requirements are met
 /// - No aliasing violations occur
+///
+/// Indexing via [`at()`](Self::at)/[`at_mut()`](Self::at_mut) is bounds-checked and panics
+/// when out of bounds.
 ///
 /// # Example
 ///
@@ -1229,41 +1339,47 @@ impl FieldUntypedMut {
         }
     }
 
+    /// Get a pointer to the element at the specified index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index` is out of bounds (`>= count`) or if the field is shared and
+    /// `index` is not 0.
     #[inline(always)]
     pub fn at(&self, index: usize) -> *const c_void {
-        ecs_assert!(
+        assert!(
             index < self.count,
-            FlecsErrorCode::OutOfRange,
             "Index {} is out of range {}",
             index,
             self.count
         );
 
-        ecs_assert!(
+        assert!(
             !self.is_shared || index == 0,
-            FlecsErrorCode::InvalidParameter,
-            "Column is shared, cannot index"
+            "Column is shared, cannot index above index 0"
         );
 
+        // SAFETY: index < count is checked above, so the offset stays within the column.
         unsafe { self.array.add(index * self.size) }
     }
 
+    /// Get a mutable pointer to the element at the specified index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index` is out of bounds (`>= count`) or if the field is shared.
     #[inline(always)]
     pub fn at_mut(&self, index: usize) -> *mut c_void {
-        ecs_assert!(
+        assert!(
             index < self.count,
-            FlecsErrorCode::OutOfRange,
             "Index {} is out of range {}",
             index,
             self.count
         );
 
-        ecs_assert!(
-            !self.is_shared,
-            FlecsErrorCode::InvalidParameter,
-            "Column is shared, cannot index"
-        );
+        assert!(!self.is_shared, "Column is shared, cannot index mutably");
 
+        // SAFETY: index < count is checked above, so the offset stays within the column.
         unsafe { self.array.add(index * self.size) }
     }
 }
@@ -1406,7 +1522,13 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let (table, row) = if src == 0 {
         (it.table, it.offset as usize)
     } else {
-        let r = unsafe { &*sys::ecs_record_find(it.real_world, src) };
+        let record = unsafe { sys::ecs_record_find(it.real_world, src) };
+        assert!(
+            !record.is_null(),
+            "ecs_field: no record found for field source entity {src}"
+        );
+        // SAFETY: record is non-null, checked above.
+        let r = unsafe { &*record };
         let row = ecs_record_to_row(r.row) as usize;
         (r.table, row)
     };
@@ -1536,7 +1658,13 @@ pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) 
     let (table, row) = if src == 0 {
         (it.table, it.offset as usize)
     } else {
-        let r = unsafe { &*sys::ecs_record_find(it.real_world, src) };
+        let record = unsafe { sys::ecs_record_find(it.real_world, src) };
+        assert!(
+            !record.is_null(),
+            "ecs_field: no record found for field source entity {src}"
+        );
+        // SAFETY: record is non-null, checked above.
+        let r = unsafe { &*record };
         let row = ecs_record_to_row(r.row) as usize;
         (r.table, row)
     };

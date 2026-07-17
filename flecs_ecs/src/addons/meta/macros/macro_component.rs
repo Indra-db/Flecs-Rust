@@ -74,7 +74,9 @@ macro_rules! component_type_stringify {
 ///
 /// Intended to be used by [`component!`](crate::component) but can be used standalone.
 ///
-/// Currently aliased to [`member_ext!`](crate::member_ext!).
+/// This is the canonical name to use at call sites. It forwards to
+/// [`member_ext!`](crate::member_ext!), which is the underlying implementation
+/// (named for symmetry with `World::component_ext`) and behaves identically.
 #[macro_export]
 macro_rules! member {
     ($($tt:tt)*) => {
@@ -85,6 +87,9 @@ macro_rules! member {
 /// Function-like macro for registering an external component's field metadata.
 ///
 /// Intended to be used by [`component_ext!`](crate::component_ext) but can be used standalone.
+///
+/// Prefer [`member!`](crate::member) at call sites; this macro is the underlying
+/// implementation and behaves identically.
 ///
 /// Field types are verified using [`assert_is_type!`](crate::assert_is_type!).
 ///
@@ -156,14 +161,17 @@ fn codegen_tuple_struct_macro() {
 
 /// Function-like macro for registering a component, optionally including field metadata.
 ///
-/// Supports structs, fieldless enums and tuple structs (up to 12 items).
+/// Supports structs, fieldless enums and tuple structs (up to 12 items; for larger
+/// tuple structs use the struct form with numeric field indices, e.g. `Big { 0: u8, 1: u8 }`).
 /// Arrays are translated to flecs arrays (`count`).
 ///
 /// Field types are verified using [`assert_is_type!`](crate::assert_is_type!).
 ///
 /// Returns the component.
 ///
-/// Currently aliased to [`component_ext!`](crate::component_ext!).
+/// This is the canonical name to use at call sites. It forwards to
+/// [`component_ext!`](crate::component_ext!), which is the underlying implementation
+/// (named for symmetry with `World::component_ext`) and behaves identically.
 #[macro_export]
 macro_rules! component {
     ($($tt:tt)*) => {
@@ -173,7 +181,13 @@ macro_rules! component {
 
 /// Function-like macro for registering an external component, optionally including field metadata.
 ///
+/// Prefer [`component!`](crate::component) at call sites; this macro is the underlying
+/// implementation and behaves identically.
+///
 /// Supports structs, fieldless enums and tuple structs (up to 12 items).
+/// - Tuple structs with more than 12 fields do not match the tuple arms and fail with a
+///   generic `no rules expected this token` error. Use the struct form with numeric field
+///   indices instead, e.g. `component_ext!(&world, Big { 0: u8, 1: u8, 2: u8 })`.
 /// - Arrays are translated to flecs arrays (`count`).
 /// - Generics are supported, but only type parameters can be passed. Use [`member_ext!`](crate::member_ext) directly if you need more complex types.
 /// - When registering a component of type `Option<T: Default>`, use `#[auto]` to set an appropriate serializer
@@ -375,10 +389,10 @@ pub fn opaque_option_struct<T: Default>(world: WorldRef) -> Opaque<Option<T>, T>
         let member = unsafe { core::ffi::CStr::from_ptr(member) };
         if member == c"None" {
             *data = None;
-            static mut BITBUCKET: bool = false;
-            // rust analyzer marks it as error, but builds perfectly fine without.
-            #[allow(unused_unsafe)]
-            return unsafe { core::ptr::addr_of_mut!(BITBUCKET) } as *mut _;
+            std::thread_local! {
+                static BITBUCKET: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+            }
+            return BITBUCKET.with(core::cell::Cell::as_ptr) as *mut _;
         } else if member == c"Some" {
             if data.is_none() {
                 *data = Some(T::default());

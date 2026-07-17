@@ -53,3 +53,23 @@ fn observer_panic_on_add_4() {
 
     world.entity().set(Position { x: 10, y: 20 });
 }
+
+#[test]
+#[should_panic(expected = "observer's entity no longer exists or is not a valid observer")]
+fn observer_context_on_non_observer_entity_panics() {
+    let world = World::new();
+
+    let entity = world.entity();
+    let observer = world.observer_from(entity);
+    let _ = observer.context();
+}
+
+#[test]
+#[should_panic(expected = "observer's entity no longer exists or is not a valid observer")]
+fn observer_query_on_non_observer_entity_panics() {
+    let world = World::new();
+
+    let entity = world.entity();
+    let mut observer = world.observer_from(entity);
+    let _ = observer.query();
+}

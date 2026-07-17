@@ -9,7 +9,7 @@ impl<'a, T: 'static> Component<'a, T> {
     {
         let mut opaque = func(self.world());
         opaque.desc.entity = self.world().component_id_map::<T>();
-        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
+        drop(opaque);
         self
     }
 
@@ -19,7 +19,7 @@ impl<'a, T: 'static> Component<'a, T> {
     {
         let mut opaque = func(self.world());
         opaque.desc.entity = *id.into();
-        unsafe { sys::ecs_opaque_init(self.world_ptr_mut(), &opaque.desc) };
+        drop(opaque);
         self
     }
 
@@ -99,6 +99,8 @@ impl<'a, T: 'static> Component<'a, T> {
 impl<T: EnumComponentInfo + 'static> Component<'_, T> {
     /// Add constant.
     pub fn constant(&self, name: &str, value: T) -> &Self {
+        // SAFETY: world_ptr_mut() comes from the live world reference held by
+        // self, and self.id is a valid entity id owned by this component.
         unsafe { sys::ecs_add_id(self.world_ptr_mut(), *self.id, flecs::meta::EcsEnum::ID) };
 
         let name = compact_str::format_compact!("{}\0", name);
@@ -109,6 +111,9 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
             ..Default::default()
         };
 
+        // SAFETY: world_ptr_mut() comes from the live world reference held by
+        // self, and desc is a fully initialized ecs_entity_desc_t with a
+        // null-terminated name buffer created just above.
         let eid = unsafe { sys::ecs_entity_init(self.world_ptr_mut(), &desc) };
 
         ecs_assert!(
@@ -121,10 +126,15 @@ impl<T: EnumComponentInfo + 'static> Component<'_, T> {
 
         let pair = ecs_pair(flecs::Constant::ID, *id);
 
+        // SAFETY: world_ptr_mut() comes from the live world reference held by
+        // self; eid was just created by ecs_entity_init and asserted non-zero
+        // above, and ecs_ensure_id is asserted non-null before being written
+        // through as *mut T::UnderlyingTypeOfEnum, matching the size passed.
         unsafe {
             let size = const { core::mem::size_of::<T::UnderlyingTypeOfEnum>() };
             let ptr = sys::ecs_ensure_id(self.world_ptr_mut(), eid, pair, size)
                 as *mut T::UnderlyingTypeOfEnum;
+            assert!(!ptr.is_null(), "failed to ensure enum constant value");
             *ptr = *(&value as *const T as *const <T as ComponentId>::UnderlyingTypeOfEnum);
             sys::ecs_modified_id(self.world_ptr_mut(), eid, pair);
         }

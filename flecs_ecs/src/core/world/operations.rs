@@ -6,14 +6,18 @@ use flecs_ecs_derive::extern_abi;
 
 #[extern_abi]
 unsafe fn c_run_post_frame(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
-    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
+    // ctx is a Box<fn(WorldRef)> created in run_post_frame. Flecs invokes this
+    // callback exactly once per registration, so the Box is reclaimed here.
+    let action: fn(WorldRef) = unsafe { *Box::from_raw(ctx as *mut fn(WorldRef)) };
     let world = unsafe { WorldRef::from_ptr(world) };
     (action)(world);
 }
 
 #[extern_abi]
 unsafe fn c_on_destroyed(world: *mut sys::ecs_world_t, ctx: *mut ::core::ffi::c_void) {
-    let action: fn(WorldRef) = unsafe { core::mem::transmute(ctx as *const ()) };
+    // ctx is a Box<fn(WorldRef)> created in on_destroyed. Flecs invokes atfini
+    // callbacks exactly once when the world is destroyed, so reclaim the Box here.
+    let action: fn(WorldRef) = unsafe { *Box::from_raw(ctx as *mut fn(WorldRef)) };
     let world = unsafe { WorldRef::from_ptr(world) };
     (action)(world);
 }
@@ -159,7 +163,7 @@ impl World {
     /// * C++ API: `world::atfini`
     #[doc(alias = "ecs_atfini")]
     pub fn on_destroyed(&self, action: fn(WorldRef)) {
-        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
+        let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;
         unsafe {
             sys::ecs_atfini(self.raw_world.as_ptr(), Some(c_on_destroyed), ctx);
         }
@@ -177,8 +181,8 @@ impl World {
     /// function needs to sleep to ensure it does not exceed the `target_fps`, when
     /// it is set. When 0 is provided for `delta_time`, the time will be measured.
     ///
-    /// # Safety
-    /// This function should only be ran from the main thread.
+    /// # Thread Safety
+    /// This function should only be run from the main thread.
     ///
     /// # Arguments
     /// * `delta_time`: Time elapsed since the last frame.
@@ -229,7 +233,7 @@ impl World {
     /// This operation must be called at the end of the frame, and always after
     /// [`World::frame_begin()`].
     ///
-    /// # Safety
+    /// # Thread Safety
     /// The function should only be run from the main thread.
     ///
     /// # See also
@@ -291,7 +295,7 @@ impl World {
     /// `readonly_end()` should always happen from a context where the code has
     /// exclusive access to the world. The functions themselves are not thread safe.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
@@ -344,7 +348,7 @@ impl World {
     /// By default, this operation also merges data back into the world, unless auto-merging
     /// was disabled explicitly.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This function should only be run from the main thread.
     ///
     /// # Returns
@@ -406,7 +410,7 @@ impl World {
     /// [`World::defer_begin()`] and [`World::defer_end()`] are executed at the
     /// end of the frame.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This operation is thread safe.
     ///
     /// # Returns
@@ -451,7 +455,7 @@ impl World {
     ///
     /// This should follow a [`World::defer_begin()`] call.
     ///
-    /// # Safety
+    /// # Thread Safety
     /// This operation is thread safe.
     ///
     /// # Returns
@@ -856,7 +860,10 @@ impl World {
     /// The application must ensure that no commands are added to the stage while the
     /// stage is being merged.
     ///
-    /// An asynchronous stage will be cleaned up when it is dropped.
+    /// The returned [`WorldRef`] does not own the stage: the underlying stage is
+    /// **not** freed when the [`WorldRef`] is dropped and stays allocated until the
+    /// process exits. Use [`World::async_stage()`] instead to get an owning handle
+    /// that frees the stage when dropped.
     ///
     /// # Returns
     ///
@@ -889,6 +896,47 @@ impl World {
     /// ```
     pub fn create_async_stage(&self) -> WorldRef<'_> {
         unsafe { WorldRef::from_ptr(sys::ecs_stage_new(self.raw_world.as_ptr())) }
+    }
+
+    /// Create an asynchronous stage that is freed when the returned handle is dropped.
+    ///
+    /// Same semantics as [`World::create_async_stage()`], except the returned
+    /// [`AsyncStage`] owns the stage and frees it on drop, so the stage does not leak.
+    /// Use [`AsyncStage::stage()`] to enqueue commands on the stage and
+    /// [`AsyncStage::merge()`] to merge them into the world.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Position {
+    ///     x: i32,
+    ///     y: i32,
+    /// }
+    ///
+    /// let world = World::new();
+    ///
+    /// let e = world.entity();
+    ///
+    /// let stage = world.async_stage();
+    ///
+    /// e.mut_current_stage(stage.stage()).set(Position { x: 10, y: 20 });
+    ///
+    /// assert!(!e.has(Position::id()));
+    ///
+    /// stage.merge();
+    ///
+    /// assert!(e.has(Position::id()));
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// * [`World::create_async_stage()`]
+    /// * [`World::merge()`]
+    pub fn async_stage(&self) -> AsyncStage<'_> {
+        AsyncStage::new(self)
     }
 
     /// Get actual world.
@@ -988,32 +1036,35 @@ impl World {
         unsafe { sys::ecs_get_binding_ctx(world) as *mut WorldCtx }
     }
 
-    #[expect(dead_code, reason = "possibly used in the future")]
-    pub(crate) fn get_components_map(world: *mut sys::ecs_world_t) -> &'static mut FlecsIdMap {
-        unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
-    }
-
     pub(crate) fn get_components_map_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsIdMap {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components }
     }
 
-    #[doc(hidden)]
-    pub fn components_map(&self) -> &'static mut FlecsIdMap {
+    pub(crate) fn components_map(&self) -> &'static mut FlecsIdMap {
         unsafe { &mut (*(self.components.as_ptr())) }
-    }
-
-    #[expect(dead_code, reason = "possibly used in the future")]
-    pub(crate) fn get_components_array(world: *mut sys::ecs_world_t) -> &'static mut FlecsArray {
-        unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
     pub(crate) fn get_components_array_ptr(world: *mut sys::ecs_world_t) -> *mut FlecsArray {
         unsafe { &mut (*(sys::ecs_get_binding_ctx(world) as *mut WorldCtx)).components_array }
     }
 
-    #[doc(hidden)]
-    pub fn components_array(&self) -> &'static mut FlecsArray {
+    pub(crate) fn components_array(&self) -> &'static mut FlecsArray {
         unsafe { &mut (*(self.components_array.as_ptr())) }
+    }
+
+    /// Resets all cached component ids for this world to zero.
+    ///
+    /// Intended for benchmarks and tests that repeatedly measure component
+    /// registration on the same world. After this call, component ids are
+    /// resolved again (or re-registered) on next use.
+    #[doc(hidden)]
+    pub fn reset_cached_component_ids(&self) {
+        for id in self.components_map().values_mut() {
+            *id = 0;
+        }
+        for id in self.components_array().iter_mut() {
+            *id = 0;
+        }
     }
 
     /// Set world binding context
@@ -1313,7 +1364,11 @@ impl World {
             .unwrap_or_else(|| EntityView::new_from(self, Entity(0)))
     }
 
-    /// Lookup entity by name, only the current scope is searched
+    /// Lookup an entity by name.
+    /// The entity is searched recursively, traversing up the tree from the
+    /// current scope until found. This matches the C++ `world::lookup`, which
+    /// searches recursively by default. Use [`World::try_lookup()`] to search
+    /// only the current scope.
     ///
     /// Matches C++ semantics: returns entity with id 0 if not found.
     ///
@@ -1412,12 +1467,12 @@ impl World {
         set_helper(self.raw_world.as_ptr(), id, component, id);
     }
 
-    /// Set a singleton pair using the second element type and a first id.
+    /// Set a singleton pair using the first element type and a second id.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Caller must ensure that `First` and `second` pair id data type is the one provided.
-    pub fn set_first<First>(&self, second: impl Into<Entity>, first: First)
+    /// Panics if the data type of the `(First, second)` pair id is not `First`.
+    pub fn set_first<First>(&self, second: impl IntoEntity, first: First)
     where
         First: ComponentId + ComponentType<Struct> + DataComponent,
     {
@@ -1427,10 +1482,10 @@ impl World {
 
     /// Set a singleton pair using the second element type and a first id.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Caller must ensure that `first` and `Second` pair id data type is the one provided.
-    pub fn set_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    /// Panics if the data type of the `(first, Second)` pair id is not `Second`.
+    pub fn set_second<Second>(&self, first: impl IntoEntity, second: Second)
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
@@ -1499,7 +1554,7 @@ impl World {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_first<First>(&self, first: First, second: impl Into<Entity>)
+    pub fn assign_first<First>(&self, first: First, second: impl IntoEntity)
     where
         First: ComponentId + DataComponent,
     {
@@ -1510,7 +1565,7 @@ impl World {
     /// assign a component for an entity.
     /// This operation sets the component value. If the entity did not yet have
     /// the component the operation will panic.
-    pub fn assign_second<Second>(&self, first: impl Into<Entity>, second: Second)
+    pub fn assign_second<Second>(&self, first: impl IntoEntity, second: Second)
     where
         Second: ComponentId + DataComponent,
     {
@@ -1781,9 +1836,12 @@ impl World {
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
     pub fn with(&self, id: impl IntoId, mut func: impl FnMut()) {
+        // SAFETY: raw_world is a valid, live world pointer.
         let prev: sys::ecs_id_t =
             unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into_id(self)) };
         func();
+        // SAFETY: raw_world is still the same valid world pointer; prev is the value
+        // ecs_set_with returned above, restoring the previous with-id.
         unsafe {
             sys::ecs_set_with(self.raw_world.as_ptr(), prev);
         }
@@ -1834,6 +1892,7 @@ impl World {
     ///
     /// * `id`: The id to delete.
     pub fn delete_entities_with(&self, id: impl IntoId) {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe {
             sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into_id(self));
         }
@@ -1886,6 +1945,7 @@ impl World {
     ///
     /// * `id`: The id to remove.
     pub fn remove_all(&self, id: impl IntoId) {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe {
             sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into_id(self));
         }
@@ -1935,17 +1995,20 @@ impl World {
     ///
     /// True if the entity exists, false otherwise.
     pub fn exists(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_exists(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is alive in the world.
     pub fn is_alive(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_is_alive(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is valid.
     /// Invalid entities cannot be used with API functions.
     pub fn is_valid(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_is_valid(self.raw_world.as_ptr(), *entity.into()) }
     }
 
@@ -1961,6 +2024,7 @@ impl World {
     /// function will return an Entity of 0. Use `try_get_alive` if you want to
     /// return an `Option<EntityView>`.
     pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
+        // SAFETY: raw_world is a valid, live world pointer.
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
 
         EntityView::new_from(self, entity)
@@ -1977,6 +2041,7 @@ impl World {
     /// The entity with the current generation.
     /// If the entity is not alive, this function will return `None`.
     pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView<'_>> {
+        // SAFETY: raw_world is a valid, live world pointer.
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
         if entity == 0 {
             None
@@ -1998,6 +2063,7 @@ impl World {
     /// The entity with the provided generation.
     pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
         let entity = *entity.into();
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)
     }
@@ -2009,7 +2075,9 @@ impl World {
     /// * `action` - The action to run.
     /// * `ctx` - The context to pass to the action.
     pub fn run_post_frame(&self, action: fn(WorldRef)) {
-        let ctx: *mut ::core::ffi::c_void = action as *const () as *mut ::core::ffi::c_void;
+        let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;
+        // SAFETY: raw_world is a valid, live world pointer; ctx is a Box<fn(WorldRef)>
+        // that c_run_post_frame reclaims exactly once when flecs invokes it.
         unsafe {
             sys::ecs_run_post_frame(self.raw_world.as_ptr(), Some(c_run_post_frame), ctx);
         }

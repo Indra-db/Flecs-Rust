@@ -2481,7 +2481,8 @@ void flecs_invoke_replace_hook(
     ecs_id_t id,
     const void *old_ptr,
     const void *new_ptr,
-    const ecs_type_info_t *ti);
+    const ecs_type_info_t *ti,
+    ecs_table_t *prev_table);
 
 /* Add action for sparse components. */
 bool flecs_sparse_on_add(
@@ -5775,7 +5776,7 @@ void* flecs_defer_set(
         /* Call on_replace hook before copying the new value. */
         if (ti->hooks.on_replace) {
             flecs_invoke_replace_hook(
-                world, r->table, entity, id, ptr.ptr, value, ti);
+                world, r->table, entity, id, ptr.ptr, value, ti, r->table);
         }
 
         copy = ti->hooks.copy;
@@ -5858,7 +5859,7 @@ void* flecs_defer_cpp_set(
         /* Call on_replace hook before copying the new value. */
         if (ti->hooks.on_replace) {
             flecs_invoke_replace_hook(
-                world, r->table, entity, id, ptr.ptr, value, ti);
+                world, r->table, entity, id, ptr.ptr, value, ti, r->table);
         }
     }
 
@@ -5892,7 +5893,7 @@ void* flecs_defer_cpp_assign(
     ecs_iter_action_t on_replace = ptr.ti->hooks.on_replace;
     if (on_replace) {
         flecs_invoke_replace_hook(
-            world, r->table, entity, id, ptr.ptr, value, ptr.ti);
+            world, r->table, entity, id, ptr.ptr, value, ptr.ti, r->table);
     }
 
     ecs_cmd_t *cmd = flecs_cmd_new(stage);
@@ -6273,8 +6274,8 @@ void flecs_cmd_batch_for_entity(
                     void *ptr = cmd->is._1.value;
                     const ecs_type_info_t *ti = dst.ti;
                     if (ti->hooks.on_replace) {
-                        flecs_invoke_replace_hook(world, r->table, entity, 
-                            cmd->id, dst.ptr, ptr, ti);
+                        flecs_invoke_replace_hook(world, table, entity,
+                            cmd->id, dst.ptr, ptr, ti, start_table);
                     }
 
                     ecs_move_t move = ti->hooks.move;
@@ -6779,7 +6780,8 @@ void flecs_invoke_replace_hook(
     ecs_id_t id,
     const void *old_ptr,
     const void *new_ptr,
-    const ecs_type_info_t *ti)
+    const ecs_type_info_t *ti,
+    ecs_table_t *prev_table)
 {
     int32_t defer = world->stages[0]->defer;
     if (defer < 0) {
@@ -6812,6 +6814,8 @@ void flecs_invoke_replace_hook(
     it.count = 1;
     it.offset = 0; /* Don't set row because we don't want to offset ptrs */
     it.flags = EcsIterIsValid;
+    it.other_table = prev_table;
+    it.set_fields = (1 << 2) - 1;
 
     ti->hooks.on_replace(&it);
 
@@ -8340,13 +8344,9 @@ void flecs_copy_id(
     const void *src_ptr,
     const ecs_type_info_t *ti)
 {
+    (void)entity;
     ecs_assert(dst_ptr != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(src_ptr != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    if (ti->hooks.on_replace) {
-        flecs_invoke_replace_hook(
-            world, r->table, entity, component, dst_ptr, src_ptr, ti);
-    }
 
     ecs_copy_t copy = ti->hooks.copy;
     if (copy) {
@@ -8492,9 +8492,9 @@ int flecs_traverse_add(
     }
 
     /* Find existing table */
-    ecs_table_t *src_table = NULL, *table = NULL;
+    ecs_table_t *src_table = NULL, *table = NULL, *init_table = NULL;
     ecs_record_t *r = flecs_entities_get(world, result);
-    table = r->table;
+    init_table = table = r->table;
 
     /* Add components from the 'add' array */
     if (desc->add) {
@@ -8572,7 +8572,11 @@ int flecs_traverse_add(
                     flecs_errstr_2(ecs_get_path(world, result)));
             
             const ecs_type_info_t *ti = cr->type_info;
-            flecs_copy_id(world, result, r, v->type, 
+            if (ti->hooks.on_replace) {
+                flecs_invoke_replace_hook(
+                    world, r->table, result, v->type, ptr.ptr, v->ptr, ti, init_table);
+            }
+            flecs_copy_id(world, result, r, v->type,
                 flecs_itosize(ti->size), ptr.ptr, v->ptr, ti);
         }
 
@@ -9826,6 +9830,7 @@ void flecs_set_id_move(
     }
 
     ecs_record_t *r = flecs_entities_get(world, entity);
+    ecs_table_t *prev_table = r->table;
     flecs_component_ptr_t dst = flecs_ensure(
         world, entity, component, r, flecs_uto(int32_t, size));
     ecs_check(dst.ptr != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -9835,7 +9840,7 @@ void flecs_set_id_move(
 
     if (ti->hooks.on_replace) {
         flecs_invoke_replace_hook(
-            world, r->table, entity, component, dst.ptr, ptr, ti);
+            world, r->table, entity, component, dst.ptr, ptr, ti, prev_table);
     }
 
     ecs_move_t move;
@@ -9893,7 +9898,8 @@ void ecs_set_id(
     }
 
     ecs_record_t *r = flecs_entities_get(world, entity);
-    flecs_component_ptr_t dst = flecs_ensure(world, entity, component, r, 
+    ecs_table_t *prev_table = r->table;
+    flecs_component_ptr_t dst = flecs_ensure(world, entity, component, r,
         flecs_uto(int32_t, size));
 
     if (component < FLECS_HI_COMPONENT_ID) {
@@ -9901,6 +9907,11 @@ void ecs_set_id(
             ecs_os_memcpy(dst.ptr, ptr, size);
             goto done;
         }
+    }
+
+    if (dst.ti->hooks.on_replace) {
+        flecs_invoke_replace_hook(
+            world, r->table, entity, component, dst.ptr, ptr, dst.ti, prev_table);
     }
 
     flecs_copy_id(world, entity, r, component, size, dst.ptr, ptr, dst.ti);
@@ -24117,9 +24128,10 @@ ecs_cpp_get_mut_t ecs_cpp_set(
     }
 
     ecs_record_t *r = flecs_entities_get(world, entity);
-    flecs_component_ptr_t dst = flecs_ensure(world, entity, id, r, 
+    ecs_table_t *prev_table = r->table;
+    flecs_component_ptr_t dst = flecs_ensure(world, entity, id, r,
         flecs_uto(int32_t, size));
-    
+
     result.ptr = dst.ptr;
 
     if (id < FLECS_HI_COMPONENT_ID) {
@@ -24134,12 +24146,12 @@ ecs_cpp_get_mut_t ecs_cpp_set(
 
     if (dst.ti->hooks.on_replace) {
         flecs_invoke_replace_hook(
-            world, r->table, entity, id, dst.ptr, new_ptr, dst.ti);
+            world, r->table, entity, id, dst.ptr, new_ptr, dst.ti, prev_table);
     }
 
 done:
     flecs_defer_end(world, stage);
-    
+
     return result;
 error:
     return (ecs_cpp_get_mut_t){0};
@@ -24167,12 +24179,13 @@ ecs_cpp_get_mut_t ecs_cpp_assign(
     }
 
     ecs_record_t *r = flecs_entities_get(world, entity);
-    flecs_component_ptr_t dst = flecs_get_mut(world, entity, id, r, 
+    ecs_table_t *prev_table = r->table;
+    flecs_component_ptr_t dst = flecs_get_mut(world, entity, id, r,
         flecs_uto(int32_t, size));
 
-    ecs_assert(dst.ptr != NULL, ECS_INVALID_OPERATION, 
+    ecs_assert(dst.ptr != NULL, ECS_INVALID_OPERATION,
         "entity does not have component, use set() instead");
-        
+
     result.ptr = dst.ptr;
 
     if (id < FLECS_HI_COMPONENT_ID) {
@@ -24187,12 +24200,12 @@ ecs_cpp_get_mut_t ecs_cpp_assign(
 
     if (dst.ti->hooks.on_replace) {
         flecs_invoke_replace_hook(
-            world, r->table, entity, id, dst.ptr, new_ptr, dst.ti);
+            world, r->table, entity, id, dst.ptr, new_ptr, dst.ti, prev_table);
     }
 
 done:
     flecs_defer_end(world, stage);
-    
+
     return result;
 error:
     return (ecs_cpp_get_mut_t){0};
@@ -24403,9 +24416,14 @@ char* flecs_log_get_captured_log(void) {
 
 void ecs_log_start_capture(bool try) {
     flecs_log_prev_color = ecs_log_enable_colors(false);
-    flecs_log_prev_log = ecs_os_api.log_;
+    /* Never record the capture hook itself as the previous logger: nested or
+     * concurrent captures would otherwise make flecs_log_capture_log call
+     * itself recursively until the stack overflows. */
+    if (ecs_os_api.log_ != flecs_log_capture_log) {
+        flecs_log_prev_log = ecs_os_api.log_;
+        flecs_set_prev_log(ecs_os_api.log_, try);
+    }
     flecs_log_prev_level = ecs_os_api.log_level_;
-    flecs_set_prev_log(ecs_os_api.log_, try);
     ecs_os_api.log_ = flecs_log_capture_log;
     ecs_os_api.log_level_ = -1; /* Ignore debug tracing, log warnings/errors */
 }

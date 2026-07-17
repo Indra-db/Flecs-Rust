@@ -52,6 +52,9 @@ impl<'a> UntypedComponent<'a> {
             add_expr: core::ptr::null(),
             set: core::ptr::null(),
         };
+        // SAFETY: world.world_ptr_mut() comes from the live world reference
+        // passed in, and desc is a fully initialized ecs_entity_desc_t with a
+        // null name (anonymous entity), which ecs_entity_init accepts.
         let id = unsafe { crate::sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
 
         UntypedComponent {
@@ -81,6 +84,9 @@ impl<'a> UntypedComponent<'a> {
             add_expr: core::ptr::null(),
             set: core::ptr::null(),
         };
+        // SAFETY: world.world_ptr_mut() comes from the live world reference
+        // passed in, and desc is a fully initialized ecs_entity_desc_t whose
+        // name buffer was null-terminated just above.
         let id = unsafe { crate::sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
 
         UntypedComponent {

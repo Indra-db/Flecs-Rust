@@ -2,17 +2,132 @@
 
 use crate::core::*;
 use crate::sys;
-use core::ffi::c_void;
+use core::ffi::{c_int, c_void};
+
+type FrameAction = Box<dyn FnMut(WorldRef, &sys::ecs_app_desc_t) -> i32>;
+type RunAction = Box<dyn FnMut(WorldRef, &mut sys::ecs_app_desc_t) -> i32>;
+
+/// Per-app action storage. A pointer to this lives in `desc.ctx` (which the
+/// flecs app addon reserves for custom run/frame actions), so the process
+/// global trampolines below can dispatch to the actions of the app that is
+/// actually running — concurrent apps in one process don't interfere.
+#[derive(Default)]
+struct AppActions {
+    frame: Option<FrameAction>,
+    run: Option<RunAction>,
+}
+
+// XAI: the C app addon copies the descriptor into a process-global
+// `static ecs_app_desc_t ecs_app_desc` inside ecs_app_run, so concurrent
+// ecs_app_run calls clobber each other's frames/ctx. Serialize all app runs
+// in this process.
+static APP_RUN_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+// XAI: `ecs_app_run_frame` dispatches to the *installed* frame action
+// (flecs.c `return frame_action(world, desc)`), so the fallback paths below
+// must replicate the C defaults instead of calling `ecs_app_run_frame`,
+// which would recurse into this trampoline.
+
+extern "C-unwind" fn frame_action_trampoline(
+    world: *mut sys::ecs_world_t,
+    desc: *const sys::ecs_app_desc_t,
+) -> c_int {
+    // SAFETY: flecs passes a valid world and desc pointer to the frame action.
+    let actions = unsafe { ((*desc).ctx as *mut AppActions).as_mut() };
+    let Some(action) = actions.and_then(|actions| actions.frame.as_mut()) else {
+        // This app has no Rust frame action (e.g. another app run in the same
+        // process): replicate flecs_default_frame_action.
+        return unsafe { !sys::ecs_progress(world, (*desc).delta_time) as c_int };
+    };
+
+    // SAFETY: see above.
+    let world_ref = unsafe { WorldRef::from_ptr(world) };
+    let desc_ref = unsafe { &*desc };
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        action(world_ref, desc_ref)
+    }));
+
+    // A panic must not unwind into the C run loop; quit with an error.
+    result.unwrap_or(-1)
+}
+
+extern "C-unwind" fn run_action_trampoline(
+    world: *mut sys::ecs_world_t,
+    desc: *mut sys::ecs_app_desc_t,
+) -> c_int {
+    // SAFETY: flecs passes a valid world and desc pointer to the run action.
+    let actions = unsafe { ((*desc).ctx as *mut AppActions).as_mut() };
+    let Some(action) = actions.and_then(|actions| actions.run.as_mut()) else {
+        // This app has no Rust run action: replicate flecs_default_run_action.
+        return unsafe { default_run_action(world, desc) };
+    };
+
+    // SAFETY: see above.
+    let world_ref = unsafe { WorldRef::from_ptr(world) };
+    let desc_ref = unsafe { &mut *desc };
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        action(world_ref, desc_ref)
+    }));
+
+    result.unwrap_or(-1)
+}
+
+/// Replica of the (non-exported) C `flecs_default_run_action`, used when the
+/// run trampoline is installed but the running app has no Rust run action.
+///
+/// # Safety
+///
+/// `world` and `desc` must be the valid pointers flecs passed to the run
+/// action.
+unsafe fn default_run_action(
+    world: *mut sys::ecs_world_t,
+    desc: *mut sys::ecs_app_desc_t,
+) -> c_int {
+    unsafe {
+        if let Some(init) = (*desc).init {
+            init(world);
+        }
+
+        let mut result = 0;
+        let frames = (*desc).frames;
+        if frames != 0 {
+            for _ in 0..frames {
+                result = sys::ecs_app_run_frame(world, desc);
+                if result != 0 {
+                    break;
+                }
+            }
+        } else {
+            loop {
+                result = sys::ecs_app_run_frame(world, desc);
+                if result != 0 {
+                    break;
+                }
+            }
+        }
+
+        sys::ecs_quit(world);
+
+        if result == 1 { 0 } else { result }
+    }
+}
 
 /// Application interface.
 ///
 /// These are typically constructed via [`World::app()`]
-pub struct App<'a> {
-    pub(crate) world: WorldRef<'a>,
+///
+/// The app holds its own claimed `World` handle for the duration of its
+/// lifetime; dropping the app without calling [`App::run()`] releases the
+/// handle again.
+pub struct App {
+    pub(crate) world: Option<World>,
     pub(crate) desc: sys::ecs_app_desc_t,
+    actions: Option<Box<AppActions>>,
 }
 
-impl<'a> App<'a> {
+impl App {
     /// Create a new application.
     ///
     /// # Arguments
@@ -22,19 +137,38 @@ impl<'a> App<'a> {
     /// # See also
     ///
     /// * [`World::app()`]
-    pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
+    pub(crate) fn new(world: World) -> Self {
         let mut obj = Self {
-            world: world.world(),
+            world: Some(world),
             desc: sys::ecs_app_desc_t::default(),
+            actions: None,
         };
 
-        let stats = unsafe { sys::ecs_get_world_info(obj.world.ptr_mut()) };
+        let stats = unsafe { sys::ecs_get_world_info(obj.world_ptr()) };
         obj.desc.target_fps = unsafe { (*stats).target_fps };
         let zero: FTime = 0.0;
         if obj.desc.target_fps.to_bits() == zero.to_bits() {
             obj.desc.target_fps = 60.0;
         }
         obj
+    }
+
+    pub(crate) fn world_ptr(&self) -> *mut sys::ecs_world_t {
+        self.world
+            .as_ref()
+            .expect("App::run consumed the world; the App cannot be reused")
+            .ptr_mut()
+    }
+
+    fn actions_mut(&mut self) -> &mut AppActions {
+        assert!(
+            self.desc.ctx.is_null() || self.actions.is_some(),
+            "App::context() cannot be combined with App::frame_action()/App::run_action(); \
+             the ctx field is used to store the Rust actions"
+        );
+        let actions = self.actions.get_or_insert_with(Box::default);
+        self.desc.ctx = (&mut **actions) as *mut AppActions as *mut c_void;
+        actions
     }
 
     /// Set the target frames per second.
@@ -117,11 +251,99 @@ impl<'a> App<'a> {
 
     /// Set the application context.
     ///
+    /// The flecs app addon reserves this field for custom run/frame actions.
+    /// It cannot be combined with [`App::frame_action()`]/[`App::run_action()`],
+    /// which store their closures in it.
+    ///
     /// # Arguments
     ///
     /// * `ctx` - The context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a Rust frame or run action was already set on this app.
     pub fn context(&mut self, ctx: *mut c_void) -> &mut Self {
+        assert!(
+            self.actions.is_none(),
+            "App::context() cannot be combined with App::frame_action()/App::run_action(); \
+             the ctx field is used to store the Rust actions"
+        );
         self.desc.ctx = ctx;
+        self
+    }
+
+    /// Set a custom frame action, invoked once per frame by the app run loop.
+    ///
+    /// The action replaces the default frame behavior (which calls
+    /// [`World::progress()`]), so it should call `world.progress()` itself.
+    /// Return `0` to continue running, non-zero to stop the app.
+    ///
+    /// The action is stored per app (in the descriptor's `ctx` field, which
+    /// the flecs app addon reserves for this purpose) and runs on the thread
+    /// that calls [`App::run()`], so it may capture `!Send` data such as
+    /// rendering handles. A panic in the action stops the app with exit code
+    /// `-1` instead of unwinding into the C run loop.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a different frame action was already installed through the C
+    /// API directly, or if [`App::context()`] was set on this app.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use flecs_ecs::prelude::*;
+    ///
+    /// let world = World::new();
+    /// world
+    ///     .app()
+    ///     .set_frames(3)
+    ///     .frame_action(|world, _desc| {
+    ///         // per-frame work on the main thread (rendering, UI, ...)
+    ///         if world.progress() { 0 } else { 1 }
+    ///     })
+    ///     .run();
+    /// ```
+    pub fn frame_action(
+        &mut self,
+        action: impl FnMut(WorldRef, &sys::ecs_app_desc_t) -> i32 + 'static,
+    ) -> &mut Self {
+        self.actions_mut().frame = Some(Box::new(action));
+        let result = unsafe { sys::ecs_app_set_frame_action(Some(frame_action_trampoline)) };
+        assert!(
+            result == 0,
+            "a different frame action is already installed through the flecs C API"
+        );
+        self
+    }
+
+    /// Set a custom run action, replacing the default app run loop.
+    ///
+    /// The action receives the world and the app descriptor and is expected
+    /// to drive the main loop itself (e.g. by calling
+    /// [`sys::ecs_app_run_frame`] or [`World::progress()`] until done).
+    /// Its return value becomes the return value of [`App::run()`].
+    ///
+    /// The action is stored per app (in the descriptor's `ctx` field, which
+    /// the flecs app addon reserves for this purpose) and runs on the thread
+    /// that calls [`App::run()`], so it may capture `!Send` data. A panic in
+    /// the action stops the app with exit code `-1` instead of unwinding into
+    /// the C run loop.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a different run action was already installed through the C
+    /// API directly, or if [`App::context()`] was set on this app.
+    pub fn run_action(
+        &mut self,
+        action: impl FnMut(WorldRef, &mut sys::ecs_app_desc_t) -> i32 + 'static,
+    ) -> &mut Self {
+        self.actions_mut().run = Some(Box::new(action));
+        let result = unsafe { sys::ecs_app_set_run_action(Some(run_action_trampoline)) };
+        assert!(
+            result == 0,
+            "a different run action is already installed through the flecs C API"
+        );
         self
     }
 
@@ -130,21 +352,41 @@ impl<'a> App<'a> {
     /// If a custom run action is set, it will be invoked by this operation.
     /// The default run action calls the frame action in a loop until it returns a non-zero value.
     ///
+    /// The app's own world handle is released when the app quits; the world is
+    /// finalized once the last remaining [`World`] handle is dropped. If the
+    /// app is used in an environment that takes over the main loop (like
+    /// emscripten), the quit flag is not set and the handle is intentionally
+    /// leaked to keep the world alive.
+    ///
+    /// Concurrent app runs in one process are serialized: the underlying C
+    /// addon stores the descriptor in a process-global, so only one app can
+    /// run at a time.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called more than once on the same `App`.
+    ///
     /// # Returns
     ///
     /// The exit code of the application.
     pub fn run(&mut self) -> i32 {
-        let world_ptr = self.world.ptr_mut();
+        let world = self
+            .world
+            .take()
+            .expect("App::run can only be called once per App");
+        let world_ptr = world.ptr_mut();
+        let _run_guard = APP_RUN_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let result = unsafe { sys::ecs_app_run(world_ptr, &mut self.desc) };
-        unsafe {
-            if sys::ecs_should_quit(world_ptr) {
-                // Only free world if quit flag is set. This ensures that we won't
-                // try to cleanup the world if the app is used in an environment
-                // that takes over the main loop, like with emscripten.
-                if sys::flecs_poly_release_(world_ptr as *mut c_void) == 0 {
-                    sys::ecs_fini(world_ptr);
-                }
-            }
+        if unsafe { sys::ecs_should_quit(world_ptr) } {
+            drop(world);
+        } else {
+            // The environment took over the main loop (e.g. emscripten):
+            // the world and the actions (still referenced by the C-side
+            // descriptor copy) must stay alive.
+            core::mem::forget(world);
+            core::mem::forget(self.actions.take());
         }
         result
     }

@@ -77,7 +77,7 @@
 //!
 //! ## Type-Safe Indexing
 //!
-//! [`FieldIndex`] provides bounds-check-free indexing when iterating:
+//! [`FieldIndex`] provides type-safe indexing when iterating:
 //!
 //! ```rust,no_run
 //! # use flecs_ecs::prelude::*;
@@ -90,9 +90,9 @@
 //!     while it.next() {
 //!         let pos = it.field::<Position>(0);
 //!
-//!         // iter() returns FieldIndex, which allows unchecked access
+//!         // iter() returns FieldIndex
 //!         for i in it.iter() {
-//!             let position = &pos[i]; // No bounds check
+//!             let position = &pos[i];
 //!         }
 //!     }
 //! });
@@ -109,7 +109,7 @@ pub(crate) use field::{flecs_field, flecs_field_w_size};
 pub use multi_src_get::*;
 
 pub use flags::TableFlags;
-pub use iter::TableIter;
+pub use iter::{FieldError, TableIter};
 #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
 pub(crate) use iter::{table_lock, table_unlock};
 
@@ -120,7 +120,7 @@ use crate::sys;
 extern crate std;
 
 extern crate alloc;
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 
 /// A wrapper class that gives direct access to the component arrays of a table, the table data
 #[derive(Debug, Clone, Copy, Eq)]
@@ -143,7 +143,15 @@ impl<'a> Table<'a> {
     ///
     /// * `world` - The world the table is in
     /// * `table` - The table to wrap
-    pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+    ///
+    /// # Safety
+    ///
+    /// `table` must point to a table that is currently alive and owned by
+    /// `world`, and must remain alive for the lifetime `'a`. Passing a stale
+    /// pointer (e.g. one obtained from [`Table::raw_table_ptr()`] after the
+    /// table was deleted) results in undefined behavior when the returned
+    /// `Table` is used.
+    pub unsafe fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
         Self {
             world: world.world(),
             table,
@@ -206,9 +214,153 @@ impl<'a> TableRange<'a> {
         count: i32,
     ) -> Self {
         Self {
-            table: Table::new(world, table),
+            // SAFETY: caller upholds this function's contract that the world
+            // and table pointers are valid.
+            table: unsafe { Table::new(world, table) },
             offset,
             count,
+        }
+    }
+}
+
+/// RAII guard providing read access to the entity ids of a table (range).
+///
+/// While the guard is alive, the world is kept in deferred mode: structural
+/// changes (creating, deleting or moving entities) are queued and applied when
+/// the guard is dropped, so the entity array cannot be reallocated or freed
+/// while it is borrowed.
+///
+/// Dereferences to `&[Entity]`.
+pub struct TableEntities<'a> {
+    slice: &'a [Entity],
+    world: WorldRef<'a>,
+}
+
+impl core::ops::Deref for TableEntities<'_> {
+    type Target = [Entity];
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.slice
+    }
+}
+
+impl Drop for TableEntities<'_> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+    }
+}
+
+/// RAII guard providing mutable access to a table column (component array).
+///
+/// While the guard is alive, the world is kept in deferred mode: structural
+/// changes (creating, deleting or moving entities) are queued and applied when
+/// the guard is dropped, so the column storage cannot be reallocated or freed
+/// while it is borrowed. When the `flecs_safety_locks` feature (part of the
+/// default features) is enabled, a write lock is additionally held on the
+/// column for the lifetime of the guard: constructing a second guard (or
+/// field accessor) for the same column while one is alive panics instead of
+/// aliasing the `&mut` data.
+///
+/// Dereferences to `&[T]` / `&mut [T]`.
+pub struct TableColumnMut<'a, T> {
+    slice: &'a mut [T],
+    world: WorldRef<'a>,
+    #[cfg(feature = "flecs_safety_locks")]
+    table: NonNull<sys::ecs_table_t>,
+    #[cfg(feature = "flecs_safety_locks")]
+    column_index: i16,
+    #[cfg(feature = "flecs_safety_locks")]
+    stage_id: i32,
+    #[cfg(feature = "flecs_safety_locks")]
+    multithreaded: bool,
+}
+
+impl<'a, T> TableColumnMut<'a, T> {
+    /// # Safety
+    ///
+    /// `table` must be a live table owned by `world`, `column_index` must be a
+    /// valid column index of that table, and `ptr`/`count` must describe that
+    /// column's component array of type `T`.
+    unsafe fn new(
+        world: WorldRef<'a>,
+        _table: NonNull<sys::ecs_table_t>,
+        _column_index: i16,
+        ptr: *mut T,
+        count: usize,
+    ) -> Self {
+        #[cfg(feature = "flecs_safety_locks")]
+        let (stage_id, multithreaded) = {
+            let stage_id = world.stage_id();
+            let multithreaded = world.is_currently_multithreaded();
+            if multithreaded {
+                get_table_column_lock_write_begin::<true>(
+                    &world,
+                    _table.as_ptr(),
+                    _column_index,
+                    stage_id,
+                );
+            } else {
+                get_table_column_lock_write_begin::<false>(
+                    &world,
+                    _table.as_ptr(),
+                    _column_index,
+                    stage_id,
+                );
+            }
+            (stage_id, multithreaded)
+        };
+        world.defer_begin();
+        // SAFETY: caller guarantees ptr/count describe the column array. The
+        // world stays in deferred mode until this guard is dropped, so the
+        // array cannot be reallocated or freed while the slice is alive, and
+        // the column write lock prevents aliased access through other guards.
+        let slice = unsafe { core::slice::from_raw_parts_mut(ptr, count) };
+        Self {
+            slice,
+            world,
+            #[cfg(feature = "flecs_safety_locks")]
+            table: _table,
+            #[cfg(feature = "flecs_safety_locks")]
+            column_index: _column_index,
+            #[cfg(feature = "flecs_safety_locks")]
+            stage_id,
+            #[cfg(feature = "flecs_safety_locks")]
+            multithreaded,
+        }
+    }
+}
+
+impl<T> core::ops::Deref for TableColumnMut<'_, T> {
+    type Target = [T];
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.slice
+    }
+}
+
+impl<T> core::ops::DerefMut for TableColumnMut<'_, T> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.slice
+    }
+}
+
+impl<T> Drop for TableColumnMut<'_, T> {
+    fn drop(&mut self) {
+        self.world.defer_end();
+        #[cfg(feature = "flecs_safety_locks")]
+        {
+            if self.multithreaded {
+                table_column_lock_write_end::<true>(
+                    self.table.as_ptr(),
+                    self.column_index,
+                    self.stage_id,
+                );
+            } else {
+                table_column_lock_write_end::<false>(self.table.as_ptr(), self.column_index, 0);
+            }
         }
     }
 }
@@ -221,29 +373,51 @@ pub trait TableOperations<'a>: IntoTable {
     /// Returns the table count
     fn count(&self) -> i32 {
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_count(table) }
     }
 
     /// Get number of allocated elements in table
     fn size(&self) -> i32 {
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_size(table) }
     }
 
-    /// Get array with entity ids
-    fn entities(&self) -> &[Entity] {
+    /// Get array with entity ids.
+    ///
+    /// For a [`TableRange`] this returns the entities within
+    /// `[offset, offset + count)`.
+    ///
+    /// The returned guard keeps the world in deferred mode: structural changes
+    /// are queued and applied when the guard is dropped, so the entity array
+    /// stays valid while it is borrowed.
+    fn entities(&self) -> TableEntities<'a> {
+        let world = self.world();
+        world.defer_begin();
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let entities = unsafe { sys::ecs_table_entities(table) };
         if entities.is_null() {
-            return &[];
+            return TableEntities { slice: &[], world };
         }
-        let count = self.count();
-        unsafe { core::slice::from_raw_parts(entities as *const Entity, count as usize) }
+        // SAFETY: table_ptr_mut points to the live table backing this range.
+        let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
+        let offset = (self.offset().max(0) as usize).min(table_count);
+        let count = (self.count().max(0) as usize).min(table_count - offset);
+        // SAFETY: entities points to `table_count` valid entity ids and
+        // offset + count <= table_count. The world stays in deferred mode
+        // until the guard is dropped, so the array cannot be reallocated or
+        // freed while the slice is alive.
+        let slice =
+            unsafe { core::slice::from_raw_parts((entities as *const Entity).add(offset), count) };
+        TableEntities { slice, world }
     }
 
     fn clear_entities(&self) {
         let world = self.world().world_ptr_mut();
         let table = self.table_ptr_mut();
+        // SAFETY: world and table come from this live table/world pair.
         unsafe { sys::ecs_table_clear_entities(world, table) };
     }
 
@@ -256,20 +430,25 @@ pub trait TableOperations<'a>: IntoTable {
                 return None;
             }
 
-            let len = CStr::from_ptr(raw_ptr).to_bytes().len();
-
-            Some(String::from_utf8_unchecked(Vec::from_raw_parts(
-                raw_ptr as *mut u8,
-                len,
-                len,
-            )))
+            // Copy into a Rust-allocated String, then free the C allocation
+            // with the flecs allocator; freeing it via Vec/String would use the
+            // Rust global allocator, which is UB when the allocators differ.
+            let string = CStr::from_ptr(raw_ptr).to_string_lossy().into_owned();
+            sys::ecs_os_api.free_.expect("os api is missing")(raw_ptr as *mut core::ffi::c_void);
+            Some(string)
         }
     }
 
     /// Returns the type of the table
     fn archetype(&self) -> Archetype<'a> {
+        // SAFETY: table_ptr_mut points to the live table backing this range;
+        // ecs_table_get_type returns a valid ecs_type_t pointer for it.
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
+        // SAFETY: type_vec was just returned by ecs_table_get_type above and
+        // is valid to dereference.
         let slice = if unsafe { !(*type_vec).array.is_null() && (*type_vec).count != 0 } {
+            // SAFETY: the branch condition just checked that `array` is
+            // non-null and `count` is nonzero, describing `count` valid ids.
             unsafe {
                 core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
             }
@@ -297,6 +476,8 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The index of the id in the table type, or `None` if the id is not found
     fn find_type_index(&self, id: impl IntoId) -> Option<i32> {
+        // SAFETY: world_ptr/table_ptr_mut come from this live table/world
+        // pair, and id is resolved against the same world.
         let index = unsafe {
             sys::ecs_table_get_type_index(
                 self.world().world_ptr(),
@@ -322,6 +503,8 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The index of the id in the table, or `None` if the id is not in the table
     fn find_column_index(&self, id: impl IntoId) -> Option<i32> {
+        // SAFETY: world_ptr/table_ptr_mut come from this live table/world
+        // pair, and id is resolved against the same world.
         let index = unsafe {
             sys::ecs_table_get_column_index(
                 self.world().world_ptr(),
@@ -357,11 +540,21 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// Some(Pointer) to the column, or `None` if not a component
     fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let ptr = unsafe { sys::ecs_table_get_column(self.table_ptr_mut(), index, self.offset()) };
         if ptr.is_null() { None } else { Some(ptr) }
     }
 
-    /// Get column, components array ptr from table by component type.
+    /// Get mutable access to a components array from the table by component type.
+    ///
+    /// The returned guard dereferences to `&mut [T]`. While it is alive the
+    /// world is kept in deferred mode (structural changes are queued) and,
+    /// when the `flecs_safety_locks` feature (part of the default features)
+    /// is enabled, a write lock is held on the column: obtaining a second
+    /// mutable guard or field accessor for the same column panics instead of
+    /// aliasing.
+    ///
+    /// For a [`TableRange`] the slice covers `[offset, offset + count)`.
     ///
     /// # Type parameters
     ///
@@ -369,13 +562,30 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// # Returns
     ///
-    /// Some(Pointer) to the column, or `None` if not found
-    //TODO this should return a field IMO
-    fn get_mut<T: ComponentId>(&mut self) -> Option<&mut [T]> {
-        self.get_mut_untyped(T::entity_id(self.world()))
-            .map(|ptr| unsafe {
-                core::slice::from_raw_parts_mut(ptr as *mut T, (self.count()) as usize)
-            })
+    /// Some(guard) for the column, or `None` if not found
+    fn get_mut<T: ComponentId>(&mut self) -> Option<TableColumnMut<'a, T>> {
+        let world = self.world();
+        world.check_thread_affinity_exclusive::<T>();
+        let id = T::entity_id(world);
+        let index = self.find_column_index(id)?;
+        let ptr = self.column_untyped(index)?;
+        let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
+        let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
+        let offset = (self.offset().max(0) as usize).min(table_count);
+        let count = (self.count().max(0) as usize).min(table_count - offset);
+        // SAFETY: table_ptr_mut is non-null, index is a valid column index for
+        // this table and ptr/count describe that column's array of T starting
+        // at this range's offset (applied by column_untyped).
+        Some(unsafe {
+            TableColumnMut::new(
+                world,
+                NonNull::new_unchecked(table),
+                index as i16,
+                ptr as *mut T,
+                count,
+            )
+        })
     }
 
     /// Get column, components array ptr from table by component type.
@@ -438,6 +648,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The size of the column
     fn column_size(&self, index: i32) -> usize {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_get_column_size(self.table_ptr_mut(), index) }
     }
 
@@ -454,6 +665,8 @@ pub trait TableOperations<'a>: IntoTable {
     /// The depth of the relationship
     fn depth(&self, rel: impl IntoEntity) -> i32 {
         let world = self.world();
+        // SAFETY: world_ptr_mut/table_ptr_mut come from this live table/world
+        // pair, and rel is a valid entity id resolved against the same world.
         unsafe {
             sys::ecs_table_get_depth(
                 world.world_ptr_mut(),
@@ -465,27 +678,34 @@ pub trait TableOperations<'a>: IntoTable {
 
     /// get table records array
     fn records(&self) -> &[sys::ecs_table_record_t] {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let records = unsafe { sys::flecs_table_records(self.table_ptr_mut()) };
 
+        // SAFETY: flecs_table_records returns a valid ecs_vec_t whose
+        // `array`/`count` describe `count` initialized records.
         unsafe { core::slice::from_raw_parts(records.array, records.count as usize) }
     }
 
     /// get table id
     fn id(&self) -> u64 {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::flecs_table_id(self.table_ptr_mut()) }
     }
 
     /// lock table
     fn lock(&self) {
+        // SAFETY: world and table_ptr_mut come from this live table/world pair.
         unsafe { sys::ecs_table_lock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
     }
 
     /// unlock table
     fn unlock(&self) {
+        // SAFETY: world and table_ptr_mut come from this live table/world pair.
         unsafe { sys::ecs_table_unlock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
     }
 
     fn has_flags(&self, flags: TableFlags) -> bool {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_has_flags(self.table_ptr_mut(), flags.bits()) }
     }
 }
@@ -505,6 +725,8 @@ impl<'a> TableOperations<'a> for Table<'a> {
 
     /// Returns the table count
     fn count(&self) -> i32 {
+        // SAFETY: table_ptr_mut derives from Table's NonNull `table` field,
+        // which is guaranteed alive and owned by the world for `'a`.
         unsafe { sys::ecs_table_count(self.table_ptr_mut()) }
     }
 }
@@ -547,6 +769,8 @@ pub(crate) struct TableLock<'a> {
 
 impl<'a> TableLock<'a> {
     pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+        // SAFETY: caller supplies a valid world and a NonNull table pointer
+        // owned by that world.
         unsafe { sys::ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
         Self {
             world: world.world(),
@@ -557,10 +781,8 @@ impl<'a> TableLock<'a> {
 
 impl Drop for TableLock<'_> {
     fn drop(&mut self) {
-        if std::thread::panicking() {
-            return;
-        }
-
+        // SAFETY: table was locked by `new` and this guard's world/table
+        // remain valid for the guard's lifetime.
         unsafe {
             sys::ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
         }

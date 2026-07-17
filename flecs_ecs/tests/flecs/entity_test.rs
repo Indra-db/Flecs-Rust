@@ -4125,6 +4125,9 @@ fn on_replace_w_assign_existing() {
 
 #[test]
 fn defer_on_replace_w_set() {
+    // on_replace must NOT fire on the first deferred set of a new component.
+    // The entity has no previous value — prev would be uninitialized memory.
+    // Only fires when the component already existed in the entity's prior table.
     #[derive(Component, Default)]
     struct Flags {
         invoked: u32,
@@ -4142,12 +4145,6 @@ fn defer_on_replace_w_set() {
             e.world().get::<&mut Flags>(|flags| {
                 match flags.invoked {
                     0 => {
-                        assert_eq!(prev.x, 0);
-                        assert_eq!(prev.y, 0);
-                        assert_eq!(next.x, 10);
-                        assert_eq!(next.y, 20);
-                    }
-                    1 => {
                         assert_eq!(prev.x, 10);
                         assert_eq!(prev.y, 20);
                         assert_eq!(next.x, 11);
@@ -4162,16 +4159,23 @@ fn defer_on_replace_w_set() {
     let e = world.entity();
     world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
 
+    // First deferred set: component is new — on_replace must NOT fire.
     world.defer_begin();
     e.set(Position { x: 10, y: 20 });
     world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
     world.defer_end();
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
         assert_eq!(p.y, 20);
     });
+
+    // Second set: component exists — on_replace fires with valid prev.
+    world.defer_begin();
+    e.set(Position { x: 11, y: 21 });
+    world.defer_end();
+    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
 }
 
 #[test]
@@ -4189,34 +4193,18 @@ fn defer_on_replace_w_set_twice() {
             p.x = 0;
             p.y = 0;
         })
-        .on_replace(|e, prev, next| {
-            e.world().get::<&mut Flags>(|flags| {
-                match flags.invoked {
-                    0 => {
-                        assert_eq!(prev.x, 0);
-                        assert_eq!(prev.y, 0);
-                        assert_eq!(next.x, 10);
-                        assert_eq!(next.y, 20);
-                    }
-                    1 => {
-                        assert_eq!(prev.x, 10);
-                        assert_eq!(prev.y, 20);
-                        assert_eq!(next.x, 11);
-                        assert_eq!(next.y, 21);
-                    }
-                    _ => unreachable!(),
-                }
-                flags.invoked += 1;
-            });
+        .on_replace(|_, _, _| {
+            unreachable!(
+                "on_replace must not fire: the component is new within the batch, \
+                 so the flush treats every set as a new add (prev not valid)"
+            );
         });
 
     let e = world.entity();
     world.defer_begin();
     e.set(Position { x: 10, y: 20 });
     e.set(Position { x: 11, y: 21 });
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
     world.defer_end();
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 11);
@@ -4339,34 +4327,18 @@ fn defer_on_replace_w_set_batched() {
             p.x = 0;
             p.y = 0;
         })
-        .on_replace(|e, prev, next| {
-            e.world().get::<&mut Flags>(|flags| {
-                match flags.invoked {
-                    0 => {
-                        assert_eq!(prev.x, 0);
-                        assert_eq!(prev.y, 0);
-                        assert_eq!(next.x, 10);
-                        assert_eq!(next.y, 20);
-                    }
-                    1 => {
-                        assert_eq!(prev.x, 10);
-                        assert_eq!(prev.y, 20);
-                        assert_eq!(next.x, 11);
-                        assert_eq!(next.y, 21);
-                    }
-                    _ => unreachable!(),
-                }
-                flags.invoked += 1;
-            });
+        .on_replace(|_, _, _| {
+            unreachable!(
+                "on_replace must not fire: the component is new within the batch, \
+                 so the flush treats the set as a new add (prev not valid)"
+            );
         });
 
     let e = world.entity();
     world.defer_begin();
     e.set(Position { x: 10, y: 20 });
     e.add(Velocity::id());
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
     world.defer_end();
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 1));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 10);
@@ -4390,25 +4362,11 @@ fn defer_on_replace_w_set_batched_twice() {
             p.x = 0;
             p.y = 0;
         })
-        .on_replace(|e, prev, next| {
-            e.world().get::<&mut Flags>(|flags| {
-                match flags.invoked {
-                    0 => {
-                        assert_eq!(prev.x, 0);
-                        assert_eq!(prev.y, 0);
-                        assert_eq!(next.x, 10);
-                        assert_eq!(next.y, 20);
-                    }
-                    1 => {
-                        assert_eq!(prev.x, 10);
-                        assert_eq!(prev.y, 20);
-                        assert_eq!(next.x, 11);
-                        assert_eq!(next.y, 21);
-                    }
-                    _ => unreachable!(),
-                }
-                flags.invoked += 1;
-            });
+        .on_replace(|_, _, _| {
+            unreachable!(
+                "on_replace must not fire: the component is new within the batch, \
+                 so the flush treats every set as a new add (prev not valid)"
+            );
         });
 
     let e = world.entity();
@@ -4416,9 +4374,7 @@ fn defer_on_replace_w_set_batched_twice() {
     e.set(Position { x: 10, y: 20 });
     e.set(Position { x: 11, y: 21 });
     e.add(Velocity::id());
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 0));
     world.defer_end();
-    world.get::<&Flags>(|f| assert_eq!(f.invoked, 2));
 
     e.get::<&Position>(|p| {
         assert_eq!(p.x, 11);
@@ -4802,6 +4758,118 @@ fn defer_on_replace_w_assign_batched_existing_twice() {
         assert_eq!(p.y, 21);
     });
     assert!(e.has(Velocity::id()));
+}
+
+use core::cell::Cell;
+
+thread_local! {
+    static REPLACE_CTX: Cell<(u32, *mut flecs_ecs::sys::ecs_table_t, u32)> =
+        const { Cell::new((0, core::ptr::null_mut(), 0)) };
+}
+
+extern "C-unwind" fn replace_capture(it: *mut flecs_ecs::sys::ecs_iter_t) {
+    let it = unsafe { &*it };
+    REPLACE_CTX.with(|ctx| {
+        let (invoked, _, _) = ctx.get();
+        ctx.set((invoked + 1, it.other_table, it.set_fields));
+    });
+}
+
+fn set_replace_capture_hooks(world: &World, id: u64) {
+    let mut hooks: flecs_ecs::sys::ecs_type_hooks_t = unsafe { core::mem::zeroed() };
+    hooks.ctor = Some(flecs_ecs::sys::flecs_default_ctor);
+    hooks.on_replace = Some(replace_capture);
+    unsafe { flecs_ecs::sys::ecs_set_hooks_id(world.ptr_mut(), id, &hooks) };
+    REPLACE_CTX.with(|ctx| ctx.set((0, core::ptr::null_mut(), 0)));
+}
+
+#[test]
+fn on_replace_other_table_set_new() {
+    let world = World::new();
+
+    let pos_id = world.component::<Position>().id();
+    set_replace_capture_hooks(&world, *pos_id);
+
+    let e = world.entity();
+    let prev = unsafe { flecs_ecs::sys::ecs_get_table(world.ptr_mut(), *e.id()) };
+    assert_eq!(REPLACE_CTX.with(Cell::get).0, 0);
+
+    e.set(Position { x: 10, y: 20 });
+    let (invoked, other_table, set_fields) = REPLACE_CTX.with(Cell::get);
+    assert_eq!(invoked, 1);
+
+    // prev captured before ensure: root table, no Position
+    assert_eq!(other_table, prev);
+    assert_eq!(set_fields, 3);
+    assert!(!unsafe { flecs_ecs::sys::ecs_table_has_id(world.ptr_mut(), other_table, *pos_id) });
+}
+
+#[test]
+fn on_replace_other_table_set_existing() {
+    let world = World::new();
+
+    let pos_id = world.component::<Position>().id();
+    set_replace_capture_hooks(&world, *pos_id);
+
+    let e = world.entity().set(Position { x: 10, y: 20 });
+    assert_eq!(REPLACE_CTX.with(Cell::get).0, 1);
+
+    let table_with_pos = unsafe { flecs_ecs::sys::ecs_get_table(world.ptr_mut(), *e.id()) };
+    REPLACE_CTX.with(|c| c.set((0, core::ptr::null_mut(), 0)));
+
+    e.set(Position { x: 11, y: 21 });
+    let (invoked, other_table, set_fields) = REPLACE_CTX.with(Cell::get);
+    assert_eq!(invoked, 1);
+
+    // Entity already had Position -> other_table == {Position} table
+    assert_eq!(other_table, table_with_pos);
+    assert_eq!(set_fields, 3);
+    assert!(unsafe { flecs_ecs::sys::ecs_table_has_id(world.ptr_mut(), other_table, *pos_id) });
+}
+
+#[test]
+fn on_replace_other_table_assign_new() {
+    let world = World::new();
+
+    let pos_id = world.component::<Position>().id();
+    set_replace_capture_hooks(&world, *pos_id);
+
+    let e = world.entity().add(Position::id());
+    assert_eq!(REPLACE_CTX.with(Cell::get).0, 0);
+
+    let table_with_pos = unsafe { flecs_ecs::sys::ecs_get_table(world.ptr_mut(), *e.id()) };
+
+    e.assign(Position { x: 10, y: 20 });
+    let (invoked, other_table, set_fields) = REPLACE_CTX.with(Cell::get);
+    assert_eq!(invoked, 1);
+
+    // assign requires component to already exist; other_table == {Position}
+    assert_eq!(other_table, table_with_pos);
+    assert_eq!(set_fields, 3);
+    assert!(unsafe { flecs_ecs::sys::ecs_table_has_id(world.ptr_mut(), other_table, *pos_id) });
+}
+
+#[test]
+fn on_replace_other_table_assign_existing() {
+    let world = World::new();
+
+    let pos_id = world.component::<Position>().id();
+    set_replace_capture_hooks(&world, *pos_id);
+
+    let e = world.entity().add(Position::id());
+    e.assign(Position { x: 10, y: 20 });
+    assert_eq!(REPLACE_CTX.with(Cell::get).0, 1);
+    let table_with_pos = unsafe { flecs_ecs::sys::ecs_get_table(world.ptr_mut(), *e.id()) };
+    REPLACE_CTX.with(|c| c.set((0, core::ptr::null_mut(), 0)));
+
+    e.assign(Position { x: 11, y: 21 });
+    let (invoked, other_table, set_fields) = REPLACE_CTX.with(Cell::get);
+    assert_eq!(invoked, 1);
+
+    // Replacing existing via assign: other_table == {Position}
+    assert_eq!(other_table, table_with_pos);
+    assert_eq!(set_fields, 3);
+    assert!(unsafe { flecs_ecs::sys::ecs_table_has_id(world.ptr_mut(), other_table, *pos_id) });
 }
 
 // =============================================================================

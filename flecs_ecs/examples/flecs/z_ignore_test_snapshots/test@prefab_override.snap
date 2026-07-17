@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-"examples.prefabs.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)\nexamples.prefabs.prefab_override.Attack, examples.prefabs.prefab_override.Damage, (Identifier,Name), (IsA,SpaceShip)\nattack: 75\ndefence: 100\ndamage: 50\n"
+"Damage, (Identifier,Name), (IsA,SpaceShip)\nAttack, Damage, (Identifier,Name), (IsA,SpaceShip)\nattack: 75\ndefence: 100\ndamage: 50\n"

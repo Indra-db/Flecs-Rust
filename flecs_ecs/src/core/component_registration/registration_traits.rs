@@ -146,9 +146,7 @@ pub trait OnComponentRegistration: InternalComponentHooks {
     message = "`{Self}` is not a flecs component.",
     label = "use `#[derive(Component)]` on `{Self}` to mark it as one."
 )]
-pub trait ComponentId:
-    Sized + ComponentInfo + 'static + Send + Sync + OnComponentRegistration
-{
+pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration {
     #[doc(hidden)]
     type UnderlyingType: ComponentId;
     #[doc(hidden)]
@@ -203,7 +201,7 @@ pub trait ComponentId:
                 }
                 components_array[index]
             } else {
-                components_array.reserve(len);
+                components_array.reserve(index + 1 - len);
                 let capacity = components_array.capacity();
                 unsafe {
                     core::ptr::write_bytes(
@@ -221,6 +219,12 @@ pub trait ComponentId:
                 };
 
                 components_array[index] = id;
+                #[cfg(feature = "flecs_meta")]
+                {
+                    world
+                        .components_map()
+                        .insert(core::any::TypeId::of::<Self>(), id);
+                }
 
                 Self::internal_on_component_registration(world, Entity::new(id));
 
@@ -336,7 +340,7 @@ pub trait ComponentId:
                 }
                 components_array[index]
             } else {
-                components_array.reserve(len);
+                components_array.reserve(index + 1 - len);
                 let capacity = components_array.capacity();
                 unsafe {
                     core::ptr::write_bytes(
@@ -350,6 +354,12 @@ pub trait ComponentId:
                     try_register_component_named::<MANUAL_REGISTRATION_CHECK, Self>(world, name);
 
                 components_array[index] = id;
+                #[cfg(feature = "flecs_meta")]
+                {
+                    world
+                        .components_map()
+                        .insert(core::any::TypeId::of::<Self>(), id);
+                }
 
                 Self::internal_on_component_registration(world, Entity::new(id));
 
@@ -595,6 +605,12 @@ pub trait ComponentInfo: Sized {
     const IMPLS_DEFAULT: bool;
     const IMPLS_PARTIAL_ORD: bool;
     const IMPLS_PARTIAL_EQ: bool;
+    /// Whether the component type is [`Send`]. Components that are not `Send`
+    /// are thread-bound: they may only be accessed from the thread that owns
+    /// the [`World`][crate::core::World] and cannot be used in multithreaded systems.
+    const IMPLS_SEND: bool;
+    /// Whether the component type is [`Sync`].
+    const IMPLS_SYNC: bool;
     #[doc(hidden)]
     const IS_REF: bool;
     #[doc(hidden)]
@@ -710,6 +726,8 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
     const IMPLS_PARTIAL_ORD: bool = T::IMPLS_PARTIAL_ORD;
     const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
+    const IMPLS_SEND: bool = T::IMPLS_SEND;
+    const IMPLS_SYNC: bool = T::IMPLS_SYNC;
     const IS_REF: bool = true;
     const IS_MUT: bool = false;
     type TagType = T::TagType;
@@ -724,6 +742,8 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IMPLS_DEFAULT: bool = T::IMPLS_DEFAULT;
     const IMPLS_PARTIAL_ORD: bool = T::IMPLS_PARTIAL_ORD;
     const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
+    const IMPLS_SEND: bool = T::IMPLS_SEND;
+    const IMPLS_SYNC: bool = T::IMPLS_SYNC;
     const IS_REF: bool = false;
     const IS_MUT: bool = true;
     type TagType = T::TagType;

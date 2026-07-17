@@ -250,8 +250,15 @@ pub fn c_add_remove_tags(criterion: &mut Criterion) {
         unsafe {
             let id_count = 32;
             let world = sys::ecs_mini();
-            let entities = create_ids(world, ENTITY_COUNT as usize, 0, false, false, true);
-            let ids = create_ids(world, id_count, 0, true, false, true);
+            let entities = create_ids(
+                WorldRef::from_ptr(world),
+                ENTITY_COUNT as usize,
+                0,
+                false,
+                false,
+                true,
+            );
+            let ids = create_ids(WorldRef::from_ptr(world), id_count, 0, true, false, true);
 
             bencher.iter_custom(|iters| {
                 let start = Instant::now();

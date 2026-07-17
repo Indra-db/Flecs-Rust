@@ -1,0 +1,21 @@
+error[E0277]: `Rc<i32>` cannot be sent between threads safely
+  --> tests/compile_fail/par_each_non_send.rs:17:10
+   |
+17 |         .par_each(|handle| {
+   |          ^^^^^^^^ `Rc<i32>` cannot be sent between threads safely
+   |
+   = help: within `&'w mut NonSendHandle`, the trait `Send` is not implemented for `Rc<i32>`
+note: required because it appears within the type `NonSendHandle`
+  --> tests/compile_fail/par_each_non_send.rs:9:8
+   |
+ 9 | struct NonSendHandle {
+   |        ^^^^^^^^^^^^^
+   = note: required because it appears within the type `&'w mut NonSendHandle`
+note: required by a bound in `par_each`
+  --> src/core/utility/traits/system_api.rs
+   |
+   |     fn par_each<Func>(&mut self, func: Func) -> <Self as builder::Builder<'a>>::BuiltType
+   |        -------- required by a bound in this associated function
+...
+   |         for<'w> T::TupleType<'w>: Send,
+   |                                   ^^^^ required by this bound in `ParSystemAPI::par_each`

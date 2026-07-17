@@ -1056,3 +1056,117 @@ fn table_clear_entities() {
     assert_eq!(table.count(), 0);
     assert_eq!(table.size(), 2);
 }
+
+// -- Regression tests for table access soundness -----------------------------
+
+/// Two independently obtained handles to the same table must not be able to
+/// hand out two live mutable guards for the same column.
+#[test]
+#[cfg(feature = "flecs_safety_locks")]
+fn table_get_mut_aliasing_panics() {
+    let world = World::new();
+
+    let e = world.entity().set(Position { x: 1, y: 2 });
+
+    let mut t1 = e.table().unwrap();
+    let mut t2 = e.table().unwrap();
+
+    let guard = t1.get_mut::<Position>().unwrap();
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        let _second = t2.get_mut::<Position>();
+    }));
+    assert!(result.is_err());
+
+    assert_eq!(guard[0].x, 1);
+    assert_eq!(guard[0].y, 2);
+}
+
+/// While an `entities()` guard is alive, structural changes are deferred, so the
+/// entity array cannot be reallocated under the borrow.
+#[test]
+fn table_entities_guard_defers_structural_changes() {
+    let world = World::new();
+
+    let e1 = world.entity().set(Position { x: 10, y: 20 });
+
+    {
+        let table = e1.table().unwrap();
+        let entities = table.entities();
+
+        for _ in 0..64 {
+            world.entity().set(Position { x: 1, y: 1 });
+        }
+
+        assert_eq!(entities.len(), 1);
+        assert_eq!(entities[0], e1.id());
+    }
+
+    assert_eq!(e1.table().unwrap().count(), 65);
+}
+
+/// While a `get_mut()` guard is alive, structural changes are deferred, so the
+/// column storage cannot be reallocated under the borrow.
+#[test]
+fn table_get_mut_guard_defers_structural_changes() {
+    let world = World::new();
+
+    let e1 = world.entity().set(Position { x: 10, y: 20 });
+
+    {
+        let mut table = e1.table().unwrap();
+        let pos = table.get_mut::<Position>().unwrap();
+
+        for _ in 0..64 {
+            world.entity().set(Position { x: 1, y: 1 });
+        }
+
+        assert_eq!(pos.len(), 1);
+        assert_eq!(pos[0].x, 10);
+        assert_eq!(pos[0].y, 20);
+    }
+
+    assert_eq!(e1.table().unwrap().count(), 65);
+}
+
+/// `entities()` on a table range must honor the range offset.
+#[test]
+fn table_range_entities_offset() {
+    let world = World::new();
+
+    let e1 = world.entity().set(Position { x: 10, y: 20 });
+    let e2 = world.entity().set(Position { x: 20, y: 30 });
+    let e3 = world.entity().set(Position { x: 30, y: 40 });
+
+    let range = e2.range().unwrap();
+    let entities = range.entities();
+    assert_eq!(entities.len(), 1);
+    assert_eq!(entities[0], e2.id());
+    drop(entities);
+
+    let range = TableRange::new(e1.table().unwrap(), 1, 2);
+    let entities = range.entities();
+    assert_eq!(entities.len(), 2);
+    assert_eq!(entities[0], e2.id());
+    assert_eq!(entities[1], e3.id());
+}
+
+/// A table lock must be released when a panic unwinds through it and is later
+/// caught, so the table can still be modified afterwards.
+#[test]
+fn table_lock_released_after_caught_panic() {
+    let world = World::new();
+
+    let e = world.entity().set(Position { x: 1, y: 2 });
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        let table = e.table().unwrap();
+        let _archetype = table.archetype();
+        panic!("panic while table lock is held");
+    }));
+    assert!(result.is_err());
+
+    e.set(Velocity { x: 3, y: 4 });
+    assert!(e.has(Position::id()));
+    assert!(e.has(Velocity::id()));
+}

@@ -15,6 +15,7 @@ use alloc::vec::Vec;
 pub struct BulkEntityBuilder<'a> {
     desc: sys::ecs_bulk_desc_t,
     data: [*mut core::ffi::c_void; sys::FLECS_ID_DESC_MAX as usize],
+    entity_ids: Vec<u64>,
     world: WorldRef<'a>,
     current_id_index: u8,
 }
@@ -48,6 +49,7 @@ impl<'a> BulkEntityBuilder<'a> {
                 table: core::ptr::null_mut(),
             },
             data: [core::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
+            entity_ids: Vec::new(),
             current_id_index: 0,
         }
     }
@@ -69,7 +71,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// The provided entities must not already have components.
     pub(crate) fn new_w_entity_ids(
         world: impl WorldProvider<'a>,
-        entities: &[impl Into<Entity>],
+        entities: &[impl Into<Entity> + Copy],
     ) -> Self {
         ecs_assert!(
             entities.len() <= i32::MAX as usize,
@@ -77,17 +79,20 @@ impl<'a> BulkEntityBuilder<'a> {
             "count must be less than i32::MAX"
         );
 
+        let entity_ids: Vec<u64> = entities.iter().map(|e| *Into::<Entity>::into(*e)).collect();
+
         Self {
             world: world.world(),
             desc: sys::ecs_bulk_desc_t {
                 _canary: 0,
-                entities: entities.as_ptr() as *mut _,
-                count: entities.len() as i32,
+                entities: core::ptr::null_mut(),
+                count: entity_ids.len() as i32,
                 ids: [0; sys::FLECS_ID_DESC_MAX as usize],
                 data: core::ptr::null_mut(),
                 table: core::ptr::null_mut(),
             },
             data: [core::ptr::null_mut(); sys::FLECS_ID_DESC_MAX as usize],
+            entity_ids,
             current_id_index: 0,
         }
     }
@@ -200,10 +205,7 @@ impl<'a> BulkEntityBuilder<'a> {
     ///
     /// let entities_created = world.entity_bulk(10).set(&positions).build();
     /// ```
-    pub fn set<T: ComponentId + DataComponent>(
-        &'a mut self,
-        component_data: &'a [T],
-    ) -> &'a mut Self {
+    pub fn set<T: ComponentId + DataComponent>(&mut self, component_data: &'a [T]) -> &mut Self {
         assert!(
             component_data.len() == self.desc.count as usize,
             "component_data length must be equal to count of entities"
@@ -242,7 +244,15 @@ impl<'a> BulkEntityBuilder<'a> {
     /// ```
     pub fn build(&mut self) -> Vec<Entity> {
         self.desc.data = self.data.as_ptr() as *mut _;
+        if !self.entity_ids.is_empty() {
+            self.desc.entities = self.entity_ids.as_mut_ptr();
+        }
+        // SAFETY: the world pointer is valid for 'a. `desc.entities` either is null or points
+        // into `self.entity_ids`, an owned buffer of `desc.count` raw entity ids. `desc.data`
+        // slices are borrowed for 'a via `set`, so they outlive this call.
         let entities = unsafe { sys::ecs_bulk_init(self.world.world_ptr_mut(), &self.desc) };
+        // SAFETY: `ecs_bulk_init` returns a pointer to `desc.count` valid entity ids: either
+        // `desc.entities` (owned by self) or a live internal buffer of the world.
         unsafe { core::slice::from_raw_parts(entities, self.desc.count as usize) }
             .iter()
             .map(|&e| Entity::from(e))
@@ -315,6 +325,7 @@ impl<'a> BulkEntityBuilder<'a> {
             let arch_iter = arch.as_slice().iter();
             arch_iter.for_each(|id| {
                 let id = *(*id);
+                // SAFETY: the world pointer is valid for 'a and `id` comes from a live archetype.
                 let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
 
                 if is_not_tag && !has_default_hook(world, id) {
@@ -332,6 +343,7 @@ impl<'a> BulkEntityBuilder<'a> {
             let mut index = 0;
             arch_slice.iter().for_each(|id| {
                 let id = *(*id);
+                // SAFETY: the world pointer is valid for 'a and `id` comes from a live archetype.
                 let is_a_tag = unsafe { sys::ecs_get_typeid(world, id) == 0 };
 
                 if is_a_tag {
@@ -374,6 +386,7 @@ impl<'a> BulkEntityBuilder<'a> {
             });
         }
 
+        // SAFETY: `table.table` is a `NonNull` to a live table owned by the same world.
         self.desc.table = unsafe { table.table.as_mut() };
         let entities = self.build();
         self.desc.table = core::ptr::null_mut();
@@ -451,7 +464,7 @@ impl World {
     /// ```
     pub fn entity_bulk_w_entity_ids(
         &self,
-        entities: &[impl Into<Entity>],
+        entities: &[impl Into<Entity> + Copy],
     ) -> BulkEntityBuilder<'_> {
         BulkEntityBuilder::new_w_entity_ids(self, entities)
     }

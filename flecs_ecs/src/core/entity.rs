@@ -30,6 +30,12 @@ impl Entity {
         Self(0)
     }
 
+    /// Returns `true` if the id is not the null (0) id.
+    ///
+    /// This is a pure numeric check: `Entity` carries no world reference, so this
+    /// cannot detect dead, deleted or recycled entities. For a full liveliness
+    /// check against a world, use [`EntityView::is_valid()`] or
+    /// [`World::is_valid()`][crate::core::World::is_valid].
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
         self.0 != 0
@@ -240,6 +246,7 @@ mod from_operations {
     {
         #[inline]
         fn from(query: Query<T>) -> Self {
+            // SAFETY: `query.query` is a NonNull pointer to a live ecs_query_t that the Query keeps alive.
             Entity(unsafe { query.query.as_ref().entity })
         }
     }

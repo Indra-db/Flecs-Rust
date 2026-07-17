@@ -891,3 +891,14 @@ fn event_enum_event() {
             .emit(&Event);
     }
 }
+
+#[test]
+#[should_panic(expected = "EventBuilder can hold at most")]
+fn event_add_more_than_max_ids_panics() {
+    let world = World::new();
+
+    let mut builder = world.event::<Evt>();
+    for _ in 0..9 {
+        builder.add(world.entity());
+    }
+}

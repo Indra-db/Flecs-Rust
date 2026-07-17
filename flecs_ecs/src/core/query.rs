@@ -472,9 +472,25 @@ where
     _phantom: PhantomData<T>,
 }
 
-unsafe impl<T> Send for Query<T> where T: QueryTuple {}
+// SAFETY: a `Query` handle may only cross threads when every component
+// reference it can hand out (`TupleType`) is itself `Send`: `&T` requires
+// `T: Sync`, `&mut T` requires `T: Send`. Queries over thread-bound
+// (`!Send`/`!Sync`) components stay pinned to the world's owning thread.
+unsafe impl<T> Send for Query<T>
+where
+    T: QueryTuple,
+    for<'w> T::TupleType<'w>: Send,
+{
+}
 
-unsafe impl<T> Sync for Query<T> where T: QueryTuple {}
+// SAFETY: sharing `&Query` lets any thread iterate it, which materializes
+// `TupleType` references on that thread; see the `Send` impl above.
+unsafe impl<T> Sync for Query<T>
+where
+    T: QueryTuple,
+    for<'w> T::TupleType<'w>: Send,
+{
+}
 
 impl<T> Clone for Query<T>
 where
@@ -482,6 +498,19 @@ where
 {
     fn clone(&self) -> Self {
         unsafe { Query::<T>::new_from(self.query) }
+    }
+}
+
+impl<T> core::fmt::Debug for Query<T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Query")
+            .field("entity", &self.entity().id())
+            .field("term_count", &self.term_count())
+            .field("expr", &query_expr_string(IterOperations::query_ptr(self)))
+            .finish()
     }
 }
 
@@ -498,8 +527,8 @@ where
                 return;
             }
 
-            // fn [`destruct`](crate::core::query::destruct) does not decrease the ref count, because it still calls drop.
-            self.world().world_ctx_mut().dec_query_ref_count();
+            // fn [`destruct`](crate::core::query::Query::destruct) decreases the ref count itself and forgets `self`, so drop never runs for destructed queries.
+            self.world().world_ctx().dec_query_ref_count();
 
             // Only free if query is not associated with entity. Queries are associated with entities
             // when they are either named or cached, such as system, cached queries and named queries. These queries have to be either explicitly
@@ -559,6 +588,17 @@ where
     #[inline(always)]
     fn entity(&self) -> EntityView<'_> {
         EntityView::new_from(self.world(), unsafe { (*self.query.as_ptr()).entity })
+    }
+}
+
+/// Formats the query as a string expression using `ecs_query_str`.
+/// The resulting expression can be parsed to create the same query.
+impl<T> core::fmt::Display for Query<T>
+where
+    T: QueryTuple,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", query_expr_string(IterOperations::query_ptr(self)))
     }
 }
 
@@ -709,6 +749,10 @@ where
     ///
     /// If the query is used as the parent of subqueries, those subqueries will be
     /// orphaned and must be deinitialized as well.
+    ///
+    /// # Panics
+    ///
+    /// Panics if other `Query` handles (clones/copies) to the same query still exist.
     pub fn destruct(self) {
         ecs_assert!(
             unsafe { (*self.query.as_ptr()).entity } != 0,
@@ -717,14 +761,17 @@ where
 
         if unsafe { (*self.query.as_ptr()).entity } != 0 {
             let world = self.world();
-            let world_ctx = world.world_ctx_mut();
+            let world_ctx = world.world_ctx();
             if unsafe { sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) } > 0 {
                 world_ctx.set_is_panicking_true();
                 unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
-                panic!("The code base still has lingering references to `Query` objects. This is a bug in the user code. 
-                Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one.");
+                panic!(
+                    "The code base still has lingering references to `Query` objects. This is a bug in the user code. Please ensure that all `Query` objects are out of scope that are a clone/copy of the current one."
+                );
             } else {
+                world_ctx.dec_query_ref_count();
                 unsafe { sys::ecs_query_fini(self.query.as_ptr()) };
+                core::mem::forget(self);
             }
         }
     }
@@ -739,6 +786,9 @@ where
     ///
     /// * `world` - The world to get the iterator for
     pub fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
+        // SAFETY: `self.world_ptr()` returns the valid world that owns this query, and
+        // `self.query.as_ptr()` is a live `ecs_query_t` owned by `self`; both outlive the
+        // `ecs_iter_t` constructed here, satisfying `ecs_query_iter`'s contract.
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 
@@ -760,6 +810,8 @@ where
     ///
     /// * [`TableIter::is_changed()`]
     pub fn is_changed(&self) -> bool {
+        // SAFETY: `self.query` is a NonNull pointer to a live `ecs_query_t` owned by
+        // `self`, satisfying `ecs_query_changed`'s requirement of a valid query pointer.
         unsafe { sys::ecs_query_changed(self.query.as_ptr()) }
     }
 
@@ -773,6 +825,9 @@ where
     ///
     /// Returns a pointer to the group info
     pub fn group_info(&self, group_id: impl Into<Entity>) -> *const sys::ecs_query_group_info_t {
+        // SAFETY: `self.query` is a NonNull pointer to a live `ecs_query_t` owned by
+        // `self` for the duration of this call; `group_id` is a plain integer id, so
+        // `ecs_query_get_group_info` is safe to call regardless of whether the group exists.
         unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
     }
 
@@ -789,6 +844,9 @@ where
         let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {
+            // SAFETY: `group_info` was just checked non-null; it was returned by
+            // `ecs_query_get_group_info` for `self.query`, which is a live query pointer
+            // owned by `self` for the duration of this call, so the pointee is valid to read.
             unsafe { (*group_info).ctx }
         } else {
             core::ptr::null_mut()

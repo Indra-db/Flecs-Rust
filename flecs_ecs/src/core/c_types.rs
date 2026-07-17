@@ -549,6 +549,19 @@ macro_rules! impl_component_traits_binding_type_w_id {
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
             const IMPLS_PARTIAL_ORD: bool = false;
+            const IMPLS_SEND: bool = {
+                // Bring the blanket `DoesNotImpl` fallback into scope so the
+                // auto-trait probe resolves to `false` for `!Send` binding types
+                // instead of failing to compile.
+                #[allow(unused_imports)]
+                use crate::core::DoesNotImpl as _;
+                crate::core::utility::types::ImplementsSend::<$name>::IMPLS
+            };
+            const IMPLS_SYNC: bool = {
+                #[allow(unused_imports)]
+                use crate::core::DoesNotImpl as _;
+                crate::core::utility::types::ImplementsSync::<$name>::IMPLS
+            };
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }
@@ -631,6 +644,19 @@ macro_rules! impl_component_traits_binding_type_w_static_id {
             const IMPLS_DEFAULT: bool = false;
             const IMPLS_PARTIAL_EQ: bool = false;
             const IMPLS_PARTIAL_ORD: bool = false;
+            const IMPLS_SEND: bool = {
+                // Bring the blanket `DoesNotImpl` fallback into scope so the
+                // auto-trait probe resolves to `false` for `!Send` binding types
+                // instead of failing to compile.
+                #[allow(unused_imports)]
+                use crate::core::DoesNotImpl as _;
+                crate::core::utility::types::ImplementsSend::<$name>::IMPLS
+            };
+            const IMPLS_SYNC: bool = {
+                #[allow(unused_imports)]
+                use crate::core::DoesNotImpl as _;
+                crate::core::utility::types::ImplementsSync::<$name>::IMPLS
+            };
             const IS_REF: bool = false;
             const IS_MUT: bool = false;
         }

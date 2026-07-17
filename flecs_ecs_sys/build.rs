@@ -337,6 +337,19 @@ fn main() {
             Some(term_count_max.to_string().as_str()),
         );
 
+        // The Rust callback trampolines use the `extern "C-unwind"` ABI so that a
+        // panic in a user system/observer/hook can unwind back to the Rust caller
+        // (e.g. the `catch_unwind` in the app run loop). Unwinding *through* these
+        // C frames is only defined if the C code carries unwind tables, so emit
+        // them explicitly. On wasm unwinding is unsupported (the trampolines use
+        // plain `extern "C"`), and MSVC/other compilers that don't accept these
+        // flags simply ignore them via `flag_if_supported`.
+        #[cfg(not(target_family = "wasm"))]
+        {
+            build.flag_if_supported("-fexceptions");
+            build.flag_if_supported("-fasynchronous-unwind-tables");
+        }
+
         build.compile("flecs");
 
         //TODO C might complain about unused functions when disabling certain features, turn the warning off?

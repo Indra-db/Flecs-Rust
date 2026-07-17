@@ -20,13 +20,6 @@ pub trait WorldProvider<'a> {
     fn world(&self) -> WorldRef<'a>;
 }
 
-impl<'a> WorldProvider<'a> for *mut sys::ecs_world_t {
-    #[inline(always)]
-    fn world(&self) -> WorldRef<'a> {
-        unsafe { WorldRef::from_ptr(*self) }
-    }
-}
-
 impl<'a> WorldProvider<'a> for IdView<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
@@ -71,11 +64,10 @@ pub struct WorldRef<'a> {
     _marker: PhantomData<&'a ()>,
 }
 
-unsafe impl Send for WorldRef<'_> {}
-
 impl<'a> WorldRef<'a> {
     #[inline(always)]
     pub fn real_world(&self) -> WorldRef<'a> {
+        // SAFETY: ecs_get_world returns a pointer to a valid world derived from self's world_ptr_mut.
         unsafe {
             WorldRef::from_ptr(
                 sys::ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
@@ -87,6 +79,7 @@ impl<'a> WorldRef<'a> {
     /// Caller must ensure `raw_world` points to a valid `sys::ecs_world_t`
     #[inline(always)]
     pub unsafe fn from_ptr(raw_world: *mut sys::ecs_world_t) -> Self {
+        // SAFETY: caller guarantees raw_world points to a valid ecs_world_t, per fn's Safety doc.
         unsafe {
             WorldRef {
                 raw_world: NonNull::new_unchecked(raw_world),
@@ -124,18 +117,22 @@ impl<'a> From<&'a mut World> for WorldRef<'a> {
     }
 }
 
-impl<'a> From<&'a *mut sys::ecs_world_t> for &WorldRef<'a> {
-    #[inline(always)]
-    fn from(value: &'a *mut sys::ecs_world_t) -> Self {
-        unsafe { core::mem::transmute::<&'a *mut sys::ecs_world_t, &WorldRef>(value) }
-    }
-}
-
 impl Deref for WorldRef<'_> {
     type Target = World;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
+        // Both `WorldRef` and `World` are `#[repr(C)]` with the same three
+        // leading `NonNull` fields; `WorldRef`'s trailing `PhantomData` is a
+        // ZST. This assertion fails to compile if that ever stops holding.
+        const {
+            assert!(
+                core::mem::size_of::<WorldRef<'_>>() == core::mem::size_of::<World>()
+                    && core::mem::align_of::<WorldRef<'_>>() == core::mem::align_of::<World>(),
+                "WorldRef and World layout diverged; WorldRef: Deref<World> transmute is unsound"
+            );
+        }
+        // SAFETY: layout equivalence between WorldRef and World is asserted above.
         unsafe { core::mem::transmute::<&WorldRef, &World>(self) }
     }
 }

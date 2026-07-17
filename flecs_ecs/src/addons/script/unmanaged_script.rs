@@ -19,19 +19,11 @@ use alloc::{borrow::ToOwned, string::String};
 #[repr(C)]
 pub struct Script<'a> {
     script: *mut sys::ecs_script_t,
-    ast: *mut core::ffi::c_char,
     _phantom: core::marker::PhantomData<&'a ()>,
 }
 
 impl Drop for Script<'_> {
     fn drop(&mut self) {
-        if !self.ast.is_null() {
-            unsafe {
-                sys::ecs_os_api.free_.expect("os api is missing")(
-                    self.ast as *mut core::ffi::c_void,
-                );
-            }
-        }
         if !self.script.is_null() {
             unsafe { sys::ecs_script_free(self.script) }
         }
@@ -86,7 +78,6 @@ impl<'a> Script<'a> {
         } else {
             Some(Script {
                 script: ptr,
-                ast: core::ptr::null_mut(),
                 _phantom: core::marker::PhantomData::<&'a ()>,
             })
         }
@@ -177,30 +168,16 @@ impl<'a> Script<'a> {
     pub fn ast(&mut self) -> Option<String> {
         let ast = unsafe { sys::ecs_script_ast_to_str(self.script, false) };
 
-        if !ast.is_null() {
-            if self.ast.is_null() {
-                self.ast = ast;
-            } else {
-                ecs_assert!(
-                    false,
-                    FlecsErrorCode::InvalidOperation,
-                    "Script AST already exists"
-                );
-                unsafe {
-                    sys::ecs_os_api.free_.expect("os api is missing")(
-                        ast as *mut core::ffi::c_void,
-                    );
-                }
-            }
-            let c_str = unsafe { CStr::from_ptr(ast) };
-            let str = c_str.to_str().unwrap().to_owned();
-            unsafe {
-                sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut core::ffi::c_void);
-            };
-            Some(str)
-        } else {
-            None
+        if ast.is_null() {
+            return None;
         }
+
+        let c_str = unsafe { CStr::from_ptr(ast) };
+        let str = c_str.to_str().unwrap().to_owned();
+        unsafe {
+            sys::ecs_os_api.free_.expect("os api is missing")(ast as *mut core::ffi::c_void);
+        };
+        Some(str)
     }
 
     /// Serialize value into a String.
@@ -221,6 +198,7 @@ impl<'a> Script<'a> {
         let id = *id_of_value.into_entity(world);
         let world = world.world_ptr_mut();
         let expr = unsafe { sys::ecs_ptr_to_expr(world, id, value as *const core::ffi::c_void) };
+        assert!(!expr.is_null(), "value to expression serialization failed");
         let c_str = unsafe { CStr::from_ptr(expr) };
         let str = c_str.to_str().unwrap().to_owned();
         unsafe {
@@ -247,6 +225,7 @@ impl<'a> Script<'a> {
             // unresolved const variable
             None
         } else {
+            // SAFETY: v is a non-zero entity id resolved by ecs_lookup_path_w_sep above.
             let value = unsafe { sys::ecs_const_var_get(world_ptr, v) };
 
             if value.ptr.is_null() {
@@ -264,17 +243,24 @@ impl<'a> Script<'a> {
     ) -> T::ConstType {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
         if T::IS_INT {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_int(&cur) };
+            // SAFETY: T::IS_INT guarantees T::ConstType has the same size/repr as i64 for this impl.
             unsafe { *(&cur_value as *const i64 as *const T::ConstType) }
         } else if T::IS_UINT {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_uint(&cur) };
+            // SAFETY: T::IS_UINT guarantees T::ConstType has the same size/repr as u64 for this impl.
             unsafe { *(&cur_value as *const u64 as *const T::ConstType) }
         } else
         /* float */
         {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_float(&cur) };
+            // SAFETY: the else branch is reached only for float ConstNumeric impls, where T::ConstType has the same size/repr as f64.
             unsafe { *(&cur_value as *const f64 as *const T::ConstType) }
         }
     }
@@ -285,7 +271,9 @@ impl<'a> Script<'a> {
     ) -> core::ffi::c_char {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        // SAFETY: cur is a valid cursor constructed above.
         let cur_value = unsafe { sys::ecs_meta_get_char(&cur) };
         cur_value as core::ffi::c_char
     }
@@ -293,9 +281,13 @@ impl<'a> Script<'a> {
     pub fn get_const_str(world: impl WorldProvider<'a>, value: sys::ecs_value_t) -> String {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        // SAFETY: cur is a valid cursor constructed above.
         let c_str = unsafe { sys::ecs_meta_get_string(&cur) };
+        assert!(!c_str.is_null(), "value is not a string");
 
+        // SAFETY: c_str was null-checked by the assert above and is a valid C string returned by flecs.
         unsafe { CStr::from_ptr(c_str) }
             .to_str()
             .unwrap()

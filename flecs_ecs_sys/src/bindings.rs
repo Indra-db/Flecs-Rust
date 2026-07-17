@@ -1963,7 +1963,7 @@ pub struct ecs_type_hooks_t {
     pub on_set: ecs_iter_action_t,
     #[doc = "Callback that is invoked when an instance of the component is removed.\n This callback is invoked after the triggers are invoked, and before the\n destructor is invoked."]
     pub on_remove: ecs_iter_action_t,
-    #[doc = "Callback that is invoked with the existing and new value before the\n value is assigned. Invoked after on_add and before on_set. Registering\n an on_replace hook prevents using operations that return a mutable\n pointer to the component like get_mut, ensure and emplace."]
+    #[doc = "Callback that is invoked with the existing and new value before the\n value is assigned. Invoked after on_add and before on_set. Registering\n an on_replace hook prevents using operations that return a mutable\n pointer to the component like get_mut, ensure and emplace.\n The iterator's other_table field is set to the table of the entity\n before the operation. To find out whether the component existed before\n the operation, call ecs_table_has_id() on other_table."]
     pub on_replace: ecs_iter_action_t,
     #[doc = "< User defined context"]
     pub ctx: *mut ::core::ffi::c_void,

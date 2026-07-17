@@ -21,6 +21,27 @@ pub struct System<'a> {
     pub(crate) entity: EntityView<'a>,
 }
 
+impl core::fmt::Debug for System<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Debug::fmt(&self.entity, f)
+    }
+}
+
+impl core::fmt::Display for System<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Display::fmt(&self.entity, f)
+    }
+}
+
+impl PartialEq for System<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.entity == other.entity
+    }
+}
+
+impl Eq for System<'_> {}
+
 impl<'a> Deref for System<'a> {
     type Target = EntityView<'a>;
 
@@ -88,27 +109,48 @@ impl<'a> System<'a> {
         }
     }
 
+    fn system_ptr(&self) -> *const sys::ecs_system_t {
+        let system = unsafe { sys::ecs_system_get(self.world.world_ptr(), *self.id()) };
+        assert!(!system.is_null(), "entity is not a system");
+        system
+    }
+
     /// Get the context for the system
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not a system.
     pub fn context(&self) -> *mut c_void {
-        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).ctx }
+        unsafe { (*self.system_ptr()).ctx }
     }
 
     /// Get the underlying query for the system
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not a system or the system has no query.
     pub fn query(&self) -> Query<()> {
-        let query = unsafe {
-            NonNull::new_unchecked((*sys::ecs_system_get(self.world.world_ptr(), *self.id())).query)
-        };
+        let query =
+            NonNull::new(unsafe { (*self.system_ptr()).query }).expect("system has no query");
         unsafe { Query::<()>::new_from(query) }
     }
 
     /// returns whether the system is immediate
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not a system.
     pub fn immediate(&self) -> bool {
-        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).immediate }
+        unsafe { (*self.system_ptr()).immediate }
     }
 
     /// returns whether the system is multi-threaded
+    ///
+    /// # Panics
+    ///
+    /// Panics if the entity is not a system.
     pub fn multi_threaded(&self) -> bool {
-        unsafe { (*sys::ecs_system_get(self.world.world_ptr(), *self.id())).multi_threaded }
+        unsafe { (*self.system_ptr()).multi_threaded }
     }
 
     /// Run the system

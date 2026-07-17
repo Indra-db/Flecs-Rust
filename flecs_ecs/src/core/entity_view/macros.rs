@@ -15,6 +15,7 @@
 /// - Implements `Deref` and `DerefMut` traits to allow easy access to the underlying `EntityView`.
 /// - Implements `From` for conversions between the newtype and `EntityView`.
 /// - Provides `Debug` and `Display` implementations for better formatting support.
+/// - Derives `PartialEq`, `Eq`, `PartialOrd`, `Ord` and `Hash`, delegating to the wrapped `EntityView`.
 ///
 /// # Example Usage & Compile test
 ///
@@ -32,7 +33,7 @@ macro_rules! newtype_of_entity_view {
     (
         $struct_vis:vis struct $name:ident($field_vis:vis EntityView)
     ) => {
-        #[derive(Clone, Copy)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
         $struct_vis struct $name<'a>($field_vis EntityView<'a>);
 
         impl<'a> $name<'a> {
@@ -105,6 +106,7 @@ macro_rules! newtype_of_entity_view {
 /// - Implements `Deref` and `DerefMut` traits to allow easy access to the underlying `Entity`.
 /// - Implements `From` for conversions between the newtype and `Entity`.
 /// - Provides `Debug` and `Display` implementations for better formatting support.
+/// - Derives `PartialEq`, `Eq`, `PartialOrd`, `Ord` and `Hash`, delegating to the wrapped `Entity`.
 ///
 /// # Example Usage & Compile test
 ///
@@ -123,7 +125,7 @@ macro_rules! newtype_of_entity {
     (
         $struct_vis:vis struct $name:ident($field_vis:vis Entity)
     ) => {
-        #[derive(Clone, Copy, Component)]
+        #[derive(Clone, Copy, Component, PartialEq, Eq, PartialOrd, Ord, Hash)]
         $struct_vis struct $name($field_vis Entity);
 
         impl core::ops::Deref for $name {

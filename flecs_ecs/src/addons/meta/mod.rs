@@ -87,7 +87,6 @@ mod declarations;
 mod ecs_serializer;
 mod entity_view;
 mod enum_type;
-mod impl_bindings;
 mod impl_primitives;
 pub mod macros;
 mod meta_fn_types;

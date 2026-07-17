@@ -123,6 +123,30 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
         T::populate(&mut obj);
         obj
     }
+
+    /// Attempts to build the observer, returning `None` if observer creation fails.
+    ///
+    /// This is the fallible counterpart of [`build()`](Builder::build): it returns
+    /// `None` instead of a handle to an invalid entity when the underlying
+    /// `ecs_observer_init` call fails, most commonly due to an invalid query
+    /// expression passed to `expr()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if neither a callback nor a run function was set, like
+    /// [`build()`](Builder::build). Use `.each*` / `.run*` to set one.
+    ///
+    /// # See also
+    ///
+    /// * [`QueryBuilder::try_build()`]
+    pub fn try_build(&mut self) -> Option<Observer<'a>> {
+        let observer = self.build();
+        if *observer.id() == 0 {
+            None
+        } else {
+            Some(observer)
+        }
+    }
 }
 
 impl<P, T: QueryTuple> ObserverBuilder<'_, P, T> {
@@ -238,35 +262,7 @@ impl<P, T: QueryTuple> core::fmt::Debug for ObserverBuilder<'_, P, T> {
         let qd = &self.desc.query;
         let mut ds = f.debug_struct("ObserverBuilder");
         ds.field("events", &&self.desc.events[..self.event_count]);
-        let mut term_list = Vec::new();
-        for t in qd.terms.iter() {
-            if t.id == 0 && t.first.id == 0 && t.first.name.is_null() {
-                break;
-            }
-            let first_name = if t.first.name.is_null() {
-                None
-            } else {
-                Some(unsafe {
-                    core::ffi::CStr::from_ptr(t.first.name)
-                        .to_str()
-                        .unwrap_or("?")
-                })
-            };
-            let src_name = if t.src.name.is_null() {
-                None
-            } else {
-                Some(unsafe {
-                    core::ffi::CStr::from_ptr(t.src.name)
-                        .to_str()
-                        .unwrap_or("?")
-                })
-            };
-            term_list.push(format!(
-                "{{ id={:#x}, first.id={:#x}, first.name={:?}, src.id={:#x}, src.name={:?}, inout={}, oper={} }}",
-                t.id, t.first.id, first_name, t.src.id, src_name, t.inout, t.oper
-            ));
-        }
-        ds.field("terms", &term_list);
+        ds.field("terms", &debug_term_list(&qd.terms));
         ds.finish()
     }
 }

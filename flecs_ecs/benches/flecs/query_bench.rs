@@ -240,6 +240,8 @@ fn bench_query_iter_components_8_term(
         let mut f =
             bench_query_iter_components_setup(&world, cache_kind, id_count, 8, sparse, fragment);
 
+        // SAFETY: f was built via bench_query_iter_components_setup with 8 terms matching
+        // C1..C8 in order, so the type-erased Query<()> layout matches Query<(&C1..&C8)>.
         let f = unsafe {
             core::mem::transmute::<Query<()>, Query<(&C1, &C2, &C3, &C4, &C5, &C6, &C7, &C8)>>(f)
         };
@@ -384,6 +386,8 @@ fn c_query_iter_read_4(
 ) {
     group.bench_function(format!("c_query_iter_{name}"), |bencher| {
         reset_srand();
+        // SAFETY: raw C API calls; world ptr from World::new is valid for the benchmark
+        // duration, ids/desc are built from it, and field indices match the 4 registered terms.
         unsafe {
             let world_ref = World::new();
             let world = world_ref.ptr_mut();

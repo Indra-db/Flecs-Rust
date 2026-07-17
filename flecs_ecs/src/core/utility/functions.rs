@@ -349,6 +349,8 @@ pub(crate) fn set_helper<T: ComponentId>(
         );
     };
 
+    unsafe { WorldRef::from_ptr(world) }.check_thread_affinity_exclusive::<T>();
+
     unsafe {
         let res = sys::ecs_rust_set(
             world,
@@ -356,6 +358,10 @@ pub(crate) fn set_helper<T: ComponentId>(
             id,
             &value as *const _ as *const _,
             const { core::mem::size_of::<T>() },
+        );
+        assert!(
+            !res.ptr.is_null(),
+            "set failed: entity is not alive or the world is invalid"
         );
         let comp = res.ptr as *mut T;
 
@@ -381,11 +387,14 @@ pub(crate) fn assign_helper<T: ComponentId>(
     value: T,
     id: sys::ecs_id_t,
 ) {
-    ecs_assert!(
-        core::mem::size_of::<T>() != 0,
-        FlecsErrorCode::InvalidParameter,
-        "operation invalid for empty type"
-    );
+    const {
+        assert!(
+            core::mem::size_of::<T>() != 0,
+            "cannot assign zero-sized-type / tag components"
+        );
+    };
+
+    unsafe { WorldRef::from_ptr(world) }.check_thread_affinity_exclusive::<T>();
 
     let res = unsafe {
         sys::ecs_cpp_assign(
@@ -397,6 +406,10 @@ pub(crate) fn assign_helper<T: ComponentId>(
         )
     };
 
+    assert!(
+        !res.ptr.is_null(),
+        "assign failed: entity is not alive, does not have the component, or the world is invalid"
+    );
     let dst = unsafe { &mut *(res.ptr as *mut T) };
     unsafe {
         core::ptr::drop_in_place(dst);
@@ -556,6 +569,9 @@ pub(crate) fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
         panic!("Id is not a valid component, pair or entity.");
     }
 
+    // SAFETY: `world` is a valid, live world pointer and `id` was just
+    // validated above via `ecs_id_is_valid`, so `ecs_get_typeid` can be
+    // called safely.
     let is_not_tag = unsafe { sys::ecs_get_typeid(world, id) != 0 };
 
     if is_not_tag {
@@ -568,7 +584,13 @@ pub(crate) fn check_add_id_validity(world: *const sys::ecs_world_t, id: u64) {
 
 #[inline(never)]
 pub(crate) fn has_default_hook(world: *const sys::ecs_world_t, id: u64) -> bool {
+    // SAFETY: `world` is a valid, live world pointer supplied by the caller and
+    // `id` is a valid id (validated by callers such as `check_add_id_validity`
+    // via `ecs_id_is_valid`), so `ecs_get_hooks_id` returns a valid, non-null
+    // pointer to the type's hooks struct.
     let hooks = unsafe { sys::ecs_get_hooks_id(world, id) };
+    // SAFETY: `hooks` was just returned by `ecs_get_hooks_id` for a valid world
+    // and id, so it points to a live, initialized `ecs_type_hooks_t`.
     let ctor_hooks =
         unsafe { (*hooks).ctor }.expect("ctor hook is always implemented, either in Rust or C");
 

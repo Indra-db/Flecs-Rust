@@ -13,7 +13,7 @@ use crate::sys;
 extern crate std;
 
 extern crate alloc;
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 
 /// An archetype is a vector of component [ids](Id) which can be requested from [entities] or [tables].
 ///
@@ -87,10 +87,13 @@ impl<'a> Archetype<'a> {
             )
         })
         .map(|s| unsafe {
-            let len = CStr::from_ptr(s.as_ptr()).to_bytes().len();
-            // Convert the C string to a Rust String without any new heap allocation.
-            // The String will de-allocate the C string when it goes out of scope.
-            String::from_utf8_unchecked(Vec::from_raw_parts(s.as_ptr() as *mut u8, len, len))
+            // Copy the C string into a Rust-allocated String, then free the C
+            // allocation with the flecs allocator it came from. Wrapping the C
+            // pointer in a Vec would free it with the Rust global allocator,
+            // which is undefined behavior when the allocators differ.
+            let string = CStr::from_ptr(s.as_ptr()).to_string_lossy().into_owned();
+            sys::ecs_os_api.free_.expect("os api is missing")(s.as_ptr() as *mut core::ffi::c_void);
+            string
         })
     }
 

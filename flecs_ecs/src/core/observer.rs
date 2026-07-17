@@ -15,6 +15,27 @@ pub struct Observer<'a> {
     entity: EntityView<'a>,
 }
 
+impl core::fmt::Debug for Observer<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Debug::fmt(&self.entity, f)
+    }
+}
+
+impl core::fmt::Display for Observer<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Display::fmt(&self.entity, f)
+    }
+}
+
+impl PartialEq for Observer<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.entity == other.entity
+    }
+}
+
+impl Eq for Observer<'_> {}
+
 impl<'a> Deref for Observer<'a> {
     type Target = EntityView<'a>;
 
@@ -114,17 +135,40 @@ impl<'a> Observer<'a> {
     }
 
     /// Get the context for the observer
+    ///
+    /// # Panics
+    ///
+    /// Panics if the observer's entity no longer exists or is not a valid observer.
     pub fn context(&self) -> *mut c_void {
-        unsafe { (*sys::ecs_observer_get(self.world.world_ptr_mut(), *self.id)).ctx }
+        let observer = unsafe { sys::ecs_observer_get(self.world.world_ptr_mut(), *self.id) };
+        assert!(
+            !observer.is_null(),
+            "observer's entity no longer exists or is not a valid observer"
+        );
+        // SAFETY: `observer` was null-checked above and points to a live `ecs_observer_t`.
+        unsafe { (*observer).ctx }
     }
 
     /// Get the query for the observer
+    ///
+    /// # Panics
+    ///
+    /// Panics if the observer's entity no longer exists or is not a valid observer.
     pub fn query(&mut self) -> Query<()> {
-        unsafe {
-            Query::<()>::new_from(NonNull::new_unchecked(
-                (*sys::ecs_observer_get(self.world_ptr(), *self.entity.id())).query,
-            ))
-        }
+        // SAFETY: `self.world_ptr()` is a valid world pointer derived from the live
+        // `WorldRef` held by this `Observer`, and `self.entity.id()` names an entity
+        // this `Observer` was constructed from, so `ecs_observer_get` receives a
+        // valid world/entity pair.
+        let observer = unsafe { sys::ecs_observer_get(self.world_ptr(), *self.entity.id()) };
+        assert!(
+            !observer.is_null(),
+            "observer's entity no longer exists or is not a valid observer"
+        );
+        // SAFETY: `observer` was null-checked above and points to a live `ecs_observer_t`.
+        let query =
+            NonNull::new(unsafe { (*observer).query }).expect("observer's query no longer exists");
+        // SAFETY: `query` is the non-null query of a live observer.
+        unsafe { Query::<()>::new_from(query) }
     }
 
     /// Get the observer's entity

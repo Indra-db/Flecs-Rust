@@ -149,9 +149,11 @@ pub fn meta_register_vector_default<T: Default>(world: WorldRef) -> Opaque<Vec<T
 
     // Forward core::vector value to (JSON/...) serializer
     ts.serialize(|s: &Serializer, data: &Vec<T>| {
+        // SAFETY: s.world is set by the reflection framework to the live world driving this serialization.
         let world = unsafe { WorldRef::from_ptr(s.world as *mut sys::ecs_world_t) };
         let id = id!(world, T);
         for el in data.iter() {
+            // SAFETY: s is the valid serializer passed by the reflection framework and el is a live reference for the call.
             unsafe { s.value_id(id, el as *const T as *const core::ffi::c_void) };
         }
         0
@@ -186,6 +188,7 @@ pub fn flecs_entity_support<'a>(world: impl WorldProvider<'a>) -> Opaque<'a, Ent
     opaque.serialize(|ser: &Serializer, data: &Entity| {
         let id: Id = <Entity as Into<Id>>::into(*data);
         let id: u64 = *id;
+        // SAFETY: ser is a valid serializer supplied by the reflection framework and id lives for the call.
         unsafe { ser.value_id(flecs::meta::Entity::ID, &id as *const u64 as *const c_void) }
     });
     opaque.assign_entity(|dst: &mut Entity, _world: WorldRef<'a>, e: Entity| {
