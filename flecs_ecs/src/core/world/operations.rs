@@ -162,7 +162,6 @@ impl World {
     ///
     /// # See also
     ///
-    /// * C++ API: `world::atfini`
     #[doc(alias = "ecs_atfini")]
     pub fn on_destroyed(&self, action: fn(WorldRef)) {
         let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;

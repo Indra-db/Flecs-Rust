@@ -53,6 +53,15 @@ pub fn ecs_is_pair(entity: impl Into<Id>) -> bool {
     entity.into() & RUST_ecs_id_FLAGS_MASK == ECS_PAIR
 }
 
+/// Combine a relationship with a raw 32-bit value into a value pair id.
+///
+/// Value pairs encode a literal value in the target position of a pair
+/// instead of an entity (matches the C `ecs_value_pair` macro).
+#[inline(always)]
+pub fn ecs_value_pair(rel: u64, value: u64) -> u64 {
+    ECS_VALUE_PAIR | ecs_entity_id_combine(value, rel)
+}
+
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
 ///
 /// # Arguments

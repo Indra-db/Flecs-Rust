@@ -53,6 +53,30 @@ impl UntypedComponent<'_> {
         let type_id = *type_id.into_entity(self.world());
         let unit = *unit.into_entity(self.world());
 
+        /* Rust structs use repr(Rust) layout, so every member is added with an
+         * explicit offset. When member entities are enabled
+         * (FLECS_CREATE_MEMBER_ENTITIES), flecs converts the EcsMember
+         * component back to an ecs_member_t without preserving use_offset;
+         * a member at offset 0 then looks auto-laid-out and triggers a
+         * relayout that overwrites the explicit offsets of all previously
+         * added members. Snapshot the current offsets so they can be restored
+         * after the add. */
+        let mut snapshot: alloc::vec::Vec<(compact_str::CompactString, i32)> =
+            alloc::vec::Vec::new();
+        let mut i = 0;
+        loop {
+            let m = unsafe { sys::ecs_struct_get_nth_member(world, id, i) };
+            if m.is_null() {
+                break;
+            }
+            let member_name = unsafe { core::ffi::CStr::from_ptr((*m).name) };
+            snapshot.push((
+                compact_str::format_compact!("{}\0", member_name.to_string_lossy()),
+                unsafe { (*m).offset },
+            ));
+            i += 1;
+        }
+
         let member = sys::ecs_member_t {
             name: name.as_ptr() as *const _,
             type_: type_id,
@@ -69,6 +93,47 @@ impl UntypedComponent<'_> {
             FlecsErrorCode::InternalError,
             "failed to add member to struct"
         );
+
+        for (member_name, offset) in &snapshot {
+            let m =
+                unsafe { sys::ecs_struct_get_member(world, id, member_name.as_ptr() as *const _) };
+            if !m.is_null() {
+                unsafe {
+                    (*m).offset = *offset;
+                    let member_entity = (*m).member;
+                    if member_entity != 0 {
+                        let ptr = sys::ecs_get_mut_id(world, member_entity, flecs::meta::Member::ID)
+                            as *mut sys::EcsMember;
+                        if !ptr.is_null() {
+                            (*ptr).offset = *offset;
+                        }
+                    }
+                }
+            }
+        }
+        if Meta::USE_OFFSET {
+            let m = unsafe { sys::ecs_struct_get_member(world, id, name.as_ptr() as *const _) };
+            if !m.is_null() {
+                unsafe {
+                    (*m).offset = data.offset();
+                    (*m).use_offset = true;
+                    let member_entity = (*m).member;
+                    if member_entity != 0 {
+                        let ptr = sys::ecs_get_mut_id(world, member_entity, flecs::meta::Member::ID)
+                            as *mut sys::EcsMember;
+                        if !ptr.is_null() {
+                            (*ptr).offset = data.offset();
+                            (*ptr).use_offset = true;
+                        }
+                    }
+                }
+            }
+        }
+        if !snapshot.is_empty() || Meta::USE_OFFSET {
+            /* Rebuild the type serializer with the restored offsets (the
+             * serializer is rebuilt by the EcsType OnSet observer). */
+            unsafe { sys::ecs_modified_id(world, id, flecs::meta::Type::ID) };
+        }
         self
     }
 

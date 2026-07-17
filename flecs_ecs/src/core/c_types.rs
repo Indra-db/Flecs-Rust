@@ -251,6 +251,10 @@ pub(crate) const ECS_PAIR: u64 = 1 << 63;
 pub(crate) const ECS_AUTO_OVERRIDE: u64 = 1 << 62;
 /// Adds bitset to storage which allows component to be enabled/disabled
 pub(crate) const ECS_TOGGLE: u64 = 1 << 61;
+
+/// Indicates that the id is a value pair: the hi 32 bits encode a value
+/// instead of a target entity.
+pub(crate) const ECS_VALUE_PAIR: u64 = (1 << 60) | (1 << 63);
 /// Include all components from entity to which AND is applied
 pub(crate) const ECS_AND: u64 = 1 << 60;
 
@@ -258,11 +262,8 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ECS_IDENTIFIER: u64 = 2;
 pub(crate) const ECS_POLY: u64 = 3;
-#[expect(dead_code, reason = "pending EcsParent port")]
 pub(crate) const ECS_PARENT: u64 = 4;
-#[expect(dead_code, reason = "pending EcsTreeSpawner port")]
 pub(crate) const ECS_TREE_SPAWNER: u64 = 5;
-#[expect(dead_code, reason = "pending EcsParentDepth port")]
 pub(crate) const ECS_PARENT_DEPTH: u64 = 6;
 
 // Term id flags

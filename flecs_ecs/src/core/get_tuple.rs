@@ -338,13 +338,23 @@ pub trait GetTuple: Sized {
             unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         } else {
             /* flecs_record_get_mut_id rejects wildcard ids; resolve (R, *) /
-             * (R, Any) to the first concrete pair on the entity first. */
-            let second = ecs_second(id, world);
-            let id = if second == flecs::Wildcard::ID || second == flecs::Any::ID {
-                let mut concrete: sys::ecs_id_t = 0;
-                let table = unsafe { (*record).table };
-                let column = unsafe { sys::ecs_search(world_ptr, table, id, &mut concrete) };
-                if column == -1 { 0 } else { concrete }
+             * (R, Any) to the concrete pair on the entity first. Only pairs
+             * can contain a wildcard, so non-pair ids skip the check. */
+            let id = if ecs_is_pair(id) {
+                let second = *ecs_second(id, world);
+                if second == flecs::Wildcard::ID || second == flecs::Any::ID {
+                    let table = unsafe { (*record).table };
+                    if table.is_null() {
+                        0
+                    } else {
+                        let mut concrete: sys::ecs_id_t = 0;
+                        let column =
+                            unsafe { sys::ecs_search(world_ptr, table, id, &mut concrete) };
+                        if column == -1 { 0 } else { concrete }
+                    }
+                } else {
+                    id
+                }
             } else {
                 id
             };

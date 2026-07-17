@@ -97,7 +97,6 @@ impl<'a> System<'a> {
     /// Returns an updater on which `.each()`/`.run()` (and variants) can be
     /// called; the change is applied through `ecs_system_update()`.
     ///
-    /// * C++ API: `system::each` / `system::run`
     pub fn update<T: QueryTuple>(&self) -> SystemUpdater<'a, T> {
         SystemUpdater::new(self.entity)
     }

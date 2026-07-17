@@ -285,7 +285,6 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// # See also
     ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new<const MULTITHREADED: bool>(
@@ -325,7 +324,6 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// # See also
     ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result<const MULTITHREADED: bool>(
@@ -620,7 +618,6 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// # See also
     ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new<const MULTITHREADED: bool>(
@@ -661,7 +658,6 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// # See also
     ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result<const MULTITHREADED: bool>(

@@ -281,6 +281,55 @@ impl<'a> EntityView<'a> {
         }
     }
 
+    pub(crate) fn new_child_of(world: impl WorldProvider<'a>, parent: Entity) -> Self {
+        let desc = sys::ecs_entity_desc_t {
+            parent: *parent,
+            ..Default::default()
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    pub(crate) fn new_named_child_of(
+        world: impl WorldProvider<'a>,
+        parent: Entity,
+        name: &str,
+    ) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            parent: *parent,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    pub(crate) fn new_w_parent(
+        world: impl WorldProvider<'a>,
+        parent: Entity,
+        name: Option<&str>,
+    ) -> Self {
+        let name = name.map(|n| compact_str::format_compact!("{}\0", n));
+        let name_ptr = name
+            .as_ref()
+            .map_or(core::ptr::null(), |n| n.as_ptr() as *const _);
+        let id = unsafe { sys::ecs_new_w_parent(world.world_ptr_mut(), *parent, name_ptr) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
     /// Create a named entity with a custom scope resolution.
     ///
     /// Creates a new entity with the specified name. Named entities can be looked up using
