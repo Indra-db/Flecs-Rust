@@ -82,6 +82,15 @@ fn set_component_type<T: ComponentId>(world: &World, component_type: ComponentTy
 )]
 fn component_types(#[case] ty: ComponentType) {}
 
+/* dont_fragment excluded: flecs does not support wildcard pair lookups on
+ * DontFragment components (ecs_get_id returns null). */
+#[template]
+#[rstest(
+    case::fragment(ComponentType::Fragment),
+    case::sparse(ComponentType::Sparse)
+)]
+fn component_types_no_dont_fragment(#[case] ty: ComponentType) {}
+
 mod cloned_tests {
     use super::*;
 
@@ -381,8 +390,7 @@ mod cloned_tests {
         mod wildcard_any {
             use super::*;
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types_no_dont_fragment)]
             fn pair_wildcard_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -391,8 +399,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 42);
             }
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types_no_dont_fragment)]
             fn pair_any_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -401,8 +408,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 42);
             }
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types_no_dont_fragment)]
             fn pair_wildcard_multiple_objects_picks_first(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -416,8 +422,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 1);
             }
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types_no_dont_fragment)]
             fn pair_any_multiple_objects_picks_first(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -431,8 +436,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 10);
             }
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types)]
             fn pair_option_wildcard_single_absent(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -441,8 +445,7 @@ mod cloned_tests {
                 assert!(v.is_none());
             }
 
-            #[ignore = "wildcard pair w/ sparse broken"]
-            #[apply(component_types)]
+                        #[apply(component_types_no_dont_fragment)]
             fn pair_option_wildcard_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -583,8 +586,7 @@ mod cloned_tests {
             assert_eq!(v.1.value, 16);
         }
 
-        #[ignore = "wildcard pair w/ sparse broken"]
-        #[apply(component_types)]
+                #[apply(component_types_no_dont_fragment)]
         fn mixed_wildcard_pair_and_nonpair_present(ty: ComponentType) {
             let world = World::new();
             set_component_type::<Value>(&world, ty);
@@ -709,8 +711,7 @@ mod cloned_tests {
             assert!(v.2.is_none());
         }
 
-        #[ignore = "wildcard pair w/ sparse broken"]
-        #[apply(component_types)]
+                #[apply(component_types_no_dont_fragment)]
         fn mixed_wildcard_pair_optional_nonpair_present(ty: ComponentType) {
             let world = World::new();
             set_component_type::<Value>(&world, ty);

@@ -2141,7 +2141,6 @@ fn untyped_field() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_component_that_triggered_observer() {
     let world = World::new();
 
@@ -2188,7 +2187,6 @@ fn query_eval_w_component_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_first_var_that_triggered_observer() {
     let world = World::new();
 
@@ -2241,7 +2239,6 @@ fn query_eval_w_pair_first_var_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_second_var_that_triggered_observer() {
     let world = World::new();
 
@@ -2294,7 +2291,6 @@ fn query_eval_w_pair_second_var_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_both_vars_that_triggered_observer() {
     let world = World::new();
 
