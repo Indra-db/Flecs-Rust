@@ -236,8 +236,7 @@ where
 
     pub fn other_table(&self) -> Option<Table<'a>> {
         // SAFETY: the iterator holds a live table owned by the real world.
-        NonNull::new(self.iter.other_table)
-            .map(|ptr| unsafe { Table::new(self.real_world(), ptr) })
+        NonNull::new(self.iter.other_table).map(|ptr| unsafe { Table::new(self.real_world(), ptr) })
     }
 
     pub fn range(&self) -> Option<TableRange<'a>> {
@@ -1235,12 +1234,7 @@ where
             {
                 let component = self.field_at_dense_internal::<T>(index, row);
                 let (table, column_index) = self.field_table_column(index);
-                FieldAt::<T::UnderlyingType>::new_dense(
-                    component,
-                    &self.world,
-                    table,
-                    column_index,
-                )
+                FieldAt::<T::UnderlyingType>::new_dense(component, &self.world, table, column_index)
             }
         }
     }
@@ -1641,7 +1635,6 @@ where
         unsafe { sys::ecs_iter_get_group(self.iter) }
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result<T: ComponentId>(
         &self,
@@ -1655,7 +1648,6 @@ where
         self.field_result_internal::<T::UnderlyingType, true>(index)
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_mut<T: ComponentId>(
         &self,
@@ -1669,7 +1661,6 @@ where
         self.field_result_internal_mut::<T::UnderlyingType, true>(index)
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_internal<T, const LOCK: bool>(
         &self,
@@ -1719,7 +1710,6 @@ where
         }
     }
 
-    #[cfg(feature = "flecs_safety_locks")]
     #[inline(always)]
     pub(crate) fn field_result_internal_mut<T, const LOCK: bool>(
         &self,
@@ -2075,11 +2065,7 @@ where
         }
     }
 
-    fn field_at_dense_internal<T: ComponentId>(
-        &self,
-        index: i8,
-        row: usize,
-    ) -> &T::UnderlyingType {
+    fn field_at_dense_internal<T: ComponentId>(&self, index: i8, row: usize) -> &T::UnderlyingType {
         let (array, _is_shared, count) = self.field_internal_parts::<T::UnderlyingType>(index);
         assert!(
             !array.is_null(),
