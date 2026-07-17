@@ -333,6 +333,12 @@ pub trait QueryTuple: Sized {
     type Pointers: ComponentPointers<Self>;
     type TupleType<'a>;
     const CONTAINS_ANY_TAG_TERM: bool;
+    /// Whether every term declares the `DontFragment` trait at compile time
+    /// (`#[flecs(traits(DontFragment))]`), no term is a tag, and no term
+    /// declares the `(OnInstantiate, Inherit)` policy. Equivalent to the C++
+    /// `is_sparse_query` trait; used to validate
+    /// [`SparseQuery`][crate::core::SparseQuery] at compile time.
+    const IS_SPARSE_QUERY: bool;
     const COUNT: i32;
     const COUNT_IMMUTABLE: usize;
     const COUNT_MUTABLE: usize;
@@ -401,6 +407,9 @@ where
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
+    const IS_SPARSE_QUERY: bool = !<<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG
+        && <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_DONT_FRAGMENT
+        && !matches!(<<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::ON_INSTANTIATE, OnInstantiatePolicy::Inherit);
     const COUNT : i32 = 1;
     const COUNT_IMMUTABLE: usize = if A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
     const COUNT_MUTABLE: usize = if !A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
@@ -572,6 +581,12 @@ macro_rules! impl_iterable {
             )*);
 
             const CONTAINS_ANY_TAG_TERM: bool = $(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG ||)* false;
+
+            const IS_SPARSE_QUERY: bool = (tuple_count!($($t),*) > 0) && $((
+                !<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG
+                && <<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_DONT_FRAGMENT
+                && !matches!(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::ON_INSTANTIATE, OnInstantiatePolicy::Inherit)
+            ) &&)* true;
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);

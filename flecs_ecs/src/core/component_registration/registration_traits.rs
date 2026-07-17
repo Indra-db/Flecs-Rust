@@ -595,11 +595,31 @@ pub trait ComponentId: Sized + ComponentInfo + 'static + OnComponentRegistration
     fn index() -> u32;
 }
 
+/// `OnInstantiate` policy a component can declare at compile time via
+/// `#[flecs(traits((OnInstantiate, ...)))]`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OnInstantiatePolicy {
+    Override,
+    Inherit,
+    DontInherit,
+}
+
 /// Component information trait.
 pub trait ComponentInfo: Sized {
     const IS_GENERIC: bool;
     const IS_ENUM: bool;
     const IS_TAG: bool;
+    /// Whether the component declares the `Sparse` trait at compile time via
+    /// `#[flecs(traits(Sparse))]`. Traits added at runtime are not reflected here.
+    const IS_SPARSE: bool = false;
+    /// Whether the component declares the `DontFragment` trait at compile time
+    /// via `#[flecs(traits(DontFragment))]`. Traits added at runtime are not
+    /// reflected here.
+    const IS_DONT_FRAGMENT: bool = false;
+    /// The `OnInstantiate` policy the component declares at compile time via
+    /// `#[flecs(traits((OnInstantiate, Inherit)))]`. Defaults to `Override`,
+    /// matching flecs. Policies added at runtime are not reflected here.
+    const ON_INSTANTIATE: OnInstantiatePolicy = OnInstantiatePolicy::Override;
     const NEEDS_DROP: bool = core::mem::needs_drop::<Self>();
     const IMPLS_CLONE: bool;
     const IMPLS_DEFAULT: bool;
@@ -728,6 +748,9 @@ impl<T: ComponentInfo> ComponentInfo for &T {
     const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
     const IMPLS_SEND: bool = T::IMPLS_SEND;
     const IMPLS_SYNC: bool = T::IMPLS_SYNC;
+    const IS_SPARSE: bool = T::IS_SPARSE;
+    const IS_DONT_FRAGMENT: bool = T::IS_DONT_FRAGMENT;
+    const ON_INSTANTIATE: OnInstantiatePolicy = T::ON_INSTANTIATE;
     const IS_REF: bool = true;
     const IS_MUT: bool = false;
     type TagType = T::TagType;
@@ -744,6 +767,9 @@ impl<T: ComponentInfo> ComponentInfo for &mut T {
     const IMPLS_PARTIAL_EQ: bool = T::IMPLS_PARTIAL_EQ;
     const IMPLS_SEND: bool = T::IMPLS_SEND;
     const IMPLS_SYNC: bool = T::IMPLS_SYNC;
+    const IS_SPARSE: bool = T::IS_SPARSE;
+    const IS_DONT_FRAGMENT: bool = T::IS_DONT_FRAGMENT;
+    const ON_INSTANTIATE: OnInstantiatePolicy = T::ON_INSTANTIATE;
     const IS_REF: bool = false;
     const IS_MUT: bool = true;
     type TagType = T::TagType;

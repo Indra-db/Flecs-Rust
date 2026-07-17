@@ -5,11 +5,42 @@ use crate::sys;
 
 /// Query that iterates sparse component storages directly.
 ///
-/// All components must have the `DontFragment` trait and must not use the
-/// `(OnInstantiate, Inherit)` policy. Created with [`World::sparse_query()`].
+/// All components must declare the `DontFragment` trait at compile time via
+/// `#[flecs(traits(DontFragment))]` and must not declare the
+/// `(OnInstantiate, Inherit)` policy; this is checked at compile time,
+/// matching the C++ `sparse_query` `static_assert`. Policies added at runtime
+/// with `add_trait` are checked with a runtime assert on construction.
+/// Created with [`World::sparse_query()`].
 ///
 /// Unlike a regular [`Query`], a sparse query has no cache and does not
 /// allocate; it walks the sparse storages on every iteration.
+///
+/// A component without the `DontFragment` trait is rejected at compile time:
+///
+/// ```compile_fail
+/// # use flecs_ecs::prelude::*;
+/// #[derive(Component)]
+/// struct Position {
+///     x: f32,
+/// }
+///
+/// let world = World::new();
+/// let query = world.sparse_query::<&Position>();
+/// ```
+///
+/// As is a component that declares the `(OnInstantiate, Inherit)` policy:
+///
+/// ```compile_fail
+/// # use flecs_ecs::prelude::*;
+/// #[derive(Component)]
+/// #[flecs(traits(DontFragment, (OnInstantiate, Inherit)))]
+/// struct Position {
+///     x: f32,
+/// }
+///
+/// let world = World::new();
+/// let query = world.sparse_query::<&Position>();
+/// ```
 pub struct SparseQuery<'a, T: QueryTuple> {
     world: WorldRef<'a>,
     ids: [sys::ecs_id_t; 32],
@@ -19,6 +50,12 @@ pub struct SparseQuery<'a, T: QueryTuple> {
 
 impl<'a, T: QueryTuple> SparseQuery<'a, T> {
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
+        const {
+            assert!(
+                T::IS_SPARSE_QUERY,
+                "all SparseQuery components must declare the DontFragment trait via #[flecs(traits(DontFragment))] and must not declare the (OnInstantiate, Inherit) policy"
+            );
+        }
         let world = world.world();
         let world_ptr = world.world_ptr_mut();
         let mut terms: [sys::ecs_term_t; 32] = Default::default();

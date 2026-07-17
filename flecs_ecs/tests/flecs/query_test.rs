@@ -5017,8 +5017,10 @@ fn sparse_query_dynamic_inherit_3_terms() {
 
 // C++ Query_sparse_query_dynamic_inherit_assert expects world.query<T>() to
 // abort because the compile-time sparse query cannot match dynamically
-// inherited components. The Rust sparse query asserts the same policy at
-// construction; verified through SparseQuery::assert_policies (debug builds).
+// inherited components. Rust rejects compile-time declared Inherit policies
+// at compile time (QueryTuple::IS_SPARSE_QUERY, see the compile_fail doctests
+// on SparseQuery); policies added at runtime with add_trait are caught by the
+// runtime assert in SparseQuery::assert_policies (debug builds), tested here.
 #[test]
 fn sparse_query_dynamic_inherit_assert() {
     let world = World::new();
