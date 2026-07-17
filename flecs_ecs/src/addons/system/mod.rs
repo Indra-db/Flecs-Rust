@@ -92,6 +92,16 @@ impl<'a> System<'a> {
         }
     }
 
+    /// Replace the system's callback or run action.
+    ///
+    /// Returns an updater on which `.each()`/`.run()` (and variants) can be
+    /// called; the change is applied through `ecs_system_update()`.
+    ///
+    /// * C++ API: `system::each` / `system::run`
+    pub fn update<T: QueryTuple>(&self) -> SystemUpdater<'a, T> {
+        SystemUpdater::new(self.entity)
+    }
+
     /// Set the context for the system
     ///
     /// # Arguments
@@ -99,13 +109,12 @@ impl<'a> System<'a> {
     /// * `context` - The context to set.
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_system_desc_t = sys::ecs_system_desc_t {
-            entity: *self.id(),
             ctx: context,
             ..Default::default()
         };
 
         unsafe {
-            sys::ecs_system_init(self.world.world_ptr_mut(), &desc);
+            sys::ecs_system_update(self.world.world_ptr_mut(), *self.id(), &desc);
         }
     }
 

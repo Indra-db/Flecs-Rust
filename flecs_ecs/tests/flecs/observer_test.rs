@@ -1055,7 +1055,7 @@ fn register_twice_w_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .each_entity(|e, _| {
             e.world().get::<&mut Count2>(|count| {
@@ -1069,13 +1069,11 @@ fn register_twice_w_each() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1090,7 +1088,7 @@ fn register_twice_w_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .run(|mut it| {
             while it.next() {
@@ -1106,15 +1104,13 @@ fn register_twice_w_run() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1129,7 +1125,7 @@ fn register_twice_w_run_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .run(|mut it| {
             while it.next() {
@@ -1145,13 +1141,11 @@ fn register_twice_w_run_each() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1166,7 +1160,7 @@ fn register_twice_w_each_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .each_entity(|e, _| {
             e.world().get::<&mut Count2>(|count| {
@@ -1180,15 +1174,13 @@ fn register_twice_w_each_run() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1579,14 +1571,12 @@ fn lookup_and_update_each() {
     let e = world.lookup("Test");
     assert!(*e.id() != 0);
 
-    // Re-register with same name replaces callback (equivalent to C++ o.each(...))
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    let o = world.observer_from(world.entity_named("Test"));
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
     world.get::<&Count2>(|count| {
@@ -1614,16 +1604,14 @@ fn lookup_and_update_run() {
         assert_eq!(count.a, 1);
     });
 
-    // Re-register with same name replaces callback (equivalent to C++ o.run(...))
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let o = world.observer_from(world.entity_named("Test"));
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
     world.get::<&Count2>(|count| {

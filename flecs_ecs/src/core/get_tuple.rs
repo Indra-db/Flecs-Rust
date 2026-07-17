@@ -337,7 +337,22 @@ pub trait GetTuple: Sized {
         } else if T::IS_IMMUTABLE {
             unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         } else {
-            unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
+            /* flecs_record_get_mut_id rejects wildcard ids; resolve (R, *) /
+             * (R, Any) to the first concrete pair on the entity first. */
+            let second = ecs_second(id, world);
+            let id = if second == flecs::Wildcard::ID || second == flecs::Any::ID {
+                let mut concrete: sys::ecs_id_t = 0;
+                let table = unsafe { (*record).table };
+                let column = unsafe { sys::ecs_search(world_ptr, table, id, &mut concrete) };
+                if column == -1 { 0 } else { concrete }
+            } else {
+                id
+            };
+            if id == 0 {
+                sys::ecs_get_ptr_t::default()
+            } else {
+                unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
+            }
         };
 
         let component_ptr = get_ptr.ptr;

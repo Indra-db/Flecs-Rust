@@ -2797,7 +2797,7 @@ fn register_twice_w_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let sys = world
         .system_named::<()>("Test")
         .run(|mut it| {
             while it.next() {
@@ -2805,23 +2805,23 @@ fn register_twice_w_each() {
                     count.a += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&mut Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
+    let sys = sys
+        .update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
                     count.b += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&mut Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2834,7 +2834,7 @@ fn register_twice_w_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let sys = world
         .system_named::<()>("Test")
         .run(|mut it| {
             while it.next() {
@@ -2842,23 +2842,23 @@ fn register_twice_w_run() {
                     count.a += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
+    let sys = sys
+        .update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
                     count.b += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2871,7 +2871,7 @@ fn register_twice_w_run_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let sys = world
         .system_named::<()>("Test")
         .run(|mut it| {
             while it.next() {
@@ -2879,23 +2879,23 @@ fn register_twice_w_run_each() {
                     count.a += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
+    let sys = sys
+        .update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
                     count.b += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2908,7 +2908,7 @@ fn register_twice_w_each_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let sys = world
         .system_named::<()>("Test")
         .run(|mut it| {
             while it.next() {
@@ -2916,23 +2916,23 @@ fn register_twice_w_each_run() {
                     count.a += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
+    let sys = sys
+        .update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
                     count.b += 1;
                 });
             }
-        })
-        .run();
+        });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2963,9 +2963,8 @@ fn lookup_and_update_each() {
     let e = world.lookup("Test");
     assert!(*e.id() != 0);
 
-    // Re-register with same name replaces callback (equivalent to C++ sys.each(...))
-    world
-        .system_named::<()>("Test")
+    let sys = world.system_from(e);
+    sys.update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
@@ -3002,9 +3001,11 @@ fn lookup_and_update_run() {
         assert_eq!(count.a, 1);
     });
 
-    // Replace callback by re-registering with same name
-    world
-        .system_named::<()>("Test")
+    let e = world.lookup("Test");
+    assert!(*e.id() != 0);
+
+    let sys = world.system_from(e);
+    sys.update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {

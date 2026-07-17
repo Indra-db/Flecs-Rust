@@ -242,3 +242,49 @@ impl<'a, T: QueryTuple> WorldProvider<'a> for SystemBuilder<'a, T> {
 
 implement_reactor_api!((), SystemBuilder<'a, T>);
 implement_reactor_par_api!((), SystemBuilder<'a, T>);
+
+/// Updates an existing [`System`]'s callback or context via
+/// `ecs_system_update()`. Created with [`System::update()`].
+pub struct SystemUpdater<'a, T: QueryTuple = ()> {
+    pub(crate) desc: sys::ecs_system_desc_t,
+    world: WorldRef<'a>,
+    entity: EntityView<'a>,
+    _phantom: core::marker::PhantomData<&'a T>,
+}
+
+impl<'a, T: QueryTuple> SystemUpdater<'a, T> {
+    pub(crate) fn new(entity: EntityView<'a>) -> Self {
+        Self {
+            desc: Default::default(),
+            world: entity.world(),
+            entity,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+impl<'a, T> Builder<'a> for SystemUpdater<'a, T>
+where
+    T: QueryTuple,
+{
+    type BuiltType = System<'a>;
+
+    #[doc(hidden)]
+    fn build(&mut self) -> Self::BuiltType {
+        if self.desc.callback.is_none() && self.desc.run.is_none() {
+            panic!("you should not call this fn manually. Use `.each` , `.run` instead")
+        }
+        unsafe {
+            sys::ecs_system_update(self.world.world_ptr_mut(), *self.entity.id(), &self.desc);
+        }
+        System::new_from_existing(self.entity)
+    }
+}
+
+impl<'a, T: QueryTuple> WorldProvider<'a> for SystemUpdater<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.world
+    }
+}
+
+implement_reactor_api!((), SystemUpdater<'a, T>);

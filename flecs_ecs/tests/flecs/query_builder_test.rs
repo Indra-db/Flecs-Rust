@@ -2149,9 +2149,9 @@ fn group_by_raw() {
         .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id_negated))
         .build();
 
-    let e3 = world.entity().add(TagX::id()).add(TagC::id());
-    let e2 = world.entity().add(TagX::id()).add(TagB::id());
     let e1 = world.entity().add(TagX::id()).add(TagA::id());
+    let e2 = world.entity().add(TagX::id()).add(TagB::id());
+    let e3 = world.entity().add(TagX::id()).add(TagC::id());
 
     let mut count = 0;
 
@@ -2159,11 +2159,11 @@ fn group_by_raw() {
         while it.next() {
             assert_eq!(it.count(), 1);
             if count == 0 {
-                assert!(it.get_entity(0usize).unwrap() == e1);
+                assert!(it.get_entity(0usize).unwrap() == e3);
             } else if count == 1 {
                 assert!(it.get_entity(0usize).unwrap() == e2);
             } else if count == 2 {
-                assert!(it.get_entity(0usize).unwrap() == e3);
+                assert!(it.get_entity(0usize).unwrap() == e1);
             } else {
                 panic!();
             }
@@ -2212,9 +2212,139 @@ fn group_by_template() {
         .group_by_fn(TagX::id(), Some(group_by_first_id_negated))
         .build();
 
-    let e3 = world.entity().add(TagX::id()).add(TagC::id());
-    let e2 = world.entity().add(TagX::id()).add(TagB::id());
     let e1 = world.entity().add(TagX::id()).add(TagA::id());
+    let e2 = world.entity().add(TagX::id()).add(TagB::id());
+    let e3 = world.entity().add(TagX::id()).add(TagC::id());
+
+    let mut count = 0;
+
+    q.run(|mut it| {
+        while it.next() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.get_entity(0usize).unwrap() == e3);
+            } else if count == 1 {
+                assert!(it.get_entity(0usize).unwrap() == e2);
+            } else if count == 2 {
+                assert!(it.get_entity(0usize).unwrap() == e1);
+            } else {
+                panic!();
+            }
+            count += 1;
+        }
+    });
+    assert_eq!(count, 3);
+
+    count = 0;
+    q_reverse.run(|mut it| {
+        while it.next() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.get_entity(0usize).unwrap() == e3);
+            } else if count == 1 {
+                assert!(it.get_entity(0usize).unwrap() == e2);
+            } else if count == 2 {
+                assert!(it.get_entity(0usize).unwrap() == e1);
+            } else {
+                panic!();
+            }
+            count += 1;
+        }
+    });
+    assert_eq!(count, 3);
+}
+
+#[test]
+fn group_by_raw_ordered() {
+    let world = World::new();
+
+    world.component::<TagA>();
+    world.component::<TagB>();
+    world.component::<TagC>();
+    world.component::<TagX>();
+
+    let q = world
+        .query::<()>()
+        .with(&TagX::id())
+        .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id))
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let q_reverse = world
+        .query::<()>()
+        .with(&TagX::id())
+        .group_by_fn(world.entity_from::<TagX>(), Some(group_by_first_id_negated))
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let e1 = world.entity().add(TagX::id()).add(TagA::id());
+    let e2 = world.entity().add(TagX::id()).add(TagB::id());
+    let e3 = world.entity().add(TagX::id()).add(TagC::id());
+
+    let mut count = 0;
+
+    q.run(|mut it| {
+        while it.next() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.get_entity(0usize).unwrap() == e1);
+            } else if count == 1 {
+                assert!(it.get_entity(0usize).unwrap() == e2);
+            } else if count == 2 {
+                assert!(it.get_entity(0usize).unwrap() == e3);
+            } else {
+                panic!();
+            }
+            count += 1;
+        }
+    });
+    assert_eq!(count, 3);
+
+    count = 0;
+    q_reverse.run(|mut it| {
+        while it.next() {
+            assert_eq!(it.count(), 1);
+            if count == 0 {
+                assert!(it.get_entity(0usize).unwrap() == e3);
+            } else if count == 1 {
+                assert!(it.get_entity(0usize).unwrap() == e2);
+            } else if count == 2 {
+                assert!(it.get_entity(0usize).unwrap() == e1);
+            } else {
+                panic!();
+            }
+            count += 1;
+        }
+    });
+    assert_eq!(count, 3);
+}
+
+#[test]
+fn group_by_template_ordered() {
+    let world = World::new();
+
+    world.component::<TagA>();
+    world.component::<TagB>();
+    world.component::<TagC>();
+    world.component::<TagX>();
+
+    let q = world
+        .query::<()>()
+        .with(&TagX::id())
+        .group_by_fn(TagX::id(), Some(group_by_first_id))
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let q_reverse = world
+        .query::<()>()
+        .with(&TagX::id())
+        .group_by_fn(TagX::id(), Some(group_by_first_id_negated))
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let e1 = world.entity().add(TagX::id()).add(TagA::id());
+    let e2 = world.entity().add(TagX::id()).add(TagB::id());
+    let e3 = world.entity().add(TagX::id()).add(TagC::id());
 
     let mut count = 0;
 

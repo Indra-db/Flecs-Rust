@@ -1362,19 +1362,23 @@ fn meta_struct_member_ptr_packed_struct() {
 
     assert_ne!(s.id(), 0);
 
-    s.lookup("a").get::<&flecs::meta::Member>(|m| {
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *s.id(), c"a".as_ptr());
+        assert!(!m.is_null());
         // In Rust, i8::id() maps to ECS_I8_T, not ECS_CHAR_T (C's char == i8 but distinct in Flecs)
-        assert_eq!(m.type_, flecs::meta::I8);
-        assert_eq!(m.offset, offset_of!(PackedStruct, a) as i32);
-    });
-    s.lookup("b").get::<&flecs::meta::Member>(|m| {
-        assert_eq!(m.type_, flecs::meta::I32);
-        assert_eq!(m.offset, offset_of!(PackedStruct, b) as i32);
-    });
-    s.lookup("c").get::<&flecs::meta::Member>(|m| {
-        assert_eq!(m.type_, flecs::meta::F64);
-        assert_eq!(m.offset, offset_of!(PackedStruct, c) as i32);
-    });
+        assert_eq!((*m).type_, flecs::meta::I8);
+        assert_eq!((*m).offset, offset_of!(PackedStruct, a) as i32);
+
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *s.id(), c"b".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::I32);
+        assert_eq!((*m).offset, offset_of!(PackedStruct, b) as i32);
+
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *s.id(), c"c".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F64);
+        assert_eq!((*m).offset, offset_of!(PackedStruct, c) as i32);
+    }
 }
 
 // ── custom_std_string_to_json ──
@@ -1770,10 +1774,12 @@ fn meta_units() {
         .member(i32::id(), "custom_unit");
     assert_ne!(t.id(), 0);
 
-    t.lookup("meters").get::<&flecs::meta::Member>(|m| {
-        assert_eq!(m.type_, flecs::meta::I32);
-        assert_eq!(m.unit, units::length::Meters::get_id(&world));
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *t.id(), c"meters".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::I32);
+        assert_eq!((*m).unit, units::length::Meters::get_id(&world));
+    }
 }
 
 // ── unit_w_quantity ──

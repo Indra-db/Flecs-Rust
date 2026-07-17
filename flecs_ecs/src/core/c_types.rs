@@ -350,6 +350,18 @@ pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
+/// Query detects changes to matched components.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_DETECT_CHANGES: u64 = 1 << 8;
+
+/// Iterate query groups in ascending group id order.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_GROUP_BY_ORDERED: u64 = 1 << 9;
+
+/// Iterate query groups in descending group id order (with GroupByOrdered).
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_GROUP_BY_DESC: u64 = 1 << 10;
+
 // Poly target components
 pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID;
 pub(crate) const ECS_OBSERVER: u64 = FLECS_HI_COMPONENT_ID + 1;
