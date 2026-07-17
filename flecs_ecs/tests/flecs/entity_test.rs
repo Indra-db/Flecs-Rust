@@ -6405,12 +6405,13 @@ fn child_of() {
     assert!(e.has((flecs::ChildOf::ID, base)));
 }
 
-// child
+// child (C++ removed the redundant entity_view::child() API; use
+// world.entity_in(parent) instead)
 #[test]
 fn child() {
     let world = World::new();
     let base = world.entity();
-    let e = base.child();
+    let e = world.entity_in(base);
     assert!(e.has((flecs::ChildOf::ID, base)));
 }
 

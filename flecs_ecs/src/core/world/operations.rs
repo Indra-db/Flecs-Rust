@@ -509,6 +509,12 @@ impl World {
         unsafe { sys::ecs_is_deferred(self.raw_world.as_ptr()) }
     }
 
+    /// Test if deferring is suspended for the current stage
+    /// (see [`World::defer_suspend()`]).
+    pub fn is_defer_suspended(&self) -> bool {
+        unsafe { sys::ecs_is_defer_suspended(self.raw_world.as_ptr()) }
+    }
+
     /// Defers all operations executed in the passed-in closure.
     ///
     /// # Arguments

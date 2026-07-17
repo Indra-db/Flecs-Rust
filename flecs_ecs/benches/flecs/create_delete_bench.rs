@@ -99,9 +99,9 @@ pub fn create_delete_tree(criterion: &mut Criterion) {
 
                         for _ in 0..depth {
                             for _ in 0..width - 1 {
-                                cur.child();
+                                world.entity_in(cur);
                             }
-                            cur = cur.child();
+                            cur = world.entity_in(cur);
                         }
 
                         root.destruct();
@@ -145,14 +145,14 @@ pub fn instantiate_delete_tree(criterion: &mut Criterion) {
 
                     for d in 0..depth {
                         for child_tag in &child_tags {
-                            let e = cur.child();
+                            let e = world.entity_in(cur);
 
                             for id in &ids {
                                 unsafe { e.add_id_unchecked(*id) };
                             }
                             e.add(*child_tag);
                         }
-                        let e = cur.child();
+                        let e = world.entity_in(cur);
                         for id in &ids {
                             unsafe { e.add_id_unchecked(*id) };
                         }
@@ -235,10 +235,10 @@ pub fn create_children_w_reachable(criterion: &mut Criterion) {
                 let parent = world.entity().add(id);
 
                 for _ in 0..ENTITY_COUNT {
-                    let p1 = parent.child();
-                    let p2 = p1.child();
-                    p1.child();
-                    p2.child();
+                    let p1 = world.entity_in(parent);
+                    let p2 = world.entity_in(p1);
+                    world.entity_in(p1);
+                    world.entity_in(p2);
                 }
 
                 parent.destruct();
