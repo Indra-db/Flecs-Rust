@@ -836,7 +836,7 @@
 //!
 //! This query will look for an child entity named `cockpit` in the scope of the matched entity for `$this`, and use that entity to match with `Powered`. If no entity with the name `cockpit` is found, the term will evaluate to false.
 //! ### Member matching
-//! Queries can match against the values of component members if they are of the `ecs_entity_t` type. The following expression shows an example of how to match against a `direction` member in a `Movement` component:
+//! Queries can match against the values of component members if they are of the `ecs_entity_t` type. Member matching requires member entities, which flecs no longer creates by default; opt in with [`UntypedComponent::create_member_entities()`](crate::core::UntypedComponent::create_member_entities). The following expression shows an example of how to match against a `direction` member in a `Movement` component:
 //!
 //! ```rust
 //! # use flecs_ecs::prelude::*;
@@ -846,12 +846,13 @@
 //! struct Movement {
 //!     direction: Entity,
 //! }
+//! world.component::<Movement>().create_member_entities();
 //!
 //! let left = world.entity();
 //! world.entity().set(Movement {
 //!     direction: left.id(),
 //! });
-//! query!(world, "Movement.direction"($"this",$left));
+//! query!(world, "Movement.direction"($"this",$left)).build();
 //! ```
 //!
 //! The same query with an implicit source:
@@ -864,12 +865,13 @@
 //! struct Movement {
 //!     direction: Entity,
 //! }
+//! world.component::<Movement>().create_member_entities();
 //!
 //! let left = world.entity();
 //! world.entity().set(Movement {
 //!     direction: left.id(),
 //! });
-//! query!(world, ("Movement.direction",$left));
+//! query!(world, ("Movement.direction",$left)).build();
 //! ```
 //!
 //! A member expression can be used in combination with variables:
@@ -883,6 +885,7 @@
 //!     left: Entity,
 //!     right: Entity,
 //! }
+//! world.component::<Thrusters>().create_member_entities();
 //! #[derive(Component)]
 //! struct Active;
 //!

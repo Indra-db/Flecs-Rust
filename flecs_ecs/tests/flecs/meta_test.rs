@@ -2079,3 +2079,76 @@ fn meta_opaque_send_follows_component_type() {
 
     let _ = <Opaque<'static, alloc::rc::Rc<u32>> as AmbiguousIfImpl<_>>::some_item;
 }
+
+#[test]
+fn meta_create_member_entities() {
+    let world = World::new();
+
+    #[derive(Component)]
+    struct MixedLayout {
+        a: u8,
+        big: f64,
+        b: u32,
+    }
+
+    let c = world
+        .component::<MixedLayout>()
+        .member(u8::id(), ("a", Count(0), offset_of!(MixedLayout, a)))
+        .member(f64::id(), ("big", Count(0), offset_of!(MixedLayout, big)))
+        .member(u32::id(), ("b", Count(0), offset_of!(MixedLayout, b)))
+        .create_member_entities();
+
+    for (name, offset) in [
+        (c"a", offset_of!(MixedLayout, a) as i32),
+        (c"big", offset_of!(MixedLayout, big) as i32),
+        (c"b", offset_of!(MixedLayout, b) as i32),
+    ] {
+        unsafe {
+            let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), name.as_ptr());
+            assert!(!m.is_null());
+            assert_eq!((*m).offset, offset);
+            assert_ne!((*m).member, 0);
+            let member_entity = EntityView::new_from(&world, (*m).member);
+            member_entity.get::<&flecs::meta::Member>(|member| {
+                assert_eq!(member.offset, offset);
+            });
+        }
+    }
+
+    let value = MixedLayout {
+        a: 1,
+        big: 2.5,
+        b: 3,
+    };
+    let json = world.to_json::<MixedLayout>(&value);
+    assert_eq!(json, "{\"a\":1, \"big\":2.5, \"b\":3}");
+}
+
+#[test]
+fn meta_member_query_w_member_entities() {
+    let world = World::new();
+
+    #[derive(Component)]
+    #[flecs(meta, name = "Movement")]
+    struct Movement {
+        direction: Entity,
+    }
+    world.component::<Movement>().create_member_entities();
+
+    let left = world.entity();
+    let right = world.entity();
+    let e = world.entity().set(Movement {
+        direction: left.id(),
+    });
+    world.entity().set(Movement {
+        direction: right.id(),
+    });
+
+    let query = query!(&world, ("Movement.direction", $left)).build();
+    let mut count = 0;
+    query.each_entity(|matched, _| {
+        assert_eq!(matched, e);
+        count += 1;
+    });
+    assert_eq!(count, 1);
+}
