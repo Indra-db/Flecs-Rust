@@ -1210,6 +1210,16 @@ impl World {
         Entity::new(unsafe { sys::ecs_get_max_id(self.raw_world.as_ptr()) })
     }
 
+    /// Invoke `func` for every alive entity in the world, including builtin
+    /// and internal entities.
+    pub fn each_alive_entity(&self, mut func: impl FnMut(EntityView)) {
+        let entities = unsafe { sys::ecs_get_entities(self.raw_world.as_ptr()) };
+        for i in 0..entities.alive_count {
+            let id = unsafe { *entities.ids.add(i as usize) };
+            func(EntityView::new_from(self, id));
+        }
+    }
+
     /// Get the current scope. Get the scope set by `set_scope`.
     /// If no scope is set, this operation will return `None`.
     ///

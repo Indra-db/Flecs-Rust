@@ -8102,46 +8102,6 @@ fn filter_as_move_arg() {
 // `each_entity`. The 0-term `world.each_entity::<()>` does NOT work because a
 // query with no terms matches no tables.
 
-#[test]
-fn world_each_entity() {
-    let world = World::new();
-
-    // Entities must have at least one component to be found by an ECS_ANY query.
-    let tag = world.entity();
-    let e1 = world.entity().add(tag);
-    let e2 = world.entity().add(tag);
-    let e3 = world.entity().add(tag);
-
-    let mut count = 0i32;
-    let mut found_e1 = false;
-    let mut found_e2 = false;
-    let mut found_e3 = false;
-
-    // Rust equivalent of C++ ecs.each([](entity e){}) — add ECS_ANY term so the
-    // query matches every entity that has at least one component/tag.
-    world
-        .query::<()>()
-        .with(flecs::Any::ID)
-        .build()
-        .each_entity(|e, ()| {
-            if e == e1 {
-                found_e1 = true;
-            }
-            if e == e2 {
-                found_e2 = true;
-            }
-            if e == e3 {
-                found_e3 = true;
-            }
-            count += 1;
-        });
-
-    assert!(found_e1);
-    assert!(found_e2);
-    assert!(found_e3);
-    // count includes built-in entities; just confirm at least our 3 were visited
-    assert!(count >= 3);
-}
 
 // ─── singleton_pair ───────────────────────────────────────────────────────────
 // TODO: missing API: Dynamic second target on singleton pair query (.term_at(0).second(tgt).singleton())
@@ -8497,4 +8457,34 @@ fn each_w_untyped_field_at_w_fixed_src() {
     });
 
     assert_eq!(count, 2);
+}
+
+#[test]
+fn world_each_entity() {
+    let world = World::new();
+
+    let e1 = world.entity();
+    let e2 = world.entity().add(TagA::id());
+    let e3 = world.entity().set(Position { x: 10, y: 20 });
+
+    let mut e1_found = false;
+    let mut e2_found = false;
+    let mut e3_found = false;
+    let mut count = 0;
+
+    world.each_alive_entity(|e| {
+        if e == e1 {
+            e1_found = true;
+        } else if e == e2 {
+            e2_found = true;
+        } else if e == e3 {
+            e3_found = true;
+        }
+        count += 1;
+    });
+
+    assert!(e1_found);
+    assert!(e2_found);
+    assert!(e3_found);
+    assert!(count > 3);
 }

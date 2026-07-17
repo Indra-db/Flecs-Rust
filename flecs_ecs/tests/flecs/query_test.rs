@@ -4524,3 +4524,59 @@ fn sparse_query_skip_prefab_disabled() {
     assert_eq!(count, 1);
     assert_eq!(q.count(), 1);
 }
+
+#[test]
+fn world_each_sparse() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+    world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let mut count = 0;
+    world
+        .sparse_query::<(&mut PositionDfOr, &VelocityDfOr)>()
+        .each(|(p, v)| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+            p.x += v.x;
+            p.y += v.y;
+            count += 1;
+        });
+
+    assert_eq!(count, 1);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn world_each_sparse_w_entity() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let mut count = 0;
+    world
+        .sparse_query::<(&PositionDfOr,)>()
+        .each_entity(|e, (p,)| {
+            if e == e1 {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+            } else {
+                assert_eq!(e, e2);
+                assert_eq!(p.x, 30);
+                assert_eq!(p.y, 40);
+            }
+            count += 1;
+        });
+
+    assert_eq!(count, 2);
+}
