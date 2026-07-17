@@ -376,16 +376,16 @@ impl<'a, T> Component<'a, T> {
     {
         let iter = unsafe { &*iter };
 
-        // other_table is the entity's pre-move table, set by
-        // flecs_invoke_replace_hook. NULL means the component did not
-        // exist before this operation (new component on entity, or entity
-        // newly added to a table without this component). In that case
-        // `prev` points to freshly ctor'd (zeroed) memory — not a valid
-        // Rust value — so skip the hook entirely, matching the non-deferred
-        // guard: `if (!result.is_new && ti->hooks.on_replace)`.
-        // set_fields bit 0 = prev field valid (component existed in prior table).
-        // Computed in flecs_invoke_replace_hook: 3 if prev valid, 2 if not.
-        if (iter.set_fields & 1) == 0 {
+        // other_table is the entity's pre-operation table, set by
+        // flecs_invoke_replace_hook. The component existed before the
+        // operation only if other_table contains it (upstream flecs contract:
+        // "to find out whether the component existed before the operation,
+        // call ecs_table_has_id() on other_table"). If it did not exist,
+        // `prev` points to unconstructed memory — not a valid Rust value —
+        // so the hook is skipped entirely.
+        let existed = !iter.other_table.is_null()
+            && unsafe { sys::ecs_table_has_id(iter.real_world, iter.other_table, iter.event_id) };
+        if !existed {
             return;
         }
 
