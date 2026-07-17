@@ -358,7 +358,7 @@ pub(crate) const ECS_QUERY_DETECT_CHANGES: u64 = 1 << 8;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_GROUP_BY_ORDERED: u64 = 1 << 9;
 
-/// Iterate query groups in descending group id order (with GroupByOrdered).
+/// Iterate query groups in descending group id order (with `GroupByOrdered`).
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_GROUP_BY_DESC: u64 = 1 << 10;
 

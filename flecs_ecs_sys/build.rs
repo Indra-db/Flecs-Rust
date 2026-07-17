@@ -203,6 +203,8 @@ fn generate_bindings() {
         bindings = bindings.clang_arg("-DFLECS_MUT_ALIAS_LOCKS");
     }
 
+    bindings = bindings.clang_arg("-DFLECS_CREATE_MEMBER_ENTITIES");
+
     let term_count_max = if cfg!(feature = "flecs_term_count_64") {
         64
     } else {
@@ -304,6 +306,10 @@ fn main() {
 
         #[cfg(feature = "flecs_safety_locks")]
         build.define("FLECS_MUT_ALIAS_LOCKS", None);
+
+        // Member queries, metrics and alerts require member entities, which
+        // flecs no longer creates by default.
+        build.define("FLECS_CREATE_MEMBER_ENTITIES", None);
 
         #[cfg(any(
             all(not(debug_assertions), not(feature = "force_build_debug"),),

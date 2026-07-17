@@ -1684,7 +1684,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
@@ -1734,7 +1734,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
 
@@ -1784,7 +1784,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
@@ -1837,7 +1837,7 @@ where
                 return Field::<T, LOCK>::new_empty(is_shared);
             }
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
@@ -1924,7 +1924,7 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
@@ -1977,7 +1977,7 @@ where
                 return FieldMut::<T, LOCK>::new_empty(is_shared);
             }
             let (table, column_index) =
-                unsafe { flecs_field_table_column(&self.iter, index as usize) };
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
             debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
@@ -2064,7 +2064,7 @@ where
         // SAFETY: callers only invoke this for a set, dense (non-sparse) field,
         // so the field resolves to a table column, matching field_internal.
         unsafe {
-            let (table, column) = flecs_field_table_column(&self.iter, index as usize);
+            let (table, column) = flecs_field_table_column(self.iter, index as usize);
             debug_assert!(!table.is_null(), "field {index} has no table column");
             (NonNull::new_unchecked(table), column)
         }
