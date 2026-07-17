@@ -511,14 +511,19 @@ where
             );
         }
         if TYPED {
-            ecs_assert!(
-                {
-                    let term_id = unsafe { sys::ecs_field_id(self.iter, _index) };
-                    let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
-                    id == term_id || unsafe { sys::ecs_id_is_pair(term_id) }
-                },
+            // Always checked, also in release builds: a mismatch would let the
+            // field data be reinterpreted as the wrong type.
+            let term_id = unsafe { sys::ecs_field_id(self.iter, _index) };
+            let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
+            let matches = id == term_id
+                || (unsafe { sys::ecs_id_is_pair(term_id) }
+                    && unsafe {
+                        sys::ecs_get_typeid(self.world().world_ptr_mut(), term_id) == id
+                    });
+            assert!(
+                matches,
+                "{}: id mismatch: expected {id}, got term id {term_id} whose component type does not match",
                 FlecsErrorCode::InvalidParameter,
-                "id mismatch: expected {id}, got {term_id} or term_id is not a pair",
             );
         }
     }
