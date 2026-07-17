@@ -3205,3 +3205,36 @@ fn kind_on_shared_builder() {
     assert!(!s2.has((flecs::DependsOn::ID, flecs::pipeline::OnUpdate::ID)));
     assert!(!s2.has(flecs::pipeline::OnUpdate::ID));
 }
+
+#[test]
+fn custom_pipeline_w_name() {
+    let world = World::new();
+
+    let tag = world.entity();
+
+    let pip = world
+        .pipeline_named("MyPipeline")
+        .with(id::<flecs::system::System>())
+        .with(tag)
+        .build();
+
+    assert_eq!(pip.entity_view(&world).name(), "MyPipeline");
+    assert_eq!(world.lookup("MyPipeline"), pip.entity_view(&world));
+
+    let count = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_c = count.clone();
+
+    world.system::<()>().kind(tag).run(move |mut it| {
+        while it.next() {
+            count_c.set(count_c.get() + 1);
+        }
+    });
+
+    assert_eq!(count.get(), 0);
+
+    world.set_pipeline(pip.entity_view(&world));
+
+    world.progress();
+
+    assert_eq!(count.get(), 1);
+}
