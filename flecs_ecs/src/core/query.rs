@@ -874,6 +874,24 @@ where
         result
     }
 
+    /// Iterate the query's groups, invoking `func` with each group id and
+    /// its group context (as set by `on_group_create`).
+    ///
+    /// Groups exist for tables that have been matched by the query; iterate
+    /// the query at least once to populate them.
+    pub fn each_group(&self, mut func: impl FnMut(Entity, *mut core::ffi::c_void)) {
+        let map = unsafe { sys::ecs_query_get_groups(self.query.as_ptr()) };
+        if map.is_null() {
+            return;
+        }
+        let mut it = unsafe { sys::ecs_map_iter(map) };
+        while unsafe { sys::ecs_map_next(&mut it) } {
+            let key = unsafe { *it.res };
+            let value = unsafe { *it.res.add(1) };
+            func(Entity::new(key), value as usize as *mut core::ffi::c_void);
+        }
+    }
+
     /// Returns true if the entire table range matches the query.
     pub fn has_table_range(&self, range: TableRange) -> bool {
         let mut c_range = sys::ecs_table_range_t {

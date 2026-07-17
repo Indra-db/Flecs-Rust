@@ -2586,9 +2586,9 @@ fn group_by_default_func_w_id() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add((rel, tgt_c));
+    let e1 = world.entity().add((rel, tgt_a));
     let e2 = world.entity().add((rel, tgt_b));
-    let e3 = world.entity().add((rel, tgt_a));
+    let e3 = world.entity().add((rel, tgt_c));
 
     let q = world
         .query::<()>()
@@ -2606,7 +2606,7 @@ fn group_by_default_func_w_id() {
             for i in it.iter() {
                 let e = it.get_entity(i).unwrap();
                 if e == e1 {
-                    assert_eq!(it.group_id(), tgt_c);
+                    assert_eq!(it.group_id(), tgt_a);
                     assert!(!e1_found);
                     assert!(e2_found);
                     assert!(e3_found);
@@ -2620,9 +2620,70 @@ fn group_by_default_func_w_id() {
                     e2_found = true;
                 }
                 if e == e3 {
+                    assert_eq!(it.group_id(), tgt_c);
+                    assert!(!e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e3_found = true;
+                }
+                count += 1;
+            }
+        }
+    });
+
+    assert_eq!(3, count);
+    assert!(e1_found);
+    assert!(e2_found);
+    assert!(e3_found);
+}
+
+#[test]
+fn group_by_default_func_w_id_ordered() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
+    let tgt_c = world.entity();
+
+    let e1 = world.entity().add((rel, tgt_a));
+    let e2 = world.entity().add((rel, tgt_b));
+    let e3 = world.entity().add((rel, tgt_c));
+
+    let q = world
+        .query::<()>()
+        .with((rel, *flecs::Wildcard))
+        .group_by(rel)
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let mut e1_found = false;
+    let mut e2_found = false;
+    let mut e3_found = false;
+    let mut count = 0;
+
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.get_entity(i).unwrap();
+                if e == e1 {
                     assert_eq!(it.group_id(), tgt_a);
                     assert!(!e1_found);
                     assert!(!e2_found);
+                    assert!(!e3_found);
+                    e1_found = true;
+                }
+                if e == e2 {
+                    assert_eq!(it.group_id(), tgt_b);
+                    assert!(e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e2_found = true;
+                }
+                if e == e3 {
+                    assert_eq!(it.group_id(), tgt_c);
+                    assert!(e1_found);
+                    assert!(e2_found);
                     assert!(!e3_found);
                     e3_found = true;
                 }
@@ -2645,9 +2706,9 @@ fn group_by_default_func_w_type() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add((Rel::id(), tgt_c));
+    let e1 = world.entity().add((Rel::id(), tgt_a));
     let e2 = world.entity().add((Rel::id(), tgt_b));
-    let e3 = world.entity().add((Rel::id(), tgt_a));
+    let e3 = world.entity().add((Rel::id(), tgt_c));
 
     let q = world
         .query::<()>()
@@ -2665,7 +2726,7 @@ fn group_by_default_func_w_type() {
             for i in it.iter() {
                 let e = it.get_entity(i).unwrap();
                 if e == e1 {
-                    assert_eq!(it.group_id(), tgt_c);
+                    assert_eq!(it.group_id(), tgt_a);
                     assert!(!e1_found);
                     assert!(e2_found);
                     assert!(e3_found);
@@ -2679,9 +2740,69 @@ fn group_by_default_func_w_type() {
                     e2_found = true;
                 }
                 if e == e3 {
+                    assert_eq!(it.group_id(), tgt_c);
+                    assert!(!e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e3_found = true;
+                }
+                count += 1;
+            }
+        }
+    });
+
+    assert_eq!(3, count);
+    assert!(e1_found);
+    assert!(e2_found);
+    assert!(e3_found);
+}
+
+#[test]
+fn group_by_default_func_w_type_ordered() {
+    let world = World::new();
+
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
+    let tgt_c = world.entity();
+
+    let e1 = world.entity().add((Rel::id(), tgt_a));
+    let e2 = world.entity().add((Rel::id(), tgt_b));
+    let e3 = world.entity().add((Rel::id(), tgt_c));
+
+    let q = world
+        .query::<()>()
+        .with((Rel::id(), id::<flecs::Wildcard>()))
+        .group_by(Rel::id())
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let mut e1_found = false;
+    let mut e2_found = false;
+    let mut e3_found = false;
+    let mut count = 0;
+
+    q.run(|mut it| {
+        while it.next() {
+            for i in it.iter() {
+                let e = it.get_entity(i).unwrap();
+                if e == e1 {
                     assert_eq!(it.group_id(), tgt_a);
                     assert!(!e1_found);
                     assert!(!e2_found);
+                    assert!(!e3_found);
+                    e1_found = true;
+                }
+                if e == e2 {
+                    assert_eq!(it.group_id(), tgt_b);
+                    assert!(e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e2_found = true;
+                }
+                if e == e3 {
+                    assert_eq!(it.group_id(), tgt_c);
+                    assert!(e1_found);
+                    assert!(e2_found);
                     assert!(!e3_found);
                     e3_found = true;
                 }
@@ -2737,9 +2858,9 @@ fn group_by_callbacks() {
     let tgt_b = world.entity();
     let tgt_c = world.entity();
 
-    let e1 = world.entity().add((Rel::id(), tgt_c));
+    let e1 = world.entity().add((Rel::id(), tgt_a));
     let e2 = world.entity().add((Rel::id(), tgt_b));
-    let e3 = world.entity().add((Rel::id(), tgt_a));
+    let e3 = world.entity().add((Rel::id(), tgt_c));
 
     let q = world
         .query::<()>()
@@ -2760,7 +2881,7 @@ fn group_by_callbacks() {
             for i in 0..it.count() {
                 let e = it.get_entity(i).unwrap();
                 if e == e1 {
-                    assert_eq!(it.group_id(), tgt_c);
+                    assert_eq!(it.group_id(), tgt_a);
                     assert!(!e1_found);
                     assert!(e2_found);
                     assert!(e3_found);
@@ -2778,7 +2899,7 @@ fn group_by_callbacks() {
                     assert_eq!(unsafe { *ctx }, it.group_id());
                 }
                 if e == e3 {
-                    assert_eq!(it.group_id(), tgt_a);
+                    assert_eq!(it.group_id(), tgt_c);
                     assert!(!e1_found);
                     assert!(!e2_found);
                     assert!(!e3_found);
@@ -2795,6 +2916,179 @@ fn group_by_callbacks() {
     assert!(e1_found);
     assert!(e2_found);
     assert!(e3_found);
+}
+
+#[test]
+fn group_by_callbacks_ordered() {
+    let cell_count_group_ctx = Cell::new(5u64);
+    let world = World::new();
+
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
+    let tgt_c = world.entity();
+
+    let e1 = world.entity().add((Rel::id(), tgt_a));
+    let e2 = world.entity().add((Rel::id(), tgt_b));
+    let e3 = world.entity().add((Rel::id(), tgt_c));
+
+    let q = world
+        .query::<()>()
+        .with((Rel::id(), *flecs::Wildcard))
+        .group_by(Rel::id())
+        .query_flags(QueryFlags::GroupByOrdered)
+        .group_by_ctx(cell_count_group_ctx.as_ptr() as *mut c_void, None)
+        .on_group_create(Some(callback_group_create))
+        .on_group_delete(Some(callback_group_delete))
+        .query_flags(QueryFlags::GroupByOrdered)
+        .build();
+
+    let mut e1_found = false;
+    let mut e2_found = false;
+    let mut e3_found = false;
+    let mut count = 0;
+
+    q.run(|mut it| {
+        while it.next() {
+            for i in 0..it.count() {
+                let e = it.get_entity(i).unwrap();
+                if e == e1 {
+                    assert_eq!(it.group_id(), tgt_a);
+                    assert!(!e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e1_found = true;
+                    let ctx: *mut u64 = q.group_context(it.group_id()) as *mut u64;
+                    assert_eq!(unsafe { *ctx }, it.group_id());
+                }
+                if e == e2 {
+                    assert_eq!(it.group_id(), tgt_b);
+                    assert!(e1_found);
+                    assert!(!e2_found);
+                    assert!(!e3_found);
+                    e2_found = true;
+                    let ctx: *mut u64 = q.group_context(it.group_id()) as *mut u64;
+                    assert_eq!(unsafe { *ctx }, it.group_id());
+                }
+                if e == e3 {
+                    assert_eq!(it.group_id(), tgt_c);
+                    assert!(e1_found);
+                    assert!(e2_found);
+                    assert!(!e3_found);
+                    e3_found = true;
+                    let ctx: *mut u64 = q.group_context(it.group_id()) as *mut u64;
+                    assert_eq!(unsafe { *ctx }, it.group_id());
+                }
+                count += 1;
+            }
+        }
+    });
+
+    assert_eq!(3, count);
+    assert!(e1_found);
+    assert!(e2_found);
+    assert!(e3_found);
+}
+
+#[test]
+fn iterate_groups() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
+    let tgt_c = world.entity();
+
+    world.entity().add((rel, tgt_a));
+    world.entity().add((rel, tgt_b));
+    world.entity().add((rel, tgt_c));
+
+    let q = world
+        .query::<()>()
+        .with((rel, *flecs::Wildcard))
+        .group_by_fn(rel, Some(group_by_rel))
+        .build();
+
+    q.run(|mut it| while it.next() {});
+
+    let mut a_found = false;
+    let mut b_found = false;
+    let mut c_found = false;
+    let mut count = 0;
+
+    q.each_group(|group, _ctx| {
+        if group == tgt_a.id() {
+            a_found = true;
+        }
+        if group == tgt_b.id() {
+            b_found = true;
+        }
+        if group == tgt_c.id() {
+            c_found = true;
+        }
+        count += 1;
+    });
+
+    assert_eq!(3, count);
+    assert!(a_found);
+    assert!(b_found);
+    assert!(c_found);
+}
+
+#[test]
+fn iterate_groups_empty() {
+    let world = World::new();
+
+    let rel = world.entity();
+
+    let q = world
+        .query::<()>()
+        .with((rel, *flecs::Wildcard))
+        .group_by_fn(rel, Some(group_by_rel))
+        .build();
+
+    let mut count = 0;
+    q.each_group(|_group, _ctx| {
+        count += 1;
+    });
+
+    assert_eq!(0, count);
+}
+
+#[test]
+fn iterate_groups_w_isa() {
+    let world = World::new();
+
+    let asset_a = world.entity();
+    let asset_b = world.entity();
+
+    world.entity().is_a(asset_a).set(Position { x: 1, y: 2 });
+    world.entity().is_a(asset_a).set(Position { x: 3, y: 4 });
+    world.entity().is_a(asset_b).set(Position { x: 5, y: 6 });
+
+    let q = world
+        .query::<&Position>()
+        .group_by(*flecs::IsA)
+        .build();
+
+    q.run(|mut it| while it.next() {});
+
+    let mut a_found = false;
+    let mut b_found = false;
+    let mut count = 0;
+
+    q.each_group(|group, _ctx| {
+        if group == asset_a.id() {
+            a_found = true;
+        }
+        if group == asset_b.id() {
+            b_found = true;
+        }
+        count += 1;
+    });
+
+    assert_eq!(2, count);
+    assert!(a_found);
+    assert!(b_found);
 }
 
 #[test]

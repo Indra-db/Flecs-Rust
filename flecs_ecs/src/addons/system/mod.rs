@@ -101,6 +101,21 @@ impl<'a> System<'a> {
         SystemUpdater::new(self.entity)
     }
 
+    /// Limit which groups the system iterates. Only tables in the given
+    /// query group will be iterated by the system.
+    pub fn set_group(&self, group_id: impl Into<Entity>) {
+        unsafe {
+            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), *group_id.into());
+        }
+    }
+
+    /// Reset the system's group filter set by [`System::set_group()`].
+    pub fn clear_group(&self) {
+        unsafe {
+            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), 0);
+        }
+    }
+
     /// Set the context for the system
     ///
     /// # Arguments
