@@ -92,6 +92,7 @@ impl Default for ecs_observer_desc_t {
             entity: Default::default(),
             events: Default::default(),
             yield_existing: Default::default(),
+            global_observer: Default::default(),
             callback: Default::default(),
             run: Default::default(),
             ctx: core::ptr::null_mut(),
@@ -150,6 +151,7 @@ impl Default for ecs_event_desc_t {
             observable: core::ptr::null_mut(),
             flags: Default::default(),
             const_param: core::ptr::null(),
+            set_ptr: core::ptr::null_mut(),
         }
     }
 }
@@ -308,6 +310,7 @@ impl Default for ecs_type_hooks_t {
             on_set: None,
             on_remove: None,
             on_replace: None,
+            on_validate: None,
             ctx: core::ptr::null_mut(),
             binding_ctx: core::ptr::null_mut(),
             ctx_free: None,

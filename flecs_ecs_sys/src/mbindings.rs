@@ -288,6 +288,7 @@ impl Default for ecs_delete_empty_tables_desc_t {
             clear_generation: 0,
             delete_generation: 0,
             time_budget_seconds: 0.0,
+            offset: 0,
         }
     }
 }
