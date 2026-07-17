@@ -3596,8 +3596,6 @@ fn optional_singleton() {
     assert_eq!(invoked, 2);
 }
 
-// NOTE: query.has(entity) is not available in the high-level Rust API.
-// Replaced with equivalent logic using each_entity.
 #[test]
 fn has_entity() {
     let world = World::new();
@@ -3607,19 +3605,8 @@ fn has_entity() {
 
     let q = world.new_query::<&Position>();
 
-    let mut found_e1 = false;
-    let mut found_e2 = false;
-    q.each_entity(|e, _| {
-        if e == e1 {
-            found_e1 = true;
-        }
-        if e == e2 {
-            found_e2 = true;
-        }
-    });
-
-    assert!(found_e1);
-    assert!(!found_e2);
+    assert!(q.has(e1));
+    assert!(!q.has(e2));
 }
 
 #[test]
@@ -3631,19 +3618,21 @@ fn has_table() {
 
     let q = world.new_query::<&Position>();
 
-    let mut found_e1 = false;
-    let mut found_e2 = false;
-    q.each_entity(|e, _| {
-        if e == e1 {
-            found_e1 = true;
-        }
-        if e == e2 {
-            found_e2 = true;
-        }
-    });
+    assert!(q.has_table(e1.table().unwrap()));
+    assert!(!q.has_table(e2.table().unwrap()));
+}
 
-    assert!(found_e1);
-    assert!(!found_e2);
+#[test]
+fn has_range() {
+    let world = World::new();
+
+    let e1 = world.entity().set(Position { x: 1, y: 2 });
+    let e2 = world.entity().set(Velocity { x: 3, y: 4 });
+
+    let q = world.new_query::<&Position>();
+
+    assert!(q.has_table_range(e1.range().unwrap()));
+    assert!(!q.has_table_range(e2.range().unwrap()));
 }
 
 #[test]

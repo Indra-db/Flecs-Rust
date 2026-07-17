@@ -852,6 +852,43 @@ where
             core::ptr::null_mut()
         }
     }
+
+    /// Returns true if the entity matches the query.
+    pub fn has(&self, entity: impl Into<Entity>) -> bool {
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result = unsafe { sys::ecs_query_has(self.query.as_ptr(), *entity.into(), &mut it) };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
+    }
+
+    /// Returns true if the table matches the query.
+    pub fn has_table(&self, table: Table) -> bool {
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result =
+            unsafe { sys::ecs_query_has_table(self.query.as_ptr(), table.raw_table_ptr(), &mut it) };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
+    }
+
+    /// Returns true if the entire table range matches the query.
+    pub fn has_table_range(&self, range: TableRange) -> bool {
+        let mut c_range = sys::ecs_table_range_t {
+            table: range.table_ptr_mut(),
+            offset: range.offset(),
+            count: TableOperations::count(&range),
+        };
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result =
+            unsafe { sys::ecs_query_has_range(self.query.as_ptr(), &mut c_range, &mut it) };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
+    }
 }
 
 impl<T: QueryTuple> From<&Query<T>> for NonNull<sys::ecs_query_t> {
