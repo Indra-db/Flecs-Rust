@@ -886,3 +886,37 @@ fn entity_scopes_do_not_become_modules() {
 
     assert!(current.parent().is_none());
 }
+
+mod guard_parent {
+    use flecs_ecs::prelude::*;
+
+    #[derive(Component, Default)]
+    pub struct SiblingType {
+        pub x: f32,
+    }
+
+    #[derive(Component)]
+    pub struct MovedModule;
+
+    impl Module for MovedModule {
+        fn module(world: &World) {
+            world.module::<MovedModule>("guard_ns::MovedModule");
+        }
+    }
+}
+
+#[test]
+fn module_reparent_keeps_old_parent_w_children() {
+    let ecs = World::new();
+
+    let sibling = ecs.component_named::<guard_parent::SiblingType>("guard_parent::SiblingType");
+    assert_eq!(sibling.path(), Some("::guard_parent::SiblingType".to_string()));
+
+    ecs.component_named::<guard_parent::MovedModule>("guard_parent::MovedModule");
+    let m = ecs.import::<guard_parent::MovedModule>();
+    assert_eq!(m.path(), Some("::guard_ns::MovedModule".to_string()));
+
+    assert!(ecs.try_lookup("::guard_parent").is_some());
+    assert!(ecs.try_lookup("::guard_parent::SiblingType").is_some());
+    assert!(sibling.entity_view(&ecs).is_alive());
+}

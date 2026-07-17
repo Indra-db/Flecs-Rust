@@ -156,12 +156,24 @@ impl World {
                 while cur.id != 0 {
                     next = cur.parent().unwrap_or(EntityView::new_null(self));
 
-                    cur.destruct();
+                    // Upstream C++ destructs unconditionally (4fd6b8dca), which
+                    // deletes unrelated children still parented to the old
+                    // scope. Keep the empty-scope check so only abandoned
+                    // scopes are cleaned up.
+                    let mut it = unsafe {
+                        sys::ecs_each_id(
+                            self.world_ptr(),
+                            ecs_pair(flecs::ChildOf::ID, cur.id.into()),
+                        )
+                    };
+                    if !unsafe { sys::ecs_iter_is_true(&mut it) } {
+                        cur.destruct();
 
-                    // Prevent increasing the generation count of the temporary
-                    // parent. This allows entities created during
-                    // initialization to keep non-recycled ids.
-                    self.set_version(cur);
+                        // Prevent increasing the generation count of the temporary
+                        // parent. This allows entities created during
+                        // initialization to keep non-recycled ids.
+                        self.set_version(cur);
+                    }
 
                     cur = next;
 
