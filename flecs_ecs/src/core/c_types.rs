@@ -522,6 +522,10 @@ pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 111;
 pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 112;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 113;
+#[cfg(feature = "flecs_meta")]
+pub(crate) const ECS_MAP: u64 = FLECS_HI_COMPONENT_ID + 122;
+#[cfg(feature = "flecs_meta")]
+pub(crate) const ECS_VALUE: u64 = FLECS_HI_COMPONENT_ID + 123;
 
 pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 114;
 

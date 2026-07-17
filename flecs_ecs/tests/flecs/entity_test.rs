@@ -5724,17 +5724,15 @@ fn set_r_t_3() {
 #[test]
 fn set_r_t_generic_no_size() {
     let world = World::new();
-    let _guard = FlecsPanicAbortGuard::install();
-    let _position = world.component::<Position>();
+    let position = world.component::<Position>();
     let rel = world.entity();
-    // C++: entity.set_ptr(ecs_pair(rel, position_component_entity), &data)
-    // The pair is (rel, Position) — rel is first, Position is second.
-    // set_first::<Position>(data, second_entity) = set pair (second_entity, Position_type)
-    // Actually: set pair where rel=first, Position=second → use set_first<Position>(data, rel)
-    let e = world
-        .entity()
-        .set_first::<Position>(Position { x: 10, y: 20 }, rel);
-    let ptr = e.get_first_untyped::<Position>(rel);
+    let pos = Position { x: 10, y: 20 };
+    let e = unsafe {
+        world
+            .entity()
+            .set_ptr((rel, position), &pos as *const _ as *const c_void)
+    };
+    let ptr = e.get_second_untyped::<Position>(rel);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
     assert_eq!(p.x, 10);

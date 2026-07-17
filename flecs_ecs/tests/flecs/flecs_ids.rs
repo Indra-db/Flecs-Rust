@@ -331,6 +331,8 @@ fn test_c_vs_rust_ids() {
             assert_eq!(flecs::meta::EcsStruct::ID, sys::FLECS_IDEcsStructID_);
             assert_eq!(flecs::meta::Array::ID, sys::FLECS_IDEcsArrayID_);
             assert_eq!(flecs::meta::Vector::ID, sys::FLECS_IDEcsVectorID_);
+            assert_eq!(flecs::meta::Map::ID, sys::FLECS_IDEcsMapID_);
+            assert_eq!(flecs::meta::Value::ID, sys::FLECS_IDecs_value_tID_);
             assert_eq!(flecs::meta::Unit::ID, sys::FLECS_IDEcsUnitID_);
             assert_eq!(flecs::meta::UnitPrefix::ID, sys::FLECS_IDEcsUnitPrefixID_);
         }

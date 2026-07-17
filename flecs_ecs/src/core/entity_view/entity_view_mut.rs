@@ -617,50 +617,42 @@ impl<'a> EntityView<'a> {
     /// # Arguments
     ///
     /// * `self` - A mutable reference to the entity.
-    /// * `component_id` - The ID of the component to set the pointer to.
+    /// * `id` - The component or pair id to set the pointer for.
     /// * `size` - The size of the component.
     /// * `ptr` - A pointer to the component.
-    pub unsafe fn set_ptr_w_size(
-        self,
-        id: impl Into<Entity>,
-        size: usize,
-        ptr: *const c_void,
-    ) -> Self {
+    pub unsafe fn set_ptr_w_size(self, id: impl IntoId, size: usize, ptr: *const c_void) -> Self {
+        let id = *id.into_id(self.world);
         // SAFETY: the world pointer is valid for 'a; the caller guarantees `ptr` points to `size` bytes valid as the type of `id`.
         unsafe {
-            sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, *id.into(), size, ptr);
+            sys::ecs_set_id(self.world.world_ptr_mut(), *self.id, id, size, ptr);
             self
         }
     }
 
-    /// Sets a pointer to a component of an entity with a given component ID.
+    /// Sets a pointer to a component of an entity with a given component or pair id.
     ///
     /// # Safety
-    /// Caller must ensure that `id` refers to a registered, sized (non-tag) component and that
-    /// `ptr` points to data that can be accessed as the type associated with `id`
+    /// Caller must ensure that `id` refers to a registered, sized (non-tag) component or pair
+    /// and that `ptr` points to data that can be accessed as the type associated with `id`
     ///
     /// # Panics
     ///
-    /// Panics if `id` is not a registered component (does not have the `EcsComponent` component).
+    /// Panics if `id` does not have an associated type (is not a component or data pair).
     ///
     /// # Arguments
     ///
     /// * `self` - A mutable reference to the entity.
-    /// * `component_id` - The ID of the component to set the pointer to.
+    /// * `id` - The component or pair id to set the pointer for.
     /// * `ptr` - A pointer to the component.
-    pub unsafe fn set_ptr(self, id: impl Into<Entity>, ptr: *const c_void) -> Self {
-        // SAFETY: the world pointer is valid for 'a; `cptr` is checked non-null before reading, and the caller guarantees `ptr` matches the type of `id`.
+    pub unsafe fn set_ptr(self, id: impl IntoId, ptr: *const c_void) -> Self {
+        // SAFETY: the world pointer is valid for 'a; `type_info` is checked non-null before reading, and the caller guarantees `ptr` matches the type of `id`.
         unsafe {
-            let id = id.into();
-            let cptr: *const sys::EcsComponent = sys::ecs_get_id(
-                self.world.world_ptr_mut(),
-                *id,
-                sys::FLECS_IDEcsComponentID_,
-            ) as *const sys::EcsComponent;
+            let id = id.into_id(self.world);
+            let type_info = sys::ecs_get_type_info(self.world.world_ptr_mut(), *id);
 
-            assert!(!cptr.is_null(), "invalid component id: {id:?}");
+            assert!(!type_info.is_null(), "invalid component id: {id:?}");
 
-            self.set_ptr_w_size(id, (*cptr).size as usize, ptr)
+            self.set_ptr_w_size(*id, (*type_info).size as usize, ptr)
         }
     }
 
