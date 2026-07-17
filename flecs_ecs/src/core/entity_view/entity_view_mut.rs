@@ -561,9 +561,8 @@ impl<'a> EntityView<'a> {
     where
         Second: ComponentId + ComponentType<Struct> + DataComponent,
     {
-        let world = self.world;
-        let world = world.world_ptr_mut();
-        let first_id = *first.into_entity(world);
+        let world = self.world.world_ptr_mut();
+        let first_id = *first.into_entity(self.world);
         let second_id = Second::entity_id(self.world);
         let pair_id = ecs_pair(first_id, second_id);
         // NOTE: we could this safety check optional

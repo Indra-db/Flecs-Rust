@@ -50,8 +50,8 @@ impl UntypedComponent<'_> {
         let name = compact_str::format_compact!("{}\0", data.name());
         let world = self.world_ptr_mut();
         let id = *self.id;
-        let type_id = *type_id.into_entity(world);
-        let unit = *unit.into_entity(world);
+        let type_id = *type_id.into_entity(self.world());
+        let unit = *unit.into_entity(self.world());
 
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr() as *const _,

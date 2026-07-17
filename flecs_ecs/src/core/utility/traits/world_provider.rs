@@ -20,14 +20,6 @@ pub trait WorldProvider<'a> {
     fn world(&self) -> WorldRef<'a>;
 }
 
-impl<'a> WorldProvider<'a> for *mut sys::ecs_world_t {
-    #[inline(always)]
-    fn world(&self) -> WorldRef<'a> {
-        // SAFETY: this impl requires callers to hold a valid, non-null ecs_world_t pointer.
-        unsafe { WorldRef::from_ptr(*self) }
-    }
-}
-
 impl<'a> WorldProvider<'a> for IdView<'a> {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
