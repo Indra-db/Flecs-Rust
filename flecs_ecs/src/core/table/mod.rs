@@ -101,13 +101,11 @@
 mod field;
 mod flags;
 mod iter;
-#[cfg(feature = "flecs_safety_locks")]
 mod multi_src_get;
 
 use core::{ffi::CStr, ffi::c_void, ptr::NonNull};
 pub use field::{Field, FieldAt, FieldAtMut, FieldIndex, FieldMut, FieldUntyped, FieldUntypedMut};
 pub(crate) use field::{flecs_field, flecs_field_w_size};
-#[cfg(feature = "flecs_safety_locks")]
 pub use multi_src_get::*;
 
 pub use flags::TableFlags;

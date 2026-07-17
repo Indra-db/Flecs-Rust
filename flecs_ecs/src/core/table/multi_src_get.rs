@@ -3,9 +3,9 @@
 //! This module provides the [`TableIter::get()`] method which enables safe access to
 //! fields from different sources (different tables), handling mutable aliasing checks.
 //!
-//! This module (and [`TableIter::get()`]) is only available when the
-//! `flecs_safety_locks` feature is enabled (part of the default features),
-//! since the aliasing detection it relies on is implemented by that feature.
+//! Mutable-aliasing detection ([`FieldError::Locked`]) requires the
+//! `flecs_safety_locks` feature (part of the default features). Without it,
+//! [`TableIter::get()`] still works but conflicting access is not detected.
 //!
 //! # Mutable Access
 //!
