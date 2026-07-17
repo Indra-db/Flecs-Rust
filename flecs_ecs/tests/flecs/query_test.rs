@@ -5032,3 +5032,33 @@ fn sparse_query_dynamic_inherit_assert() {
     }));
     assert!(result.is_err());
 }
+
+#[test]
+fn sparse_query_dynamic_dont_inherit() {
+    let world = World::new();
+
+    world
+        .component::<PositionDf>()
+        .add_trait::<(flecs::OnInstantiate, flecs::DontInherit)>();
+
+    let e1 = world.entity().set(PositionDf { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDf { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&PositionDf,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(q.count(), 2);
+}
