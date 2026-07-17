@@ -475,8 +475,6 @@ pub(crate) unsafe fn flecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, ro
 /// # Type Parameters
 ///
 /// * `T`: The type to get the `OperKind` for.
-///
-/// # See also
 #[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER

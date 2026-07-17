@@ -125,7 +125,6 @@ impl<'a> Observer<'a> {
     ///
     /// Returns an updater on which `.each()`/`.run()` (and variants) can be
     /// called; the change is applied through `ecs_observer_update()`.
-    ///
     pub fn update<T: QueryTuple>(&self) -> ObserverUpdater<'a, (), T> {
         ObserverUpdater::new(self.entity)
     }

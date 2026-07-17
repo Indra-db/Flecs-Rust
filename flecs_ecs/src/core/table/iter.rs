@@ -283,7 +283,6 @@ where
     ///
     /// # See also
     ///
-    ///
     /// # Safety
     /// - caller must ensure the ctx variable was set to a type accessible as C and is not aliased
     pub unsafe fn context<T>(&mut self) -> &'a mut T {

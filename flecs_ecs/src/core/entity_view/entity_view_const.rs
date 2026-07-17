@@ -454,7 +454,6 @@ impl<'a> EntityView<'a> {
     /// - if they are alive (see [`EntityView::is_alive()`])
     /// - the id contains a valid bit pattern for an entity
     ///
-    ///
     /// # Examples
     ///
     /// ```
@@ -2500,7 +2499,6 @@ impl EntityView<'_> {
     /// Enqueue event for entity.
     ///
     /// # Safety
-    ///
     ///
     /// # Arguments
     ///

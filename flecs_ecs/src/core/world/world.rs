@@ -181,7 +181,6 @@ impl World {
     /// // world_a is consumed — cannot be used here
     /// world_b.release();             // last handle → ecs_fini called
     /// ```
-    ///
     pub fn release(self) {
         drop(self); // Drop impl handles flecs_poly_release / ecs_fini
     }

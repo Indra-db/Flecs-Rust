@@ -157,7 +157,6 @@ impl<'a> Script<'a> {
     /// Convert script AST to string.
     /// This operation converts the script abstract syntax tree to a string, which can be used to debug a script.
     ///
-    ///
     /// # Returns
     ///
     /// Some String if success, None if failed.

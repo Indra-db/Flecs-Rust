@@ -13,7 +13,6 @@ use alloc::string::String;
 
 //MARK: trait::Doc
 ///
-///
 /// ```
 /// use flecs_ecs::{addons::doc::Doc, core::World, macros::Component};
 ///

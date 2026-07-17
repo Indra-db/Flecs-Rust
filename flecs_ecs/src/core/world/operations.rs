@@ -159,9 +159,6 @@ impl World {
     /// });
     /// // World will be destroyed when it goes out of scope
     /// ```
-    ///
-    /// # See also
-    ///
     #[doc(alias = "ecs_atfini")]
     pub fn on_destroyed(&self, action: fn(WorldRef)) {
         let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;

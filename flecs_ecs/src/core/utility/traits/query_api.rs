@@ -99,7 +99,6 @@ where
     /// This is an unsafe variant of [`each()`](QueryAPI::each) that skips all mutable aliasing checks
     /// for maximum performance. Use this when you are certain that no component aliasing can occur.
     ///
-    ///
     /// When the `flecs_safety_locks` feature is enabled, this function bypasses all runtime
     /// safety checks that [`each()`](QueryAPI::each) would normally perform.
     ///
@@ -1010,7 +1009,6 @@ where
     ///
     /// # See also
     ///
-    ///
     /// ```rust
     /// use flecs_ecs::prelude::*;
     ///
@@ -1071,7 +1069,6 @@ where
     /// if there are no entities.
     ///
     /// # See also
-    ///
     ///
     /// ```rust
     /// use flecs_ecs::prelude::*;

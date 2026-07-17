@@ -96,16 +96,16 @@ impl<'a> System<'a> {
     ///
     /// Returns an updater on which `.each()`/`.run()` (and variants) can be
     /// called; the change is applied through `ecs_system_update()`.
-    ///
     pub fn update<T: QueryTuple>(&self) -> SystemUpdater<'a, T> {
         SystemUpdater::new(self.entity)
     }
 
     /// Limit which groups the system iterates. Only tables in the given
     /// query group will be iterated by the system.
-    pub fn set_group(&self, group_id: impl Into<Entity>) {
+    pub fn set_group(&self, group_id: impl IntoEntity) {
+        let group_id = group_id.into_entity(self.world);
         unsafe {
-            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), *group_id.into());
+            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), *group_id);
         }
     }
 

@@ -162,7 +162,6 @@ impl World {
 
     /// Create a new entity as a child of `parent` (fragmenting `ChildOf`
     /// hierarchy storage).
-    ///
     pub fn entity_child_of(&self, parent: impl IntoEntity) -> EntityView<'_> {
         let parent = parent.into_entity(self);
         EntityView::new_child_of(self, parent)
@@ -170,7 +169,6 @@ impl World {
 
     /// Create a named entity as a child of `parent` (fragmenting `ChildOf`
     /// hierarchy storage). The name is scoped under the parent.
-    ///
     pub fn entity_named_child_of(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
         let parent = parent.into_entity(self);
         EntityView::new_named_child_of(self, parent, name)
@@ -178,7 +176,6 @@ impl World {
 
     /// Create a new entity for a parent using [`flecs::Parent`] hierarchy
     /// storage (non-fragmenting).
-    ///
     pub fn entity_w_parent(&self, parent: impl IntoEntity) -> EntityView<'_> {
         let parent = parent.into_entity(self);
         EntityView::new_w_parent(self, parent, None)
@@ -186,7 +183,6 @@ impl World {
 
     /// Create a named entity for a parent using [`flecs::Parent`] hierarchy
     /// storage (non-fragmenting). The name cannot be a scoped identifier.
-    ///
     pub fn entity_named_w_parent(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
         let parent = parent.into_entity(self);
         EntityView::new_w_parent(self, parent, Some(name))
@@ -283,7 +279,6 @@ impl World {
     }
 
     /// Create a prefab as a child of `parent`.
-    ///
     pub fn prefab_child_of(&self, parent: impl IntoEntity) -> EntityView<'_> {
         let result = self.entity_child_of(parent);
         unsafe { result.add_id_unchecked(ECS_PREFAB) };
@@ -291,7 +286,6 @@ impl World {
     }
 
     /// Create a named prefab as a child of `parent`.
-    ///
     pub fn prefab_named_child_of(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
         let result = self.entity_named_child_of(parent, name);
         unsafe { result.add_id_unchecked(ECS_PREFAB) };
