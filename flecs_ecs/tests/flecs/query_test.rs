@@ -4956,3 +4956,79 @@ fn each_optional_sparse() {
     assert_eq!(count, 2);
     assert_eq!(with_p, 1);
 }
+
+#[test]
+fn sparse_query_dynamic_inherit_3_terms() {
+    let world = World::new();
+
+    world
+        .component::<PositionDfDi>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let owner = world
+        .entity()
+        .set(PositionDfDi { x: 10, y: 20 })
+        .set(PositionDfOr { x: 30, y: 40 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+
+    let base = world.prefab().set(PositionDfDi { x: 50, y: 60 });
+    let inst = world
+        .entity()
+        .is_a(base)
+        .set(PositionDfOr { x: 70, y: 80 })
+        .set(VelocityDfOr { x: 3, y: 4 });
+
+    assert!(!inst.owns(PositionDfDi::id()));
+    assert!(inst.has(PositionDfDi::id()));
+
+    for cache_kind in [QueryCacheKind::None, QueryCacheKind::Auto] {
+        let q = world
+            .query::<(&PositionDfDi, &PositionDfOr, &VelocityDfOr)>()
+            .set_cache_kind(cache_kind)
+            .build();
+
+        let mut owner_count = 0;
+        let mut inst_count = 0;
+        q.each_entity(|e, (p, p2, v)| {
+            if e == owner {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+                assert_eq!(p2.x, 30);
+                assert_eq!(p2.y, 40);
+                assert_eq!(v.x, 1);
+                assert_eq!(v.y, 2);
+                owner_count += 1;
+            } else {
+                assert_eq!(e, inst);
+                assert_eq!(p.x, 50);
+                assert_eq!(p.y, 60);
+                assert_eq!(p2.x, 70);
+                assert_eq!(p2.y, 80);
+                assert_eq!(v.x, 3);
+                assert_eq!(v.y, 4);
+                inst_count += 1;
+            }
+        });
+
+        assert_eq!(owner_count, 1);
+        assert_eq!(inst_count, 1);
+    }
+}
+
+// C++ Query_sparse_query_dynamic_inherit_assert expects world.query<T>() to
+// abort because the compile-time sparse query cannot match dynamically
+// inherited components. The Rust sparse query asserts the same policy at
+// construction; verified through SparseQuery::assert_policies (debug builds).
+#[test]
+fn sparse_query_dynamic_inherit_assert() {
+    let world = World::new();
+
+    world
+        .component::<PositionDfDi>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        world.sparse_query::<(&PositionDfDi,)>();
+    }));
+    assert!(result.is_err());
+}
