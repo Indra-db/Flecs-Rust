@@ -287,6 +287,68 @@ impl<'a, T> Component<'a, T> {
         self
     }
 
+    /// Register a hook that is invoked before the `on_set` hook and `OnSet`
+    /// observers run. When the hook returns `false`, `on_set` and `OnSet`
+    /// observers are not invoked for the entity.
+    pub fn on_validate<Func>(self, func: Func) -> Self
+    where
+        T: ComponentId,
+        Func: FnMut(EntityView, &mut T) -> bool + 'static,
+    {
+        let mut type_hooks: sys::ecs_type_hooks_t = self.get_hooks();
+
+        ecs_assert!(
+            type_hooks.on_validate.is_none(),
+            FlecsErrorCode::InvalidOperation,
+            "on_validate hook already set for component {}",
+            core::any::type_name::<T>()
+        );
+
+        let binding_ctx = Self::get_binding_context(&mut type_hooks);
+        let boxed_func = Box::new(func);
+        let static_ref = Box::leak(boxed_func);
+        binding_ctx.on_validate = Some(static_ref as *mut _ as *mut c_void);
+        binding_ctx.free_on_validate = Some(Self::on_validate_drop::<Func>);
+        type_hooks.on_validate = Some(Self::run_validate::<Func>);
+        unsafe { sys::ecs_set_hooks_id(self.world.world_ptr_mut(), *self.id, &type_hooks) };
+        self
+    }
+
+    /// Function to free the on validate hook.
+    #[extern_abi]
+    unsafe fn on_validate_drop<Func>(func: *mut c_void)
+    where
+        Func: FnMut(EntityView, &mut T) -> bool + 'static,
+    {
+        let ptr_func: *mut Func = func as *mut Func;
+        unsafe {
+            ptr::drop_in_place(ptr_func);
+        }
+    }
+
+    /// Function to run the on validate hook.
+    #[extern_abi]
+    unsafe fn run_validate<Func>(
+        world: *mut sys::ecs_world_t,
+        entity: sys::ecs_entity_t,
+        ptr: *mut c_void,
+    ) -> bool
+    where
+        T: ComponentId,
+        Func: FnMut(EntityView, &mut T) -> bool + 'static,
+    {
+        unsafe {
+            let world_ref = WorldRef::from_ptr(world);
+            let component_id = <T as ComponentId>::entity_id(world_ref);
+            let hooks = sys::ecs_get_hooks_id(world, component_id);
+            let ctx = (*hooks).binding_ctx as *mut ComponentBindingCtx;
+            let on_validate = (*ctx).on_validate.unwrap();
+            let on_validate = &mut *(on_validate as *mut Func);
+            let entity = EntityView::new_from(world_ref, entity);
+            on_validate(entity, &mut *(ptr as *mut T))
+        }
+    }
+
     /// Function to free the on add hook.
     #[extern_abi]
     unsafe fn on_add_drop<Func>(func: *mut c_void)
