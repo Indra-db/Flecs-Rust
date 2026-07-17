@@ -161,16 +161,20 @@ fn query_handle_two_par_systems() {
     let h1 = query.handle();
     let h2 = query.handle();
 
-    world.system::<&mut Position>().par_each_entity(move |e, p| {
-        h1.iter_stage(e.world()).each(|v| {
-            p.x += v.x;
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            h1.iter_stage(e.world()).each(|v| {
+                p.x += v.x;
+            });
         });
-    });
-    world.system::<&mut Position>().par_each_entity(move |e, p| {
-        h2.iter_stage(e.world()).each(|v| {
-            p.y += v.y;
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            h2.iter_stage(e.world()).each(|v| {
+                p.y += v.y;
+            });
         });
-    });
 
     world.progress();
 
@@ -192,13 +196,15 @@ fn query_handle_clone_inside_par_callback() {
 
     let handle = world.new_query::<&Velocity>().handle();
 
-    world.system::<&mut Position>().par_each_entity(move |e, p| {
-        // Clone and drop on the worker thread, mid staged execution.
-        let local = handle.clone();
-        local.iter_stage(e.world()).each(|v| {
-            p.x += v.x;
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            // Clone and drop on the worker thread, mid staged execution.
+            let local = handle.clone();
+            local.iter_stage(e.world()).each(|v| {
+                p.x += v.x;
+            });
         });
-    });
 
     world.progress();
 

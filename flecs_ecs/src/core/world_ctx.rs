@@ -91,7 +91,9 @@ impl WorldCtx {
     }
 
     pub(crate) fn is_panicking(&self) -> bool {
-        self.is_panicking.load(core::sync::atomic::Ordering::Relaxed) || std::thread::panicking()
+        self.is_panicking
+            .load(core::sync::atomic::Ordering::Relaxed)
+            || std::thread::panicking()
     }
 }
 
