@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-" - Enter: examples.observers.observer_monitor.Velocity: e\n - Leave: examples.observers.observer_monitor.Position: e\n"
+" - Enter: Velocity: e\n - Leave: Position: e\n"

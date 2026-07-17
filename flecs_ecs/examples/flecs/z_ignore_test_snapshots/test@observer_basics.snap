@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-" - OnAdd: examples.observers.observer_basics.Position: #[ID] | e1\n - OnSet: examples.observers.observer_basics.Position: #[ID] | e1: with Position { x: 10.0, y: 20.0 }\n - OnRemove: examples.observers.observer_basics.Position: #[ID] | e1: with Position { x: 10.0, y: 20.0 }\n"
+" - OnAdd: Position: #[ID] | e1\n - OnSet: Position: #[ID] | e1: with Position { x: 10.0, y: 20.0 }\n - OnRemove: Position: #[ID] | e1: with Position { x: 10.0, y: 20.0 }\n"

@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-"Unit id: #[ID] of class examples.queries.query_setting_variables.Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class examples.queries.query_setting_variables.Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class examples.queries.query_setting_variables.Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class examples.queries.query_setting_variables.Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class examples.queries.query_setting_variables.Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class examples.queries.query_setting_variables.Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\n"
+"Unit id: #[ID] of class Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class Wizard in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\nUnit id: #[ID] of class Marksman in platoon id: #[ID] for player #[ID] | MyPlayer\n"

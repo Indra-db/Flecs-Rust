@@ -68,9 +68,9 @@ fn main() {
 
     let moon = world
         .entity_named("Moon")
+        .child_of(earth)
         .set(Position { x: 0.1, y: 0.1 })
-        .add(Moon)
-        .child_of(earth);
+        .add(Moon);
 
     // Is the Moon a child of the Earth?
     println!(
@@ -94,7 +94,7 @@ fn main() {
     //  Position { x: 3.0, y: 3.0 }
     //  ::Sun::Earth [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
     //  Position { x: 4.0, y: 4.0 }
-    //  ::Sun::Earth::Moon [Component, Position, Sun.Earth.Moon, (Identifier,Name), (Identifier,Symbol), (ChildOf,Sun.Earth), (OnDelete,Panic)]
+    //  ::Sun::Earth::Moon [Position, Moon, (Identifier,Name), (ChildOf,Sun.Earth)]
     //  Position { x: 4.1, y: 4.1 }
 }
 
