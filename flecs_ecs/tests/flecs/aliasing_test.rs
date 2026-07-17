@@ -40,6 +40,59 @@ fn query_duplicate_read_read_terms_allowed() {
 }
 
 #[test]
+fn query_multi_src_read_read_same_entity_allowed() {
+    let world = World::new();
+    let e = world.entity().set(Position { x: 1, y: 2 });
+    let query = world
+        .query::<(&Position, &Position)>()
+        .term_at(1)
+        .set_src(e)
+        .build();
+    let mut count = 0;
+    query.each(|(this_pos, src_pos)| {
+        assert_eq!(this_pos.x, src_pos.x);
+        count += 1;
+    });
+    assert_eq!(count, 1);
+}
+
+#[test]
+#[should_panic(expected = "same component data")]
+fn query_multi_src_mut_read_same_entity_panics() {
+    let world = World::new();
+    let e = world.entity().set(Position { x: 1, y: 2 });
+    world
+        .query::<(&mut Position, &Position)>()
+        .term_at(1)
+        .set_src(e)
+        .build()
+        .each(|(_a, _b)| {});
+}
+
+#[test]
+fn query_multi_src_mut_mut_different_entities_allowed() {
+    let world = World::new();
+    let e1 = world.entity().set(Position { x: 1, y: 2 }).add(Tag::id());
+    let e2 = world.entity().set(Position { x: 10, y: 20 });
+    let _ = e2;
+    let query = world
+        .query::<(&mut Position, &mut Position)>()
+        .with(Tag::id())
+        .term_at(1)
+        .set_src(e2)
+        .build();
+    let mut count = 0;
+    query.each(|(this_pos, src_pos)| {
+        this_pos.x += src_pos.x;
+        src_pos.y += 1;
+        count += 1;
+    });
+    assert_eq!(count, 1);
+    e1.get::<&Position>(|p| assert_eq!(p.x, 11));
+    e2.get::<&Position>(|p| assert_eq!(p.y, 21));
+}
+
+#[test]
 fn query_same_component_different_source_allowed() {
     let world = World::new();
     let parent = world.entity().set(Position { x: 1, y: 2 });
