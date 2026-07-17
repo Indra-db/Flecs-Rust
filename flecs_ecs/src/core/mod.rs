@@ -77,7 +77,7 @@ pub use id::Id;
 pub use id_view::IdView;
 pub use observer::Observer;
 pub use observer_builder::ObserverBuilder;
-pub use query::Query;
+pub use query::{Query, QueryHandle};
 #[doc(hidden)]
 pub use query_builder::*;
 pub use query_iter::{ChainedIter, QueryIter};

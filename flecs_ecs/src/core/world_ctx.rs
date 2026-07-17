@@ -7,14 +7,21 @@ use core::cell::Cell;
 extern crate std;
 
 extern crate alloc;
+use alloc::sync::Arc;
 use alloc::vec;
+use std::sync::Mutex;
 
 pub(crate) struct WorldCtx {
     query_ref_count: Cell<i32>,
     pub(crate) components: FlecsIdMap,
     pub(crate) components_array: FlecsArray,
-    is_panicking: Cell<bool>,
+    // Atomic because `QueryHandle::drop` reads it from other threads.
+    is_panicking: core::sync::atomic::AtomicBool,
     owning_thread: std::thread::ThreadId,
+    // Shared with every `QueryHandle`. `true` once world teardown has begun;
+    // a handle dropping on another thread takes the lock so its refcount
+    // release can never interleave with `ecs_fini` freeing query memory.
+    world_dead: Arc<Mutex<bool>>,
 }
 
 impl WorldCtx {
@@ -23,9 +30,22 @@ impl WorldCtx {
             query_ref_count: Cell::new(0),
             components: Default::default(),
             components_array: vec![0; 500],
-            is_panicking: Cell::new(false),
+            is_panicking: core::sync::atomic::AtomicBool::new(false),
             owning_thread: std::thread::current().id(),
+            world_dead: Arc::new(Mutex::new(false)),
         }
+    }
+
+    pub(crate) fn world_dead_lock(&self) -> &Arc<Mutex<bool>> {
+        &self.world_dead
+    }
+
+    pub(crate) fn mark_world_dead(&self) {
+        let mut dead = self
+            .world_dead
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *dead = true;
     }
 
     pub(crate) fn owning_thread(&self) -> std::thread::ThreadId {
@@ -66,11 +86,12 @@ impl WorldCtx {
     }
 
     pub(crate) fn set_is_panicking_true(&self) {
-        self.is_panicking.set(true);
+        self.is_panicking
+            .store(true, core::sync::atomic::Ordering::Relaxed);
     }
 
     pub(crate) fn is_panicking(&self) -> bool {
-        self.is_panicking.get() || std::thread::panicking()
+        self.is_panicking.load(core::sync::atomic::Ordering::Relaxed) || std::thread::panicking()
     }
 }
 
@@ -82,8 +103,8 @@ impl World {
     // XAI: thread-affinity model. `World`/`WorldRef` are !Send, so all safe
     // handles stay on the thread that created the world (`owning_thread`).
     // Component data can still reach worker threads through two doors:
-    // 1. `par_*` systems — guarded statically (`TupleType: Send` bounds +
-    //    conditional `Query` Send/Sync impls).
+    // 1. `par_*` systems — guarded statically (`TupleType: Send` bounds on
+    //    the par registration methods; `Query` itself is `!Send`/`!Sync`).
     // 2. Views handed to par callbacks (`EntityView`, `TableIter`,
     //    `WorldRef::from_ptr` in trampolines) — guarded by the runtime checks
     //    below at every typed materialization/move choke point.
@@ -125,6 +146,26 @@ impl World {
 fn thread_affinity_violation(type_name: &str) -> ! {
     panic!(
         "component `{type_name}` is thread-bound (!Send or !Sync) and can only be accessed from the thread that owns the world"
+    );
+}
+
+/// Mirrors the C-side `ecs_assert` in `flecs_new_id`, which is compiled out in
+/// release builds (`NDEBUG`): entity id allocation mutates the shared entity
+/// index without synchronization, so creating entities during the
+/// multithreaded pipeline phase (e.g. from a `par_*` system callback) would
+/// race.
+#[inline(always)]
+pub(crate) fn assert_not_in_multithreaded_phase(world_ptr: *const sys::ecs_world_t) {
+    if unsafe { sys::ecs_world_get_flags(world_ptr) & sys::EcsWorldMultiThreaded != 0 } {
+        multithreaded_entity_creation_violation();
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn multithreaded_entity_creation_violation() -> ! {
+    panic!(
+        "entities cannot be created while the world is in its multithreaded execution phase; create them before or after progress(), or from a single-threaded system"
     );
 }
 

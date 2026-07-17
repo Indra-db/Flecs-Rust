@@ -68,7 +68,7 @@ Mutable aliasing of the same component is checked: requesting the same component
 
 #### Threading model
 
-`World` is `!Send`/`!Sync`: a world is owned by the thread that created it, and components are not required to be `Send`. Types that are not thread-safe (e.g. `Rc`, raw pointers) can be stored as components. `Query` is only `Send`/`Sync` when its component types are. Multithreaded system execution through pipelines remains available; it is managed by flecs itself rather than by sharing the `World` handle across threads.
+`World` is `!Send`/`!Sync`: a world is owned by the thread that created it, and components are not required to be `Send`. Types that are not thread-safe (e.g. `Rc`, raw pointers) can be stored as components. `Query` is `!Send`/`!Sync` like `World`; to reach a query from multithreaded (`par_*`) system callbacks, use `Query::handle()`, which returns a thread-shareable `QueryHandle` that can only be iterated through a stage. Multithreaded system execution through pipelines remains available; it is managed by flecs itself rather than by sharing the `World` handle across threads.
 
 #### Performance
 
