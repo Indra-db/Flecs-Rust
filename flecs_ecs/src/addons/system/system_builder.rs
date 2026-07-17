@@ -29,18 +29,11 @@ where
             _phantom: core::marker::PhantomData,
         };
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
-
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
 
         obj
@@ -54,21 +47,11 @@ where
             _phantom: core::marker::PhantomData,
         };
 
-        if obj.desc.entity == 0 {
-            obj.desc.entity =
-                unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
-        }
-
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        if obj.desc.phase == 0 {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
 
         obj
@@ -96,13 +79,8 @@ where
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
         obj
     }
@@ -113,24 +91,7 @@ where
     ///
     /// * `phase` - the phase
     pub fn kind(&mut self, phase: impl IntoEntity) -> &mut Self {
-        let phase = *phase.into_entity(self.world);
-        let current_phase: sys::ecs_entity_t = unsafe {
-            sys::ecs_get_target(self.world_ptr_mut(), self.desc.entity, ECS_DEPENDS_ON, 0)
-        };
-        unsafe {
-            if current_phase != 0 {
-                sys::ecs_remove_id(
-                    self.world_ptr_mut(),
-                    self.desc.entity,
-                    ecs_dependson(current_phase),
-                );
-                sys::ecs_remove_id(self.world_ptr_mut(), self.desc.entity, current_phase);
-            }
-            if phase != 0 {
-                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, ecs_dependson(phase));
-                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, phase);
-            }
-        };
+        self.desc.phase = *phase.into_entity(self.world);
         self
     }
 

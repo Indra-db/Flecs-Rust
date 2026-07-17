@@ -3148,3 +3148,60 @@ fn run_w_0_src_query() {
         assert_eq!(c.0, 1);
     });
 }
+
+#[test]
+fn reuse_system_builder() {
+    let world = World::new();
+
+    world.entity().set(Position { x: 10, y: 20 });
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let count_1 = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_2 = std::rc::Rc::new(core::cell::Cell::new(0));
+
+    let mut sb = world.system::<&Position>();
+
+    let count_1_c = count_1.clone();
+    let s1 = sb.each(move |_p| {
+        count_1_c.set(count_1_c.get() + 1);
+    });
+
+    let count_2_c = count_2.clone();
+    let s2 = sb.with(Velocity::id()).each(move |_p| {
+        count_2_c.set(count_2_c.get() + 1);
+    });
+
+    assert!(s1.id() != s2.id());
+
+    world.progress();
+
+    assert_eq!(count_1.get(), 2);
+    assert_eq!(count_2.get(), 1);
+}
+
+#[test]
+fn kind_on_shared_builder() {
+    let world = World::new();
+
+    let mut sb = world.system::<&Position>();
+
+    let s1 = sb.each(|_p| {});
+
+    let s2 = sb.kind(id::<flecs::pipeline::PostUpdate>()).each(|_p| {});
+
+    assert!(s1.id() != s2.id());
+
+    let s1 = s1.entity_view(&world);
+    let s2 = s2.entity_view(&world);
+
+    assert!(s1.has((flecs::DependsOn::ID, flecs::pipeline::OnUpdate::ID)));
+    assert!(s1.has(flecs::pipeline::OnUpdate::ID));
+
+    assert!(s2.has((flecs::DependsOn::ID, flecs::pipeline::PostUpdate::ID)));
+    assert!(s2.has(flecs::pipeline::PostUpdate::ID));
+    assert!(!s2.has((flecs::DependsOn::ID, flecs::pipeline::OnUpdate::ID)));
+    assert!(!s2.has(flecs::pipeline::OnUpdate::ID));
+}

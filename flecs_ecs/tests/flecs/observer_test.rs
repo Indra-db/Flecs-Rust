@@ -2520,3 +2520,34 @@ fn run_callback_w_yield_existing_2_fields() {
         assert_eq!(count.0, 1);
     });
 }
+
+#[test]
+fn reuse_observer_builder() {
+    let world = World::new();
+
+    let mut ob = world.observer::<flecs::OnSet, &Position>();
+
+    let count_1 = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_2 = std::rc::Rc::new(core::cell::Cell::new(0));
+
+    let count_1_c = count_1.clone();
+    let o1 = ob.each(move |_p| {
+        count_1_c.set(count_1_c.get() + 1);
+    });
+
+    let count_2_c = count_2.clone();
+    let o2 = ob.with(Velocity::id()).each(move |_p| {
+        count_2_c.set(count_2_c.get() + 1);
+    });
+
+    assert!(o1.id() != o2.id());
+
+    world.entity().set(Position { x: 10, y: 20 });
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert_eq!(count_1.get(), 2);
+    assert_eq!(count_2.get(), 1);
+}
