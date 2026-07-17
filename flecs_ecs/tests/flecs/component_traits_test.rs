@@ -1,3 +1,4 @@
+#![allow(clippy::float_cmp)]
 //! Ported from test/cpp/src/ComponentTraits.cpp
 
 use flecs_ecs::prelude::*;

@@ -2522,8 +2522,8 @@ fn reuse_observer_builder() {
 
     let mut ob = world.observer::<flecs::OnSet, &Position>();
 
-    let count_1 = std::rc::Rc::new(core::cell::Cell::new(0));
-    let count_2 = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_1 = alloc::rc::Rc::new(core::cell::Cell::new(0));
+    let count_2 = alloc::rc::Rc::new(core::cell::Cell::new(0));
 
     let count_1_c = count_1.clone();
     let o1 = ob.each(move |_p| {
