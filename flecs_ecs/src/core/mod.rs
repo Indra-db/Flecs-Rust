@@ -51,6 +51,7 @@ pub(crate) mod query_tuple;
 mod safety_map;
 pub mod table;
 pub mod term;
+pub(crate) mod tuple_alias;
 pub mod utility;
 pub mod world;
 pub mod world_ctx;

@@ -735,7 +735,7 @@ mod panic_and_assign_tests {
         let world = World::new();
         let tag = world.entity();
 
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
             tag.with(|| {
                 panic!("panic inside with");
             });
@@ -751,7 +751,7 @@ mod panic_and_assign_tests {
         let world = World::new();
         let parent = world.entity();
 
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
             parent.run_in_scope(|| {
                 panic!("panic inside run_in_scope");
             });
@@ -822,7 +822,7 @@ mod panic_and_assign_tests {
         let not_a_component = world.entity();
         let pos = Position { x: 1, y: 2 };
 
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
             // SAFETY: `ptr` is valid; the call must panic because `id` is not a registered component.
             unsafe {
                 e.set_ptr(

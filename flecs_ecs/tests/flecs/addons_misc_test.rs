@@ -83,13 +83,17 @@ fn system_builder_try_build() {
 
     extern "C-unwind" fn noop_iter(_it: *mut flecs_ecs::sys::ecs_iter_t) {}
 
-    let mut desc = flecs_ecs::sys::ecs_system_desc_t::default();
-    desc.callback = Some(noop_iter);
+    let desc = flecs_ecs::sys::ecs_system_desc_t {
+        callback: Some(noop_iter),
+        ..Default::default()
+    };
     let valid = world.system_builder_from_desc::<&Position>(desc).try_build();
     assert!(valid.is_some());
 
-    let mut desc = flecs_ecs::sys::ecs_system_desc_t::default();
-    desc.callback = Some(noop_iter);
+    let desc = flecs_ecs::sys::ecs_system_desc_t {
+        callback: Some(noop_iter),
+        ..Default::default()
+    };
     let invalid = world
         .system_builder_from_desc::<()>(desc)
         .expr("invalid syntax!!!")

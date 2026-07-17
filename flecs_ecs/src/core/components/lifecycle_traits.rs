@@ -65,6 +65,7 @@ use flecs_ecs_derive::extern_abi;
 /// behavior once that memory is later read or dropped. Aborting instead keeps
 /// the invariant that a hook either completes for the whole range or the
 /// process ends.
+#[allow(clippy::print_stderr, reason = "last words before process abort")]
 fn abort_on_hook_panic<R>(hook_kind: &str, type_name: &str, f: impl FnOnce() -> R) -> R {
     match std::panic::catch_unwind(core::panic::AssertUnwindSafe(f)) {
         Ok(val) => val,

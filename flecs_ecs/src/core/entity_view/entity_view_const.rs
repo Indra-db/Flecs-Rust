@@ -1553,7 +1553,9 @@ impl<'a> EntityView<'a> {
             self.id
         );
 
-        let tuple_data = T::create_ptrs::<true>(self.world, self.id, record);
+        // SAFETY: record was just looked up for self.id on this world and
+        // checked non-null above.
+        let tuple_data = unsafe { T::create_ptrs::<true>(self.world, self.id, record) };
 
         #[cfg(feature = "flecs_safety_locks")]
         {
@@ -1642,7 +1644,9 @@ impl<'a> EntityView<'a> {
             return None;
         }
 
-        let tuple_data = T::create_ptrs::<false>(self.world, self.id, record);
+        // SAFETY: record was just looked up for self.id on this world and
+        // checked non-null above.
+        let tuple_data = unsafe { T::create_ptrs::<false>(self.world, self.id, record) };
 
         //todo we can maybe early return if we don't yet if doesn't have all. Same for try_get
         let has_all_components = tuple_data.has_all_components();

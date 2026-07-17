@@ -551,23 +551,18 @@ macro_rules! impl_get_tuple {
                 let entity = *entity;
                 let mut index : usize = 0;
                 let mut has_all_components = true;
-                let mut _ids = [0u64; { tuple_count!($($t),*) }];
-                let mut _mut_flags = [false; { tuple_count!($($t),*) }];
+                let _alias_keys: [crate::core::tuple_alias::TermAliasKey; { tuple_count!($($t),*) }] = [$( crate::core::tuple_alias::TermAliasKey::new::<$t::OnlyType>(!$t::IS_IMMUTABLE) ),*];
+                if let Some(_i) = crate::core::tuple_alias::static_alias_conflict(&_alias_keys) {
+                    let _names: [&str; { tuple_count!($($t),*) }] = [$( core::any::type_name::<$t::OnlyType>() ),*];
+                    panic!(
+                        "get tuple `{}` requests component `{}` more than once with at least one mutable reference, which would alias mutable access",
+                        core::any::type_name::<Self>(),
+                        _names[_i]
+                    );
+                }
 
                 $(
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
-                    let mut _j: usize = 0;
-                    while _j < index {
-                        assert!(
-                            _ids[_j] != id || ($t::IS_IMMUTABLE && !_mut_flags[_j]),
-                            "get tuple `{}` requests component `{}` more than once with at least one mutable reference, which would alias mutable access",
-                            core::any::type_name::<Self>(),
-                            core::any::type_name::<$t::OnlyType>()
-                        );
-                        _j += 1;
-                    }
-                    _ids[index] = id;
-                    _mut_flags[index] = !$t::IS_IMMUTABLE;
                     // SAFETY: world_ptr comes from the live world above; record is
                     // the caller-provided record for entity from that world.
                     unsafe {
@@ -600,25 +595,20 @@ macro_rules! impl_get_tuple {
                 let world_ref = world.world();
                 let mut index : usize = 0;
                 let mut has_all_components = true;
-                let mut _ids = [0u64; { tuple_count!($($t),*) }];
-                let mut _mut_flags = [false; { tuple_count!($($t),*) }];
+                let _alias_keys: [crate::core::tuple_alias::TermAliasKey; { tuple_count!($($t),*) }] = [$( crate::core::tuple_alias::TermAliasKey::new::<$t::OnlyType>(!$t::IS_IMMUTABLE) ),*];
+                if let Some(_i) = crate::core::tuple_alias::static_alias_conflict(&_alias_keys) {
+                    let _names: [&str; { tuple_count!($($t),*) }] = [$( core::any::type_name::<$t::OnlyType>() ),*];
+                    panic!(
+                        "get tuple `{}` requests component `{}` more than once with at least one mutable reference, which would alias mutable access",
+                        core::any::type_name::<Self>(),
+                        _names[_i]
+                    );
+                }
 
                 $(
                     let entity = <<$t::OnlyType as ComponentOrPairId>::First>::entity_id(world_ref);
                     let record = unsafe { sys::ecs_record_find(world_ptr, entity) };
                     let id = <$t::OnlyType as ComponentOrPairId>::get_id(world_ref);
-                    let mut _j: usize = 0;
-                    while _j < index {
-                        assert!(
-                            _ids[_j] != id || ($t::IS_IMMUTABLE && !_mut_flags[_j]),
-                            "get tuple `{}` requests component `{}` more than once with at least one mutable reference, which would alias mutable access",
-                            core::any::type_name::<Self>(),
-                            core::any::type_name::<$t::OnlyType>()
-                        );
-                        _j += 1;
-                    }
-                    _ids[index] = id;
-                    _mut_flags[index] = !$t::IS_IMMUTABLE;
 
                     // SAFETY: world_ptr comes from the live world above; record was
                     // just looked up for entity in that same world.

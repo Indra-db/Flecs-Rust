@@ -2105,5 +2105,5 @@ fn meta_opaque_send_follows_component_type() {
     struct InvalidSend;
     impl<T: ?Sized + Send> AmbiguousIfImpl<InvalidSend> for T {}
 
-    let _ = <Opaque<'static, std::rc::Rc<u32>> as AmbiguousIfImpl<_>>::some_item;
+    let _ = <Opaque<'static, alloc::rc::Rc<u32>> as AmbiguousIfImpl<_>>::some_item;
 }

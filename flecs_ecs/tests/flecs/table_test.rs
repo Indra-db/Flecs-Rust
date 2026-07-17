@@ -1073,7 +1073,7 @@ fn table_get_mut_aliasing_panics() {
 
     let guard = t1.get_mut::<Position>().unwrap();
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         let _second = t2.get_mut::<Position>();
     }));
     assert!(result.is_err());
@@ -1082,7 +1082,7 @@ fn table_get_mut_aliasing_panics() {
     assert_eq!(guard[0].y, 2);
 }
 
-/// While an entities() guard is alive, structural changes are deferred, so the
+/// While an `entities()` guard is alive, structural changes are deferred, so the
 /// entity array cannot be reallocated under the borrow.
 #[test]
 fn table_entities_guard_defers_structural_changes() {
@@ -1105,7 +1105,7 @@ fn table_entities_guard_defers_structural_changes() {
     assert_eq!(e1.table().unwrap().count(), 65);
 }
 
-/// While a get_mut() guard is alive, structural changes are deferred, so the
+/// While a `get_mut()` guard is alive, structural changes are deferred, so the
 /// column storage cannot be reallocated under the borrow.
 #[test]
 fn table_get_mut_guard_defers_structural_changes() {
@@ -1129,7 +1129,7 @@ fn table_get_mut_guard_defers_structural_changes() {
     assert_eq!(e1.table().unwrap().count(), 65);
 }
 
-/// entities() on a table range must honor the range offset.
+/// `entities()` on a table range must honor the range offset.
 #[test]
 fn table_range_entities_offset() {
     let world = World::new();
@@ -1159,7 +1159,7 @@ fn table_lock_released_after_caught_panic() {
 
     let e = world.entity().set(Position { x: 1, y: 2 });
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
         let table = e.table().unwrap();
         let _archetype = table.archetype();
         panic!("panic while table lock is held");
