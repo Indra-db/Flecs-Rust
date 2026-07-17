@@ -4829,3 +4829,130 @@ fn sparse_query_convert_to_query_3_terms() {
     assert_eq!(count, 1);
     assert_eq!(q.count(), 1);
 }
+
+#[test]
+fn each_dont_fragment_trait() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&mut PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else if e == e2 {
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        p.x += 1;
+        p.y += 1;
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    e2.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 41);
+    });
+}
+
+#[test]
+fn each_dont_fragment_trait_mixed() {
+    let world = World::new();
+
+    let entity = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<(&mut PositionDfOr, &Velocity)>();
+
+    q.each(|(p, v)| {
+        p.x += v.x;
+        p.y += v.y;
+    });
+
+    entity.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn each_dont_fragment_trait_shared() {
+    let world = World::new();
+
+    let parent = world.entity().set(Velocity { x: 1, y: 2 });
+    let entity = world
+        .entity()
+        .child_of(parent)
+        .set(PositionDfOr { x: 10, y: 20 });
+
+    let q = world
+        .query::<(&mut PositionDfOr, &Velocity)>()
+        .term_at(1)
+        .up_id(flecs::ChildOf::ID)
+        .build();
+
+    let mut count = 0;
+    q.each(|(p, v)| {
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+        p.x += v.x;
+        p.y += v.y;
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+
+    entity.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn each_optional_sparse() {
+    let world = World::new();
+
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+
+    let e1 = world
+        .entity()
+        .set(Velocity { x: 1, y: 2 })
+        .set(Position { x: 10, y: 20 });
+    let e2 = world.entity().set(Velocity { x: 3, y: 4 });
+
+    let q = world.new_query::<(&Velocity, Option<&Position>)>();
+
+    let mut count = 0;
+    let mut with_p = 0;
+    q.each_entity(|e, (v, p)| {
+        if e == e1 {
+            let p = p.unwrap();
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+            with_p += 1;
+        } else {
+            assert_eq!(e, e2);
+            assert!(p.is_none());
+            assert_eq!(v.x, 3);
+            assert_eq!(v.y, 4);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(with_p, 1);
+}
