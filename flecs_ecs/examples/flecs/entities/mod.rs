@@ -4,3 +4,7 @@ mod entity_hierarchy;
 mod entity_hooks;
 mod entity_iterate_components;
 mod entity_prefab;
+mod derive_traits;
+mod entity_get_multiple;
+mod entity_on_validate;
+mod entity_parent_hierarchy;

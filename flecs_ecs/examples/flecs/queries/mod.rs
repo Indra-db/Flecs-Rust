@@ -10,6 +10,7 @@ mod query_group_by;
 mod query_group_by_callbacks;
 mod query_group_by_custom;
 mod query_group_iter;
+mod query_group_iter_all;
 mod query_hierarchy;
 mod query_pass_query_to_system;
 mod query_run;
