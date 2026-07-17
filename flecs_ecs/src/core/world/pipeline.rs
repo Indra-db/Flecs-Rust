@@ -373,6 +373,9 @@ impl World {
     /// * C API: `ecs_delete_empty_tables`
     #[inline(always)]
     pub fn delete_empty_tables(&self, desc: sys::ecs_delete_empty_tables_desc_t) -> i32 {
+        // SAFETY: `self.raw_world` is a valid, non-null pointer to a live flecs world;
+        // `&desc` points to a properly initialized `ecs_delete_empty_tables_desc_t`
+        // owned by this stack frame and valid for the duration of the call.
         unsafe { sys::ecs_delete_empty_tables(self.raw_world.as_ptr(), &desc) }
     }
 
@@ -403,6 +406,9 @@ impl World {
     pub fn exclusive_access_begin(&self, thread_name: Option<&'static CStr>) {
         let name_ptr = thread_name.map_or(core::ptr::null(), CStr::as_ptr);
 
+        // SAFETY: `self.raw_world` is a valid, non-null pointer to a live flecs world;
+        // `name_ptr` is either null or the pointer of a `'static` CStr, so it remains
+        // valid for as long as flecs may retain it.
         unsafe {
             sys::ecs_exclusive_access_begin(self.raw_world.as_ptr(), name_ptr);
         }
@@ -439,6 +445,9 @@ impl World {
     /// This feature only works in builds where asserts are enabled. The
     /// feature requires the OS API `thread_self_` callback to be set.
     pub fn exclusive_access_end(&self, lock_world: bool) {
+        // SAFETY: `self.raw_world` is a valid, non-null pointer to a live flecs world
+        // for the duration of `&self`; `ecs_exclusive_access_end` only mutates internal
+        // world lock/thread-ownership state and requires no other preconditions.
         unsafe {
             sys::ecs_exclusive_access_end(self.raw_world.as_ptr(), lock_world);
         }

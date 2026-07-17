@@ -32,6 +32,7 @@ impl<'a> TermRef<'a> {
     }
 
     pub fn is_set(&self) -> bool {
+        // SAFETY: self.term is a valid &ecs_term_t reference for the lifetime of self.
         unsafe { sys::ecs_term_is_initialized(self.term) }
     }
 
@@ -272,6 +273,7 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
     /// It is useful when initializing a 0-initialized array of terms (like in `sys::ecs_term_desc_t`)
     /// as this operation can be used to find the last initialized element.
     fn is_set(&mut self) -> bool {
+        // SAFETY: current_term() returns a valid pointer into the builder's live term array.
         unsafe { sys::ecs_term_is_initialized(self.current_term()) }
     }
 

@@ -1836,9 +1836,12 @@ impl World {
     /// * `id`: The id to create entities with.
     /// * `func`: The function to run.
     pub fn with(&self, id: impl IntoId, mut func: impl FnMut()) {
+        // SAFETY: raw_world is a valid, live world pointer.
         let prev: sys::ecs_id_t =
             unsafe { sys::ecs_set_with(self.raw_world.as_ptr(), *id.into_id(self)) };
         func();
+        // SAFETY: raw_world is still the same valid world pointer; prev is the value
+        // ecs_set_with returned above, restoring the previous with-id.
         unsafe {
             sys::ecs_set_with(self.raw_world.as_ptr(), prev);
         }
@@ -1889,6 +1892,7 @@ impl World {
     ///
     /// * `id`: The id to delete.
     pub fn delete_entities_with(&self, id: impl IntoId) {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe {
             sys::ecs_delete_with(self.raw_world.as_ptr(), *id.into_id(self));
         }
@@ -1941,6 +1945,7 @@ impl World {
     ///
     /// * `id`: The id to remove.
     pub fn remove_all(&self, id: impl IntoId) {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe {
             sys::ecs_remove_all(self.raw_world.as_ptr(), *id.into_id(self));
         }
@@ -1990,17 +1995,20 @@ impl World {
     ///
     /// True if the entity exists, false otherwise.
     pub fn exists(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_exists(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is alive in the world.
     pub fn is_alive(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_is_alive(self.raw_world.as_ptr(), *entity.into()) }
     }
 
     /// Checks if the given entity ID is valid.
     /// Invalid entities cannot be used with API functions.
     pub fn is_valid(&self, entity: impl Into<Entity>) -> bool {
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_is_valid(self.raw_world.as_ptr(), *entity.into()) }
     }
 
@@ -2016,6 +2024,7 @@ impl World {
     /// function will return an Entity of 0. Use `try_get_alive` if you want to
     /// return an `Option<EntityView>`.
     pub fn get_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
+        // SAFETY: raw_world is a valid, live world pointer.
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
 
         EntityView::new_from(self, entity)
@@ -2032,6 +2041,7 @@ impl World {
     /// The entity with the current generation.
     /// If the entity is not alive, this function will return `None`.
     pub fn try_get_alive(&self, entity: impl Into<Entity>) -> Option<EntityView<'_>> {
+        // SAFETY: raw_world is a valid, live world pointer.
         let entity = unsafe { sys::ecs_get_alive(self.raw_world.as_ptr(), *entity.into()) };
         if entity == 0 {
             None
@@ -2053,6 +2063,7 @@ impl World {
     /// The entity with the provided generation.
     pub fn make_alive(&self, entity: impl Into<Entity>) -> EntityView<'_> {
         let entity = *entity.into();
+        // SAFETY: raw_world is a valid, live world pointer.
         unsafe { sys::ecs_make_alive(self.raw_world.as_ptr(), entity) };
         EntityView::new_from(self, entity)
     }
@@ -2065,6 +2076,8 @@ impl World {
     /// * `ctx` - The context to pass to the action.
     pub fn run_post_frame(&self, action: fn(WorldRef)) {
         let ctx = Box::into_raw(Box::new(action)) as *mut ::core::ffi::c_void;
+        // SAFETY: raw_world is a valid, live world pointer; ctx is a Box<fn(WorldRef)>
+        // that c_run_post_frame reclaims exactly once when flecs invokes it.
         unsafe {
             sys::ecs_run_post_frame(self.raw_world.as_ptr(), Some(c_run_post_frame), ctx);
         }

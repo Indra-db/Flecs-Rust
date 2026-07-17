@@ -786,6 +786,9 @@ where
     ///
     /// * `world` - The world to get the iterator for
     pub fn get_iter_raw(&mut self) -> sys::ecs_iter_t {
+        // SAFETY: `self.world_ptr()` returns the valid world that owns this query, and
+        // `self.query.as_ptr()` is a live `ecs_query_t` owned by `self`; both outlive the
+        // `ecs_iter_t` constructed here, satisfying `ecs_query_iter`'s contract.
         unsafe { sys::ecs_query_iter(self.world_ptr(), self.query.as_ptr()) }
     }
 
@@ -807,6 +810,8 @@ where
     ///
     /// * [`TableIter::is_changed()`]
     pub fn is_changed(&self) -> bool {
+        // SAFETY: `self.query` is a NonNull pointer to a live `ecs_query_t` owned by
+        // `self`, satisfying `ecs_query_changed`'s requirement of a valid query pointer.
         unsafe { sys::ecs_query_changed(self.query.as_ptr()) }
     }
 
@@ -820,6 +825,9 @@ where
     ///
     /// Returns a pointer to the group info
     pub fn group_info(&self, group_id: impl Into<Entity>) -> *const sys::ecs_query_group_info_t {
+        // SAFETY: `self.query` is a NonNull pointer to a live `ecs_query_t` owned by
+        // `self` for the duration of this call; `group_id` is a plain integer id, so
+        // `ecs_query_get_group_info` is safe to call regardless of whether the group exists.
         unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
     }
 
@@ -836,6 +844,9 @@ where
         let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {
+            // SAFETY: `group_info` was just checked non-null; it was returned by
+            // `ecs_query_get_group_info` for `self.query`, which is a live query pointer
+            // owned by `self` for the duration of this call, so the pointee is valid to read.
             unsafe { (*group_info).ctx }
         } else {
             core::ptr::null_mut()

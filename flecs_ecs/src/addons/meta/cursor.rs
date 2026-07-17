@@ -149,42 +149,50 @@ impl<'a> Cursor<'a> {
 
     /// Set null value
     pub fn set_null(&mut self) -> i32 {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_set_null(&mut self.cursor) }
     }
 
     /// Get boolean value
     pub fn get_bool(&self) -> bool {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_bool(&self.cursor) }
     }
 
     /// Get char value
     pub fn get_char(&self) -> char {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_char(&self.cursor) as u8 as char }
     }
 
     /// Get signed int value
     pub fn get_int(&self) -> i64 {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_int(&self.cursor) }
     }
 
     /// Get unsigned int value
     pub fn get_uint(&self) -> u64 {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_uint(&self.cursor) }
     }
 
     /// Get float value
     pub fn get_float(&self) -> f64 {
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_float(&self.cursor) }
     }
 
     /// Get string value
     pub fn get_string(&self) -> *const core::ffi::c_char {
         // TODO: Rustify this to return &str
+        // SAFETY: self.cursor is a valid, initialized ecs_meta_cursor_t positioned by prior cursor calls.
         unsafe { sys::ecs_meta_get_string(&self.cursor) }
     }
 
     /// Get entity value
     pub fn get_entity(&self) -> EntityView<'_> {
+        // SAFETY: self.cursor.world is the world pointer the cursor was created with in `new`, still valid for 'a.
         unsafe {
             EntityView::new_from(
                 WorldRef::from_ptr(self.cursor.world as *mut sys::ecs_world_t),

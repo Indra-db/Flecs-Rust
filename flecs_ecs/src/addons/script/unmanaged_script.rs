@@ -225,6 +225,7 @@ impl<'a> Script<'a> {
             // unresolved const variable
             None
         } else {
+            // SAFETY: v is a non-zero entity id resolved by ecs_lookup_path_w_sep above.
             let value = unsafe { sys::ecs_const_var_get(world_ptr, v) };
 
             if value.ptr.is_null() {
@@ -242,17 +243,24 @@ impl<'a> Script<'a> {
     ) -> T::ConstType {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
         if T::IS_INT {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_int(&cur) };
+            // SAFETY: T::IS_INT guarantees T::ConstType has the same size/repr as i64 for this impl.
             unsafe { *(&cur_value as *const i64 as *const T::ConstType) }
         } else if T::IS_UINT {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_uint(&cur) };
+            // SAFETY: T::IS_UINT guarantees T::ConstType has the same size/repr as u64 for this impl.
             unsafe { *(&cur_value as *const u64 as *const T::ConstType) }
         } else
         /* float */
         {
+            // SAFETY: cur is a valid cursor constructed above.
             let cur_value = unsafe { sys::ecs_meta_get_float(&cur) };
+            // SAFETY: the else branch is reached only for float ConstNumeric impls, where T::ConstType has the same size/repr as f64.
             unsafe { *(&cur_value as *const f64 as *const T::ConstType) }
         }
     }
@@ -263,7 +271,9 @@ impl<'a> Script<'a> {
     ) -> core::ffi::c_char {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        // SAFETY: cur is a valid cursor constructed above.
         let cur_value = unsafe { sys::ecs_meta_get_char(&cur) };
         cur_value as core::ffi::c_char
     }
@@ -271,10 +281,13 @@ impl<'a> Script<'a> {
     pub fn get_const_str(world: impl WorldProvider<'a>, value: sys::ecs_value_t) -> String {
         let world_ptr = world.world_ptr();
 
+        // SAFETY: world_ptr is a valid world pointer and value.{type_,ptr} come from a caller-provided ecs_value_t.
         let cur = unsafe { sys::ecs_meta_cursor(world_ptr, value.type_, value.ptr) };
+        // SAFETY: cur is a valid cursor constructed above.
         let c_str = unsafe { sys::ecs_meta_get_string(&cur) };
         assert!(!c_str.is_null(), "value is not a string");
 
+        // SAFETY: c_str was null-checked by the assert above and is a valid C string returned by flecs.
         unsafe { CStr::from_ptr(c_str) }
             .to_str()
             .unwrap()

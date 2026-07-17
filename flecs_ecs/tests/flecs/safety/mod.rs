@@ -1571,9 +1571,11 @@ mod dense_field_at_locks {
     fn each_iter_field_at_mut_aliases_tuple_dense() {
         let world = World::new();
         world.entity().set(Foo(0));
-        query!(world, &mut Foo).build().each_iter(|iter, index, _foo| {
-            let _aliased = iter.field_at_mut::<Foo>(0, index);
-        });
+        query!(world, &mut Foo)
+            .build()
+            .each_iter(|iter, index, _foo| {
+                let _aliased = iter.field_at_mut::<Foo>(0, index);
+            });
     }
 
     #[test]
@@ -1581,8 +1583,10 @@ mod dense_field_at_locks {
     fn each_iter_field_mut_aliases_tuple_dense() {
         let world = World::new();
         world.entity().set(Foo(0));
-        query!(world, &mut Foo).build().each_iter(|iter, _index, _foo| {
-            let _aliased = iter.field_mut::<Foo>(0);
-        });
+        query!(world, &mut Foo)
+            .build()
+            .each_iter(|iter, _index, _foo| {
+                let _aliased = iter.field_mut::<Foo>(0);
+            });
     }
 }

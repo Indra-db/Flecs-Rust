@@ -39,6 +39,7 @@ impl<'a> ScriptBuilder<'a> {
         };
         ScriptBuilder {
             script: sys::ecs_script_desc_t {
+                // SAFETY: world.world_ptr_mut() is a valid world pointer and entity_desc is fully initialized above with a null-terminated name.
                 entity: unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &entity_desc) },
                 filename: core::ptr::null(),
                 code: core::ptr::null(),
@@ -87,6 +88,7 @@ impl<'a> ScriptBuilder<'a> {
         self.script.filename = filename.as_ptr() as *const _;
         self.script.code = core::ptr::null();
 
+        // SAFETY: world is a valid world pointer and self.script is a fully-initialized, null-terminated descriptor set above.
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
 
         self.script.filename = core::ptr::null();
@@ -118,6 +120,7 @@ impl<'a> ScriptBuilder<'a> {
         self.script.code = code.as_ptr() as *const _;
         self.script.filename = core::ptr::null();
 
+        // SAFETY: world is a valid world pointer and self.script is a fully-initialized, null-terminated descriptor set above.
         let result = unsafe { sys::ecs_script_init(world, &self.script) };
 
         self.script.code = core::ptr::null();

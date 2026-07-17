@@ -87,7 +87,9 @@ fn system_builder_try_build() {
         callback: Some(noop_iter),
         ..Default::default()
     };
-    let valid = world.system_builder_from_desc::<&Position>(desc).try_build();
+    let valid = world
+        .system_builder_from_desc::<&Position>(desc)
+        .try_build();
     assert!(valid.is_some());
 
     let desc = flecs_ecs::sys::ecs_system_desc_t {

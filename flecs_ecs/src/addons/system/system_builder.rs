@@ -174,7 +174,11 @@ where
     /// * [`QueryBuilder::try_build()`]
     pub fn try_build(&mut self) -> Option<System<'a>> {
         let system = self.build();
-        if *system.id() == 0 { None } else { Some(system) }
+        if *system.id() == 0 {
+            None
+        } else {
+            Some(system)
+        }
     }
 }
 

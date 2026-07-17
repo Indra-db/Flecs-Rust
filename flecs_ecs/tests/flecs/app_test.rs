@@ -8,6 +8,7 @@ use flecs_ecs::prelude::*;
 use flecs_ecs::sys;
 
 fn world_refcount(world: &World) -> i32 {
+    // SAFETY: world.ptr_mut() is a valid live world pointer.
     unsafe { sys::flecs_poly_refcount(world.ptr_mut() as *mut c_void) }
 }
 

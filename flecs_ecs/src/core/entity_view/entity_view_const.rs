@@ -2757,7 +2757,6 @@ impl EntityView<'_> {
             // Entity observers match on a non-$this source, so iter.count is
             // 0; invoke once per event instead of once per table row.
             empty();
-
         }
     }
 
@@ -2786,7 +2785,6 @@ impl EntityView<'_> {
                 world,
                 sys::ecs_field_src(iter, 0),
             ));
-
         }
     }
 
@@ -2813,7 +2811,6 @@ impl EntityView<'_> {
             let data = (*iter).param as *mut C;
             let data_ref = &mut *data;
             empty(data_ref);
-
         }
     }
 
@@ -2844,7 +2841,6 @@ impl EntityView<'_> {
                 &mut EntityView::new_from(world, sys::ecs_field_src(iter, 0)),
                 data_ref,
             );
-
         }
     }
 

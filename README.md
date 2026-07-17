@@ -64,7 +64,11 @@ This library was made publicly available on the release date of Flecs V4 release
 
 #### Safety
 
-One important safety factor that has yet to be addressed is having multiple aliases to the same component. This is a known issue and is being worked on. It will be addressed through a table column lock mechanism.
+Mutable aliasing of the same component is checked: requesting the same component more than once with a mutable reference in a `get` or query tuple panics instead of handing out aliasing `&mut` references. For statically known tuples the check is resolved at compile time and folds away entirely in release builds. Additionally, the optional `flecs_safety_locks` feature (enabled by default) guards component column access with read/write locks that catch aliasing across queries and systems at runtime.
+
+#### Threading model
+
+`World` is `!Send`/`!Sync`: a world is owned by the thread that created it, and components are not required to be `Send`. Types that are not thread-safe (e.g. `Rc`, raw pointers) can be stored as components. `Query` is only `Send`/`Sync` when its component types are. Multithreaded system execution through pipelines remains available; it is managed by flecs itself rather than by sharing the `World` handle across threads.
 
 #### Performance
 

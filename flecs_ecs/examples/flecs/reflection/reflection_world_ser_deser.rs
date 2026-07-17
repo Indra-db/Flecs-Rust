@@ -134,11 +134,11 @@ fn main() {
     //      "name": "ent_1",
     //      "id": 551,
     //      "components": {
-    //        "examples.reflection.world_ser_deser.Position": {
+    //        "Position": {
     //          "x": 10,
     //          "y": 20
     //        },
-    //        "examples.reflection.world_ser_deser.Velocity": {
+    //        "Velocity": {
     //          "x": 1,
     //          "y": -1
     //        },
@@ -149,11 +149,11 @@ fn main() {
     //      "name": "ent_2",
     //      "id": 552,
     //      "components": {
-    //        "examples.reflection.world_ser_deser.Position": {
+    //        "Position": {
     //          "x": 30,
     //          "y": 40
     //        },
-    //        "examples.reflection.world_ser_deser.Velocity": {
+    //        "Velocity": {
     //          "x": -1,
     //          "y": 1
     //        },

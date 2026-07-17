@@ -93,6 +93,9 @@ impl World {
     /// A JSON string representation of the value. Since a valid reference is provided,
     /// this will always succeed and return a `String`.
     pub fn to_json_dyn<'a, T>(&'a self, id: FetchedId<T>, value: &'a T) -> String {
+        // SAFETY: `value` is derived from a valid `&'a T` reference, so it is non-null and
+        // points to a properly initialized `T` matching the component identified by
+        // `id.id()`, satisfying `to_json_id`'s contract.
         unsafe {
             self.to_json_id(id.id(), value as *const T as *const core::ffi::c_void)
                 .expect("to_json_dyn should not fail with a valid reference")
@@ -106,6 +109,12 @@ impl World {
             .map(|d| d as *const WorldToJsonDesc)
             .unwrap_or(core::ptr::null());
 
+        // SAFETY: `world` is a valid, non-null world pointer obtained from
+        // `self.world_ptr_mut()`. `desc_ptr` is either null or points to a live
+        // `WorldToJsonDesc` borrowed for this call. `ecs_world_to_json` returns either null
+        // (asserted against below) or a pointer to a NUL-terminated, UTF-8 C string owned by
+        // the flecs OS allocator, so `CStr::from_ptr` and the subsequent `free_` call are
+        // both valid.
         unsafe {
             let json_ptr = sys::ecs_world_to_json(world, desc_ptr);
             assert!(!json_ptr.is_null(), "world to JSON serialization failed");
@@ -137,6 +146,12 @@ impl World {
         //TODO json object to prevent multiple conversions
         let json = compact_str::format_compact!("{}\0", json);
 
+        // SAFETY: `world` is a valid, non-null world pointer obtained from `self.ptr_mut()`.
+        // `value` is either null (only permitted when `DO_CHECKS` is false, per the assert
+        // above) or a valid pointer to memory large enough for the component identified by
+        // `tid`, per the caller's contract. `json` is NUL-terminated via
+        // `format_compact!("{}\0", ..)`, so its `as_ptr()` is a valid C string. `desc_ptr` is
+        // either null or points to a live `FromJsonDesc` borrowed for this call.
         unsafe {
             let result = sys::ecs_ptr_from_json(
                 world,
@@ -188,6 +203,11 @@ impl World {
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) -> bool {
+        // SAFETY: forwards the caller-supplied `value` pointer to `from_json_id_internal`
+        // with `DO_CHECKS = true`, which null-checks it before dereferencing. The caller of
+        // this `unsafe fn` (per its documented `# Safety` contract) is responsible for
+        // ensuring `value` is either null or points to valid, initialized memory large
+        // enough for the type identified by `tid`.
         unsafe { self.from_json_id_internal::<T, true>(tid, value, json, desc) }
     }
 
@@ -206,6 +226,10 @@ impl World {
         json: &str,
         desc: Option<&FromJsonDesc>,
     ) {
+        // SAFETY: `value` is derived from a valid `&mut T::CastType` reference, so it is
+        // non-null and points to properly initialized, writable memory for the type
+        // identified by `T::CastType::get_id`, satisfying `from_json_id_internal`'s contract
+        // (checks are skipped here since non-nullness is guaranteed by the reference).
         unsafe {
             self.from_json_id_internal::<u64, false>(
                 T::CastType::get_id(self),
@@ -225,6 +249,10 @@ impl World {
             .map(|d| d as *const FromJsonDesc)
             .unwrap_or(core::ptr::null());
 
+        // SAFETY: `world` is a valid, non-null world pointer obtained from `self.ptr_mut()`.
+        // `json` is NUL-terminated via `format_compact!("{}\0", ..)`, so its `as_ptr()` is a
+        // valid C string for `ecs_world_from_json`. `desc_ptr` is either null or points to a
+        // live `FromJsonDesc` borrowed for the duration of this call.
         unsafe {
             sys::ecs_world_from_json(world, json.as_ptr() as *const _, desc_ptr);
         }
@@ -245,6 +273,10 @@ impl World {
             .map(|d| d as *const FromJsonDesc)
             .unwrap_or(core::ptr::null());
 
+        // SAFETY: `world` is a valid, non-null world pointer obtained from `self.ptr_mut()`.
+        // `json_file` is NUL-terminated via `format_compact!("{}\0", ..)`, so its `as_ptr()`
+        // is a valid C string for `ecs_world_from_json_file`. `desc_ptr` is either null or
+        // points to a live `FromJsonDesc` borrowed for the duration of this call.
         unsafe {
             sys::ecs_world_from_json_file(world, json_file.as_ptr() as *const _, desc_ptr);
         }

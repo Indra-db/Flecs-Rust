@@ -232,6 +232,9 @@ macro_rules! create_pre_registered_extern_component {
         impl From<$struct_name> for flecs_ecs::core::Entity {
             #[inline]
             fn from(_view: $struct_name) -> Self {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 flecs_ecs::core::Entity(unsafe { $static_id })
             }
         }
@@ -255,6 +258,9 @@ macro_rules! create_pre_registered_extern_component {
         impl PartialEq<u64> for $struct_name {
             #[inline]
             fn eq(&self, other: &u64) -> bool {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 unsafe { $static_id == *other }
             }
         }
@@ -262,6 +268,9 @@ macro_rules! create_pre_registered_extern_component {
         impl PartialEq<$struct_name> for u64 {
             #[inline]
             fn eq(&self, _other: &$struct_name) -> bool {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 *self == unsafe { $static_id }
             }
         }
@@ -301,6 +310,9 @@ macro_rules! create_pre_registered_extern_component {
             fn __register_or_get_id<'a, const MANUAL_REGISTRATION_CHECK: bool>(
                 _world: impl crate::core::WorldProvider<'a>,
             ) -> sys::ecs_entity_t {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 unsafe { $static_id }
             }
 
@@ -308,6 +320,9 @@ macro_rules! create_pre_registered_extern_component {
                 _world: impl crate::core::WorldProvider<'a>,
                 _name: &str,
             ) -> sys::ecs_entity_t {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 unsafe { $static_id }
             }
 
@@ -316,6 +331,9 @@ macro_rules! create_pre_registered_extern_component {
             }
 
             fn entity_id<'a>(_world: impl crate::core::WorldProvider<'a>) -> sys::ecs_id_t {
+                // SAFETY: `$static_id` is written exactly once by the flecs C
+                // library when the owning module is imported; reading it here
+                // races with no writer once import has happened.
                 unsafe { $static_id }
             }
 

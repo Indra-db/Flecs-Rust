@@ -27,9 +27,7 @@ impl TermAliasKey {
 
     #[inline(always)]
     fn same_id(&self, other: &Self) -> bool {
-        self.is_pair == other.is_pair
-            && self.first == other.first
-            && self.second == other.second
+        self.is_pair == other.is_pair && self.first == other.first && self.second == other.second
     }
 
     #[inline(always)]

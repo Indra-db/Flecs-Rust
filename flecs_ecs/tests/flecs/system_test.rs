@@ -814,6 +814,7 @@ fn order_by_type_after_create() {
     });
 }
 
+// SAFETY_MARKER_ORDER_BY_ID_AFTER_CREATE
 #[test]
 fn order_by_id_after_create() {
     let world = World::new();
@@ -2644,6 +2645,8 @@ fn randomize_timers() {
 
     // on musl builds, `rand` call always returns 0 until seeded, so we need to
     // call srand to seed the random number generator
+    // SAFETY: libc::time and libc::srand are plain C library calls with no
+    // preconditions here; null is a valid argument to time() per its contract.
     unsafe {
         let seed = libc::time(core::ptr::null_mut()) as u32;
         libc::srand(seed);
@@ -3081,6 +3084,8 @@ fn set_group() {
         _ctx: *mut c_void,
     ) -> u64 {
         let mut match_id: flecs_ecs::sys::ecs_id_t = 0;
+        // SAFETY: world and table pointers are valid, non-null pointers passed in by
+        // flecs from within a group_by callback invocation; ecs_search is a valid C API call.
         unsafe {
             if flecs_ecs::sys::ecs_search(
                 world,

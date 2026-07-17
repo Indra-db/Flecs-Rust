@@ -17,6 +17,9 @@ pub trait IdOperations<'a>: WorldProvider<'a> + IntoId + Sized + Copy {
     /// * C API: `ecs_id_is_wildcard`
     fn is_wildcard(self) -> bool {
         let world = self.world();
+        // SAFETY: ecs_id_is_wildcard is a pure query over the id value and
+        // performs no dereference; the id is a valid u64 produced by
+        // into_id.
         unsafe { sys::ecs_id_is_wildcard(*self.into_id(world)) }
     }
 

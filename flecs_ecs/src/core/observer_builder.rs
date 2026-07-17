@@ -141,7 +141,11 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
     /// * [`QueryBuilder::try_build()`]
     pub fn try_build(&mut self) -> Option<Observer<'a>> {
         let observer = self.build();
-        if *observer.id() == 0 { None } else { Some(observer) }
+        if *observer.id() == 0 {
+            None
+        } else {
+            Some(observer)
+        }
     }
 }
 

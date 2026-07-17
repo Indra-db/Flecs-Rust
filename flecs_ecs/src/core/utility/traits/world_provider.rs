@@ -23,6 +23,7 @@ pub trait WorldProvider<'a> {
 impl<'a> WorldProvider<'a> for *mut sys::ecs_world_t {
     #[inline(always)]
     fn world(&self) -> WorldRef<'a> {
+        // SAFETY: this impl requires callers to hold a valid, non-null ecs_world_t pointer.
         unsafe { WorldRef::from_ptr(*self) }
     }
 }
@@ -74,6 +75,7 @@ pub struct WorldRef<'a> {
 impl<'a> WorldRef<'a> {
     #[inline(always)]
     pub fn real_world(&self) -> WorldRef<'a> {
+        // SAFETY: ecs_get_world returns a pointer to a valid world derived from self's world_ptr_mut.
         unsafe {
             WorldRef::from_ptr(
                 sys::ecs_get_world(self.world_ptr_mut() as *const c_void) as *mut sys::ecs_world_t
@@ -85,6 +87,7 @@ impl<'a> WorldRef<'a> {
     /// Caller must ensure `raw_world` points to a valid `sys::ecs_world_t`
     #[inline(always)]
     pub unsafe fn from_ptr(raw_world: *mut sys::ecs_world_t) -> Self {
+        // SAFETY: caller guarantees raw_world points to a valid ecs_world_t, per fn's Safety doc.
         unsafe {
             WorldRef {
                 raw_world: NonNull::new_unchecked(raw_world),
@@ -137,6 +140,7 @@ impl Deref for WorldRef<'_> {
                 "WorldRef and World layout diverged; WorldRef: Deref<World> transmute is unsound"
             );
         }
+        // SAFETY: layout equivalence between WorldRef and World is asserted above.
         unsafe { core::mem::transmute::<&WorldRef, &World>(self) }
     }
 }

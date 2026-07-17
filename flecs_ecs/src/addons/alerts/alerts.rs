@@ -43,6 +43,7 @@ impl<'a> Alert<'a> {
     /// * `world` - The world to create the alert in.
     /// * `desc` - The alert description.
     pub fn new(world: impl WorldProvider<'a>, desc: sys::ecs_alert_desc_t) -> Self {
+        // SAFETY: world.world_ptr_mut() is a valid world pointer and desc is a valid, fully-initialized descriptor.
         let id = unsafe { sys::ecs_alert_init(world.world_ptr_mut(), &desc) };
         let entity = EntityView::new_from(world.world(), id);
 

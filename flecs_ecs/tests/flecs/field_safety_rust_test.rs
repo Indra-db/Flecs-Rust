@@ -176,10 +176,7 @@ mod safety_locks {
         query.run(|mut it| {
             while it.next() {
                 let pos = it.field_mut::<Position>(0);
-                assert_eq!(
-                    it.try_field::<Position>(0).unwrap_err(),
-                    FieldError::Locked
-                );
+                assert_eq!(it.try_field::<Position>(0).unwrap_err(), FieldError::Locked);
                 assert_eq!(
                     it.try_field_mut::<Position>(0).unwrap_err(),
                     FieldError::Locked

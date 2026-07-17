@@ -355,7 +355,13 @@ where
         compact_str::format_compact!("{}\0", type_name_without_scope.as_str());
 
     let id = if name.is_null() {
+        // SAFETY: `world_ptr` is the caller-provided valid world pointer; setting
+        // the root scope (0) temporarily is a simple FFI call with no further
+        // invariants beyond a valid world pointer.
         let prev_scope = unsafe { sys::ecs_set_scope(world_ptr, 0) };
+        // SAFETY: `type_name_without_scope` is a `compact_str` built with a
+        // trailing '\0' above, so its pointer is a valid null-terminated C string
+        // for the duration of this call, and `world_ptr` is valid.
         let id = unsafe {
             sys::ecs_lookup_symbol(
                 world_ptr,
@@ -364,6 +370,9 @@ where
                 false,
             )
         };
+        // SAFETY: `world_ptr` is the caller-provided valid world pointer and
+        // `prev_scope` is the scope id returned by the `ecs_set_scope` call above,
+        // so this restores the caller's original scope via a simple FFI setter.
         unsafe { sys::ecs_set_scope(world_ptr, prev_scope) };
         id
     } else {
@@ -391,13 +400,25 @@ fn finalize_component_registration(
 ) -> sys::ecs_entity_t {
     let entity_desc = create_entity_desc(name, entity_desc_name);
 
+    // SAFETY: `entity_desc` was built by `create_entity_desc` with valid,
+    // null-terminated name pointers, and `world` is the caller-provided valid
+    // world pointer; `ecs_entity_init` follows the flecs C API contract for
+    // entity creation.
     let entity = unsafe { flecs_ecs_sys::ecs_entity_init(world, &entity_desc) };
 
     let component_desc = create_component_desc(entity, type_info);
 
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     {
+        // SAFETY: `component_desc` was built by `create_component_desc` with a valid
+        // entity id and type_info, and `world` is the caller-provided valid world
+        // pointer; `ecs_component_init` follows the flecs C API contract for
+        // component registration.
         let entity = unsafe { flecs_ecs_sys::ecs_component_init(world, &component_desc) };
+        // SAFETY: the `&&` short-circuits on `entity != 0`, so `ecs_exists` is only
+        // called with the non-zero entity id just returned by `ecs_component_init`
+        // above on the same valid `world` pointer; this is a read-only existence
+        // check.
         ecs_assert!(
             entity != 0 && unsafe { sys::ecs_exists(world, entity) },
             FlecsErrorCode::InternalError

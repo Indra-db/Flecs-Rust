@@ -375,12 +375,14 @@ pub trait TableOperations<'a>: IntoTable {
     /// Returns the table count
     fn count(&self) -> i32 {
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_count(table) }
     }
 
     /// Get number of allocated elements in table
     fn size(&self) -> i32 {
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_size(table) }
     }
 
@@ -396,10 +398,12 @@ pub trait TableOperations<'a>: IntoTable {
         let world = self.world();
         world.defer_begin();
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let entities = unsafe { sys::ecs_table_entities(table) };
         if entities.is_null() {
             return TableEntities { slice: &[], world };
         }
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
         let offset = (self.offset().max(0) as usize).min(table_count);
         let count = (self.count().max(0) as usize).min(table_count - offset);
@@ -407,15 +411,15 @@ pub trait TableOperations<'a>: IntoTable {
         // offset + count <= table_count. The world stays in deferred mode
         // until the guard is dropped, so the array cannot be reallocated or
         // freed while the slice is alive.
-        let slice = unsafe {
-            core::slice::from_raw_parts((entities as *const Entity).add(offset), count)
-        };
+        let slice =
+            unsafe { core::slice::from_raw_parts((entities as *const Entity).add(offset), count) };
         TableEntities { slice, world }
     }
 
     fn clear_entities(&self) {
         let world = self.world().world_ptr_mut();
         let table = self.table_ptr_mut();
+        // SAFETY: world and table come from this live table/world pair.
         unsafe { sys::ecs_table_clear_entities(world, table) };
     }
 
@@ -439,8 +443,14 @@ pub trait TableOperations<'a>: IntoTable {
 
     /// Returns the type of the table
     fn archetype(&self) -> Archetype<'a> {
+        // SAFETY: table_ptr_mut points to the live table backing this range;
+        // ecs_table_get_type returns a valid ecs_type_t pointer for it.
         let type_vec = unsafe { sys::ecs_table_get_type(self.table_ptr_mut()) };
+        // SAFETY: type_vec was just returned by ecs_table_get_type above and
+        // is valid to dereference.
         let slice = if unsafe { !(*type_vec).array.is_null() && (*type_vec).count != 0 } {
+            // SAFETY: the branch condition just checked that `array` is
+            // non-null and `count` is nonzero, describing `count` valid ids.
             unsafe {
                 core::slice::from_raw_parts((*type_vec).array as _, (*type_vec).count as usize)
             }
@@ -468,6 +478,8 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The index of the id in the table type, or `None` if the id is not found
     fn find_type_index(&self, id: impl IntoId) -> Option<i32> {
+        // SAFETY: world_ptr/table_ptr_mut come from this live table/world
+        // pair, and id is resolved against the same world.
         let index = unsafe {
             sys::ecs_table_get_type_index(
                 self.world().world_ptr(),
@@ -493,6 +505,8 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The index of the id in the table, or `None` if the id is not in the table
     fn find_column_index(&self, id: impl IntoId) -> Option<i32> {
+        // SAFETY: world_ptr/table_ptr_mut come from this live table/world
+        // pair, and id is resolved against the same world.
         let index = unsafe {
             sys::ecs_table_get_column_index(
                 self.world().world_ptr(),
@@ -528,6 +542,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// Some(Pointer) to the column, or `None` if not a component
     fn column_untyped(&self, index: i32) -> Option<*mut c_void> {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let ptr = unsafe { sys::ecs_table_get_column(self.table_ptr_mut(), index, self.offset()) };
         if ptr.is_null() { None } else { Some(ptr) }
     }
@@ -557,6 +572,7 @@ pub trait TableOperations<'a>: IntoTable {
         let index = self.find_column_index(id)?;
         let ptr = self.column_untyped(index)?;
         let table = self.table_ptr_mut();
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let table_count = unsafe { sys::ecs_table_count(table) }.max(0) as usize;
         let offset = (self.offset().max(0) as usize).min(table_count);
         let count = (self.count().max(0) as usize).min(table_count - offset);
@@ -634,6 +650,7 @@ pub trait TableOperations<'a>: IntoTable {
     ///
     /// The size of the column
     fn column_size(&self, index: i32) -> usize {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_get_column_size(self.table_ptr_mut(), index) }
     }
 
@@ -650,6 +667,8 @@ pub trait TableOperations<'a>: IntoTable {
     /// The depth of the relationship
     fn depth(&self, rel: impl IntoEntity) -> i32 {
         let world = self.world();
+        // SAFETY: world_ptr_mut/table_ptr_mut come from this live table/world
+        // pair, and rel is a valid entity id resolved against the same world.
         unsafe {
             sys::ecs_table_get_depth(
                 world.world_ptr_mut(),
@@ -661,27 +680,34 @@ pub trait TableOperations<'a>: IntoTable {
 
     /// get table records array
     fn records(&self) -> &[sys::ecs_table_record_t] {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         let records = unsafe { sys::flecs_table_records(self.table_ptr_mut()) };
 
+        // SAFETY: flecs_table_records returns a valid ecs_vec_t whose
+        // `array`/`count` describe `count` initialized records.
         unsafe { core::slice::from_raw_parts(records.array, records.count as usize) }
     }
 
     /// get table id
     fn id(&self) -> u64 {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::flecs_table_id(self.table_ptr_mut()) }
     }
 
     /// lock table
     fn lock(&self) {
+        // SAFETY: world and table_ptr_mut come from this live table/world pair.
         unsafe { sys::ecs_table_lock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
     }
 
     /// unlock table
     fn unlock(&self) {
+        // SAFETY: world and table_ptr_mut come from this live table/world pair.
         unsafe { sys::ecs_table_unlock(self.world().world_ptr_mut(), self.table_ptr_mut()) };
     }
 
     fn has_flags(&self, flags: TableFlags) -> bool {
+        // SAFETY: table_ptr_mut points to the live table backing this range.
         unsafe { sys::ecs_table_has_flags(self.table_ptr_mut(), flags.bits()) }
     }
 }
@@ -701,6 +727,8 @@ impl<'a> TableOperations<'a> for Table<'a> {
 
     /// Returns the table count
     fn count(&self) -> i32 {
+        // SAFETY: table_ptr_mut derives from Table's NonNull `table` field,
+        // which is guaranteed alive and owned by the world for `'a`.
         unsafe { sys::ecs_table_count(self.table_ptr_mut()) }
     }
 }
@@ -743,6 +771,8 @@ pub(crate) struct TableLock<'a> {
 
 impl<'a> TableLock<'a> {
     pub fn new(world: impl WorldProvider<'a>, table: NonNull<sys::ecs_table_t>) -> Self {
+        // SAFETY: caller supplies a valid world and a NonNull table pointer
+        // owned by that world.
         unsafe { sys::ecs_table_lock(world.world_ptr_mut(), table.as_ptr()) };
         Self {
             world: world.world(),
@@ -753,6 +783,8 @@ impl<'a> TableLock<'a> {
 
 impl Drop for TableLock<'_> {
     fn drop(&mut self) {
+        // SAFETY: table was locked by `new` and this guard's world/table
+        // remain valid for the guard's lifetime.
         unsafe {
             sys::ecs_table_unlock(self.world.world_ptr_mut(), self.table.as_ptr());
         }

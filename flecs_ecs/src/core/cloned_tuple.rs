@@ -192,7 +192,11 @@ pub trait ClonedTuple: Sized {
     /// that `record` is the (non-null) entity record for `entity` obtained
     /// from that same world.
     #[inline(always)]
-    unsafe fn internal_populate_array_ptrs<'a, const SHOULD_PANIC: bool, T: ClonedTupleTypeOperation>(
+    unsafe fn internal_populate_array_ptrs<
+        'a,
+        const SHOULD_PANIC: bool,
+        T: ClonedTupleTypeOperation,
+    >(
         world: &WorldRef<'a>,
         world_ptr: *mut sys::ecs_world_t,
         entity: u64,

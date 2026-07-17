@@ -79,10 +79,7 @@ impl<'a> BulkEntityBuilder<'a> {
             "count must be less than i32::MAX"
         );
 
-        let entity_ids: Vec<u64> = entities
-            .iter()
-            .map(|e| *Into::<Entity>::into(*e))
-            .collect();
+        let entity_ids: Vec<u64> = entities.iter().map(|e| *Into::<Entity>::into(*e)).collect();
 
         Self {
             world: world.world(),
@@ -208,10 +205,7 @@ impl<'a> BulkEntityBuilder<'a> {
     ///
     /// let entities_created = world.entity_bulk(10).set(&positions).build();
     /// ```
-    pub fn set<T: ComponentId + DataComponent>(
-        &mut self,
-        component_data: &'a [T],
-    ) -> &mut Self {
+    pub fn set<T: ComponentId + DataComponent>(&mut self, component_data: &'a [T]) -> &mut Self {
         assert!(
             component_data.len() == self.desc.count as usize,
             "component_data length must be equal to count of entities"

@@ -1647,6 +1647,7 @@ fn __internal_find_impl<'a, T, const ANY_SPARSE_TERMS: bool>(
     #[cfg(any(debug_assertions, feature = "flecs_force_enable_ecs_asserts"))]
     table_lock(_world_ptr, iter.table);
 
+    // SAFETY: i ranges over 0..iter_count, and iter.entities has iter.count valid entries.
     unsafe {
         if !is_any_array.a_ref && !is_any_array.a_row {
             for i in 0..iter_count {
@@ -1694,8 +1695,11 @@ where
     T: QueryTuple,
     Func: FnMut(T::TupleType<'_>),
 {
+    // SAFETY: iter is the non-null iterator pointer C passes to the run callback.
     let iter = unsafe { &mut *iter };
+    // SAFETY: callback_ctx was set to &mut func_each of type Func before this callback ran.
     let func = unsafe { &mut *(iter.callback_ctx as *mut Func) };
+    // SAFETY: iter.world is the live world pointer supplied by the C iterator.
     let world = unsafe { WorldRef::from_ptr(iter.world) };
 
     #[cfg(feature = "flecs_safety_locks")]
@@ -1720,6 +1724,8 @@ where
     T: QueryTuple,
     Func: FnMut(EntityView, T::TupleType<'_>),
 {
+    // SAFETY: iter is the non-null iterator pointer C passes to the run callback; callback_ctx
+    // was set to &mut func_each before this callback was invoked.
     unsafe {
         let iter = &mut *iter;
         let func = &mut *(iter.callback_ctx as *mut Func);
@@ -1749,6 +1755,8 @@ where
     P: ComponentId,
     Func: FnMut(TableIter<false, P>, FieldIndex, T::TupleType<'_>),
 {
+    // SAFETY: iter is the non-null iterator pointer C passes to the run callback; callback_ctx
+    // was set to &mut func_each before this callback was invoked.
     unsafe {
         let iter = &mut *iter;
         let func = &mut *(iter.callback_ctx as *mut Func);
@@ -1790,13 +1798,17 @@ struct ReadWriteCachedInstructions {
 fn _determine_ids_plus_indices_for_wildcard_terms(
     iter: &sys::ecs_iter_t,
 ) -> ReadWriteCachedInstructions {
+    // SAFETY: iter.query is a valid pointer to the live query that produced this iterator.
     let terms = unsafe { (*iter.query).terms };
+    // SAFETY: iter.query is a valid pointer to the live query that produced this iterator.
     let terms_count = unsafe { (*iter.query).term_count };
+    // SAFETY: C guarantees iter.ids has exactly term_count entries for this query's iterator.
     let ids = unsafe { core::slice::from_raw_parts(iter.ids, terms_count as usize) };
 
     let mut read_write = ReadWriteCachedInstructions::default();
 
     for (i, id) in ids.iter().enumerate().take(terms_count as usize) {
+        // SAFETY: i is bounded by terms_count, matching the terms array length from the query.
         let term = unsafe { &*terms.add(i) };
         if *id == 0 {
             match term.inout as sys::ecs_inout_kind_t {

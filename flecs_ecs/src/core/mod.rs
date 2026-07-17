@@ -61,8 +61,8 @@ pub use archetype::Archetype;
 pub use builder::*;
 #[doc(hidden)]
 pub use c_types::*;
-pub(crate) use cloned_tuple::*;
 pub use cloned_tuple::ClonedTuple;
+pub(crate) use cloned_tuple::*;
 #[doc(hidden)]
 pub use component_registration::*;
 #[doc(inline)]
@@ -91,8 +91,8 @@ pub use table::*;
 pub use term::*;
 #[doc(hidden)]
 pub use utility::*;
-pub(crate) use world::FlecsArray;
 pub use world::AsyncStage;
+pub(crate) use world::FlecsArray;
 pub use world::World;
 pub use world::WorldGet;
 pub(crate) use world_ctx::*;
