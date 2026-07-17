@@ -6,6 +6,7 @@ use core::mem::offset_of;
 use flecs_ecs::prelude::meta::*;
 use flecs_ecs::prelude::*;
 use flecs_ecs_sys::ecs_world_t;
+use flecs_ecs::sys;
 
 fn std_string_support(world: WorldRef) -> Opaque<String> {
     let mut ts = Opaque::<String>::new(world);
@@ -91,21 +92,15 @@ fn meta_struct() {
 
     assert_ne!(c.id(), 0);
 
-    let a = c.lookup("a");
-    assert_ne!(a.id(), 0);
-    assert!(a.has(id::<flecs::meta::Member>()));
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"a".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::I32);
 
-    a.get::<&flecs::meta::Member>(|mem| {
-        assert_eq!(mem.type_, flecs::meta::I32);
-    });
-
-    let b = c.lookup("b");
-    assert_ne!(b.id(), 0);
-    assert!(b.has(id::<flecs::meta::Member>()));
-
-    b.get::<&flecs::meta::Member>(|mem| {
-        assert_eq!(mem.type_, flecs::meta::F32);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"b".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+    }
 }
 
 #[test]
@@ -128,13 +123,11 @@ fn meta_nested_struct() {
 
     assert_ne!(n.id(), 0);
 
-    let a = n.lookup("a");
-    assert_ne!(a.id(), 0);
-    assert!(a.has(id::<flecs::meta::Member>()));
-
-    a.get::<&flecs::meta::Member>(|mem| {
-        assert_eq!(mem.type_, t.id());
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *n.id(), c"a".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, t.id());
+    }
 }
 
 /*
@@ -207,17 +200,15 @@ fn meta_struct_w_portable_type() {
 
     assert_ne!(t.id(), 0);
 
-    let a = t.lookup("a");
-    assert_ne!(a.id(), 0);
-    assert!(a.has(id::<flecs::meta::Member>()));
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *t.id(), c"a".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::UPtr);
 
-    a.get::<&flecs::meta::Member>(|mem| {
-        assert_eq!(mem.type_, flecs::meta::UPtr);
-    });
-
-    let b = t.lookup("b");
-    assert_ne!(b.id(), 0);
-    assert!(b.has(id::<flecs::meta::Member>()));
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *t.id(), c"b".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::UPtr);
+    }
 
     // b.get::<&flecs::meta::Member>(|mem| {
     //     assert_eq!(mem.type_, flecs::meta::UPtr);
@@ -263,13 +254,12 @@ fn meta_partial_struct() {
         assert_eq!(ptr.alignment, 4);
     });
 
-    let xe = c.lookup("x");
-    assert_ne!(xe.id(), 0);
-    assert!(xe.has(id::<flecs::meta::Member>()));
-    xe.get::<&flecs::meta::Member>(|x| {
-        assert_eq!(x.type_, flecs::meta::F32);
-        assert_eq!(x.offset, 0);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+        assert_eq!((*m).offset, 0);
+    }
 }
 
 #[test]
@@ -293,13 +283,12 @@ fn meta_partial_struct_custom_offset() {
         assert_eq!(ptr.alignment, 4);
     });
 
-    let xe = c.lookup("y");
-    assert_ne!(xe.id(), 0);
-    assert!(xe.has(id::<flecs::meta::Member>()));
-    xe.get::<&flecs::meta::Member>(|x| {
-        assert_eq!(x.type_, flecs::meta::F32);
-        assert_eq!(x.offset, 4);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+        assert_eq!((*m).offset, 4);
+    }
 }
 
 #[test]
@@ -697,23 +686,17 @@ fn meta_value_range() {
         .member(f32::id(), "y")
         .range(-2.0, 2.0);
 
-    let x = c.lookup("x");
-    assert_ne!(x.id(), 0);
-    assert!(x.has(id::<flecs::meta::MemberRanges>()));
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).range.min, -1.0);
+        assert_eq!((*m).range.max, 1.0);
 
-    x.get::<&flecs::meta::MemberRanges>(|ranges| {
-        assert_eq!(ranges.value.min, -1.0);
-        assert_eq!(ranges.value.max, 1.0);
-    });
-
-    let y = c.lookup("y");
-    assert_ne!(y.id(), 0);
-    assert!(y.has(id::<flecs::meta::MemberRanges>()));
-
-    y.get::<&flecs::meta::MemberRanges>(|ranges| {
-        assert_eq!(ranges.value.min, -2.0);
-        assert_eq!(ranges.value.max, 2.0);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).range.min, -2.0);
+        assert_eq!((*m).range.max, 2.0);
+    }
 }
 
 #[test]
@@ -733,23 +716,17 @@ fn meta_warning_range() {
         .member(f32::id(), "y")
         .warning_range(-2.0, 2.0);
 
-    let x = c.lookup("x");
-    assert_ne!(x.id(), 0);
-    assert!(x.has(id::<flecs::meta::MemberRanges>()));
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).warning_range.min, -1.0);
+        assert_eq!((*m).warning_range.max, 1.0);
 
-    x.get::<&flecs::meta::MemberRanges>(|range| {
-        assert_eq!(range.warning.min, -1.0);
-        assert_eq!(range.warning.max, 1.0);
-    });
-
-    let y = c.lookup("y");
-    assert_ne!(y.id(), 0);
-    assert!(y.has(id::<flecs::meta::MemberRanges>()));
-
-    y.get::<&flecs::meta::MemberRanges>(|range| {
-        assert_eq!(range.warning.min, -2.0);
-        assert_eq!(range.warning.max, 2.0);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).warning_range.min, -2.0);
+        assert_eq!((*m).warning_range.max, 2.0);
+    }
 }
 
 #[test]
@@ -769,23 +746,17 @@ fn meta_error_range() {
         .member(f32::id(), "y")
         .error_range(-2.0, 2.0);
 
-    let x = c.lookup("x");
-    assert_ne!(x.id(), 0);
-    assert!(x.has(id::<flecs::meta::MemberRanges>()));
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).error_range.min, -1.0);
+        assert_eq!((*m).error_range.max, 1.0);
 
-    x.get::<&flecs::meta::MemberRanges>(|range| {
-        assert_eq!(range.error.min, -1.0);
-        assert_eq!(range.error.max, 1.0);
-    });
-
-    let y = c.lookup("y");
-    assert_ne!(y.id(), 0);
-    assert!(y.has(id::<flecs::meta::MemberRanges>()));
-
-    y.get::<&flecs::meta::MemberRanges>(|range| {
-        assert_eq!(range.error.min, -2.0);
-        assert_eq!(range.error.max, 2.0);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).error_range.min, -2.0);
+        assert_eq!((*m).error_range.max, 2.0);
+    }
 }
 
 #[test]
@@ -821,45 +792,38 @@ fn meta_struct_member_ptr() {
     //validate Test #1
     assert_ne!(t.id(), 0);
 
-    let x = t.lookup("x");
-    assert_ne!(x.id(), 0);
-    assert!(x.has(id::<flecs::meta::Member>()));
-    x.get::<&flecs::meta::Member>(|xm| {
-        assert_eq!(xm.type_, flecs::meta::I32);
-        assert_eq!(xm.offset, offset_of!(Test, x) as i32);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *t.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::I32);
+        assert_eq!((*m).offset, offset_of!(Test, x) as i32);
+    }
 
     //validate Test2 #2
     assert_ne!(t2.id(), 0);
 
-    let y = t2.lookup("y");
-    assert_ne!(y.id(), 0);
-    assert!(y.has(id::<flecs::meta::Member>()));
-    y.get::<&flecs::meta::Member>(|ym| {
-        assert_eq!(ym.type_, flecs::meta::F64);
-        assert_eq!(ym.offset, offset_of!(Test2, y) as i32);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *t2.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F64);
+        assert_eq!((*m).offset, offset_of!(Test2, y) as i32);
+    }
 
     // Validate Nested
     assert_ne!(n.id(), 0);
 
-    let a = n.lookup("a");
-    assert_ne!(a.id(), 0);
-    assert!(a.has(id::<flecs::meta::Member>()));
-    a.get::<&flecs::meta::Member>(|am| {
-        assert_eq!(am.type_, t.id());
-        let offset = offset_of!(Nested, a) as i32;
-        assert_eq!(am.offset, offset);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *n.id(), c"a".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, t.id());
+        assert_eq!((*m).offset, offset_of!(Nested, a) as i32);
 
-    let b = n.lookup("b");
-    assert_ne!(b.id(), 0);
-    assert!(b.has(id::<flecs::meta::Member>()));
-    b.get::<&flecs::meta::Member>(|bm| {
-        assert_eq!(bm.type_, t2.id());
-        assert_eq!(bm.offset, offset_of!(Nested, b) as i32);
-        assert_eq!(bm.count, 2);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *n.id(), c"b".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, t2.id());
+        assert_eq!((*m).offset, offset_of!(Nested, b) as i32);
+        assert_eq!((*m).count, 2);
+    }
 }
 
 #[test]
@@ -1351,15 +1315,17 @@ fn meta_out_of_order_member_declaration() {
         assert_eq!(ptr.alignment, 4);
     });
 
-    c.lookup("x").get::<&flecs::meta::Member>(|m| {
-        assert_eq!(m.type_, flecs::meta::F32);
-        assert_eq!(m.offset, 0);
-    });
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+        assert_eq!((*m).offset, 0);
 
-    c.lookup("y").get::<&flecs::meta::Member>(|m| {
-        assert_eq!(m.type_, flecs::meta::F32);
-        assert_eq!(m.offset, 4);
-    });
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+        assert_eq!((*m).offset, 4);
+    }
 
     let e2 = world.entity_named("ent2").set(Pos2 { x: 10.0, y: 20.0 });
     e2.get::<&Pos2>(|p| {

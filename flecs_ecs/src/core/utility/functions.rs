@@ -416,6 +416,10 @@ pub(crate) fn assign_helper<T: ComponentId>(
         core::ptr::write(dst, value);
     }
 
+    if !res.stage.is_null() {
+        unsafe { sys::flecs_defer_end(res.world, res.stage) };
+    }
+
     if res.call_modified {
         unsafe { sys::ecs_modified_id(world, entity, id) };
     }

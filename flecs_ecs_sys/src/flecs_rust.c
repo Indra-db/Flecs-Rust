@@ -93,7 +93,7 @@ error:
 
 /* Like flecs_ensure but adds new components WITHOUT constructor.
  * Mirrors flecs_ensure's fast paths (component_map for low IDs, sparse
- * handling) with the single difference: flecs_add_id_w_record(construct=false).
+ * handling) with the single difference: flecs_add_id_w_record(emplace_id=component).
  * We don't modify upstream flecs_ensure because "ensure" semantically implies
  * construction. We can't use ecs_emplace_id because it debug-asserts no
  * on_replace (that assert protects the emplace public API where no new_ptr
@@ -144,8 +144,8 @@ flecs_component_ptr_t flecs_rust_ensure(
         }
     }
 
-    /* Entity doesn't have component — add WITHOUT constructor */
-    flecs_add_id_w_record(world, entity, r, component, false);
+    /* Entity doesn't have component — add WITHOUT constructor (emplace) */
+    flecs_add_id_w_record(world, entity, r, component, component);
 
     /* Flush so the pointer we're fetching is stable */
     flecs_defer_end(world, world->stages[0]);

@@ -12,11 +12,23 @@ pub struct IsAnyArray {
 }
 
 #[cfg(feature = "flecs_safety_locks")]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct TableColumnSafety {
     //only set for sparse terms
     pub component_id: u64,
-    pub table_record: *const sys::ecs_table_record_t,
+    pub table: *mut sys::ecs_table_t,
+    pub column: i16,
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl Default for TableColumnSafety {
+    fn default() -> Self {
+        Self {
+            component_id: 0,
+            table: core::ptr::null_mut(),
+            column: -1,
+        }
+    }
 }
 
 pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
@@ -444,7 +456,9 @@ where
         let tr = unsafe { table_records.get_unchecked_mut(0) };
         #[cfg(feature = "flecs_safety_locks")]
         {
-            tr.table_record = unsafe { *it.trs.add(0) };
+            let (table, column) = unsafe { flecs_field_table_column(it, 0) };
+            tr.table = table;
+            tr.column = column;
         }
 
         #[cfg(not(feature = "flecs_term_count_64"))] 
@@ -482,7 +496,9 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { table_records.get_unchecked_mut(0) };
-            tr.table_record = unsafe { *it.trs.add(0) };
+            let (table, column) = unsafe { flecs_field_table_column(it, 0) };
+            tr.table = table;
+            tr.column = column;
         }
         components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
@@ -633,7 +649,9 @@ macro_rules! impl_iterable {
 
                     #[cfg(feature = "flecs_safety_locks")]
                     {
-                        tr.table_record = unsafe { *it.trs.add(index) };
+                        let (table, column) = unsafe { flecs_field_table_column(it, index) };
+                        tr.table = table;
+                        tr.column = column;
                     }
 
                     #[cfg(feature = "flecs_safety_locks")]
@@ -749,7 +767,9 @@ macro_rules! impl_iterable {
                         };
 
                         let tr = unsafe { table_records.get_unchecked_mut(*idx) };
-                        tr.table_record = unsafe { *it.trs.add(index) };
+                        let (table, column) = unsafe { flecs_field_table_column(it, index) };
+                        tr.table = table;
+                        tr.column = column;
                         *idx += 1;
                     }
                     index += 1;

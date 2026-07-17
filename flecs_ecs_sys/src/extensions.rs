@@ -3,6 +3,8 @@ use crate::ecs_app_desc_t;
 
 #[cfg(feature = "flecs_meta")]
 use crate::EcsOpaque;
+#[cfg(feature = "flecs_meta")]
+use crate::ecs_member_t;
 
 #[cfg(feature = "flecs_alerts")]
 use crate::{ecs_alert_desc_t, ecs_alert_severity_filter_t};
@@ -163,6 +165,7 @@ impl Default for ecs_system_desc_t {
             _canary: Default::default(),
             entity: Default::default(),
             query: Default::default(),
+            phase: Default::default(),
             run: Default::default(),
             callback: Default::default(),
             ctx: core::ptr::null_mut(),
@@ -293,6 +296,25 @@ impl Default for EcsTickSource {
     }
 }
 
+#[cfg(feature = "flecs_meta")]
+impl Default for ecs_member_t {
+    fn default() -> Self {
+        ecs_member_t {
+            name: core::ptr::null(),
+            type_: 0,
+            count: 0,
+            offset: 0,
+            unit: 0,
+            use_offset: false,
+            range: crate::ecs_member_value_range_t { min: 0.0, max: 0.0 },
+            error_range: crate::ecs_member_value_range_t { min: 0.0, max: 0.0 },
+            warning_range: crate::ecs_member_value_range_t { min: 0.0, max: 0.0 },
+            size: 0,
+            member: 0,
+        }
+    }
+}
+
 impl Default for ecs_type_hooks_t {
     fn default() -> Self {
         ecs_type_hooks_t {
@@ -362,6 +384,7 @@ impl Default for crate::ecs_iter_to_json_desc_t {
             serialize_alerts: Default::default(),
             serialize_refs: Default::default(),
             serialize_matches: Default::default(),
+            serialize_parents_before_children: Default::default(),
             query: core::ptr::null_mut(),
         }
     }

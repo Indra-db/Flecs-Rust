@@ -2229,14 +2229,14 @@ fn each_child() {
 fn set_entity_range() {
     let world = World::new();
 
-    // Get current max entity ID so min is valid (must not be below current max).
     // Use a large min value that is safely above all built-in entity IDs.
-    let min = 500000u64;
-    let max = 1000000u64;
-    world.set_entity_range(Entity::new(min), Entity::new(max));
+    let min = 500000u32;
+    let max = 1000000u32;
+    let range = world.entity_range_new(min, max);
+    world.entity_range_set(range);
 
     let e = world.entity();
-    assert!(e.id() >= min && e.id() < max);
+    assert!(e.id() >= min as u64 && e.id() < max as u64);
 }
 
 #[test]

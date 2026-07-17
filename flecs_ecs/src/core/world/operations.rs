@@ -1,4 +1,6 @@
 use core::ffi::c_void;
+use core::marker::PhantomData;
+use core::ptr::NonNull;
 
 use super::*;
 
@@ -1124,14 +1126,20 @@ impl World {
         unsafe { sys::ecs_shrink(self.raw_world.as_ptr()) };
     }
 
-    /// Set the entity range.
+    /// Create a new entity id range.
     ///
-    /// This function limits the range of issued entity IDs between `min` and `max`.
+    /// This function creates a range that constrains new entity identifiers to
+    /// the `[min, max]` interval. Each range maintains its own list of recycled
+    /// entity ids, which ensures that recycled ids always respect the
+    /// configured range. If `max` is set to 0, the range is unbounded.
+    ///
+    /// Entity ranges cannot be deleted once created. Use
+    /// [`World::entity_range_set()`] to activate a range.
     ///
     /// # Arguments
     ///
-    /// * `min` - Minimum entity ID issued.
-    /// * `max` - Maximum entity ID issued.
+    /// * `min` - The first entity id in the range (inclusive).
+    /// * `max` - The last entity id in the range (inclusive, 0 = unlimited).
     ///
     /// # Example
     ///
@@ -1140,7 +1148,8 @@ impl World {
     ///
     /// let world = World::new();
     ///
-    /// world.set_entity_range(5000, 0);
+    /// let range = world.entity_range_new(5000, 0);
+    /// world.entity_range_set(range);
     ///
     /// let e = world.entity();
     ///
@@ -1153,44 +1162,53 @@ impl World {
     ///
     /// # See also
     ///
-    /// * [`World::enable_range_check()`]
-    /// * [`World::preallocate_entity_count()`]
-    pub fn set_entity_range(&self, min: impl Into<Entity>, max: impl Into<Entity>) {
-        unsafe { sys::ecs_set_entity_range(self.raw_world.as_ptr(), *min.into(), *max.into()) };
+    /// * [`World::entity_range_set()`]
+    /// * [`World::entity_range_get()`]
+    pub fn entity_range_new(&self, min: u32, max: u32) -> EntityRange<'_> {
+        let ptr = unsafe { sys::ecs_entity_range_new(self.raw_world.as_ptr(), min, max) };
+        EntityRange {
+            ptr: NonNull::new(ptr.cast_mut()).expect("ecs_entity_range_new returned null"),
+            _marker: PhantomData,
+        }
     }
 
-    /// Enforce that operations cannot modify entities outside of the specified range.
+    /// Set the active entity id range.
     ///
-    /// This function ensures that only entities within the specified range can
-    /// be modified. Use this function if specific parts of the code are only allowed
-    /// to modify a certain set of entities, as could be the case for networked applications.
+    /// This function activates a range created with [`World::entity_range_new()`].
+    /// When a range is activated, new entity identifiers will fall within the
+    /// specified `[min, max]` interval, including recycled identifiers.
     ///
-    /// # Arguments
-    ///
-    /// * `enabled` - True if the range check should be enabled, false otherwise.
-    ///
-    /// # Example
-    ///
-    /// ```should_panic
-    /// use flecs_ecs::prelude::*;
-    ///
-    /// let world = World::new();
-    ///
-    /// let e = world.entity();
-    /// let e2 = world.entity();
-    ///
-    /// world.set_entity_range(5000, 0);
-    /// world.enable_range_check(true);
-    ///
-    /// e.add(e2); // panics in debug mode! because e and e2 are outside the range
-    /// panic!("in release mode, this does not panic, this is to prevent the test from failing")
-    /// ```
+    /// When the active range is out of available ids, operations that create
+    /// new entity ids will assert.
     ///
     /// # See also
     ///
-    /// * [`World::set_entity_range()`]
-    pub fn enable_range_check(&self, enabled: bool) {
-        unsafe { sys::ecs_enable_range_check(self.raw_world.as_ptr(), enabled) };
+    /// * [`World::entity_range_new()`]
+    /// * [`World::entity_range_get()`]
+    pub fn entity_range_set(&self, range: EntityRange<'_>) {
+        unsafe { sys::ecs_entity_range_set(self.raw_world.as_ptr(), range.ptr.as_ptr()) };
+    }
+
+    /// Get the currently active entity id range.
+    ///
+    /// Returns the range set by [`World::entity_range_set()`], or `None` if no
+    /// range is active.
+    ///
+    /// # See also
+    ///
+    /// * [`World::entity_range_new()`]
+    /// * [`World::entity_range_set()`]
+    pub fn entity_range_get(&self) -> Option<EntityRange<'_>> {
+        let ptr = unsafe { sys::ecs_entity_range_get(self.raw_world.as_ptr()) };
+        NonNull::new(ptr.cast_mut()).map(|ptr| EntityRange {
+            ptr,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Get the largest issued entity ID (not counting generation).
+    pub fn max_id(&self) -> Entity {
+        Entity::new(unsafe { sys::ecs_get_max_id(self.raw_world.as_ptr()) })
     }
 
     /// Get the current scope. Get the scope set by `set_scope`.

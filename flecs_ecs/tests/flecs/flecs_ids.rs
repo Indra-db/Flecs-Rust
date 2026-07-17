@@ -119,6 +119,11 @@ fn test_c_vs_rust_ids() {
             sys::EcsTermDontFragment as u64,
             "EcsTermDontFragment (C) != IsDontFragment (Rust)"
         );
+        assert_eq!(
+            flecs::term_flags::NonFragmentingChildOf,
+            sys::EcsTermNonFragmentingChildOf as u64,
+            "EcsTermNonFragmentingChildOf (C) != NonFragmentingChildOf (Rust)"
+        );
 
         // Query flags
         assert_eq!(
@@ -163,9 +168,7 @@ fn test_c_vs_rust_ids() {
         assert_eq!(flecs::EcsWorld, sys::EcsWorld);
         assert_eq!(flecs::Flecs, sys::EcsFlecs);
         assert_eq!(flecs::FlecsCore, sys::EcsFlecsCore);
-        //assert_eq!(flecs::FlecsInternals, sys::EcsFlecsInternals);
         assert_eq!(flecs::Module, sys::EcsModule);
-        assert_eq!(flecs::Private, sys::EcsPrivate);
         assert_eq!(flecs::Prefab, sys::EcsPrefab);
         assert_eq!(flecs::Disabled, sys::EcsDisabled);
         assert_eq!(flecs::NotQueryable, sys::EcsNotQueryable);

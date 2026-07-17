@@ -83,19 +83,22 @@ fn entities_and_components_entities_manual_versioning_09() {
 #[test]
 fn entities_and_components_entities_ranges_10() {
     let world = World::new();
-    world.set_entity_range(5000, 0);
+    let range = world.entity_range_new(5000, 0);
+    world.entity_range_set(range);
 }
 
 #[test]
 fn entities_and_components_entities_ranges_11() {
     let world = World::new();
-    world.set_entity_range(5000, 10000);
+    let range = world.entity_range_new(5000, 10000);
+    world.entity_range_set(range);
 }
 
 #[test]
 fn entities_and_components_entities_ranges_12() {
     let world = World::new();
-    world.enable_range_check(true);
+    let range = world.entity_range_new(5000, 10000);
+    world.entity_range_set(range);
 }
 
 #[test]

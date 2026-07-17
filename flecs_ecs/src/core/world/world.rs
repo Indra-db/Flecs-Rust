@@ -71,7 +71,7 @@ impl Default for World {
 
         world.init_builtin_components();
 
-        let o = world
+        world
             .observer::<flecs::OnAdd, ()>()
             .with((flecs::With, flecs::Wildcard))
             .run(|mut it| {
@@ -92,8 +92,6 @@ impl Default for World {
                     }
                 }
             });
-
-        o.child_of(world.lookup("flecs::core::internals"));
 
         world
     }
