@@ -1413,7 +1413,6 @@ void Observer_on_set_singleton_set_component_named_entity(void) {
 
 */
 #[test]
-#[ignore = "observer with write() modifying a named entity triggers table-lock abort — needs Rust binding fix for deferred observer writes"]
 fn on_set_singleton_set_component_named_entity() {
     #[derive(Component)]
     struct MyComponent {
