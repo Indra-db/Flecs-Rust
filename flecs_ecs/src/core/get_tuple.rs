@@ -8,6 +8,32 @@ use crate::sys;
 use flecs_ecs_derive::tuples;
 use sys::ecs_record_t;
 
+/* Without flecs_safety_locks, ecs_get_ptr_t degrades to a bare void*
+ * (mirror of C's ECS_GET_PTR_PTR / ECS_GET_PTR_NULL macros). */
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) fn get_ptr_raw(get_ptr: &sys::ecs_get_ptr_t) -> *mut c_void {
+    get_ptr.ptr
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+#[inline(always)]
+pub(crate) fn get_ptr_raw(get_ptr: &sys::ecs_get_ptr_t) -> *mut c_void {
+    *get_ptr
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) fn get_ptr_null() -> sys::ecs_get_ptr_t {
+    sys::ecs_get_ptr_t::default()
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+#[inline(always)]
+pub(crate) fn get_ptr_null() -> sys::ecs_get_ptr_t {
+    core::ptr::null_mut()
+}
+
 #[cfg(feature = "flecs_safety_locks")]
 #[derive(Debug, Copy, Clone)]
 #[doc(hidden)]
@@ -305,7 +331,7 @@ pub trait GetTuple: Sized {
                     let constant_value =
                         unsafe { sys::flecs_record_get_id(world_ptr, target, record, pair_id) };
                     ecs_assert!(
-                        !constant_value.ptr.is_null(),
+                        !get_ptr_raw(&constant_value).is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -322,7 +348,7 @@ pub trait GetTuple: Sized {
                         unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
 
                     ecs_assert!(
-                        !constant_value.ptr.is_null(),
+                        !get_ptr_raw(&constant_value).is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -381,13 +407,13 @@ pub trait GetTuple: Sized {
                 id
             };
             if id == 0 {
-                sys::ecs_get_ptr_t::default()
+                get_ptr_null()
             } else {
                 unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
             }
         };
 
-        let component_ptr = get_ptr.ptr;
+        let component_ptr = get_ptr_raw(&get_ptr);
 
         if component_ptr.is_null() {
             components[index] = core::ptr::null_mut();

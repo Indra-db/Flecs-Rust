@@ -144,8 +144,15 @@ flecs_component_ptr_t flecs_rust_ensure(
         }
     }
 
-    /* Entity doesn't have component — add WITHOUT constructor (emplace) */
-    flecs_add_id_w_record(world, entity, r, component, component);
+    /* Entity doesn't have component — add WITHOUT constructor (emplace).
+     * Exception: EcsParent must be default-constructed, because the
+     * non-fragmenting child move hooks read Parent.value during the add
+     * itself, before the caller has written the new value. */
+    ecs_id_t emplace_id = component;
+    if (component == ecs_id(EcsParent)) {
+        emplace_id = 0;
+    }
+    flecs_add_id_w_record(world, entity, r, component, emplace_id);
 
     /* Flush so the pointer we're fetching is stable */
     flecs_defer_end(world, world->stages[0]);

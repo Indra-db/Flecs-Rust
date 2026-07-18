@@ -231,7 +231,7 @@ pub trait ClonedTuple: Sized {
         } else {
             unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         };
-        let component_ptr = get_ptr.ptr;
+        let component_ptr = get_ptr_raw(&get_ptr);
 
         if <T::OnlyType as ComponentOrPairId>::IS_PAIR {
             assert!(

@@ -65,6 +65,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_MIN_VER }}
+          components: rustfmt
       - name: regenerate bindings
         run: cargo build -p flecs_ecs --features flecs_regenerate_binding
       - name: check for drift
