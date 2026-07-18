@@ -60,7 +60,7 @@ fn main() {
         let asset = world.entity_from_id(group_id);
         println!("Group {}:", asset.path().unwrap());
 
-        query.set_group(group_id).each_entity(|e, p| {
+        query.with_group(group_id).each_entity(|e, p| {
             println!(" - {}: {{{}, {}}}", e.path().unwrap(), p.x, p.y);
         });
     }

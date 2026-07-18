@@ -104,7 +104,7 @@ fn main() {
 
     // Iterate query, limit the results to units of MyPlayer
     query
-        .set_var(player_var, world.lookup_recursive("MyPlayer"))
+        .with_var(player_var, world.lookup_recursive("MyPlayer"))
         .each_iter(|it, index, _| {
             let unit = it.entity(index);
             println!(

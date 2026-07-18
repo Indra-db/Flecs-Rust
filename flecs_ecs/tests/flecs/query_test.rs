@@ -500,7 +500,7 @@ fn set_this_var() {
     let q = world.new_query_named::<&Position>("my::query");
 
     let mut count = 0;
-    q.set_var(0, e_2).each_entity(|e, _pos| {
+    q.with_var(0, e_2).each_entity(|e, _pos| {
         assert_eq!(e.id(), e_2.id());
         count += 1;
     });
@@ -1785,7 +1785,7 @@ fn set_group_captured_query() {
         .add((rel, tgt_b));
 
     let mut count = 0;
-    q.set_group(tgt_b).each_entity(|e, p| {
+    q.with_group(tgt_b).each_entity(|e, p| {
         assert_eq!(e.id(), e2.id());
         assert_eq!(p.x, 20);
         assert_eq!(p.y, 30);
@@ -1814,7 +1814,7 @@ fn set_var_captured_query() {
         .add((rel, tgt_b));
 
     let mut count = 0;
-    q.set_var_expr("var", tgt_b).each_entity(|e, p| {
+    q.with_var_expr("var", tgt_b).each_entity(|e, p| {
         assert_eq!(e.id(), e2.id());
         assert_eq!(p.x, 20);
         assert_eq!(p.y, 30);
@@ -1845,7 +1845,7 @@ fn set_var_id_captured_query() {
         .add((rel, tgt_b));
 
     let mut count = 0;
-    q.set_var(var_id, tgt_b).each_entity(|e, p| {
+    q.with_var(var_id, tgt_b).each_entity(|e, p| {
         assert_eq!(e.id(), e2.id());
         assert_eq!(p.x, 20);
         assert_eq!(p.y, 30);

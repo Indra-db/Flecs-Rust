@@ -3106,7 +3106,7 @@ fn set_group() {
 
     // Run with TgtB group
     sys.query()
-        .set_group(tgt_b_id)
+        .with_group(tgt_b_id)
         .run(|mut it| while it.next() {});
 
     sys.run();

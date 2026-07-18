@@ -1363,63 +1363,82 @@ where
         result
     }
 
-    /// Limit results to tables with specified group id (grouped queries only)
+    /// Returns a new iterator limited to tables with the specified group id (grouped queries only).
+    ///
+    /// Does not modify `self`. To constrain an existing [`QueryIter`] in place,
+    /// use [`QueryIter::set_group`].
     ///
     /// # Arguments
     ///
     /// * `group_id`: the group id to set
-    fn set_group(&self, group_id: impl IntoEntity) -> QueryIter<'_, P, T> {
+    #[must_use = "returns a new iterator; the original is unchanged. Use `QueryIter::set_group` to modify in place"]
+    fn with_group(&self, group_id: impl IntoEntity) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_group(&mut iter, group_id);
         iter
     }
 
-    /// set variable of iter
+    /// Returns a new iterator with the query variable set to the given entity.
+    ///
+    /// Does not modify `self`. To constrain an existing [`QueryIter`] in place,
+    /// use [`QueryIter::set_var`].
     ///
     /// # Arguments
     ///
     /// * `var_id`: the variable id to set
     ///
     /// * `value`: the value to set
-    #[must_use = "This method returns a new query iterator that should be used"]
-    fn set_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
+    #[must_use = "returns a new iterator; the original is unchanged. Use `QueryIter::set_var` to modify in place"]
+    fn with_var(&self, var_id: i32, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var(&mut iter, var_id, value);
         iter
     }
 
-    /// set variable of iter as table
+    /// Returns a new iterator with the query variable set to the given table range.
+    ///
+    /// Does not modify `self`. To constrain an existing [`QueryIter`] in place,
+    /// use [`QueryIter::set_var_table`].
     ///
     /// # Arguments
     ///
     /// * `var_id`: the variable id to set
     ///
     /// * `range`: the range to set
-    fn set_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
+    #[must_use = "returns a new iterator; the original is unchanged. Use `QueryIter::set_var_table` to modify in place"]
+    fn with_var_table(&self, var_id: i32, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table(&mut iter, var_id, table);
         iter
     }
 
-    /// set variable for rule iter
+    /// Returns a new iterator with the named query variable set to the given entity.
+    ///
+    /// Does not modify `self`. To constrain an existing [`QueryIter`] in place,
+    /// use [`QueryIter::set_var_expr`].
     ///
     /// # Arguments
     ///
     /// * `name`: the name of the variable to set
     /// * `value`: the value to set
-    fn set_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
+    #[must_use = "returns a new iterator; the original is unchanged. Use `QueryIter::set_var_expr` to modify in place"]
+    fn with_var_expr(&self, name: &str, value: impl Into<Entity>) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_expr(&mut iter, name, value);
         iter
     }
 
-    /// set variable for rule iter as table
+    /// Returns a new iterator with the named query variable set to the given table range.
+    ///
+    /// Does not modify `self`. To constrain an existing [`QueryIter`] in place,
+    /// use [`QueryIter::set_var_table_expr`].
     ///
     /// # Arguments
     ///
     /// * `name`: the name of the variable to set
     /// * `range`: the range to set
-    fn set_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
+    #[must_use = "returns a new iterator; the original is unchanged. Use `QueryIter::set_var_table_expr` to modify in place"]
+    fn with_var_table_expr(&self, name: &str, table: impl IntoTableRange) -> QueryIter<'_, P, T> {
         let mut iter = self.iterable();
         QueryIter::<P, T>::set_var_table_expr(&mut iter, name, table);
         iter

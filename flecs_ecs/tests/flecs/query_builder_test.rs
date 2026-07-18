@@ -6006,7 +6006,7 @@ fn query_builder_cascade_w_set_var() {
         .build();
 
     let mut count = 0;
-    q.set_var(0, earth).each_entity(|e, p| {
+    q.with_var(0, earth).each_entity(|e, p| {
         count += 1;
         assert_eq!(e, earth);
         assert!(p.is_some());
@@ -6484,7 +6484,7 @@ fn query_builder_set_var_on_query() {
     let food_var = r.find_var("Food").unwrap();
 
     let mut count = 0;
-    r.set_var(food_var, pears).each_iter(|it, i, ()| {
+    r.with_var(food_var, pears).each_iter(|it, i, ()| {
         assert_eq!(it.get_entity(i).unwrap(), e2);
         assert_eq!(it.get_var(food_var), pears);
         count += 1;
@@ -6517,7 +6517,7 @@ fn query_builder_set_var_by_name_on_query() {
 
     let food_var_id = r.find_var("Food").unwrap();
     let mut count = 0;
-    r.set_var_expr("Food", pears).each_iter(|it, i, ()| {
+    r.with_var_expr("Food", pears).each_iter(|it, i, ()| {
         assert_eq!(it.get_entity(i).unwrap(), e2);
         assert_eq!(it.get_var(food_var_id), pears);
         count += 1;
@@ -6539,7 +6539,7 @@ fn query_builder_set_table_var() {
     let r = world.new_query::<&Position>();
 
     let mut count = 0;
-    r.set_var_table_expr("this", e1.table().unwrap())
+    r.with_var_table_expr("this", e1.table().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             if usize::from(index) == 0 {
@@ -6552,7 +6552,7 @@ fn query_builder_set_table_var() {
 
     assert_eq!(count, 2);
 
-    r.set_var_table_expr("this", e3.table().unwrap())
+    r.with_var_table_expr("this", e3.table().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e3);
@@ -6576,7 +6576,7 @@ fn query_builder_set_range_var() {
 
     let mut count = 0;
 
-    r.set_var_table_expr("this", e1.range().unwrap())
+    r.with_var_table_expr("this", e1.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e1);
@@ -6584,7 +6584,7 @@ fn query_builder_set_range_var() {
         });
     assert_eq!(count, 1);
 
-    r.set_var_table_expr("this", e2.range().unwrap())
+    r.with_var_table_expr("this", e2.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e2);
@@ -6592,7 +6592,7 @@ fn query_builder_set_range_var() {
         });
     assert_eq!(count, 2);
 
-    r.set_var_table_expr("this", e3.range().unwrap())
+    r.with_var_table_expr("this", e3.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e3);
@@ -6619,7 +6619,7 @@ fn query_builder_set_table_var_chained() {
 
     q1.run(|mut it| {
         while it.next() {
-            q2.set_var_table_expr("this", it.table().unwrap())
+            q2.with_var_table_expr("this", it.table().unwrap())
                 .each_entity(|e, _| {
                     assert_eq!(e, e3);
                     count += 1;
@@ -6648,7 +6648,7 @@ fn query_builder_set_range_var_chained() {
 
     q1.run(|mut it| {
         while it.next() {
-            q2.set_var_table_expr("this", it.range().unwrap())
+            q2.with_var_table_expr("this", it.range().unwrap())
                 .each_entity(|e, _| {
                     assert_eq!(e, e3);
                     count += 1;
@@ -6689,7 +6689,7 @@ fn query_builder_set_group_on_query() {
     let mut e5_found = false;
     let mut count = 0;
 
-    q.set_group(tgt_b).each_iter(|it, i, ()| {
+    q.with_group(tgt_b).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b);
         if e == e2 {
@@ -6742,7 +6742,7 @@ fn query_builder_set_group_type_on_query() {
     let mut e5_found = false;
     let mut count = 0;
 
-    q.set_group(TgtBSGT::id()).each_iter(|it, i, ()| {
+    q.with_group(TgtBSGT::id()).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b_raw);
         if e == e2 {
@@ -7271,7 +7271,7 @@ fn cascade_w_set_var() {
         .build();
 
     let mut count = 0;
-    q.set_var(0, earth).each_entity(|e, p| {
+    q.with_var(0, earth).each_entity(|e, p| {
         count += 1;
         assert_eq!(e, earth);
         assert!(p.is_some());
@@ -7751,7 +7751,7 @@ fn set_var_on_query() {
     let food_var = r.find_var("Food").unwrap();
 
     let mut count = 0;
-    r.set_var(food_var, pears).each_iter(|it, i, ()| {
+    r.with_var(food_var, pears).each_iter(|it, i, ()| {
         assert_eq!(it.get_entity(i).unwrap(), e2);
         assert_eq!(it.get_var(food_var), pears);
         count += 1;
@@ -7784,7 +7784,7 @@ fn set_var_by_name_on_query() {
 
     let food_var_id = r.find_var("Food").unwrap();
     let mut count = 0;
-    r.set_var_expr("Food", pears).each_iter(|it, i, ()| {
+    r.with_var_expr("Food", pears).each_iter(|it, i, ()| {
         assert_eq!(it.get_entity(i).unwrap(), e2);
         assert_eq!(it.get_var(food_var_id), pears);
         count += 1;
@@ -7806,7 +7806,7 @@ fn set_table_var() {
     let r = world.new_query::<&Position>();
 
     let mut count = 0;
-    r.set_var_table_expr("this", e1.table().unwrap())
+    r.with_var_table_expr("this", e1.table().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             if usize::from(index) == 0 {
@@ -7819,7 +7819,7 @@ fn set_table_var() {
 
     assert_eq!(count, 2);
 
-    r.set_var_table_expr("this", e3.table().unwrap())
+    r.with_var_table_expr("this", e3.table().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e3);
@@ -7843,7 +7843,7 @@ fn set_range_var() {
 
     let mut count = 0;
 
-    r.set_var_table_expr("this", e1.range().unwrap())
+    r.with_var_table_expr("this", e1.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e1);
@@ -7851,7 +7851,7 @@ fn set_range_var() {
         });
     assert_eq!(count, 1);
 
-    r.set_var_table_expr("this", e2.range().unwrap())
+    r.with_var_table_expr("this", e2.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e2);
@@ -7859,7 +7859,7 @@ fn set_range_var() {
         });
     assert_eq!(count, 2);
 
-    r.set_var_table_expr("this", e3.range().unwrap())
+    r.with_var_table_expr("this", e3.range().unwrap())
         .each_iter(|it, index, _| {
             let e = it.get_entity(index).unwrap();
             assert_eq!(e, e3);
@@ -7886,7 +7886,7 @@ fn set_table_var_chained() {
 
     q1.run(|mut it| {
         while it.next() {
-            q2.set_var_table_expr("this", it.table().unwrap())
+            q2.with_var_table_expr("this", it.table().unwrap())
                 .each_entity(|e, _| {
                     assert_eq!(e, e3);
                     count += 1;
@@ -7915,7 +7915,7 @@ fn set_range_var_chained() {
 
     q1.run(|mut it| {
         while it.next() {
-            q2.set_var_table_expr("this", it.range().unwrap())
+            q2.with_var_table_expr("this", it.range().unwrap())
                 .each_entity(|e, _| {
                     assert_eq!(e, e3);
                     count += 1;
@@ -7956,7 +7956,7 @@ fn set_group_on_query() {
     let mut e5_found = false;
     let mut count = 0;
 
-    q.set_group(tgt_b).each_iter(|it, i, ()| {
+    q.with_group(tgt_b).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b);
         if e == e2 {
@@ -8009,7 +8009,7 @@ fn set_group_type_on_query() {
     let mut e5_found = false;
     let mut count = 0;
 
-    q.set_group(TgtBSGT::id()).each_iter(|it, i, ()| {
+    q.with_group(TgtBSGT::id()).each_iter(|it, i, ()| {
         let e = it.get_entity(i).unwrap();
         assert_eq!(it.group_id(), tgt_b_raw);
         if e == e2 {

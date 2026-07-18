@@ -1154,7 +1154,7 @@ fn query_set_this_var() {
     let q = world.query_named::<&Position>("my::query").build();
 
     let mut count = 0;
-    q.set_var(0, e2).each_entity(|e, _| {
+    q.with_var(0, e2).each_entity(|e, _| {
         assert_eq!(e, e2);
         count += 1;
     });
@@ -3434,7 +3434,7 @@ fn query_set_group_captured_query() {
 
     let run = || {
         let mut count = 0;
-        q.set_group(tgt_b).each_entity(|e, p| {
+        q.with_group(tgt_b).each_entity(|e, p| {
             assert_eq!(e, e2);
             assert_eq!(p.x, 20);
             assert_eq!(p.y, 30);
@@ -3473,7 +3473,7 @@ fn query_set_var_captured_query() {
 
     let run = || {
         let mut count = 0;
-        q.set_var_expr("var", tgt_b).each_entity(|e, p| {
+        q.with_var_expr("var", tgt_b).each_entity(|e, p| {
             assert_eq!(e, e2);
             assert_eq!(p.x, 20);
             assert_eq!(p.y, 30);
@@ -3514,7 +3514,7 @@ fn query_set_var_id_captured_query() {
 
     let run = || {
         let mut count = 0;
-        q.set_var(var_id, tgt_b).each_entity(|e, p| {
+        q.with_var(var_id, tgt_b).each_entity(|e, p| {
             assert_eq!(e, e2);
             assert_eq!(p.x, 20);
             assert_eq!(p.y, 30);
@@ -3523,6 +3523,45 @@ fn query_set_var_id_captured_query() {
         assert_eq!(count, 1);
     };
     run();
+}
+
+// ─── query_iter_set_var_expr_in_place ─────────────────────────────────────────
+
+#[test]
+fn query_iter_set_var_expr_in_place() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let tgt_a = world.entity();
+    let tgt_b = world.entity();
+
+    let q = world
+        .query::<&Position>()
+        .with(rel)
+        .second()
+        .set_var("var")
+        .build();
+
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .add((rel, tgt_a));
+    let e2 = world
+        .entity()
+        .set(Position { x: 20, y: 30 })
+        .add((rel, tgt_b));
+
+    let mut iter = q.iterable();
+    iter.set_var_expr("var", tgt_b);
+
+    let mut count = 0;
+    iter.each_entity(|e, p| {
+        assert_eq!(e, e2);
+        assert_eq!(p.x, 20);
+        assert_eq!(p.y, 30);
+        count += 1;
+    });
+    assert_eq!(count, 1);
 }
 
 // ─── iter_entities ────────────────────────────────────────────────────────────

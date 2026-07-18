@@ -62,7 +62,7 @@ fn main() {
 
     println!(
         "Are Bob and Alice friends? {}",
-        if friends.set_var(x_var, bob).set_var(y_var, alice).is_true() {
+        if friends.with_var(x_var, bob).set_var(y_var, alice).is_true() {
             "Yes"
         } else {
             "No"
@@ -71,7 +71,7 @@ fn main() {
 
     println!(
         "Are Bob and John friends? {}",
-        if friends.set_var(x_var, bob).set_var(y_var, john).is_true() {
+        if friends.with_var(x_var, bob).set_var(y_var, john).is_true() {
             "Yes"
         } else {
             "No"
@@ -80,7 +80,7 @@ fn main() {
 
     println!(
         "Are Jane and John friends? {}",
-        if friends.set_var(x_var, jane).set_var(y_var, john).is_true() {
+        if friends.with_var(x_var, jane).set_var(y_var, john).is_true() {
             "Yes"
         } else {
             "No"
@@ -92,7 +92,7 @@ fn main() {
 
     println!(
         "Are John and Jane friends? {}",
-        if friends.set_var(x_var, john).set_var(y_var, jane).is_true() {
+        if friends.with_var(x_var, john).set_var(y_var, jane).is_true() {
             "Yes"
         } else {
             "No"
