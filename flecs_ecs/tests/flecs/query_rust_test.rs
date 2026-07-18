@@ -73,7 +73,7 @@ fn query_iter_stage() {
     let world = World::new();
     world.set_threads(4);
 
-    let query = world.new_query::<&Comp>();
+    let query = world.new_query::<&Comp>().handle();
 
     for i in 0..4 {
         world.entity().set(Comp(i));
@@ -84,6 +84,286 @@ fn query_iter_stage() {
     });
 
     world.progress();
+}
+
+#[test]
+fn query_handle_keeps_query_alive() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    world.entity().set(Comp(1));
+
+    let handle = {
+        let query = world.new_query::<&Comp>();
+        query.handle()
+    };
+
+    let count = core::cell::Cell::new(0);
+    handle
+        .iter_stage(&world)
+        .each(|_| count.set(count.get() + 1));
+    assert_eq!(count.get(), 1);
+}
+
+#[test]
+fn query_handle_reference_counts() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    let query = world.new_query::<&Comp>();
+    assert_eq!(query.reference_count(), 1);
+
+    let h1 = query.handle();
+    assert_eq!(query.reference_count(), 2);
+
+    let h2 = query.handle();
+    let h3 = h1.clone();
+    assert_eq!(query.reference_count(), 4);
+
+    drop(h1);
+    drop(h2);
+    drop(h3);
+    assert_eq!(query.reference_count(), 1);
+}
+
+#[test]
+fn query_handle_entity_query_off_thread_drop() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    world.entity().set(Comp(1));
+
+    let query = world.query_named::<&Comp>("named_query").build();
+    let handle = query.handle();
+
+    std::thread::spawn(move || drop(handle)).join().unwrap();
+
+    let count = core::cell::Cell::new(0);
+    query.each(|_| count.set(count.get() + 1));
+    assert_eq!(count.get(), 1);
+    query.destruct();
+}
+
+#[test]
+fn query_handle_two_par_systems() {
+    let world = World::new();
+    world.set_threads(2);
+
+    let e = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let query = world.new_query::<&Velocity>();
+    let h1 = query.handle();
+    let h2 = query.handle();
+
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            h1.iter_stage(e.world()).each(|v| {
+                p.x += v.x;
+            });
+        });
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            h2.iter_stage(e.world()).each(|v| {
+                p.y += v.y;
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 1);
+        assert_eq!(p.y, 2);
+    });
+}
+
+#[test]
+fn query_handle_clone_inside_par_callback() {
+    let world = World::new();
+    world.set_threads(4);
+
+    let e = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let handle = world.new_query::<&Velocity>().handle();
+
+    world
+        .system::<&mut Position>()
+        .par_each_entity(move |e, p| {
+            // Clone and drop on the worker thread, mid staged execution.
+            let local = handle.clone();
+            local.iter_stage(e.world()).each(|v| {
+                p.x += v.x;
+            });
+        });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 1);
+    });
+}
+
+#[test]
+fn query_handle_in_single_threaded_system() {
+    let world = World::new();
+
+    let e = world
+        .entity()
+        .set(Position { x: 0, y: 0 })
+        .set(Velocity { x: 3, y: 4 });
+
+    let handle = world.new_query::<&Velocity>().handle();
+
+    world.system::<&mut Position>().each_entity(move |e, p| {
+        handle.iter_stage(e.world()).each(|v| {
+            p.x += v.x;
+        });
+    });
+
+    world.progress();
+
+    e.get::<&Position>(|p| {
+        assert_eq!(p.x, 3);
+    });
+}
+
+#[test]
+fn query_handle_concurrent_drop_stress() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    for _ in 0..50 {
+        let world = World::new();
+        world.entity().set(Comp(1));
+
+        let query = world.new_query::<&Comp>();
+        let threads: Vec<_> = (0..8)
+            .map(|_| {
+                let handle = query.handle();
+                std::thread::spawn(move || drop(handle))
+            })
+            .collect();
+
+        // Churn other queries on the owning thread while worker threads drop
+        // handles, contending the shared query refcount and poly atomics.
+        for _ in 0..20 {
+            let other = world.new_query::<&Comp>();
+            drop(other);
+        }
+
+        for t in threads {
+            t.join().unwrap();
+        }
+        drop(query);
+    }
+}
+
+#[test]
+fn query_handle_drop_racing_world_drop() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    for _ in 0..100 {
+        let world = World::new();
+        world.entity().set(Comp(1));
+        let handle = world.new_query::<&Comp>().handle();
+
+        let barrier = alloc::sync::Arc::new(std::sync::Barrier::new(2));
+        let thread_barrier = barrier.clone();
+        let t = std::thread::spawn(move || {
+            thread_barrier.wait();
+            drop(handle);
+        });
+
+        barrier.wait();
+        // Either ordering is defined: clean drop on both sides, or the world
+        // observes the still-live handle and panics with "lingering
+        // references" (caught here), never memory unsafety.
+        let _ = std::panic::catch_unwind(core::panic::AssertUnwindSafe(move || drop(world)));
+        t.join().unwrap();
+    }
+}
+
+#[test]
+#[should_panic(expected = "multithreaded execution phase")]
+fn entity_create_during_multithreaded_phase_panics() {
+    let world = World::new();
+    world.set_threads(2);
+
+    world.readonly_begin(true);
+    let _ = world.entity();
+}
+
+#[test]
+#[should_panic(expected = "lingering references")]
+fn query_handle_outliving_world_panics() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    let handle = world.new_query::<&Comp>().handle();
+    core::mem::forget(handle);
+    drop(world);
+}
+
+#[test]
+#[should_panic(expected = "different world")]
+fn query_iter_stage_wrong_world_panics() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world_a = World::new();
+    let world_b = World::new();
+    world_a.entity().set(Comp(1));
+
+    let query = world_a.new_query::<&Comp>();
+    query.iter_stage(&world_b).each(|_| {});
+}
+
+#[test]
+#[should_panic(expected = "different world")]
+fn query_handle_iter_stage_wrong_world_panics() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world_a = World::new();
+    let world_b = World::new();
+    world_a.entity().set(Comp(1));
+
+    let handle = world_a.new_query::<&Comp>().handle();
+    handle.iter_stage(&world_b).each(|_| {});
+}
+
+#[test]
+fn query_handle_drop_off_thread_last_ref() {
+    #[derive(Component, Debug)]
+    struct Comp(usize);
+
+    let world = World::new();
+    world.entity().set(Comp(1));
+
+    let handle = {
+        let query = world.new_query::<&Comp>();
+        query.handle()
+    };
+
+    std::thread::spawn(move || drop(handle)).join().unwrap();
+
+    world.entity().set(Comp(2));
+    let query = world.new_query::<&Comp>();
+    let count = core::cell::Cell::new(0);
+    query.each(|_| count.set(count.get() + 1));
+    assert_eq!(count.get(), 2);
 }
 
 #[test]

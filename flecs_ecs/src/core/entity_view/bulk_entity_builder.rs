@@ -243,6 +243,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// let entities_created = world.entity_bulk(10).set(&positions).build();
     /// ```
     pub fn build(&mut self) -> Vec<Entity> {
+        assert_not_in_multithreaded_phase(self.world.world_ptr());
         self.desc.data = self.data.as_ptr() as *mut _;
         if !self.entity_ids.is_empty() {
             self.desc.entities = self.entity_ids.as_mut_ptr();
@@ -317,6 +318,7 @@ impl<'a> BulkEntityBuilder<'a> {
     ///     .build_to_table(&mut table);
     /// ```
     pub fn build_to_table(&mut self, table: &mut Table) -> Vec<Entity> {
+        assert_not_in_multithreaded_phase(self.world.world_ptr());
         if self.data.is_empty() {
             let mut all_default = true;
 

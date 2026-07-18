@@ -78,7 +78,7 @@ pub use id::Id;
 pub use id_view::IdView;
 pub use observer::Observer;
 pub use observer_builder::{ObserverBuilder, ObserverUpdater};
-pub use query::Query;
+pub use query::{Query, QueryHandle};
 #[doc(hidden)]
 pub use sparse_query::SparseQuery;
 pub use query_builder::*;

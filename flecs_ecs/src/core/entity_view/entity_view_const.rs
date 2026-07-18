@@ -182,6 +182,7 @@ impl<'a> EntityView<'a> {
     /// * [`World::entity()`] - Preferred way to create entities
     pub(crate) fn new(world: impl WorldProvider<'a>) -> Self {
         let world_ptr = world.world_ptr_mut();
+        assert_not_in_multithreaded_phase(world_ptr);
         let id = if unsafe { sys::ecs_get_scope(world_ptr) == 0 && ecs_get_with(world_ptr) == 0 } {
             unsafe { sys::ecs_new(world_ptr) }
         } else {
@@ -259,6 +260,7 @@ impl<'a> EntityView<'a> {
     /// * [`EntityView::path()`] - Get full hierarchical path
     /// * [`World::lookup()`] - Look up named entities
     pub(crate) fn new_named(world: impl WorldProvider<'a>, name: &str) -> Self {
+        assert_not_in_multithreaded_phase(world.world_ptr());
         let name = compact_str::format_compact!("{}\0", name);
 
         let desc = sys::ecs_entity_desc_t {
@@ -366,6 +368,7 @@ impl<'a> EntityView<'a> {
         sep: &str,
         root_sep: &str,
     ) -> Self {
+        assert_not_in_multithreaded_phase(world.world_ptr());
         let name = compact_str::format_compact!("{}\0", name);
         let sep = compact_str::format_compact!("{}\0", sep);
         let root_sep = compact_str::format_compact!("{}\0", root_sep);
@@ -391,6 +394,7 @@ impl<'a> EntityView<'a> {
     }
 
     pub(crate) fn new_named_cstr(world: impl WorldProvider<'a>, name: &CStr) -> Self {
+        assert_not_in_multithreaded_phase(world.world_ptr());
         let desc = sys::ecs_entity_desc_t {
             name: name.as_ptr(),
             sep: SEPARATOR.as_ptr(),

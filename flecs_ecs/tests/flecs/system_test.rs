@@ -2118,7 +2118,7 @@ fn multithread_system_w_query_each() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
 
     world
         .system::<&mut Position>()
@@ -2149,7 +2149,7 @@ fn multithread_system_w_query_each_w_iter() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
 
     world.system::<&mut Position>().par_run(move |mut it| {
         while it.next() {
@@ -2183,7 +2183,7 @@ fn multithread_system_w_query_each_w_world() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
     world.system::<&mut Position>().par_run(move |mut it| {
         let world = it.world();
         while it.next() {
@@ -2217,7 +2217,7 @@ fn multithread_system_w_query_iter() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
 
     world
         .system::<&mut Position>()
@@ -2253,7 +2253,7 @@ fn multithread_system_w_query_iter_w_iter() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
 
     world.system::<&mut Position>().par_run(move |mut it| {
         let world = it.world();
@@ -2293,7 +2293,7 @@ fn multithread_system_w_query_iter_w_world() {
         .set(Position { x: 10, y: 20 })
         .set(Velocity { x: 1, y: 2 });
 
-    let q = world.new_query::<&Velocity>();
+    let q = world.new_query::<&Velocity>().handle();
 
     world.system::<&mut Position>().par_run(move |mut it| {
         let world = it.world();

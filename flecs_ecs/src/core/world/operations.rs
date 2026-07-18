@@ -864,6 +864,12 @@ impl World {
     /// The application must ensure that no commands are added to the stage while the
     /// stage is being merged.
     ///
+    /// Like all stage handles, the returned [`WorldRef`] is `!Send`/`!Sync`:
+    /// asynchronous stages are a tool for batching commands on the world's
+    /// owning thread and merging them at a chosen point, not for recording
+    /// commands from other threads. Cross-thread query access goes through
+    /// [`QueryHandle`][crate::core::QueryHandle] instead.
+    ///
     /// The returned [`WorldRef`] does not own the stage: the underlying stage is
     /// **not** freed when the [`WorldRef`] is dropped and stays allocated until the
     /// process exits. Use [`World::async_stage()`] instead to get an owning handle
@@ -908,6 +914,10 @@ impl World {
     /// [`AsyncStage`] owns the stage and frees it on drop, so the stage does not leak.
     /// Use [`AsyncStage::stage()`] to enqueue commands on the stage and
     /// [`AsyncStage::merge()`] to merge them into the world.
+    ///
+    /// [`AsyncStage`] is `!Send`/`!Sync` and stays on the world's owning
+    /// thread; see [`World::create_async_stage()`] for what stages are (and
+    /// are not) for.
     ///
     /// # Example
     ///
