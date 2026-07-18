@@ -31,8 +31,8 @@ use crate::sys;
 /// A `QueryIter` is single-shot: the underlying C iterator owns resources
 /// (a cursor into the stage's stack allocator) that are released exactly once,
 /// either when iteration runs to completion or on drop. Consuming operations
-/// ([`QueryAPI::each`](crate::core::QueryAPI::each), [`QueryAPI::run`](crate::core::QueryAPI::run),
-/// [`QueryAPI::count`](crate::core::QueryAPI::count), ...) hand those resources to the C side;
+/// ([`QueryAPI::each`], [`QueryAPI::run`],
+/// [`QueryAPI::count`], ...) hand those resources to the C side;
 /// using the same `QueryIter` for a second consuming operation panics.
 /// Create a fresh one with `query.iterable()` instead.
 pub struct QueryIter<'a, P, T>

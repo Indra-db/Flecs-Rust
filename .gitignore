@@ -15,3 +15,4 @@ docreplace/
 test_projects/
 /docs/
 tmp/
+.claude/
