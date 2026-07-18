@@ -2797,30 +2797,26 @@ fn register_twice_w_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    let sys = world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        });
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&mut Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    let sys = sys
-        .update::<()>()
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&mut Count2>(|count| {
@@ -2834,30 +2830,26 @@ fn register_twice_w_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    let sys = world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        });
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    let sys = sys
-        .update::<()>()
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {
@@ -2871,30 +2863,26 @@ fn register_twice_w_run_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    let sys = world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        });
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    let sys = sys
-        .update::<()>()
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {
@@ -2908,30 +2896,26 @@ fn register_twice_w_each_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    let sys = world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        });
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    let sys = sys
-        .update::<()>()
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
     sys.run();
 
     world.get::<&Count2>(|count| {

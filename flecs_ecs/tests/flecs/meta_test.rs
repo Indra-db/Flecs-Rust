@@ -5,8 +5,8 @@ use core::ffi::CStr;
 use core::mem::offset_of;
 use flecs_ecs::prelude::meta::*;
 use flecs_ecs::prelude::*;
-use flecs_ecs_sys::ecs_world_t;
 use flecs_ecs::sys;
+use flecs_ecs_sys::ecs_world_t;
 
 fn std_string_support(world: WorldRef) -> Opaque<String> {
     let mut ts = Opaque::<String>::new(world);

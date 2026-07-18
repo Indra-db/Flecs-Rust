@@ -111,8 +111,7 @@ impl<'a, T: QueryTuple> SparseQuery<'a, T> {
             }
             sparse[f] = s;
             let cr = unsafe { sys::flecs_components_get(world_ptr, self.ids[f]) };
-            let ti =
-                unsafe { sys::ecs_rust_get_type_info_from_record(world_ptr, self.ids[f], cr) };
+            let ti = unsafe { sys::ecs_rust_get_type_info_from_record(world_ptr, self.ids[f], cr) };
             ecs_assert!(
                 !ti.is_null(),
                 FlecsErrorCode::InvalidOperation,
@@ -135,9 +134,8 @@ impl<'a, T: QueryTuple> SparseQuery<'a, T> {
         'entity: for i in 0..count {
             let e = unsafe { *entities.add(i as usize) };
             for f in 0..n {
-                let ptr = unsafe {
-                    sys::flecs_sparse_get_w_check(sparse[f], sizes[f], e, f != lead)
-                };
+                let ptr =
+                    unsafe { sys::flecs_sparse_get_w_check(sparse[f], sizes[f], e, f != lead) };
                 if ptr.is_null() {
                     continue 'entity;
                 }
@@ -147,8 +145,7 @@ impl<'a, T: QueryTuple> SparseQuery<'a, T> {
             let record = unsafe { sys::ecs_record_find(world_ptr, e) };
             let table = unsafe { (*record).table };
             let flags = unsafe { sys::flecs_table_flags(table) };
-            if flags
-                & (sys::EcsTableNotQueryable | sys::EcsTableIsPrefab | sys::EcsTableIsDisabled)
+            if flags & (sys::EcsTableNotQueryable | sys::EcsTableIsPrefab | sys::EcsTableIsDisabled)
                 != 0
             {
                 continue;

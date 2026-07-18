@@ -45,11 +45,11 @@ pub mod observer;
 pub mod observer_builder;
 pub mod query;
 pub mod query_builder;
-pub mod sparse_query;
 pub mod query_iter;
 pub(crate) mod query_tuple;
 #[cfg(feature = "flecs_safety_locks")]
 mod safety_map;
+pub mod sparse_query;
 pub mod table;
 pub mod term;
 pub(crate) mod tuple_alias;
@@ -79,14 +79,14 @@ pub use id_view::IdView;
 pub use observer::Observer;
 pub use observer_builder::{ObserverBuilder, ObserverUpdater};
 pub use query::{Query, QueryHandle};
-#[doc(hidden)]
-pub use sparse_query::SparseQuery;
 pub use query_builder::*;
 pub use query_iter::{ChainedIter, QueryIter};
 #[doc(hidden)]
 pub use query_tuple::*;
 #[cfg(feature = "flecs_safety_locks")]
 pub(crate) use safety_map::*;
+#[doc(hidden)]
+pub use sparse_query::SparseQuery;
 #[doc(hidden)]
 pub use table::*;
 #[doc(hidden)]

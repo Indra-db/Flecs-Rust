@@ -4181,11 +4181,9 @@ fn on_validate_hook_blocks_observer() {
         p.x != 0 || p.y != 0
     });
 
-    world
-        .observer::<flecs::OnSet, &Position>()
-        .each(move |_| {
-            observer_count_c.set(observer_count_c.get() + 1);
-        });
+    world.observer::<flecs::OnSet, &Position>().each(move |_| {
+        observer_count_c.set(observer_count_c.get() + 1);
+    });
 
     let e = world.entity();
     e.set(Position { x: 10, y: 20 });

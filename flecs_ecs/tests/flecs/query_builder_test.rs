@@ -3065,10 +3065,7 @@ fn iterate_groups_w_isa() {
     world.entity().is_a(asset_a).set(Position { x: 3, y: 4 });
     world.entity().is_a(asset_b).set(Position { x: 5, y: 6 });
 
-    let q = world
-        .query::<&Position>()
-        .group_by(*flecs::IsA)
-        .build();
+    let q = world.query::<&Position>().group_by(*flecs::IsA).build();
 
     q.run(|mut it| while it.next() {});
 
@@ -8101,7 +8098,6 @@ fn filter_as_move_arg() {
 // Rust equivalent: build a query with `.with(flecs::Any::ID)` and iterate with
 // `each_entity`. The 0-term `world.each_entity::<()>` does NOT work because a
 // query with no terms matches no tables.
-
 
 // ─── singleton_pair ───────────────────────────────────────────────────────────
 // TODO: missing API: Dynamic second target on singleton pair query (.term_at(0).second(tgt).singleton())

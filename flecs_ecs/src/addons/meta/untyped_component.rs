@@ -201,9 +201,8 @@ impl UntypedComponent<'_> {
 
         let mut offsets_changed = false;
         for member in &members {
-            let m = unsafe {
-                sys::ecs_struct_get_member(world, id, member.name.as_ptr() as *const _)
-            };
+            let m =
+                unsafe { sys::ecs_struct_get_member(world, id, member.name.as_ptr() as *const _) };
             if m.is_null() || unsafe { (*m).offset } == member.offset {
                 continue;
             }

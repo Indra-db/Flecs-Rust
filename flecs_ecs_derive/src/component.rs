@@ -500,7 +500,13 @@ pub(crate) fn collect_flecs_traits_calls(
         out
     };
 
-    (out, has_flecs_meta, has_on_registration, flecs_name, trait_consts)
+    (
+        out,
+        has_flecs_meta,
+        has_on_registration,
+        flecs_name,
+        trait_consts,
+    )
 }
 
 pub(crate) fn impl_meta(

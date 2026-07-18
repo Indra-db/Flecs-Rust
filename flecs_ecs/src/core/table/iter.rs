@@ -517,9 +517,7 @@ where
             let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
             let matches = id == term_id
                 || (unsafe { sys::ecs_id_is_pair(term_id) }
-                    && unsafe {
-                        sys::ecs_get_typeid(self.world().world_ptr_mut(), term_id) == id
-                    });
+                    && unsafe { sys::ecs_get_typeid(self.world().world_ptr_mut(), term_id) == id });
             assert!(
                 matches,
                 "{}: id mismatch: expected {id}, got term id {term_id} whose component type does not match",

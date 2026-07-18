@@ -809,8 +809,6 @@ fn module_module_has_singleton() {
     assert!(e.has(flecs::Singleton::ID));
 }
 
-
-
 #[test]
 fn component_scopes_do_not_become_modules() {
     let world = World::new();
@@ -910,7 +908,10 @@ fn module_reparent_keeps_old_parent_w_children() {
     let ecs = World::new();
 
     let sibling = ecs.component_named::<guard_parent::SiblingType>("guard_parent::SiblingType");
-    assert_eq!(sibling.path(), Some("::guard_parent::SiblingType".to_string()));
+    assert_eq!(
+        sibling.path(),
+        Some("::guard_parent::SiblingType".to_string())
+    );
 
     ecs.component_named::<guard_parent::MovedModule>("guard_parent::MovedModule");
     let m = ecs.import::<guard_parent::MovedModule>();

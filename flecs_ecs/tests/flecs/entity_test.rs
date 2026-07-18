@@ -7214,7 +7214,9 @@ fn set_parent() {
     let world = World::new();
 
     let parent = world.entity();
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(child.has(id::<flecs::Parent>()));
     assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7232,7 +7234,9 @@ fn defer_set_parent() {
     let parent = world.entity();
 
     world.defer_begin();
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(!child.has(id::<flecs::Parent>()));
     assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7253,7 +7257,9 @@ fn set_change_parent() {
 
     let parent = world.entity();
     let parent_2 = world.entity().child_of(parent);
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(child.has(id::<flecs::Parent>()));
     assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7281,7 +7287,9 @@ fn defer_set_change_parent() {
 
     let parent = world.entity();
     let parent_2 = world.entity().child_of(parent);
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(child.has(id::<flecs::Parent>()));
     assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7315,7 +7323,9 @@ fn assign_parent() {
 
     let parent = world.entity();
     let parent_2 = world.entity().child_of(parent);
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(child.has(id::<flecs::Parent>()));
     assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7343,7 +7353,9 @@ fn defer_assign_parent() {
 
     let parent = world.entity();
     let parent_2 = world.entity().child_of(parent);
-    let child = world.entity().set(flecs::Parent { value: *parent.id() });
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(child.has(id::<flecs::Parent>()));
     assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7381,7 +7393,9 @@ fn set_parent_on_stage() {
 
     world.readonly_begin(false);
 
-    let child = stage.entity().set(flecs::Parent { value: *parent.id() });
+    let child = stage.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(!child.has(id::<flecs::Parent>()));
     assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7408,7 +7422,9 @@ fn assign_parent_on_stage() {
 
     world.readonly_begin(false);
 
-    let child = stage.entity().set(flecs::Parent { value: *parent.id() });
+    let child = stage.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
 
     assert!(!child.has(id::<flecs::Parent>()));
     assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
@@ -7451,7 +7467,9 @@ fn defer_set_parent_to_deleted() {
 
     world.defer_begin();
     parent.destruct();
-    child.set(flecs::Parent { value: *parent.id() });
+    child.set(flecs::Parent {
+        value: *parent.id(),
+    });
     world.defer_end();
 
     assert!(!parent.is_alive());
@@ -7469,7 +7487,9 @@ fn defer_set_parent_to_deleted_batched() {
     world.defer_begin();
     parent.destruct();
     child.set(Position { x: 10, y: 20 });
-    child.set(flecs::Parent { value: *parent.id() });
+    child.set(flecs::Parent {
+        value: *parent.id(),
+    });
     child.set(Velocity { x: 1, y: 2 });
     world.defer_end();
 

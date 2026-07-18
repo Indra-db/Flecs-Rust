@@ -1,8 +1,8 @@
 mod entity_type;
 mod member_ranges;
-mod reflection_auto_define_struct;
-mod reflection_auto_define_nested_struct;
 mod reflection_auto_define_enum;
+mod reflection_auto_define_nested_struct;
+mod reflection_auto_define_struct;
 mod reflection_basics;
 mod reflection_basics_bitmask;
 mod reflection_basics_deserialize;

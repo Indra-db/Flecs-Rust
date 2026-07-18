@@ -390,7 +390,7 @@ mod cloned_tests {
         mod wildcard_any {
             use super::*;
 
-                        #[apply(component_types_no_dont_fragment)]
+            #[apply(component_types_no_dont_fragment)]
             fn pair_wildcard_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -399,7 +399,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 42);
             }
 
-                        #[apply(component_types_no_dont_fragment)]
+            #[apply(component_types_no_dont_fragment)]
             fn pair_any_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -408,7 +408,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 42);
             }
 
-                        #[apply(component_types_no_dont_fragment)]
+            #[apply(component_types_no_dont_fragment)]
             fn pair_wildcard_multiple_objects_picks_first(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -422,7 +422,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 1);
             }
 
-                        #[apply(component_types_no_dont_fragment)]
+            #[apply(component_types_no_dont_fragment)]
             fn pair_any_multiple_objects_picks_first(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -436,7 +436,7 @@ mod cloned_tests {
                 assert_eq!(v.value, 10);
             }
 
-                        #[apply(component_types)]
+            #[apply(component_types)]
             fn pair_option_wildcard_single_absent(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -445,7 +445,7 @@ mod cloned_tests {
                 assert!(v.is_none());
             }
 
-                        #[apply(component_types_no_dont_fragment)]
+            #[apply(component_types_no_dont_fragment)]
             fn pair_option_wildcard_single_present(ty: ComponentType) {
                 let world = World::new();
                 set_component_type::<Value>(&world, ty);
@@ -586,7 +586,7 @@ mod cloned_tests {
             assert_eq!(v.1.value, 16);
         }
 
-                #[apply(component_types_no_dont_fragment)]
+        #[apply(component_types_no_dont_fragment)]
         fn mixed_wildcard_pair_and_nonpair_present(ty: ComponentType) {
             let world = World::new();
             set_component_type::<Value>(&world, ty);
@@ -711,7 +711,7 @@ mod cloned_tests {
             assert!(v.2.is_none());
         }
 
-                #[apply(component_types_no_dont_fragment)]
+        #[apply(component_types_no_dont_fragment)]
         fn mixed_wildcard_pair_optional_nonpair_present(ty: ComponentType) {
             let world = World::new();
             set_component_type::<Value>(&world, ty);

@@ -1087,8 +1087,9 @@ where
     /// Returns true if the table matches the query.
     pub fn has_table(&self, table: Table) -> bool {
         let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
-        let result =
-            unsafe { sys::ecs_query_has_table(self.query.as_ptr(), table.raw_table_ptr(), &mut it) };
+        let result = unsafe {
+            sys::ecs_query_has_table(self.query.as_ptr(), table.raw_table_ptr(), &mut it)
+        };
         if result {
             unsafe { sys::ecs_iter_fini(&mut it) };
         }

@@ -2308,8 +2308,6 @@ impl<'a> EntityView<'a> {
         dest_entity
     }
 
-
-
     /// Clones the current entity to a new or specified entity.
     ///
     /// This function creates a clone of the current entity. If `dest_id` is provided

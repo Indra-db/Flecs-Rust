@@ -19,9 +19,7 @@ fn main() {
     world
         .component::<Position>()
         // Returns false when the position is outside of the world bounds.
-        .on_validate(|_entity, p| {
-            p.x >= 0.0 && p.x <= 100.0 && p.y >= 0.0 && p.y <= 100.0
-        })
+        .on_validate(|_entity, p| p.x >= 0.0 && p.x <= 100.0 && p.y >= 0.0 && p.y <= 100.0)
         .on_set(|e, p| {
             println!("{} set to {{{}, {}}}", e.name(), p.x, p.y);
         });

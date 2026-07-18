@@ -37,7 +37,10 @@ fn main() {
 
     // Traits are applied on component registration (implicit or explicit).
     let pos = world.component::<Position>();
-    println!("Position has DontFragment: {}", pos.has(flecs::DontFragment));
+    println!(
+        "Position has DontFragment: {}",
+        pos.has(flecs::DontFragment)
+    );
 
     let vel = world.component::<Velocity>();
     println!("Velocity has Sparse: {}", vel.has(flecs::Sparse));
