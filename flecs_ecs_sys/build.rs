@@ -323,7 +323,7 @@ fn main() {
 
         #[cfg(feature = "flecs_force_enable_ecs_asserts")]
         {
-            build.define("FLECS_KEEP_ASSERTS", None);
+            build.define("FLECS_KEEP_ASSERT", None);
         }
 
         let term_count_max = if cfg!(feature = "flecs_term_count_64") {

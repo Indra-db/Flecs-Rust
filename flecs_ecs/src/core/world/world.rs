@@ -112,6 +112,10 @@ impl Drop for World {
             } else {
                 let ctx = self.world_ctx();
 
+                // Blocks until no `QueryHandle` is mid-drop on another thread,
+                // then makes all later handle drops no-ops (see `QueryHandle`).
+                ctx.mark_world_dead();
+
                 unsafe {
                     // before we call ecs_fini(), we increment the reference count back to 1
                     // otherwise, copies of this object created during ecs_fini (e.g. a component on_remove hook)

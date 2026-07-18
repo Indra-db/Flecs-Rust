@@ -312,6 +312,9 @@
 use core::panic;
 use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
+use alloc::sync::Arc;
+use std::sync::{Mutex, PoisonError};
+
 use flecs_ecs_sys::ecs_get_binding_ctx;
 use sys::ecs_get_alive;
 
@@ -404,6 +407,14 @@ use crate::sys;
 ///     .build();
 /// ```
 ///
+/// # Thread Safety
+///
+/// `Query` is `!Send`/`!Sync`, like [`World`]: iterating it
+/// reads world storage that the owning thread may be mutating without
+/// synchronization. To use a query inside multithreaded (`par_*`) system
+/// callbacks, create a thread-shareable handle with [`Query::handle()`] and
+/// iterate it through the callback's stage; see [`QueryHandle`].
+///
 /// # Lifetime and Ownership
 ///
 /// Queries are reference-counted and can be cloned cheaply. They remain valid as long
@@ -472,24 +483,202 @@ where
     _phantom: PhantomData<T>,
 }
 
-// SAFETY: a `Query` handle may only cross threads when every component
-// reference it can hand out (`TupleType`) is itself `Send`: `&T` requires
-// `T: Sync`, `&mut T` requires `T: Send`. Queries over thread-bound
-// (`!Send`/`!Sync`) components stay pinned to the world's owning thread.
-unsafe impl<T> Send for Query<T>
+// `Query` is deliberately `!Send`/`!Sync` (via its `NonNull` fields), like
+// `World`: iterating a query reads world storage (tables, query cache) with
+// no synchronization against the owning thread mutating the world.
+// Component-tuple `Send` bounds are not sufficient to make that sound.
+// Use [`Query::handle()`] to reach a query from `par_*` system callbacks.
+
+/// A thread-shareable handle to a [`Query`], for use inside multithreaded
+/// (`par_*`) system callbacks.
+///
+/// [`Query`] itself is `!Send`/`!Sync`: iterating it goes through the world
+/// pointer it stores, which would race with the owning thread mutating the
+/// world. A `QueryHandle` cannot be iterated on its own — every iteration goes
+/// through [`QueryHandle::iter_stage()`], which requires a world/stage handle
+/// that is already valid on the current thread. Outside the world's owning
+/// thread such a handle only exists inside flecs-managed staged execution
+/// (the views passed to `par_each`/`par_run` callbacks), where the world is
+/// read-only and mutations are deferred to per-stage command queues.
+///
+/// The handle keeps the underlying query alive, like a [`Query`] clone. It is
+/// `Send`/`Sync` only when every component reference the query can hand out
+/// is `Send`.
+///
+/// # Example
+///
+/// ```
+/// # use flecs_ecs::prelude::*;
+/// # #[derive(Component)] struct Position { x: f32 }
+/// # #[derive(Component)] struct Velocity { x: f32 }
+/// # let world = World::new();
+/// # world.set_threads(2);
+/// # world.entity().set(Position { x: 0.0 }).set(Velocity { x: 1.0 });
+/// let q = world.new_query::<&Velocity>().handle();
+///
+/// world.system::<&mut Position>().par_each_entity(move |e, p| {
+///     q.iter_stage(e.world()).each(|v| {
+///         p.x += v.x;
+///     });
+/// });
+///
+/// world.progress();
+/// ```
+pub struct QueryHandle<T>
+where
+    T: QueryTuple,
+{
+    query: NonNull<sys::ecs_query_t>,
+    world_ctx: NonNull<WorldCtx>,
+    world_dead: Arc<Mutex<bool>>,
+    _phantom: PhantomData<T>,
+}
+
+// SAFETY: a `QueryHandle` exposes no world access by itself. Iteration
+// requires a `WorldProvider` already valid on the current thread; off the
+// owning thread one only exists inside flecs staged execution, where the
+// world is read-only. Component references materialized during iteration are
+// covered by the `TupleType: Send` bound (`&T` requires `T: Sync`, `&mut T`
+// requires `T: Send`). `Drop` only performs atomic refcount operations and
+// holds `world_dead` so it cannot interleave with world teardown.
+unsafe impl<T> Send for QueryHandle<T>
 where
     T: QueryTuple,
     for<'w> T::TupleType<'w>: Send,
 {
 }
 
-// SAFETY: sharing `&Query` lets any thread iterate it, which materializes
-// `TupleType` references on that thread; see the `Send` impl above.
-unsafe impl<T> Sync for Query<T>
+// SAFETY: `&QueryHandle` only offers `iter_stage`; see the `Send` impl above.
+unsafe impl<T> Sync for QueryHandle<T>
 where
     T: QueryTuple,
     for<'w> T::TupleType<'w>: Send,
 {
+}
+
+impl<T> QueryHandle<T>
+where
+    T: QueryTuple,
+{
+    /// Returns an iterator over the query using the given world or stage.
+    ///
+    /// Inside `par_*` callbacks, pass the stage obtained from the callback's
+    /// view (e.g. `entity_view.world()` or `table_iter.world()`).
+    ///
+    /// Mutable component access through the returned iterator is guarded at
+    /// runtime by the same per-column locks as `par_*` field access
+    /// (`flecs_safety_locks` feature, enabled by default): concurrent
+    /// conflicting access errors instead of aliasing.
+    pub fn iter_stage<'a>(&'a self, stage: impl WorldProvider<'a>) -> QueryIter<'a, (), T> {
+        let stage_ptr = stage.world_ptr();
+        assert_stage_belongs_to_query_world(stage_ptr, self.query.as_ptr());
+        QueryIter::new(
+            unsafe { sys::ecs_query_iter(stage_ptr, self.query.as_ptr()) },
+            sys::ecs_query_next,
+        )
+    }
+}
+
+/// The C side does not validate this, and iterating a query with a stage of a
+/// different world reads foreign table storage with the wrong query plan.
+#[inline]
+fn assert_stage_belongs_to_query_world(
+    stage_ptr: *const sys::ecs_world_t,
+    query: *const sys::ecs_query_t,
+) {
+    unsafe {
+        assert!(
+            core::ptr::eq(
+                sys::ecs_get_world(stage_ptr as *const c_void),
+                (*query).real_world as *const sys::ecs_world_t
+            ),
+            "the world/stage passed to `iter_stage()` belongs to a different world than the query"
+        );
+    }
+}
+
+impl<T> Clone for QueryHandle<T>
+where
+    T: QueryTuple,
+{
+    /// # Panics
+    ///
+    /// Panics if the world has already been destroyed.
+    fn clone(&self) -> Self {
+        // Unlike `Query::handle()` (which runs on the owning thread, where the
+        // world cannot be concurrently dropped), `clone` can run on any
+        // thread, so it must exclude world teardown while claiming.
+        let dead = self
+            .world_dead
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        assert!(
+            !*dead,
+            "cannot clone a QueryHandle after its world has been destroyed"
+        );
+        unsafe {
+            sys::flecs_poly_claim_(self.query.as_ptr() as *mut c_void);
+            self.world_ctx.as_ref().inc_query_ref_count();
+        }
+        drop(dead);
+        Self {
+            query: self.query,
+            world_ctx: self.world_ctx,
+            world_dead: Arc::clone(&self.world_dead),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T> Drop for QueryHandle<T>
+where
+    T: QueryTuple,
+{
+    fn drop(&mut self) {
+        // Taking the lock excludes world teardown for the whole drop: the
+        // query header and `WorldCtx` stay alive until we are done.
+        let dead = self
+            .world_dead
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        // `WorldCtx` is either alive (a live handle keeps `query_ref_count`
+        // nonzero, so a clean world drop cannot have freed it) or leaked by
+        // the world's lingering-references panic path.
+        let ctx = unsafe { self.world_ctx.as_ref() };
+        if ctx.is_panicking() {
+            // World was destroyed with this handle still alive (its drop
+            // already reported that), or the thread is unwinding.
+            return;
+        }
+        let on_owning_thread = std::thread::current().id() == ctx.owning_thread();
+        if *dead && !on_owning_thread {
+            // World is finalizing on its owning thread; the query header may
+            // already be freed, so only the world's panic check reports us.
+            return;
+        }
+        // Reached with the world alive, or on the owning thread during
+        // `ecs_fini` (handles captured in system closures drop there, like
+        // `Query` clones do).
+        unsafe {
+            if self.query.as_ref().entity == 0 {
+                if sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void) == 0 {
+                    // Freeing mutates world allocator state, so it is only
+                    // done on the owning thread; otherwise the memory is
+                    // reclaimed when the world is finalized.
+                    if on_owning_thread {
+                        sys::ecs_query_fini(self.query.as_ptr());
+                    }
+                }
+            } else {
+                let header = self.query.as_ptr() as *const sys::ecs_header_t;
+                if (*header).refcount > 1 {
+                    sys::flecs_poly_release_(self.query.as_ptr() as *mut c_void);
+                }
+            }
+            ctx.dec_query_ref_count();
+        }
+        drop(dead);
+    }
 }
 
 impl<T> Clone for Query<T>
@@ -562,7 +751,9 @@ where
 
     #[inline(always)]
     fn retrieve_iter_stage<'a>(&self, stage: impl WorldProvider<'a>) -> sys::ecs_iter_t {
-        unsafe { sys::ecs_query_iter(stage.world_ptr(), self.query.as_ptr()) }
+        let stage_ptr = stage.world_ptr();
+        assert_stage_belongs_to_query_world(stage_ptr, self.query.as_ptr());
+        unsafe { sys::ecs_query_iter(stage_ptr, self.query.as_ptr()) }
     }
 
     #[inline(always)]
@@ -778,6 +969,34 @@ where
 
     pub fn reference_count(&self) -> i32 {
         unsafe { sys::flecs_poly_refcount(self.query.as_ptr() as *mut c_void) }
+    }
+
+    /// Creates a thread-shareable [`QueryHandle`] to this query, for use
+    /// inside multithreaded (`par_*`) system callbacks.
+    ///
+    /// The handle keeps the query alive like a clone. See [`QueryHandle`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the flecs OS API has no threading functions installed
+    /// (`flecs_os_api_impl` feature disabled without a custom OS API): the
+    /// handle's cross-thread reference counting relies on them being atomic.
+    pub fn handle(&self) -> QueryHandle<T> {
+        assert!(
+            unsafe { sys::ecs_os_has_threading() },
+            "QueryHandle requires a flecs OS API with threading functions (enable `flecs_os_api_impl` or install a custom OS API)"
+        );
+        unsafe {
+            sys::flecs_poly_claim_(self.query.as_ptr() as *mut c_void);
+            let ctx = self.world_ctx.as_ref();
+            ctx.inc_query_ref_count();
+            QueryHandle {
+                query: self.query,
+                world_ctx: self.world_ctx,
+                world_dead: ctx.world_dead_lock().clone(),
+                _phantom: PhantomData,
+            }
+        }
     }
 
     /// Get the iterator for the query
