@@ -49,26 +49,22 @@ fn main() {
     let sun = world.entity_named("Sun").set(Position { x: 1.0, y: 1.0 });
 
     world
-        .entity_named("Mercury")
+        .entity_named_in(sun, "Mercury")
         .set(Position { x: 1.0, y: 1.0 })
-        .add(Planet)
-        .child_of(sun); // Shortcut for add(flecs::ChildOf, sun)
+        .add(Planet);
 
     world
-        .entity_named("Venus")
+        .entity_named_in(sun, "Venus")
         .set(Position { x: 2.0, y: 2.0 })
-        .add(Planet)
-        .child_of(sun);
+        .add(Planet);
 
     let earth = world
-        .entity_named("Earth")
+        .entity_named_in(sun, "Earth")
         .set(Position { x: 3.0, y: 3.0 })
-        .add(Planet)
-        .child_of(sun);
+        .add(Planet);
 
     let moon = world
-        .entity_named("Moon")
-        .child_of(earth)
+        .entity_named_in(earth, "Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add(Moon);
 
