@@ -28,12 +28,20 @@ use crate::sys;
 ///     });
 /// });
 /// ```
+/// A `QueryIter` is single-shot: the underlying C iterator owns resources
+/// (a cursor into the stage's stack allocator) that are released exactly once,
+/// either when iteration runs to completion or on drop. Consuming operations
+/// ([`QueryAPI::each`](crate::core::QueryAPI::each), [`QueryAPI::run`](crate::core::QueryAPI::run),
+/// [`QueryAPI::count`](crate::core::QueryAPI::count), ...) hand those resources to the C side;
+/// using the same `QueryIter` for a second consuming operation panics.
+/// Create a fresh one with `query.iterable()` instead.
 pub struct QueryIter<'a, P, T>
 where
     T: QueryTuple,
 {
     iter: sys::ecs_iter_t,
     iter_next: ExternIterNextFn,
+    consumed: core::cell::Cell<bool>,
     _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -45,8 +53,21 @@ where
         Self {
             iter,
             iter_next,
+            consumed: core::cell::Cell::new(false),
             _phantom: core::marker::PhantomData,
         }
+    }
+
+    /// Marks the iterator as consumed and returns the raw iterator, transferring
+    /// responsibility for releasing its resources to the caller.
+    fn take_iter(&self) -> sys::ecs_iter_t {
+        assert!(
+            !self.consumed.get(),
+            "QueryIter already consumed: each/run/count and other consuming operations \
+             release the underlying flecs iterator. Create a new one with `query.iterable()`."
+        );
+        self.consumed.set(true);
+        self.iter
     }
 
     /// Limit results to tables with specified group id (grouped queries only)
@@ -126,6 +147,22 @@ where
     }
 }
 
+impl<P, T> Drop for QueryIter<'_, P, T>
+where
+    T: QueryTuple,
+{
+    fn drop(&mut self) {
+        if !self.consumed.get() {
+            // SAFETY: the iterator was created by ecs_query_iter (or a chained
+            // variant) and has not been handed to a consuming operation, so its
+            // resources are still live and owned by this struct. ecs_iter_fini
+            // is the documented release path for iterators that were not
+            // iterated until completion.
+            unsafe { sys::ecs_iter_fini(&mut self.iter) };
+        }
+    }
+}
+
 #[doc(hidden)]
 impl<P, T> IterOperations for QueryIter<'_, P, T>
 where
@@ -133,7 +170,7 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t {
-        self.iter
+        self.take_iter()
     }
 
     fn retrieve_iter_stage<'w>(&self, _stage: impl WorldProvider<'w>) -> sys::ecs_iter_t {
@@ -245,6 +282,7 @@ where
     param2: i32,
     make_iter: unsafe extern "C-unwind" fn(*const sys::ecs_iter_t, i32, i32) -> sys::ecs_iter_t,
     iter_next: ExternIterNextFn,
+    consumed: core::cell::Cell<bool>,
     _phantom: core::marker::PhantomData<&'a (P, T)>,
 }
 
@@ -254,23 +292,39 @@ where
 {
     fn new_page(parent: QueryIter<'a, P, T>, offset: i32, limit: i32) -> Self {
         Self {
-            parent: core::cell::UnsafeCell::new(parent.iter),
+            parent: core::cell::UnsafeCell::new(parent.take_iter()),
             param1: offset,
             param2: limit,
             make_iter: sys::ecs_page_iter,
             iter_next: sys::ecs_page_next,
+            consumed: core::cell::Cell::new(false),
             _phantom: core::marker::PhantomData,
         }
     }
 
     fn new_worker(parent: QueryIter<'a, P, T>, index: i32, count: i32) -> Self {
         Self {
-            parent: core::cell::UnsafeCell::new(parent.iter),
+            parent: core::cell::UnsafeCell::new(parent.take_iter()),
             param1: index,
             param2: count,
             make_iter: sys::ecs_worker_iter,
             iter_next: sys::ecs_worker_next,
+            consumed: core::cell::Cell::new(false),
             _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+impl<P, T> Drop for ChainedIter<'_, P, T>
+where
+    T: QueryTuple,
+{
+    fn drop(&mut self) {
+        if !self.consumed.get() {
+            // SAFETY: the parent iterator's resources were transferred into this
+            // struct on construction and no child iterator was created, so the
+            // parent is still pristine and must be released here.
+            unsafe { sys::ecs_iter_fini(self.parent.get_mut()) };
         }
     }
 }
@@ -282,9 +336,17 @@ where
 {
     #[inline(always)]
     fn retrieve_iter(&self) -> sys::ecs_iter_t {
+        assert!(
+            !self.consumed.get(),
+            "ChainedIter already consumed: iterating a page/worker iterator releases the \
+             underlying flecs iterator. Create a new one with `query.iterable().page()/.worker()`."
+        );
+        self.consumed.set(true);
         // SAFETY: &self is borrowed for the entire run()/each() call, so self.parent
         // cannot move. The child iter stores chain_it = self.parent.get(), which
         // remains valid and exclusively owned (no other &mut exists) for the duration.
+        // The consumed flag guarantees a single child per parent, so the parent's
+        // resources are released exactly once (by the child's fini/completion).
         unsafe { (self.make_iter)(self.parent.get() as *const _, self.param1, self.param2) }
     }
 

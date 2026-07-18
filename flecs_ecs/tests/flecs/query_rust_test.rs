@@ -3564,6 +3564,76 @@ fn query_iter_set_var_expr_in_place() {
     assert_eq!(count, 1);
 }
 
+// ─── query_iter_lifecycle ─────────────────────────────────────────────────────
+
+#[test]
+fn query_iter_unconsumed_drop_releases_resources() {
+    let world = World::new();
+    world.entity().set(Position { x: 1, y: 2 });
+    let q = world.new_query::<&Position>();
+
+    let iter = q.iterable();
+    drop(iter);
+
+    let iter = q.iterable().page(0, 1);
+    drop(iter);
+
+    let iter = q.iterable().worker(0, 2);
+    drop(iter);
+
+    drop(q);
+    drop(world);
+}
+
+#[test]
+fn query_iter_transfer_through_with_var_releases_resources() {
+    let world = World::new();
+
+    let rel = world.entity();
+    let tgt = world.entity();
+
+    let q = world
+        .query::<&Position>()
+        .with(rel)
+        .second()
+        .set_var("var")
+        .build();
+
+    world.entity().set(Position { x: 1, y: 2 }).add((rel, tgt));
+
+    let iter = q.iterable();
+    let constrained = iter.with_var_expr("var", tgt);
+    drop(constrained);
+    drop(iter);
+
+    drop(q);
+    drop(world);
+}
+
+#[test]
+#[should_panic(expected = "QueryIter already consumed")]
+fn query_iter_reuse_panics() {
+    let world = World::new();
+    world.entity().set(Position { x: 1, y: 2 });
+    let q = world.new_query::<&Position>();
+
+    let iter = q.iterable();
+    iter.each(|_| {});
+    iter.each(|_| {});
+}
+
+#[test]
+#[should_panic(expected = "ChainedIter already consumed")]
+fn chained_iter_reuse_panics() {
+    let world = World::new();
+    world.entity().set(Position { x: 1, y: 2 });
+    let q = world.new_query::<&Position>();
+
+    let iter = q.iterable().page(0, 1);
+    iter.each(|_| {});
+    iter.each(|_| {});
+}
+
 // ─── iter_entities ────────────────────────────────────────────────────────────
 
 #[test]
