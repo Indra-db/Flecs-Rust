@@ -407,7 +407,7 @@ fn set_generic() {
     let pos = Position { x: 10, y: 20 };
 
     let entity = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             position.id(),
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -1434,7 +1434,7 @@ fn path_custom_sep() {
     world.set_scope(parent.id());
     let child = world.entity_named("child");
 
-    assert_eq!(&child.path_w_sep("_", "?").unwrap(), "?parent_child");
+    assert_eq!(&child.path_with_sep("_", "?").unwrap(), "?parent_child");
 }
 
 #[test]
@@ -1448,11 +1448,11 @@ fn path_from_custom_sep() {
     let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep("_", "?").unwrap(),
+        &grandchild.path_with_sep("_", "?").unwrap(),
         "?parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_w_sep(parent, "_", "::").unwrap(),
+        &grandchild.path_from_with_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1468,11 +1468,11 @@ fn path_from_type_custom_sep() {
     let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep("_", "?").unwrap(),
+        &grandchild.path_with_sep("_", "?").unwrap(),
         "?Parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_w_sep(parent, "_", "::").unwrap(),
+        &grandchild.path_from_with_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -5604,7 +5604,7 @@ fn set_generic_w_id() {
     let position = world.component::<Position>();
     let pos = Position { x: 10, y: 20 };
     let e = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             position.id(),
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -5626,7 +5626,7 @@ fn set_generic_w_id_t() {
     let id = position.id();
     let pos = Position { x: 10, y: 20 };
     let e = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             id,
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -6414,12 +6414,12 @@ fn child_of() {
 }
 
 // child (C++ removed the redundant entity_view::child() API; use
-// world.entity_in(parent) instead)
+// world.entity_child_of(parent) instead)
 #[test]
 fn child() {
     let world = World::new();
     let base = world.entity();
-    let e = world.entity_in(base);
+    let e = world.entity_child_of(base);
     assert!(e.has((flecs::ChildOf::ID, base)));
 }
 
@@ -7047,7 +7047,7 @@ fn entity_w_childof() {
     let world = World::new();
 
     let p = world.entity();
-    let e = world.entity_in(p);
+    let e = world.entity_child_of(p);
 
     assert!(e.has((flecs::ChildOf::ID, p)));
 }
@@ -7058,7 +7058,7 @@ fn entity_w_childof_w_name() {
     let world = World::new();
 
     let p = world.entity_named("Parent");
-    let e = world.entity_named_in(p, "Foo");
+    let e = world.entity_named_child_of(p, "Foo");
 
     assert!(e.has((flecs::ChildOf::ID, p)));
     assert_eq!(e.name(), "Foo");
@@ -7074,7 +7074,7 @@ fn entity_w_childof_w_name_existing_w_name() {
 
     let p = world.entity_named("Parent");
     let f = world.entity_named("Foo");
-    let e = world.entity_named_in(p, "Foo");
+    let e = world.entity_named_child_of(p, "Foo");
 
     assert!(f != e);
     assert!(!f.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));
@@ -7085,9 +7085,9 @@ fn entity_w_childof_w_name_existing_w_name() {
     assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
-// entity_w_parent
+// entity_with_parent
 #[test]
-fn entity_w_parent() {
+fn entity_with_parent() {
     let world = World::new();
 
     let p = world.entity();
@@ -7159,7 +7159,7 @@ fn prefab_w_childof() {
     let world = World::new();
 
     let p = world.entity();
-    let e = world.prefab_in(p);
+    let e = world.prefab_child_of(p);
 
     assert!(e.has(flecs::Prefab::ID));
     assert!(e.has((flecs::ChildOf::ID, p)));
@@ -7171,7 +7171,7 @@ fn prefab_w_childof_w_name() {
     let world = World::new();
 
     let p = world.entity_named("Parent");
-    let e = world.prefab_named_in(p, "Foo");
+    let e = world.prefab_named_child_of(p, "Foo");
 
     assert!(e.has(flecs::Prefab::ID));
     assert!(e.has((flecs::ChildOf::ID, p)));
@@ -7188,7 +7188,7 @@ fn prefab_w_childof_w_name_existing_w_name() {
 
     let p = world.entity_named("Parent");
     let f = world.entity_named("Foo");
-    let e = world.prefab_named_in(p, "Foo");
+    let e = world.prefab_named_child_of(p, "Foo");
 
     assert!(f != e);
     assert!(!f.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));

@@ -13,7 +13,7 @@ pub fn change_parent(criterion: &mut Criterion) {
         let mut entities = Vec::with_capacity(ENTITY_COUNT as usize);
 
         for _ in 0..ENTITY_COUNT {
-            entities.push(world.entity_in(p2));
+            entities.push(world.entity_child_of(p2));
         }
 
         bencher.iter_custom(|iters| {

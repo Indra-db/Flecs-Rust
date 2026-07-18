@@ -383,10 +383,10 @@ fn systems_timers_nested_tick_sources_30() {
     let each_second = world.timer().set_interval(1.0);
 
     // tick each minute
-    let each_minute = world.timer().set_rate_w_tick_source(60, each_second);
+    let each_minute = world.timer().set_rate_with_tick_source(60, each_second);
 
     // tick each hour
-    let each_hour = world.timer().set_rate_w_tick_source(60, each_minute);
+    let each_hour = world.timer().set_rate_with_tick_source(60, each_minute);
 }
 
 #[test]

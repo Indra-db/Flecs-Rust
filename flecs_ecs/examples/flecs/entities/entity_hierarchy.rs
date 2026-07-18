@@ -52,22 +52,22 @@ fn main() {
         .set(Position { x: 1.0, y: 1.0 });
 
     world
-        .entity_named_in(sun, "Mercury")
+        .entity_named_child_of(sun, "Mercury")
         .set(Position { x: 1.0, y: 1.0 })
         .add(Planet);
 
     world
-        .entity_named_in(sun, "Venus")
+        .entity_named_child_of(sun, "Venus")
         .set(Position { x: 2.0, y: 2.0 })
         .add(Planet);
 
     let earth = world
-        .entity_named_in(sun, "Earth")
+        .entity_named_child_of(sun, "Earth")
         .set(Position { x: 3.0, y: 3.0 })
         .add(Planet);
 
     let moon = world
-        .entity_named_in(earth, "Moon")
+        .entity_named_child_of(earth, "Moon")
         .set(Position { x: 0.1, y: 0.1 })
         .add(Moon);
 

@@ -85,7 +85,7 @@ impl<'a, T: ComponentId> Component<'a, T> {
     }
 
     #[doc(hidden)]
-    pub fn new_w_id(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
+    pub fn new_with_id(world: impl WorldProvider<'a>, id: impl IntoEntity) -> Self {
         Self {
             base: UntypedComponent::new_from(world, id),
             _marker: PhantomData,
@@ -517,10 +517,10 @@ impl<'a, T> Component<'a, T> {
         // Guard against double-registering a *custom* fn. Overriding the auto-registered
         // panic stub (set when T does not impl PartialOrd) is allowed.
         let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
-        let already_custom =
+        let _already_custom =
             !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_compare.is_some() };
         ecs_assert!(
-            !already_custom,
+            !_already_custom,
             FlecsErrorCode::InvalidOperation,
             "cmp hook already set for component {}",
             core::any::type_name::<T>()
@@ -546,10 +546,10 @@ impl<'a, T> Component<'a, T> {
         // Guard against double-registering a *custom* fn. Overriding the auto-registered
         // panic stub (set when T does not impl PartialEq) is allowed.
         let binding_ctx_ptr = type_hooks.binding_ctx as *const ComponentBindingCtx;
-        let already_custom =
+        let _already_custom =
             !binding_ctx_ptr.is_null() && unsafe { (*binding_ctx_ptr).on_equals.is_some() };
         ecs_assert!(
-            !already_custom,
+            !_already_custom,
             FlecsErrorCode::InvalidOperation,
             "equals hook already set for component {}",
             core::any::type_name::<T>()

@@ -1,5 +1,6 @@
 ---
 source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+assertion_line: 78
 expression: str_output
 ---
-"Entity Sun is at (1, 1)\nEntity Mercury is at (2, 2)\nEntity Venus is at (3, 3)\nEntity Earth is at (4, 4)\nEntity Moon is at (4.1, 4.1)\n"
+"Sun: {1, 1}\nMercury: {2, 2}\nVenus: {3, 3}\nEarth: {4, 4}\nMoon: {4.1, 4.1}\n"

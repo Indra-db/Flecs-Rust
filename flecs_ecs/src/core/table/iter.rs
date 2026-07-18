@@ -1900,7 +1900,7 @@ where
             self.count()
         };
 
-        let array = flecs_field_w_size(self.iter, size, index);
+        let array = flecs_field_with_size(self.iter, size, index);
 
         (array, is_shared, count, size)
     }

@@ -316,7 +316,7 @@ impl<'a> EntityView<'a> {
         }
     }
 
-    pub(crate) fn new_w_parent(
+    pub(crate) fn new_with_parent(
         world: impl WorldProvider<'a>,
         parent: Entity,
         name: Option<&str>,
@@ -626,11 +626,11 @@ impl<'a> EntityView<'a> {
     /// let child = world.entity_named("Child").child_of(parent);
     ///
     /// assert_eq!(
-    ///     child.path_w_sep("::", "::"),
+    ///     child.path_with_sep("::", "::"),
     ///     Some("::Parent::Child".to_string())
     /// );
     /// assert_eq!(
-    ///     child.path_w_sep("/", "/"),
+    ///     child.path_with_sep("/", "/"),
     ///     Some("/Parent/Child".to_string())
     /// );
     /// ```
@@ -639,8 +639,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::path()`] - Get path with default separator
     /// * [`EntityView::name()`] - Get entity name only
-    pub fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
-        self.path_from_w_sep(0, sep, init_sep)
+    pub fn path_with_sep(self, sep: &str, init_sep: &str) -> Option<String> {
+        self.path_from_with_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -659,7 +659,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::path_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_with_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent
     pub fn path(self) -> Option<String> {
         self.path_from(0)
@@ -686,13 +686,13 @@ impl<'a> EntityView<'a> {
     ///
     /// // Get path relative to root
     /// assert_eq!(
-    ///     child.path_from_w_sep(root, "::", "::"),
+    ///     child.path_from_with_sep(root, "::", "::"),
     ///     Some("Parent::Child".to_string())
     /// );
     ///
     /// // Get path relative to parent
     /// assert_eq!(
-    ///     child.path_from_w_sep(parent, "::", "::"),
+    ///     child.path_from_with_sep(parent, "::", "::"),
     ///     Some("Child".to_string())
     /// );
     /// ```
@@ -701,7 +701,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::path_from()`] - Get path relative to parent type
     /// * [`EntityView::path()`] - Get full path
-    pub fn path_from_w_sep(
+    pub fn path_from_with_sep(
         &self,
         parent: impl IntoEntity,
         sep: &str,
@@ -746,7 +746,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::path_from_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_from_with_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent type
     pub fn path_from(self, parent: impl IntoEntity) -> Option<String> {
         NonNull::new(unsafe {

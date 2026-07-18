@@ -1637,7 +1637,7 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     unsafe { sys::ecs_table_get_column(table, column_index as i32, row as i32) as *mut T }
 }
 
-pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
+pub(crate) fn flecs_field_with_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
     let index_usize = index as usize;
     //TODO should be soft asserts
     ecs_assert!(

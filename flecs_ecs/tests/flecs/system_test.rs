@@ -2530,7 +2530,7 @@ fn nested_rate_tick_source() {
 
     // t3 ticks every 3 frames; t6 ticks every 2 t3 ticks = every 6 frames
     let t3 = world.timer().set_rate(3);
-    let t6 = world.timer().set_rate_w_tick_source(2, t3.id());
+    let t6 = world.timer().set_rate_with_tick_source(2, t3.id());
 
     world
         .system_named::<()>("sys_a")

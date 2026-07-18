@@ -620,7 +620,12 @@ impl<'a> EntityView<'a> {
     /// * `id` - The component or pair id to set the pointer for.
     /// * `size` - The size of the component.
     /// * `ptr` - A pointer to the component.
-    pub unsafe fn set_ptr_w_size(self, id: impl IntoId, size: usize, ptr: *const c_void) -> Self {
+    pub unsafe fn set_ptr_with_size(
+        self,
+        id: impl IntoId,
+        size: usize,
+        ptr: *const c_void,
+    ) -> Self {
         let id = *id.into_id(self.world);
         // SAFETY: the world pointer is valid for 'a; the caller guarantees `ptr` points to `size` bytes valid as the type of `id`.
         unsafe {
@@ -652,7 +657,7 @@ impl<'a> EntityView<'a> {
 
             assert!(!type_info.is_null(), "invalid component id: {id:?}");
 
-            self.set_ptr_w_size(*id, (*type_info).size as usize, ptr)
+            self.set_ptr_with_size(*id, (*type_info).size as usize, ptr)
         }
     }
 

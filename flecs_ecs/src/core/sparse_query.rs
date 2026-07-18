@@ -78,10 +78,10 @@ impl<'a, T: QueryTuple> SparseQuery<'a, T> {
     }
 
     fn assert_policies(&self) {
-        for &id in &self.ids[..self.count] {
+        for &_id in &self.ids[..self.count] {
             ecs_assert!(
                 unsafe {
-                    sys::ecs_get_target(self.world.world_ptr_mut(), id, ECS_ON_INSTANTIATE, 0)
+                    sys::ecs_get_target(self.world.world_ptr_mut(), _id, ECS_ON_INSTANTIATE, 0)
                 } != ECS_INHERIT,
                 FlecsErrorCode::InvalidOperation,
                 "sparse query component has the (OnInstantiate, Inherit) trait, which sparse queries cannot match"

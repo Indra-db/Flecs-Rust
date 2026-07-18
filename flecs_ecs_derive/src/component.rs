@@ -1167,7 +1167,7 @@ pub(crate) fn impl_cached_component_data_struct(
             #pre_name
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
+                let _component = flecs_ecs::core::Component::<Self>::new_with_id(world, component_id);
 
                 #flecs_traits_calls
 
@@ -1530,7 +1530,7 @@ pub(crate) fn impl_cached_component_data_enum(
                 #pre_name
                 #[inline(always)]
                 fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                    let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
+                    let _component = flecs_ecs::core::Component::<Self>::new_with_id(world, component_id);
 
                     #flecs_traits_calls
 

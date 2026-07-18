@@ -132,32 +132,18 @@ impl World {
         EntityView::new_named_cstr(self, name)
     }
 
-    /// Create a new entity inside `parent` (fragmenting `ChildOf` hierarchy
-    /// storage).
-    pub fn entity_in(&self, parent: impl IntoEntity) -> EntityView<'_> {
-        let parent = parent.into_entity(self);
-        EntityView::new_child_of(self, parent)
-    }
-
-    /// Create a named entity inside `parent` (fragmenting `ChildOf` hierarchy
-    /// storage). The name is scoped under the parent.
-    pub fn entity_named_in(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
-        let parent = parent.into_entity(self);
-        EntityView::new_named_child_of(self, parent, name)
-    }
-
     /// Create a new entity for a parent using [`flecs::Parent`] hierarchy
     /// storage (non-fragmenting).
     pub fn entity_with_parent(&self, parent: impl IntoEntity) -> EntityView<'_> {
         let parent = parent.into_entity(self);
-        EntityView::new_w_parent(self, parent, None)
+        EntityView::new_with_parent(self, parent, None)
     }
 
     /// Create a named entity for a parent using [`flecs::Parent`] hierarchy
     /// storage (non-fragmenting). The name cannot be a scoped identifier.
     pub fn entity_named_with_parent(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
         let parent = parent.into_entity(self);
-        EntityView::new_w_parent(self, parent, Some(name))
+        EntityView::new_with_parent(self, parent, Some(name))
     }
 
     /// Create a new entity as a child of `parent` (fragmenting `ChildOf`
@@ -172,20 +158,6 @@ impl World {
     pub fn entity_named_child_of(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
         let parent = parent.into_entity(self);
         EntityView::new_named_child_of(self, parent, name)
-    }
-
-    /// Create a new entity for a parent using [`flecs::Parent`] hierarchy
-    /// storage (non-fragmenting).
-    pub fn entity_w_parent(&self, parent: impl IntoEntity) -> EntityView<'_> {
-        let parent = parent.into_entity(self);
-        EntityView::new_w_parent(self, parent, None)
-    }
-
-    /// Create a named entity for a parent using [`flecs::Parent`] hierarchy
-    /// storage (non-fragmenting). The name cannot be a scoped identifier.
-    pub fn entity_named_w_parent(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
-        let parent = parent.into_entity(self);
-        EntityView::new_w_parent(self, parent, Some(name))
     }
 
     /// Create a new entity.
@@ -259,21 +231,6 @@ impl World {
     /// * [`World::prefab_type_named()`]
     pub fn prefab_named<'a>(&'a self, name: &str) -> EntityView<'a> {
         let result = EntityView::new_named(self, name);
-        unsafe { result.add_id_unchecked(ECS_PREFAB) };
-        result
-    }
-
-    /// Create a prefab inside `parent`.
-    pub fn prefab_in(&self, parent: impl IntoEntity) -> EntityView<'_> {
-        let result = self.entity_in(parent);
-        unsafe { result.add_id_unchecked(ECS_PREFAB) };
-        result
-    }
-
-    /// Create a named prefab inside `parent`. The name is scoped under the
-    /// parent.
-    pub fn prefab_named_in(&self, parent: impl IntoEntity, name: &str) -> EntityView<'_> {
-        let result = self.entity_named_in(parent, name);
         unsafe { result.add_id_unchecked(ECS_PREFAB) };
         result
     }

@@ -63,9 +63,9 @@ impl UntypedComponent<'_> {
             ..Default::default()
         };
 
-        let result = unsafe { sys::ecs_struct_add_member(world, id, &member) };
+        let _result = unsafe { sys::ecs_struct_add_member(world, id, &member) };
         ecs_assert!(
-            result == 0,
+            _result == 0,
             FlecsErrorCode::InternalError,
             "failed to add member to struct"
         );

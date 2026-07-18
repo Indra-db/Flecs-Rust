@@ -28,19 +28,19 @@ fn main() {
         .set(LocalTransform { x: 1.0, y: 1.0 });
 
     world
-        .entity_named_in(sun, "Mercury")
+        .entity_named_child_of(sun, "Mercury")
         .set(LocalTransform { x: 1.0, y: 1.0 });
 
     world
-        .entity_named_in(sun, "Venus")
+        .entity_named_child_of(sun, "Venus")
         .set(LocalTransform { x: 2.0, y: 2.0 });
 
     let earth = world
-        .entity_named_in(sun, "Earth")
+        .entity_named_child_of(sun, "Earth")
         .set(LocalTransform { x: 3.0, y: 3.0 });
 
     world
-        .entity_named_in(earth, "Moon")
+        .entity_named_child_of(earth, "Moon")
         .set(LocalTransform { x: 0.1, y: 0.1 });
 
     // Create a hierarchical query to compute the global position from the

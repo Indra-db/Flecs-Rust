@@ -98,7 +98,7 @@ pub trait TimerAPI: Sized {
     ///
     /// # See also
     ///
-    /// * [`TimerAPI::set_rate_w_tick_source()`]
+    /// * [`TimerAPI::set_rate_with_tick_source()`]
     fn set_rate(self, rate: i32) -> Self {
         unsafe { sys::ecs_set_rate(self.world_ptr_mut(), *self.id(), rate, 0) };
         self
@@ -128,7 +128,7 @@ pub trait TimerAPI: Sized {
     /// # See also
     ///
     /// * [`TimerAPI::set_rate()`]
-    fn set_rate_w_tick_source(self, rate: i32, tick_source: impl Into<Entity>) -> Self {
+    fn set_rate_with_tick_source(self, rate: i32, tick_source: impl Into<Entity>) -> Self {
         unsafe { sys::ecs_set_rate(self.world_ptr_mut(), *self.id(), rate, *tick_source.into()) };
         self
     }
