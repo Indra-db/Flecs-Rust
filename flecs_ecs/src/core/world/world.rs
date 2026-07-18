@@ -71,7 +71,7 @@ impl Default for World {
 
         world.init_builtin_components();
 
-        let o = world
+        world
             .observer::<flecs::OnAdd, ()>()
             .with((flecs::With, flecs::Wildcard))
             .run(|mut it| {
@@ -92,8 +92,6 @@ impl Default for World {
                     }
                 }
             });
-
-        o.child_of(world.lookup("flecs::core::internals"));
 
         world
     }
@@ -187,8 +185,6 @@ impl World {
     /// // world_a is consumed — cannot be used here
     /// world_b.release();             // last handle → ecs_fini called
     /// ```
-    ///
-    /// * C++ API: `world::release`
     pub fn release(self) {
         drop(self); // Drop impl handles flecs_poly_release / ecs_fini
     }

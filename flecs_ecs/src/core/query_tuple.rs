@@ -12,11 +12,23 @@ pub struct IsAnyArray {
 }
 
 #[cfg(feature = "flecs_safety_locks")]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct TableColumnSafety {
     //only set for sparse terms
     pub component_id: u64,
-    pub table_record: *const sys::ecs_table_record_t,
+    pub table: *mut sys::ecs_table_t,
+    pub column: i16,
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+impl Default for TableColumnSafety {
+    fn default() -> Self {
+        Self {
+            component_id: 0,
+            table: core::ptr::null_mut(),
+            column: -1,
+        }
+    }
 }
 
 pub struct ComponentsData<T: QueryTuple, const LEN: usize> {
@@ -321,6 +333,12 @@ pub trait QueryTuple: Sized {
     type Pointers: ComponentPointers<Self>;
     type TupleType<'a>;
     const CONTAINS_ANY_TAG_TERM: bool;
+    /// Whether every term declares the `DontFragment` trait at compile time
+    /// (`#[flecs(traits(DontFragment))]`), no term is a tag, and no term
+    /// declares the `(OnInstantiate, Inherit)` policy. Equivalent to the C++
+    /// `is_sparse_query` trait; used to validate
+    /// [`SparseQuery`][crate::core::SparseQuery] at compile time.
+    const IS_SPARSE_QUERY: bool;
     const COUNT: i32;
     const COUNT_IMMUTABLE: usize;
     const COUNT_MUTABLE: usize;
@@ -389,6 +407,9 @@ where
     type Pointers = ComponentsData<A, 1>;
     type TupleType<'w> = A::ActualType<'w>;
     const CONTAINS_ANY_TAG_TERM: bool = <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG;
+    const IS_SPARSE_QUERY: bool = !<<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG
+        && <<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_DONT_FRAGMENT
+        && !matches!(<<A::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::ON_INSTANTIATE, OnInstantiatePolicy::Inherit);
     const COUNT : i32 = 1;
     const COUNT_IMMUTABLE: usize = if A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
     const COUNT_MUTABLE: usize = if !A::IS_IMMUTABLE && !A::IS_OPTIONAL { 1 } else { 0 };
@@ -444,7 +465,9 @@ where
         let tr = unsafe { table_records.get_unchecked_mut(0) };
         #[cfg(feature = "flecs_safety_locks")]
         {
-            tr.table_record = unsafe { *it.trs.add(0) };
+            let (table, column) = unsafe { flecs_field_table_column(it, 0) };
+            tr.table = table;
+            tr.column = column;
         }
 
         #[cfg(not(feature = "flecs_term_count_64"))] 
@@ -482,7 +505,9 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let tr = unsafe { table_records.get_unchecked_mut(0) };
-            tr.table_record = unsafe { *it.trs.add(0) };
+            let (table, column) = unsafe { flecs_field_table_column(it, 0) };
+            tr.table = table;
+            tr.column = column;
         }
         components[0] = flecs_field::<A::OnlyPairType>(it, 0) as *mut u8 ;
     }
@@ -556,6 +581,12 @@ macro_rules! impl_iterable {
             )*);
 
             const CONTAINS_ANY_TAG_TERM: bool = $(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG ||)* false;
+
+            const IS_SPARSE_QUERY: bool = (tuple_count!($($t),*) > 0) && $((
+                !<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_TAG
+                && <<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::IS_DONT_FRAGMENT
+                && !matches!(<<$t::OnlyPairType as ComponentId>::UnderlyingType as ComponentInfo>::ON_INSTANTIATE, OnInstantiatePolicy::Inherit)
+            ) &&)* true;
 
             type Pointers = ComponentsData<Self, { tuple_count!($($t),*) }>;
             const COUNT : i32 = tuple_count!($($t),*);
@@ -633,7 +664,9 @@ macro_rules! impl_iterable {
 
                     #[cfg(feature = "flecs_safety_locks")]
                     {
-                        tr.table_record = unsafe { *it.trs.add(index) };
+                        let (table, column) = unsafe { flecs_field_table_column(it, index) };
+                        tr.table = table;
+                        tr.column = column;
                     }
 
                     #[cfg(feature = "flecs_safety_locks")]
@@ -749,7 +782,9 @@ macro_rules! impl_iterable {
                         };
 
                         let tr = unsafe { table_records.get_unchecked_mut(*idx) };
-                        tr.table_record = unsafe { *it.trs.add(index) };
+                        let (table, column) = unsafe { flecs_field_table_column(it, index) };
+                        tr.table = table;
+                        tr.column = column;
                         *idx += 1;
                     }
                     index += 1;

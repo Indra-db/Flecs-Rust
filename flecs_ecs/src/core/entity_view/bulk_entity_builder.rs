@@ -69,7 +69,7 @@ impl<'a> BulkEntityBuilder<'a> {
     /// # Notes
     ///
     /// The provided entities must not already have components.
-    pub(crate) fn new_w_entity_ids(
+    pub(crate) fn new_with_entity_ids(
         world: impl WorldProvider<'a>,
         entities: &[impl Into<Entity> + Copy],
     ) -> Self {
@@ -460,14 +460,14 @@ impl World {
     ///
     /// let entities: Vec<Entity> = (0..10).map(|_| world.entity().id()).collect();
     /// let new_entities = world
-    ///     .entity_bulk_w_entity_ids(&entities)
+    ///     .entity_bulk_with_entity_ids(&entities)
     ///     .set(&positions)
     ///     .build();
     /// ```
-    pub fn entity_bulk_w_entity_ids(
+    pub fn entity_bulk_with_entity_ids(
         &self,
         entities: &[impl Into<Entity> + Copy],
     ) -> BulkEntityBuilder<'_> {
-        BulkEntityBuilder::new_w_entity_ids(self, entities)
+        BulkEntityBuilder::new_with_entity_ids(self, entities)
     }
 }

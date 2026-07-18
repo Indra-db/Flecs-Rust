@@ -436,6 +436,9 @@ bitflags::bitflags! {
         const MatchEmptyTables = sys::EcsQueryMatchEmptyTables;
         const AllowUnresolvedByName = sys::EcsQueryAllowUnresolvedByName;
         const TableOnly = sys::EcsQueryTableOnly;
+        const DetectChanges = sys::EcsQueryDetectChanges;
+        const GroupByOrdered = sys::EcsQueryGroupByOrdered;
+        const GroupByDesc = sys::EcsQueryGroupByDesc;
     }
 }
 

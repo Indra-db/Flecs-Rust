@@ -15,6 +15,7 @@ create_pre_registered_component!(IsToggle, IS_TOGGLE);
 create_pre_registered_component!(IsSparse, IS_SPARSE);
 create_pre_registered_component!(IsOr, IS_OR);
 create_pre_registered_component!(IsDontFragment, IS_DONT_FRAGMENT);
+create_pre_registered_component!(NonFragmentingChildOf, NON_FRAGMENTING_CHILD_OF);
 
 create_pre_registered_component!(IsVariable, ECS_IS_VARIABLE, "Term id is a variable");
 create_pre_registered_component!(IsEntity, ECS_IS_ENTITY, "Term id is an entity");

@@ -32,6 +32,8 @@ pub type MemberRanges = sys::EcsMemberRanges;
 pub type EcsStruct = sys::EcsStruct;
 pub type Array = sys::EcsArray;
 pub type Vector = sys::EcsVector;
+pub type Map = sys::EcsMap;
+pub type Value = sys::ecs_value_t;
 pub type Unit = sys::EcsUnit;
 pub type UnitPrefix = sys::EcsUnitPrefix;
 
@@ -45,5 +47,7 @@ impl_component_traits_binding_type_w_id!(MemberRanges, ECS_MEMBER_RANGES);
 impl_component_traits_binding_type_w_id!(EcsStruct, ECS_STRUCT);
 impl_component_traits_binding_type_w_id!(Array, ECS_ARRAY);
 impl_component_traits_binding_type_w_id!(Vector, ECS_VECTOR);
+impl_component_traits_binding_type_w_id!(Map, ECS_MAP);
+impl_component_traits_binding_type_w_id!(Value, ECS_VALUE);
 impl_component_traits_binding_type_w_id!(Unit, ECS_UNIT);
 impl_component_traits_binding_type_w_id!(UnitPrefix, ECS_UNIT_PREFIX);

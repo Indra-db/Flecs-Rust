@@ -1055,7 +1055,7 @@ fn register_twice_w_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .each_entity(|e, _| {
             e.world().get::<&mut Count2>(|count| {
@@ -1069,13 +1069,11 @@ fn register_twice_w_each() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1090,7 +1088,7 @@ fn register_twice_w_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .run(|mut it| {
             while it.next() {
@@ -1106,15 +1104,13 @@ fn register_twice_w_run() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1129,7 +1125,7 @@ fn register_twice_w_run_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .run(|mut it| {
             while it.next() {
@@ -1145,13 +1141,11 @@ fn register_twice_w_run_each() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1166,7 +1160,7 @@ fn register_twice_w_each_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
+    let o = world
         .observer_named::<flecs::OnSet, &Position>("Test")
         .each_entity(|e, _| {
             e.world().get::<&mut Count2>(|count| {
@@ -1180,15 +1174,13 @@ fn register_twice_w_each_run() {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
 
@@ -1421,7 +1413,6 @@ void Observer_on_set_singleton_set_component_named_entity(void) {
 
 */
 #[test]
-#[ignore = "observer with write() modifying a named entity triggers table-lock abort — needs Rust binding fix for deferred observer writes"]
 fn on_set_singleton_set_component_named_entity() {
     #[derive(Component)]
     struct MyComponent {
@@ -1579,14 +1570,12 @@ fn lookup_and_update_each() {
     let e = world.lookup("Test");
     assert!(*e.id() != 0);
 
-    // Re-register with same name replaces callback (equivalent to C++ o.each(...))
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .each_entity(|e, _| {
-            e.world().get::<&mut Count2>(|count| {
-                count.b += 1;
-            });
+    let o = world.observer_from(world.entity_named("Test"));
+    o.update::<&Position>().each_entity(|e, _| {
+        e.world().get::<&mut Count2>(|count| {
+            count.b += 1;
         });
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
     world.get::<&Count2>(|count| {
@@ -1614,16 +1603,14 @@ fn lookup_and_update_run() {
         assert_eq!(count.a, 1);
     });
 
-    // Re-register with same name replaces callback (equivalent to C++ o.run(...))
-    world
-        .observer_named::<flecs::OnSet, &Position>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        });
+    let o = world.observer_from(world.entity_named("Test"));
+    o.update::<&Position>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
 
     world.entity().set(Position { x: 10, y: 20 });
     world.get::<&Count2>(|count| {
@@ -2154,7 +2141,6 @@ fn untyped_field() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_component_that_triggered_observer() {
     let world = World::new();
 
@@ -2201,7 +2187,6 @@ fn query_eval_w_component_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_first_var_that_triggered_observer() {
     let world = World::new();
 
@@ -2254,7 +2239,6 @@ fn query_eval_w_pair_first_var_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_second_var_that_triggered_observer() {
     let world = World::new();
 
@@ -2307,7 +2291,6 @@ fn query_eval_w_pair_second_var_that_triggered_observer() {
 }
 
 #[test]
-#[ignore = "need to update flecs to fix"]
 fn query_eval_w_pair_both_vars_that_triggered_observer() {
     let world = World::new();
 
@@ -2531,4 +2514,35 @@ fn run_callback_w_yield_existing_2_fields() {
     world.get::<&Count>(|count| {
         assert_eq!(count.0, 1);
     });
+}
+
+#[test]
+fn reuse_observer_builder() {
+    let world = World::new();
+
+    let mut ob = world.observer::<flecs::OnSet, &Position>();
+
+    let count_1 = alloc::rc::Rc::new(core::cell::Cell::new(0));
+    let count_2 = alloc::rc::Rc::new(core::cell::Cell::new(0));
+
+    let count_1_c = count_1.clone();
+    let o1 = ob.each(move |_p| {
+        count_1_c.set(count_1_c.get() + 1);
+    });
+
+    let count_2_c = count_2.clone();
+    let o2 = ob.with(Velocity::id()).each(move |_p| {
+        count_2_c.set(count_2_c.get() + 1);
+    });
+
+    assert!(o1.id() != o2.id());
+
+    world.entity().set(Position { x: 10, y: 20 });
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    assert_eq!(count_1.get(), 2);
+    assert_eq!(count_2.get(), 1);
 }

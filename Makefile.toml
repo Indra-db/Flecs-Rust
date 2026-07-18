@@ -114,6 +114,12 @@ cwd = "./flecs_ecs/doc/flecs"
 command = "mdbook"
 args = ["serve", "--open"]
 
+[tasks.regenerate-bindings]
+description = "Regenerate flecs_ecs_sys bindings (debug + release variants) with the full addon feature set"
+command = "cargo"
+args = ["build", "-p", "flecs_ecs", "--features", "flecs_regenerate_binding"]
+workspace = false
+
 [tasks.build-tests-with-regeneration]
 description = "Build all build test projects with binding regeneration enabled"
 script = { file = "${CARGO_MAKE_WORKING_DIRECTORY}/scripts/build_tests_with_regeneration.sh", absolute_path = true }
@@ -130,7 +136,7 @@ args = [
     "flecs_ecs",
     "--each-feature",
     "--exclude-features",
-    "flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c",
+    "flecs_force_build_debug_c,flecs_force_build_release_c,flecs_default_to_uncached_queries,flecs_force_enable_ecs_asserts,flecs_disable_build_c,flecs_nightly_tests",
     "--no-dev-deps",
     "-v",
     "--features",

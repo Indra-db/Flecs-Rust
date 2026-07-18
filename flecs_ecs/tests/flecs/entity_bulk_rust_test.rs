@@ -180,7 +180,7 @@ fn bulk_entity_builder_with_entity_ids() {
     }
 
     let new_entities = world
-        .entity_bulk_w_entity_ids(&entity_ids)
+        .entity_bulk_with_entity_ids(&entity_ids)
         .add::<Position>()
         .build();
 
@@ -329,7 +329,7 @@ fn bulk_entity_builder_with_entity_ids_accepts_entity_views() {
     let views: Vec<EntityView> = ids.iter().map(|&id| world.entity_from_id(id)).collect();
 
     let created = world
-        .entity_bulk_w_entity_ids(&views)
+        .entity_bulk_with_entity_ids(&views)
         .add::<Position>()
         .build();
 
@@ -349,7 +349,7 @@ fn bulk_entity_builder_entity_ids_owned_by_builder() {
     let ids: [u64; 3] = [200_000, 200_001, 200_002];
     let mut builder = {
         let temp: Vec<Entity> = ids.iter().map(|&id| Entity(id)).collect();
-        world.entity_bulk_w_entity_ids(&temp)
+        world.entity_bulk_with_entity_ids(&temp)
     };
 
     let created = builder.add::<Position>().build();

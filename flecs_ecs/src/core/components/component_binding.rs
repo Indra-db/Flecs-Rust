@@ -11,10 +11,12 @@ pub(crate) struct ComponentBindingCtx {
     pub(crate) on_remove: Option<*mut c_void>,
     pub(crate) on_set: Option<*mut c_void>,
     pub(crate) on_replace: Option<*mut c_void>,
+    pub(crate) on_validate: Option<*mut c_void>,
     pub(crate) free_on_add: Option<EcsCtxFreeT>,
     pub(crate) free_on_remove: Option<EcsCtxFreeT>,
     pub(crate) free_on_set: Option<EcsCtxFreeT>,
     pub(crate) free_on_replace: Option<EcsCtxFreeT>,
+    pub(crate) free_on_validate: Option<EcsCtxFreeT>,
     // fn pointers need no heap allocation, so no free_on_compare/free_on_equals
     pub(crate) on_compare: Option<*mut c_void>,
     pub(crate) on_equals: Option<*mut c_void>,
@@ -50,6 +52,14 @@ impl Drop for ComponentBindingCtx {
             // pointer is freed exactly once here.
             unsafe { free_on_set(on_set) };
         }
+        if let Some(on_validate) = self.on_validate
+            && let Some(free_on_validate) = self.free_on_validate
+        {
+            // SAFETY: on_validate was allocated by the matching Box/leak that
+            // produced free_on_validate, and Drop runs at most once so this
+            // pointer has not been freed yet.
+            unsafe { free_on_validate(on_validate) };
+        }
         if let Some(on_replace) = self.on_replace
             && let Some(free_on_replace) = self.free_on_replace
         {
@@ -69,10 +79,12 @@ impl Default for ComponentBindingCtx {
             on_remove: None,
             on_set: None,
             on_replace: None,
+            on_validate: None,
             free_on_add: None,
             free_on_remove: None,
             free_on_set: None,
             free_on_replace: None,
+            free_on_validate: None,
             on_compare: None,
             on_equals: None,
         }

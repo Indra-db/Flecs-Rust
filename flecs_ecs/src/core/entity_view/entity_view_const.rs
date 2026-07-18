@@ -283,6 +283,55 @@ impl<'a> EntityView<'a> {
         }
     }
 
+    pub(crate) fn new_child_of(world: impl WorldProvider<'a>, parent: Entity) -> Self {
+        let desc = sys::ecs_entity_desc_t {
+            parent: *parent,
+            ..Default::default()
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    pub(crate) fn new_named_child_of(
+        world: impl WorldProvider<'a>,
+        parent: Entity,
+        name: &str,
+    ) -> Self {
+        let name = compact_str::format_compact!("{}\0", name);
+
+        let desc = sys::ecs_entity_desc_t {
+            name: name.as_ptr() as *const _,
+            parent: *parent,
+            sep: SEPARATOR.as_ptr(),
+            root_sep: SEPARATOR.as_ptr(),
+            ..Default::default()
+        };
+        let id = unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &desc) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
+    pub(crate) fn new_with_parent(
+        world: impl WorldProvider<'a>,
+        parent: Entity,
+        name: Option<&str>,
+    ) -> Self {
+        let name = name.map(|n| compact_str::format_compact!("{}\0", n));
+        let name_ptr = name
+            .as_ref()
+            .map_or(core::ptr::null(), |n| n.as_ptr() as *const _);
+        let id = unsafe { sys::ecs_new_w_parent(world.world_ptr_mut(), *parent, name_ptr) };
+        Self {
+            world: world.world(),
+            id: id.into(),
+        }
+    }
+
     /// Create a named entity with a custom scope resolution.
     ///
     /// Creates a new entity with the specified name. Named entities can be looked up using
@@ -408,7 +457,6 @@ impl<'a> EntityView<'a> {
     /// - its id is not 0
     /// - if they are alive (see [`EntityView::is_alive()`])
     /// - the id contains a valid bit pattern for an entity
-    ///
     ///
     /// # Examples
     ///
@@ -578,11 +626,11 @@ impl<'a> EntityView<'a> {
     /// let child = world.entity_named("Child").child_of(parent);
     ///
     /// assert_eq!(
-    ///     child.path_w_sep("::", "::"),
+    ///     child.path_with_sep("::", "::"),
     ///     Some("::Parent::Child".to_string())
     /// );
     /// assert_eq!(
-    ///     child.path_w_sep("/", "/"),
+    ///     child.path_with_sep("/", "/"),
     ///     Some("/Parent/Child".to_string())
     /// );
     /// ```
@@ -591,8 +639,8 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::path()`] - Get path with default separator
     /// * [`EntityView::name()`] - Get entity name only
-    pub fn path_w_sep(self, sep: &str, init_sep: &str) -> Option<String> {
-        self.path_from_w_sep(0, sep, init_sep)
+    pub fn path_with_sep(self, sep: &str, init_sep: &str) -> Option<String> {
+        self.path_from_with_sep(0, sep, init_sep)
     }
 
     /// Return the hierarchical entity path using the default separator "::".
@@ -611,7 +659,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::path_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_with_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent
     pub fn path(self) -> Option<String> {
         self.path_from(0)
@@ -638,13 +686,13 @@ impl<'a> EntityView<'a> {
     ///
     /// // Get path relative to root
     /// assert_eq!(
-    ///     child.path_from_w_sep(root, "::", "::"),
+    ///     child.path_from_with_sep(root, "::", "::"),
     ///     Some("Parent::Child".to_string())
     /// );
     ///
     /// // Get path relative to parent
     /// assert_eq!(
-    ///     child.path_from_w_sep(parent, "::", "::"),
+    ///     child.path_from_with_sep(parent, "::", "::"),
     ///     Some("Child".to_string())
     /// );
     /// ```
@@ -653,7 +701,7 @@ impl<'a> EntityView<'a> {
     ///
     /// * [`EntityView::path_from()`] - Get path relative to parent type
     /// * [`EntityView::path()`] - Get full path
-    pub fn path_from_w_sep(
+    pub fn path_from_with_sep(
         &self,
         parent: impl IntoEntity,
         sep: &str,
@@ -698,7 +746,7 @@ impl<'a> EntityView<'a> {
     ///
     /// # See also
     ///
-    /// * [`EntityView::path_from_w_sep()`] - Get path with custom separator
+    /// * [`EntityView::path_from_with_sep()`] - Get path with custom separator
     /// * [`EntityView::path_from()`] - Get path relative to parent type
     pub fn path_from(self, parent: impl IntoEntity) -> Option<String> {
         NonNull::new(unsafe {
@@ -2260,64 +2308,6 @@ impl<'a> EntityView<'a> {
         dest_entity
     }
 
-    /// Creates a new entity that is a child of this entity.
-    ///
-    /// Shorthand for `world.entity().child_of(self)`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use flecs_ecs::prelude::*;
-    /// let world = World::new();
-    ///
-    /// let parent = world.entity();
-    /// let child = parent.child();
-    ///
-    /// assert_eq!(child.parent(), Some(parent));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::child_named()`] - Create a named child entity
-    /// * [`EntityView::child_of()`] - Make an existing entity a child of another
-    #[inline(always)]
-    pub fn child(self) -> EntityView<'a> {
-        let w = self.world();
-        let e = unsafe { sys::ecs_new_w_id(w.ptr_mut(), ecs_pair(ECS_CHILD_OF, *self.id)) };
-        EntityView::new_from(w, e)
-    }
-
-    /// Creates a new named entity that is a child of this entity.
-    ///
-    /// Shorthand for `world.entity_named(name).child_of(self)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the child entity.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use flecs_ecs::prelude::*;
-    /// let world = World::new();
-    ///
-    /// let parent = world.entity_named("Parent");
-    /// let child = parent.child_named("Child");
-    ///
-    /// assert_eq!(child.path(), Some("::Parent::Child".to_string()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// * [`EntityView::child()`] - Create an unnamed child entity
-    /// * [`EntityView::child_of()`] - Make an existing entity a child of another
-    #[inline(always)]
-    pub fn child_named(self, name: &str) -> EntityView<'a> {
-        let w = self.world();
-        let e = w.entity_named(name).child_of(self.id);
-        EntityView::new_from(self.world(), *e)
-    }
-
     /// Clones the current entity to a new or specified entity.
     ///
     /// This function creates a clone of the current entity. If `dest_id` is provided
@@ -2455,7 +2445,6 @@ impl EntityView<'_> {
     /// Enqueue event for entity.
     ///
     /// # Safety
-    ///
     ///
     /// # Arguments
     ///

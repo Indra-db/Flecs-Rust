@@ -38,8 +38,6 @@ impl<'a, P: ComponentId, T: QueryTuple> ObserverBuilder<'a, P, T> {
         };
 
         obj.desc.events[0] = P::UnderlyingType::entity_id(world.world());
-        obj.desc.entity =
-            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
 
         T::populate(&mut obj);
 
@@ -89,9 +87,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             _phantom: core::marker::PhantomData,
         };
 
-        obj.desc.entity =
-            unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
-
         T::populate(&mut obj);
         obj
     }
@@ -114,11 +109,6 @@ impl<'a, P, T: QueryTuple> ObserverBuilder<'a, P, T> {
             world: world.world(),
             _phantom: core::marker::PhantomData,
         };
-
-        if obj.desc.entity == 0 {
-            obj.desc.entity =
-                unsafe { sys::ecs_entity_init(world.world_ptr_mut(), &Default::default()) };
-        }
 
         T::populate(&mut obj);
         obj
@@ -266,3 +256,49 @@ impl<P, T: QueryTuple> core::fmt::Debug for ObserverBuilder<'_, P, T> {
         ds.finish()
     }
 }
+
+/// Updates an existing [`Observer`]'s callback or context via
+/// `ecs_observer_update()`. Created with [`Observer::update()`].
+pub struct ObserverUpdater<'a, P = (), T: QueryTuple = ()> {
+    desc: sys::ecs_observer_desc_t,
+    world: WorldRef<'a>,
+    entity: EntityView<'a>,
+    _phantom: core::marker::PhantomData<&'a (T, P)>,
+}
+
+impl<'a, P, T: QueryTuple> ObserverUpdater<'a, P, T> {
+    pub(crate) fn new(entity: EntityView<'a>) -> Self {
+        Self {
+            desc: Default::default(),
+            world: entity.world(),
+            entity,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+impl<'a, P, T> Builder<'a> for ObserverUpdater<'a, P, T>
+where
+    T: QueryTuple,
+{
+    type BuiltType = Observer<'a>;
+
+    #[doc(hidden)]
+    fn build(&mut self) -> Self::BuiltType {
+        if self.desc.callback.is_none() && self.desc.run.is_none() {
+            panic!("you should not call this fn manually. Use `.each` , `.run` instead")
+        }
+        unsafe {
+            sys::ecs_observer_update(self.world.world_ptr_mut(), *self.entity.id(), &self.desc);
+        }
+        Observer::new_from_existing(self.entity)
+    }
+}
+
+impl<'a, P, T: QueryTuple> WorldProvider<'a> for ObserverUpdater<'a, P, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.world
+    }
+}
+
+implement_reactor_api!(ObserverUpdater<'a, P, T>);

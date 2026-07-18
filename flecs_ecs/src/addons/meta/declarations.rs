@@ -34,11 +34,13 @@ pub enum EcsTypeKind {
     ArrayType = sys::ecs_type_kind_t_EcsArrayType as u32,
     VectorType = sys::ecs_type_kind_t_EcsVectorType as u32,
     OpaqueType = sys::ecs_type_kind_t_EcsOpaqueType as u32,
+    MapType = sys::ecs_type_kind_t_EcsMapType as u32,
+    ValueType = sys::ecs_type_kind_t_EcsValueType as u32,
 }
 
 impl EcsTypeKind {
     pub fn last_type_kind() -> EcsTypeKind {
-        EcsTypeKind::OpaqueType
+        EcsTypeKind::ValueType
     }
 }
 

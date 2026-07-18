@@ -6,6 +6,7 @@ extern crate alloc;
 
 pub mod common_test;
 
+mod abi_test;
 mod addons_misc_test;
 mod aliasing_test;
 #[cfg(feature = "flecs_app")]
@@ -14,6 +15,7 @@ mod clone_default_impl_test;
 mod component_index_growth_test;
 mod component_lifecycle_test;
 mod component_test;
+mod component_traits_test;
 mod derive_attr_component_traits;
 mod entity_bulk_rust_test;
 mod entity_rust_test;

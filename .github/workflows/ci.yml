@@ -56,6 +56,21 @@ jobs:
       - name: cargo test release
         run: cargo test --workspace --release --features test-with-crash-handler
 
+  bindings-check:
+    runs-on: ubuntu-latest
+    name: committed bindings match regeneration
+    steps:
+      - uses: actions/checkout@v6
+      - name: install MSRV toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_MIN_VER }}
+          components: rustfmt
+      - name: regenerate bindings
+        run: cargo build -p flecs_ecs --features flecs_regenerate_binding
+      - name: check for drift
+        run: git diff --exit-code flecs_ecs_sys/src/bindings.rs flecs_ecs_sys/src/bindings_release.rs
+
   hack-each-feature:
     runs-on: ubuntu-latest
     name: cargo make hack-each-feature

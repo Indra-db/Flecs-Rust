@@ -1043,11 +1043,12 @@ where
     /// # Returns
     ///
     /// Returns a pointer to the group info
-    pub fn group_info(&self, group_id: impl Into<Entity>) -> *const sys::ecs_query_group_info_t {
+    pub fn group_info(&self, group_id: impl IntoEntity) -> *const sys::ecs_query_group_info_t {
+        let group_id = group_id.into_entity(self.world());
         // SAFETY: `self.query` is a NonNull pointer to a live `ecs_query_t` owned by
         // `self` for the duration of this call; `group_id` is a plain integer id, so
         // `ecs_query_get_group_info` is safe to call regardless of whether the group exists.
-        unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id.into()) }
+        unsafe { sys::ecs_query_get_group_info(self.query.as_ptr(), *group_id) }
     }
 
     /// Get context for group
@@ -1059,7 +1060,7 @@ where
     /// # Returns
     ///
     /// Returns a (void) pointer to the group context
-    pub fn group_context(&self, group_id: impl Into<Entity>) -> *mut c_void {
+    pub fn group_context(&self, group_id: impl IntoEntity) -> *mut c_void {
         let group_info = self.group_info(group_id);
 
         if !group_info.is_null() {
@@ -1070,6 +1071,63 @@ where
         } else {
             core::ptr::null_mut()
         }
+    }
+
+    /// Returns true if the entity matches the query.
+    pub fn has(&self, entity: impl IntoEntity) -> bool {
+        let entity = entity.into_entity(self.world());
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result = unsafe { sys::ecs_query_has(self.query.as_ptr(), *entity, &mut it) };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
+    }
+
+    /// Returns true if the table matches the query.
+    pub fn has_table(&self, table: Table) -> bool {
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result = unsafe {
+            sys::ecs_query_has_table(self.query.as_ptr(), table.raw_table_ptr(), &mut it)
+        };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
+    }
+
+    /// Iterate the query's groups, invoking `func` with each group id and
+    /// its group context (as set by `on_group_create`).
+    ///
+    /// Groups exist for tables that have been matched by the query; iterate
+    /// the query at least once to populate them.
+    pub fn each_group(&self, mut func: impl FnMut(Entity, *mut core::ffi::c_void)) {
+        let map = unsafe { sys::ecs_query_get_groups(self.query.as_ptr()) };
+        if map.is_null() {
+            return;
+        }
+        let mut it = unsafe { sys::ecs_map_iter(map) };
+        while unsafe { sys::ecs_map_next(&mut it) } {
+            let key = unsafe { *it.res };
+            let value = unsafe { *it.res.add(1) };
+            func(Entity::new(key), value as usize as *mut core::ffi::c_void);
+        }
+    }
+
+    /// Returns true if the entire table range matches the query.
+    pub fn has_table_range(&self, range: TableRange) -> bool {
+        let mut c_range = sys::ecs_table_range_t {
+            table: range.table_ptr_mut(),
+            offset: range.offset(),
+            count: TableOperations::count(&range),
+        };
+        let mut it: sys::ecs_iter_t = unsafe { core::mem::zeroed() };
+        let result =
+            unsafe { sys::ecs_query_has_range(self.query.as_ptr(), &mut c_range, &mut it) };
+        if result {
+            unsafe { sys::ecs_iter_fini(&mut it) };
+        }
+        result
     }
 }
 

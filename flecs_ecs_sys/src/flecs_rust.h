@@ -31,3 +31,22 @@ ecs_rust_set_t ecs_rust_set(
     ecs_id_t id,
     const void *new_ptr,
     size_t size);
+
+/* Fast path for compile-time-known sparse / dont_fragment components without
+ * the (OnInstantiate, Inherit) trait. Mirrors ecs_get_sparse_id() but returns
+ * an ecs_get_ptr_t so lock-target info is available under
+ * FLECS_MUT_ALIAS_LOCKS. */
+FLECS_API
+ecs_get_ptr_t ecs_rust_get_sparse_id(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id,
+    size_t size);
+
+/* ABI guards: C-side sizeof for structs with FLECS_DEBUG-gated fields, so the
+ * Rust side can assert its bindings match the compiled profile. */
+FLECS_API size_t ecs_rust_sizeof_ecs_ref_t(void);
+FLECS_API size_t ecs_rust_sizeof_ecs_map_t(void);
+FLECS_API size_t ecs_rust_sizeof_ecs_map_iter_t(void);
+FLECS_API size_t ecs_rust_sizeof_ecs_stack_t(void);
+FLECS_API size_t ecs_rust_sizeof_ecs_stack_cursor_t(void);

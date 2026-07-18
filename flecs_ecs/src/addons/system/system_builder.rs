@@ -29,18 +29,11 @@ where
             _phantom: core::marker::PhantomData,
         };
 
-        obj.desc.entity = unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
-
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
 
         obj
@@ -54,21 +47,11 @@ where
             _phantom: core::marker::PhantomData,
         };
 
-        if obj.desc.entity == 0 {
-            obj.desc.entity =
-                unsafe { sys::ecs_entity_init(obj.world_ptr_mut(), &Default::default()) };
-        }
-
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        if obj.desc.phase == 0 {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
 
         obj
@@ -96,13 +79,8 @@ where
         T::populate(&mut obj);
 
         #[cfg(feature = "flecs_pipeline")]
-        unsafe {
-            sys::ecs_add_id(
-                world.world_ptr_mut(),
-                obj.desc.entity,
-                ecs_dependson(ECS_ON_UPDATE),
-            );
-            sys::ecs_add_id(world.world_ptr_mut(), obj.desc.entity, ECS_ON_UPDATE);
+        {
+            obj.desc.phase = ECS_ON_UPDATE;
         }
         obj
     }
@@ -113,24 +91,7 @@ where
     ///
     /// * `phase` - the phase
     pub fn kind(&mut self, phase: impl IntoEntity) -> &mut Self {
-        let phase = *phase.into_entity(self.world);
-        let current_phase: sys::ecs_entity_t = unsafe {
-            sys::ecs_get_target(self.world_ptr_mut(), self.desc.entity, ECS_DEPENDS_ON, 0)
-        };
-        unsafe {
-            if current_phase != 0 {
-                sys::ecs_remove_id(
-                    self.world_ptr_mut(),
-                    self.desc.entity,
-                    ecs_dependson(current_phase),
-                );
-                sys::ecs_remove_id(self.world_ptr_mut(), self.desc.entity, current_phase);
-            }
-            if phase != 0 {
-                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, ecs_dependson(phase));
-                sys::ecs_add_id(self.world_ptr_mut(), self.desc.entity, phase);
-            }
-        };
+        self.desc.phase = *phase.into_entity(self.world);
         self
     }
 
@@ -242,3 +203,49 @@ impl<'a, T: QueryTuple> WorldProvider<'a> for SystemBuilder<'a, T> {
 
 implement_reactor_api!((), SystemBuilder<'a, T>);
 implement_reactor_par_api!((), SystemBuilder<'a, T>);
+
+/// Updates an existing [`System`]'s callback or context via
+/// `ecs_system_update()`. Created with [`System::update()`].
+pub struct SystemUpdater<'a, T: QueryTuple = ()> {
+    pub(crate) desc: sys::ecs_system_desc_t,
+    world: WorldRef<'a>,
+    entity: EntityView<'a>,
+    _phantom: core::marker::PhantomData<&'a T>,
+}
+
+impl<'a, T: QueryTuple> SystemUpdater<'a, T> {
+    pub(crate) fn new(entity: EntityView<'a>) -> Self {
+        Self {
+            desc: Default::default(),
+            world: entity.world(),
+            entity,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+impl<'a, T> Builder<'a> for SystemUpdater<'a, T>
+where
+    T: QueryTuple,
+{
+    type BuiltType = System<'a>;
+
+    #[doc(hidden)]
+    fn build(&mut self) -> Self::BuiltType {
+        if self.desc.callback.is_none() && self.desc.run.is_none() {
+            panic!("you should not call this fn manually. Use `.each` , `.run` instead")
+        }
+        unsafe {
+            sys::ecs_system_update(self.world.world_ptr_mut(), *self.entity.id(), &self.desc);
+        }
+        System::new_from_existing(self.entity)
+    }
+}
+
+impl<'a, T: QueryTuple> WorldProvider<'a> for SystemUpdater<'a, T> {
+    fn world(&self) -> WorldRef<'a> {
+        self.world
+    }
+}
+
+implement_reactor_api!((), SystemUpdater<'a, T>);

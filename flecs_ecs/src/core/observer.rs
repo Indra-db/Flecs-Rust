@@ -121,16 +121,23 @@ impl<'a> Observer<'a> {
         }
     }
 
+    /// Replace the observer's callback or run action.
+    ///
+    /// Returns an updater on which `.each()`/`.run()` (and variants) can be
+    /// called; the change is applied through `ecs_observer_update()`.
+    pub fn update<T: QueryTuple>(&self) -> ObserverUpdater<'a, (), T> {
+        ObserverUpdater::new(self.entity)
+    }
+
     /// Set the context for the observer
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_observer_desc_t = sys::ecs_observer_desc_t {
-            entity: *self.id,
             ctx: context,
             ..Default::default()
         };
 
         unsafe {
-            sys::ecs_observer_init(self.world.world_ptr_mut(), &desc);
+            sys::ecs_observer_update(self.world.world_ptr_mut(), *self.id, &desc);
         }
     }
 

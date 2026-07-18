@@ -130,7 +130,6 @@ impl<'a> Archetype<'a> {
     ///
     /// # See also
     ///
-    ///
     /// [`Some(IdView)`]: IdView
     pub fn get(&self, index: usize) -> Option<IdView<'_>> {
         if index < self.count() {

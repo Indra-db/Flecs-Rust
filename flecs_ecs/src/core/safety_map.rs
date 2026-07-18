@@ -424,49 +424,33 @@ fn __internal_do_read_write_locks<
     unsafe {
         for i in 0..count_immutable {
             let info = table_records.get_unchecked(i);
-            let tr = info.table_record;
 
             //if component_id is set, that means this term is a row term
             if ANY_SPARSE_TERMS && info.component_id != 0 {
-                let idr = if tr.is_null() {
-                    //non-fragmenting component
-                    sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
-                } else {
-                    //sparse component
-                    (&*tr).hdr.cr
-                };
+                let idr = sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id);
                 lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
                 continue;
             }
 
-            let tr = &*tr;
-
-            let col = tr.column;
-
-            let table = tr.hdr.table;
-            lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
+            if info.table.is_null() {
+                continue;
+            }
+            lock_table::<INCREMENT, true, MULTITHREADED>(world, info.table, info.column, stage);
         }
         for i in start_index_mutable..end_index_mutable {
             let info = table_records.get_unchecked(i);
-            let tr = info.table_record;
 
             //if component_id is set, that means this term is a row term
             if ANY_SPARSE_TERMS && info.component_id != 0 {
-                let idr = if tr.is_null() {
-                    //non-fragmenting component
-                    sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
-                } else {
-                    //sparse component
-                    (&*tr).hdr.cr
-                };
+                let idr = sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id);
                 lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
                 continue;
             }
 
-            let tr = &*tr;
-            let col = tr.column;
-            let table = tr.hdr.table;
-            lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
+            if info.table.is_null() {
+                continue;
+            }
+            lock_table::<INCREMENT, false, MULTITHREADED>(world, info.table, info.column, stage);
         }
         for i in start_index_optional_immutable..end_index_optional_immutable {
             //this is done by the tr.null check
@@ -474,33 +458,17 @@ fn __internal_do_read_write_locks<
             //     continue;
             // }
             let info = table_records.get_unchecked(i);
-            let tr = info.table_record;
 
-            if !ANY_SPARSE_TERMS && tr.is_null() {
+            if ANY_SPARSE_TERMS && info.component_id != 0 {
+                let idr = sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id);
+                lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
                 continue;
             }
 
-            if ANY_SPARSE_TERMS {
-                let is_comp_id_set = info.component_id != 0;
-                if is_comp_id_set {
-                    let idr = if tr.is_null() {
-                        //non-fragmenting component
-                        sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
-                    } else {
-                        //sparse component
-                        (&*tr).hdr.cr
-                    };
-                    lock_sparse::<INCREMENT, true, MULTITHREADED>(world, idr);
-                    continue;
-                } else if tr.is_null() {
-                    continue;
-                }
+            if info.table.is_null() {
+                continue;
             }
-
-            let tr = &*tr;
-            let col = tr.column;
-            let table = tr.hdr.table;
-            lock_table::<INCREMENT, true, MULTITHREADED>(world, table, col, stage);
+            lock_table::<INCREMENT, true, MULTITHREADED>(world, info.table, info.column, stage);
         }
         for i in start_index_optional_mutable..end_index_optional_mutable {
             //this is done by the tr.null check
@@ -508,33 +476,17 @@ fn __internal_do_read_write_locks<
             //     continue;
             // }
             let info = table_records.get_unchecked(i);
-            let tr = info.table_record;
 
-            if !ANY_SPARSE_TERMS && tr.is_null() {
+            if ANY_SPARSE_TERMS && info.component_id != 0 {
+                let idr = sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id);
+                lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
                 continue;
             }
 
-            if ANY_SPARSE_TERMS {
-                let is_comp_id_set = info.component_id != 0;
-                if is_comp_id_set {
-                    let idr = if tr.is_null() {
-                        //non-fragmenting component
-                        sys::flecs_components_get(world.raw_world.as_ptr(), info.component_id)
-                    } else {
-                        //sparse component
-                        (&*tr).hdr.cr
-                    };
-                    lock_sparse::<INCREMENT, false, MULTITHREADED>(world, idr);
-                    continue;
-                } else if tr.is_null() {
-                    continue;
-                }
+            if info.table.is_null() {
+                continue;
             }
-
-            let tr = &*tr;
-            let col = tr.column;
-            let table = tr.hdr.table;
-            lock_table::<INCREMENT, false, MULTITHREADED>(world, table, col, stage);
+            lock_table::<INCREMENT, false, MULTITHREADED>(world, info.table, info.column, stage);
         }
     }
 }
@@ -554,9 +506,9 @@ pub(crate) fn sparse_id_record_lock_read_begin<const MULTITHREADED: bool>(
     idr: *mut sys::ecs_component_record_t,
 ) {
     let val = if MULTITHREADED {
-        unsafe { sys::flecs_sparse_id_record_lock_read_begin_multithreaded(idr) }
+        unsafe { sys::flecs_sparse_id_record_read_begin_multithreaded(idr) }
     } else {
-        unsafe { sys::flecs_sparse_id_record_lock_read_begin(idr) }
+        unsafe { sys::flecs_sparse_id_record_read_begin(idr) }
     };
     if val {
         panic!(
@@ -583,11 +535,11 @@ pub(crate) fn sparse_id_record_lock_read_end<const MULTITHREADED: bool>(
 ) {
     if MULTITHREADED {
         unsafe {
-            sys::flecs_sparse_id_record_lock_read_end_multithreaded(idr);
+            sys::flecs_sparse_id_record_read_end_multithreaded(idr);
         }
     } else {
         unsafe {
-            sys::flecs_sparse_id_record_lock_read_end(idr);
+            sys::flecs_sparse_id_record_read_end(idr);
         }
     }
 }
@@ -598,9 +550,9 @@ pub(crate) fn sparse_id_record_lock_write_begin<const MULTITHREADED: bool>(
     idr: *mut sys::ecs_component_record_t,
 ) {
     let val = if MULTITHREADED {
-        unsafe { sys::flecs_sparse_id_record_lock_write_begin_multithreaded(idr) }
+        unsafe { sys::flecs_sparse_id_record_write_begin_multithreaded(idr) }
     } else {
-        unsafe { sys::flecs_sparse_id_record_lock_write_begin(idr) }
+        unsafe { sys::flecs_sparse_id_record_write_begin(idr) }
     };
     unsafe {
         if val {
@@ -629,11 +581,11 @@ pub(crate) fn sparse_id_record_lock_write_end<const MULTITHREADED: bool>(
 ) {
     if MULTITHREADED {
         unsafe {
-            sys::flecs_sparse_id_record_lock_write_end_multithreaded(idr);
+            sys::flecs_sparse_id_record_write_end_multithreaded(idr);
         }
     } else {
         unsafe {
-            sys::flecs_sparse_id_record_lock_write_end(idr);
+            sys::flecs_sparse_id_record_write_end(idr);
         }
     }
 }
@@ -646,9 +598,9 @@ pub(crate) fn get_table_column_lock_read_begin<const MULTITHREADED: bool>(
     _stage_id: i32,
 ) {
     let val = if MULTITHREADED {
-        unsafe { sys::flecs_table_column_lock_read_begin_multithreaded(table, column, _stage_id) }
+        unsafe { sys::flecs_table_column_read_begin_multithreaded(table, column, _stage_id) }
     } else {
-        unsafe { sys::flecs_table_column_lock_read_begin(table, column) }
+        unsafe { sys::flecs_table_column_read_begin(table, column) }
     };
 
     if val {
@@ -680,9 +632,9 @@ pub(crate) fn table_column_lock_read_begin<const MULTITHREADED: bool>(
     _stage_id: i32,
 ) -> bool {
     let locked = if MULTITHREADED {
-        unsafe { sys::flecs_table_column_lock_read_begin_multithreaded(table, column, _stage_id) }
+        unsafe { sys::flecs_table_column_read_begin_multithreaded(table, column, _stage_id) }
     } else {
-        unsafe { sys::flecs_table_column_lock_read_begin(table, column) }
+        unsafe { sys::flecs_table_column_read_begin(table, column) }
     };
     if locked {
         table_column_lock_read_end::<MULTITHREADED>(table, column, _stage_id);
@@ -698,11 +650,11 @@ pub(crate) fn table_column_lock_read_end<const MULTITHREADED: bool>(
 ) {
     if MULTITHREADED {
         unsafe {
-            sys::flecs_table_column_lock_read_end_multithreaded(table, column, _stage_id);
+            sys::flecs_table_column_read_end_multithreaded(table, column, _stage_id);
         }
     } else {
         unsafe {
-            sys::flecs_table_column_lock_read_end(table, column);
+            sys::flecs_table_column_read_end(table, column);
         }
     }
 }
@@ -717,9 +669,9 @@ pub(crate) fn table_column_lock_write_begin<const MULTITHREADED: bool>(
     _stage_id: i32,
 ) -> bool {
     let locked = if MULTITHREADED {
-        unsafe { sys::flecs_table_column_lock_write_begin_multithreaded(table, column, _stage_id) }
+        unsafe { sys::flecs_table_column_write_begin_multithreaded(table, column, _stage_id) }
     } else {
-        unsafe { sys::flecs_table_column_lock_write_begin(table, column) }
+        unsafe { sys::flecs_table_column_write_begin(table, column) }
     };
     if locked {
         table_column_lock_write_end::<MULTITHREADED>(table, column, _stage_id);
@@ -734,9 +686,9 @@ pub(crate) fn get_table_column_lock_write_begin<const MULTITHREADED: bool>(
     _stage_id: i32,
 ) {
     let val = if MULTITHREADED {
-        unsafe { sys::flecs_table_column_lock_write_begin_multithreaded(table, column, _stage_id) }
+        unsafe { sys::flecs_table_column_write_begin_multithreaded(table, column, _stage_id) }
     } else {
-        unsafe { sys::flecs_table_column_lock_write_begin(table, column) }
+        unsafe { sys::flecs_table_column_write_begin(table, column) }
     };
 
     if val {
@@ -765,9 +717,9 @@ pub(crate) fn table_column_lock_write_end<const MULTITHREADED: bool>(
     _stage_id: i32,
 ) {
     if MULTITHREADED {
-        unsafe { sys::flecs_table_column_lock_write_end_multithreaded(table, column, _stage_id) }
+        unsafe { sys::flecs_table_column_write_end_multithreaded(table, column, _stage_id) }
     } else {
-        unsafe { sys::flecs_table_column_lock_write_end(table, column) }
+        unsafe { sys::flecs_table_column_write_end(table, column) }
     };
 }
 

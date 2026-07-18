@@ -428,6 +428,7 @@ fn flecs_query_docs_compile_test() {
         clear_generation: 10,
         delete_generation: 0,
         time_budget_seconds: 0.0,
+        offset: 0,
     });
 
     let q = world.new_query::<(&mut Position, &Velocity)>();
@@ -1269,11 +1270,11 @@ fn flecs_entities_components_docs_compile_test() {
     //TODO does not exist yet
     //world.set_version(versioned_id);
 
-    world.set_entity_range(5000, 0);
+    let range = world.entity_range_new(5000, 0);
+    world.entity_range_set(range);
 
-    world.set_entity_range(5000, 10000);
-
-    world.enable_range_check(true);
+    let range = world.entity_range_new(5000, 10000);
+    world.entity_range_set(range);
 
     let e = world.entity_named("MyEntity");
     if e == world.lookup("MyEntity") {

@@ -1165,3 +1165,50 @@ fn enum_runtime_type_constant_u8_template() {
     let _world = World::new();
     // TODO: missing API: flecs_meta dynamic runtime enum with typed constants
 }
+
+#[test]
+fn query_singleton_enum_constant_or() {
+    let world = World::new();
+
+    world
+        .component::<StandardEnum>()
+        .add_trait::<flecs::Singleton>();
+
+    let q = world
+        .query::<()>()
+        .with_enum(StandardEnum::Red)
+        .or()
+        .with_enum(StandardEnum::Blue)
+        .build();
+
+    let mut count = 0;
+
+    q.each_iter(|_it, _index, ()| {
+        count += 1;
+    });
+    assert_eq!(count, 0);
+
+    world.add_enum(StandardEnum::Green);
+
+    q.each_iter(|_it, _index, ()| {
+        count += 1;
+    });
+    assert_eq!(count, 0);
+
+    world.add_enum(StandardEnum::Blue);
+
+    let std_enum_component = world.component::<StandardEnum>().entity_view(&world);
+    q.each_iter(|it, _index, ()| {
+        assert_eq!(it.src(0), std_enum_component);
+        count += 1;
+    });
+    assert_eq!(count, 1);
+
+    world.add_enum(StandardEnum::Red);
+
+    q.each_iter(|it, _index, ()| {
+        assert_eq!(it.src(0), std_enum_component);
+        count += 1;
+    });
+    assert_eq!(count, 2);
+}

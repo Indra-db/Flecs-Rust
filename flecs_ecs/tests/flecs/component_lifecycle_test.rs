@@ -4103,3 +4103,94 @@ fn compare_int64_enum() {
     assert_eq!(c.compare(&red, &yellow), Some(Ordering::Less));
     assert_eq!(c.compare(&blue, &red), Some(Ordering::Greater));
 }
+
+#[test]
+fn on_validate_hook() {
+    let validate_count = std::rc::Rc::new(Cell::new(0));
+    let on_set_count = std::rc::Rc::new(Cell::new(0));
+    let e_arg = std::rc::Rc::new(Cell::new(0u64));
+    let v = std::rc::Rc::new(Cell::new((0, 0)));
+
+    let world = World::new();
+
+    let validate_count_c = validate_count.clone();
+    let on_set_count_c = on_set_count.clone();
+    let e_arg_c = e_arg.clone();
+    let v_c = v.clone();
+
+    world
+        .component::<Position>()
+        .on_validate(move |arg, p| {
+            validate_count_c.set(validate_count_c.get() + 1);
+            e_arg_c.set(*arg.id());
+            v_c.set((p.x, p.y));
+            p.x != 0 || p.y != 0
+        })
+        .on_set(move |_, _| {
+            on_set_count_c.set(on_set_count_c.get() + 1);
+        });
+
+    let e = world.entity();
+    e.set(Position { x: 10, y: 20 });
+
+    assert_eq!(validate_count.get(), 1);
+    assert_eq!(on_set_count.get(), 1);
+    assert_eq!(e_arg.get(), *e.id());
+    assert_eq!(v.get(), (10, 20));
+}
+
+#[test]
+fn on_validate_hook_blocks_on_set() {
+    let validate_count = std::rc::Rc::new(Cell::new(0));
+    let on_set_count = std::rc::Rc::new(Cell::new(0));
+
+    let world = World::new();
+
+    let validate_count_c = validate_count.clone();
+    let on_set_count_c = on_set_count.clone();
+
+    world
+        .component::<Position>()
+        .on_validate(move |_, p| {
+            validate_count_c.set(validate_count_c.get() + 1);
+            p.x != 0 || p.y != 0
+        })
+        .on_set(move |_, _| {
+            on_set_count_c.set(on_set_count_c.get() + 1);
+        });
+
+    let e = world.entity();
+    e.set(Position { x: 0, y: 0 });
+
+    assert_eq!(validate_count.get(), 1);
+    assert_eq!(on_set_count.get(), 0);
+}
+
+#[test]
+fn on_validate_hook_blocks_observer() {
+    let validate_count = std::rc::Rc::new(Cell::new(0));
+    let observer_count = std::rc::Rc::new(Cell::new(0));
+
+    let world = World::new();
+
+    let validate_count_c = validate_count.clone();
+    let observer_count_c = observer_count.clone();
+
+    world.component::<Position>().on_validate(move |_, p| {
+        validate_count_c.set(validate_count_c.get() + 1);
+        p.x != 0 || p.y != 0
+    });
+
+    world.observer::<flecs::OnSet, &Position>().each(move |_| {
+        observer_count_c.set(observer_count_c.get() + 1);
+    });
+
+    let e = world.entity();
+    e.set(Position { x: 10, y: 20 });
+    assert_eq!(validate_count.get(), 1);
+    assert_eq!(observer_count.get(), 1);
+
+    e.set(Position { x: 0, y: 0 });
+    assert_eq!(validate_count.get(), 2);
+    assert_eq!(observer_count.get(), 1);
+}

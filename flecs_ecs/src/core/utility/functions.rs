@@ -53,6 +53,15 @@ pub fn ecs_is_pair(entity: impl Into<Id>) -> bool {
     entity.into() & RUST_ecs_id_FLAGS_MASK == ECS_PAIR
 }
 
+/// Combine a relationship with a raw 32-bit value into a value pair id.
+///
+/// Value pairs encode a literal value in the target position of a pair
+/// instead of an entity (matches the C `ecs_value_pair` macro).
+#[inline(always)]
+pub fn ecs_value_pair(rel: u64, value: u64) -> u64 {
+    ECS_VALUE_PAIR | ecs_entity_id_combine(value, rel)
+}
+
 /// Set the `ECS_DEPENDS_ON` flag for the given entity.
 ///
 /// # Arguments
@@ -416,6 +425,10 @@ pub(crate) fn assign_helper<T: ComponentId>(
         core::ptr::write(dst, value);
     }
 
+    if !res.stage.is_null() {
+        unsafe { sys::flecs_defer_end(res.world, res.stage) };
+    }
+
     if res.call_modified {
         unsafe { sys::ecs_modified_id(world, entity, id) };
     }
@@ -462,8 +475,6 @@ pub(crate) unsafe fn flecs_field_at<T>(it: *const sys::ecs_iter_t, index: i8, ro
 /// # Type Parameters
 ///
 /// * `T`: The type to get the `OperKind` for.
-///
-/// # See also
 #[expect(dead_code, reason = "possibly used in the future")]
 pub(crate) fn type_to_oper<T: OperType>() -> OperKind {
     T::OPER

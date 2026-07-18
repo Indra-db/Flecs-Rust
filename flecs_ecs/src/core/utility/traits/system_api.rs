@@ -502,8 +502,6 @@ where
     ///     .add(Position::id())
     ///     .add(Velocity::id());
     ///
-    ///
-    ///
     /// let count_entities = Rc::new(RefCell::new(0));
     /// let count_tables = Rc::new(RefCell::new(0));
     /// // Clone the `Rc` to retain shared ownership and move it into the closure to satisfy the 'static lifetime requirement.
@@ -607,8 +605,6 @@ where
     ///     .add(Tag)
     ///     .add(Position::id())
     ///     .add(Velocity::id());
-    ///
-    ///
     ///
     /// let count_entities = Rc::new(RefCell::new(0));
     /// let count_tables = Rc::new(RefCell::new(0));

@@ -8,6 +8,32 @@ use crate::sys;
 use flecs_ecs_derive::tuples;
 use sys::ecs_record_t;
 
+/* Without flecs_safety_locks, ecs_get_ptr_t degrades to a bare void*
+ * (mirror of C's ECS_GET_PTR_PTR / ECS_GET_PTR_NULL macros). */
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) fn get_ptr_raw(get_ptr: &sys::ecs_get_ptr_t) -> *mut c_void {
+    get_ptr.ptr
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+#[inline(always)]
+pub(crate) fn get_ptr_raw(get_ptr: &sys::ecs_get_ptr_t) -> *mut c_void {
+    *get_ptr
+}
+
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) fn get_ptr_null() -> sys::ecs_get_ptr_t {
+    sys::ecs_get_ptr_t::default()
+}
+
+#[cfg(not(feature = "flecs_safety_locks"))]
+#[inline(always)]
+pub(crate) fn get_ptr_null() -> sys::ecs_get_ptr_t {
+    core::ptr::null_mut()
+}
+
 #[cfg(feature = "flecs_safety_locks")]
 #[derive(Debug, Copy, Clone)]
 #[doc(hidden)]
@@ -305,7 +331,7 @@ pub trait GetTuple: Sized {
                     let constant_value =
                         unsafe { sys::flecs_record_get_id(world_ptr, target, record, pair_id) };
                     ecs_assert!(
-                        !constant_value.ptr.is_null(),
+                        !get_ptr_raw(&constant_value).is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -322,7 +348,7 @@ pub trait GetTuple: Sized {
                         unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
 
                     ecs_assert!(
-                        !constant_value.ptr.is_null(),
+                        !get_ptr_raw(&constant_value).is_null(),
                         FlecsErrorCode::InternalError,
                         "missing enum constant value {}",
                         core::any::type_name::<T>()
@@ -334,13 +360,60 @@ pub trait GetTuple: Sized {
                 // if there is no matching pair for (r,*), try just r
                 unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
             }
+        } else if const {
+            // mirrors the C++ `is_get_sparse_component` fast path: sparse /
+            // dont_fragment components without (OnInstantiate, Inherit) skip
+            // the table-record lookup and read sparse storage directly.
+            // Restricted to non-pairs: a pair record's sparse trait comes from
+            // its relationship, which the data type's consts can't express.
+            (<T::OnlyType as ComponentOrPairId>::CastType::IS_SPARSE
+                || <T::OnlyType as ComponentOrPairId>::CastType::IS_DONT_FRAGMENT)
+                && !matches!(
+                    <T::OnlyType as ComponentOrPairId>::CastType::ON_INSTANTIATE,
+                    OnInstantiatePolicy::Inherit
+                )
+                && !<T::OnlyType as ComponentOrPairId>::IS_PAIR
+        } {
+            unsafe {
+                sys::ecs_rust_get_sparse_id(
+                    world_ptr,
+                    entity,
+                    id,
+                    core::mem::size_of::<<T::OnlyType as ComponentOrPairId>::CastType>(),
+                )
+            }
         } else if T::IS_IMMUTABLE {
             unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         } else {
-            unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
+            /* flecs_record_get_mut_id rejects wildcard ids; resolve (R, *) /
+             * (R, Any) to the concrete pair on the entity first. Only pairs
+             * can contain a wildcard, so non-pair ids skip the check. */
+            let id = if ecs_is_pair(id) {
+                let second = *ecs_second(id, world);
+                if second == flecs::Wildcard::ID || second == flecs::Any::ID {
+                    let table = unsafe { (*record).table };
+                    if table.is_null() {
+                        0
+                    } else {
+                        let mut concrete: sys::ecs_id_t = 0;
+                        let column =
+                            unsafe { sys::ecs_search(world_ptr, table, id, &mut concrete) };
+                        if column == -1 { 0 } else { concrete }
+                    }
+                } else {
+                    id
+                }
+            } else {
+                id
+            };
+            if id == 0 {
+                get_ptr_null()
+            } else {
+                unsafe { sys::flecs_record_get_mut_id(world_ptr, record, id) }
+            }
         };
 
-        let component_ptr = get_ptr.ptr;
+        let component_ptr = get_ptr_raw(&get_ptr);
 
         if component_ptr.is_null() {
             components[index] = core::ptr::null_mut();

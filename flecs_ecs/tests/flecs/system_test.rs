@@ -2530,7 +2530,7 @@ fn nested_rate_tick_source() {
 
     // t3 ticks every 3 frames; t6 ticks every 2 t3 ticks = every 6 frames
     let t3 = world.timer().set_rate(3);
-    let t6 = world.timer().set_rate_w_tick_source(2, t3.id());
+    let t6 = world.timer().set_rate_with_tick_source(2, t3.id());
 
     world
         .system_named::<()>("sys_a")
@@ -2797,31 +2797,27 @@ fn register_twice_w_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        })
-        .run();
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&mut Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        })
-        .run();
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&mut Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2834,31 +2830,27 @@ fn register_twice_w_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        })
-        .run();
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        })
-        .run();
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2871,31 +2863,27 @@ fn register_twice_w_run_each() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        })
-        .run();
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        })
-        .run();
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2908,31 +2896,27 @@ fn register_twice_w_each_run() {
 
     world.set(Count2 { a: 0, b: 0 });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.a += 1;
-                });
-            }
-        })
-        .run();
+    let sys = world.system_named::<()>("Test").run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.a += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.a, 1);
     });
 
-    world
-        .system_named::<()>("Test")
-        .run(|mut it| {
-            while it.next() {
-                it.world().get::<&mut Count2>(|count| {
-                    count.b += 1;
-                });
-            }
-        })
-        .run();
+    let sys = sys.update::<()>().run(|mut it| {
+        while it.next() {
+            it.world().get::<&mut Count2>(|count| {
+                count.b += 1;
+            });
+        }
+    });
+    sys.run();
 
     world.get::<&Count2>(|count| {
         assert_eq!(count.b, 1);
@@ -2963,9 +2947,8 @@ fn lookup_and_update_each() {
     let e = world.lookup("Test");
     assert!(*e.id() != 0);
 
-    // Re-register with same name replaces callback (equivalent to C++ sys.each(...))
-    world
-        .system_named::<()>("Test")
+    let sys = world.system_from(e);
+    sys.update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
@@ -3002,9 +2985,11 @@ fn lookup_and_update_run() {
         assert_eq!(count.a, 1);
     });
 
-    // Replace callback by re-registering with same name
-    world
-        .system_named::<()>("Test")
+    let e = world.lookup("Test");
+    assert!(*e.id() != 0);
+
+    let sys = world.system_from(e);
+    sys.update::<()>()
         .run(|mut it| {
             while it.next() {
                 it.world().get::<&mut Count2>(|count| {
@@ -3146,4 +3131,94 @@ fn run_w_0_src_query() {
     world.get::<&Count>(|c| {
         assert_eq!(c.0, 1);
     });
+}
+
+#[test]
+fn reuse_system_builder() {
+    let world = World::new();
+
+    world.entity().set(Position { x: 10, y: 20 });
+    world
+        .entity()
+        .set(Position { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let count_1 = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_2 = std::rc::Rc::new(core::cell::Cell::new(0));
+
+    let mut sb = world.system::<&Position>();
+
+    let count_1_c = count_1.clone();
+    let s1 = sb.each(move |_p| {
+        count_1_c.set(count_1_c.get() + 1);
+    });
+
+    let count_2_c = count_2.clone();
+    let s2 = sb.with(Velocity::id()).each(move |_p| {
+        count_2_c.set(count_2_c.get() + 1);
+    });
+
+    assert!(s1.id() != s2.id());
+
+    world.progress();
+
+    assert_eq!(count_1.get(), 2);
+    assert_eq!(count_2.get(), 1);
+}
+
+#[test]
+fn kind_on_shared_builder() {
+    let world = World::new();
+
+    let mut sb = world.system::<&Position>();
+
+    let s1 = sb.each(|_p| {});
+
+    let s2 = sb.kind(id::<flecs::pipeline::PostUpdate>()).each(|_p| {});
+
+    assert!(s1.id() != s2.id());
+
+    let s1 = s1.entity_view(&world);
+    let s2 = s2.entity_view(&world);
+
+    assert!(s1.has((flecs::DependsOn::ID, flecs::pipeline::OnUpdate::ID)));
+    assert!(s1.has(flecs::pipeline::OnUpdate::ID));
+
+    assert!(s2.has((flecs::DependsOn::ID, flecs::pipeline::PostUpdate::ID)));
+    assert!(s2.has(flecs::pipeline::PostUpdate::ID));
+    assert!(!s2.has((flecs::DependsOn::ID, flecs::pipeline::OnUpdate::ID)));
+    assert!(!s2.has(flecs::pipeline::OnUpdate::ID));
+}
+
+#[test]
+fn custom_pipeline_w_name() {
+    let world = World::new();
+
+    let tag = world.entity();
+
+    let pip = world
+        .pipeline_named("MyPipeline")
+        .with(id::<flecs::system::System>())
+        .with(tag)
+        .build();
+
+    assert_eq!(pip.entity_view(&world).name(), "MyPipeline");
+    assert_eq!(world.lookup("MyPipeline"), pip.entity_view(&world));
+
+    let count = std::rc::Rc::new(core::cell::Cell::new(0));
+    let count_c = count.clone();
+
+    world.system::<()>().kind(tag).run(move |mut it| {
+        while it.next() {
+            count_c.set(count_c.get() + 1);
+        }
+    });
+
+    assert_eq!(count.get(), 0);
+
+    world.set_pipeline(pip.entity_view(&world));
+
+    world.progress();
+
+    assert_eq!(count.get(), 1);
 }

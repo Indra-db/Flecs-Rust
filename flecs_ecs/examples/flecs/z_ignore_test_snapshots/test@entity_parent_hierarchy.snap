@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Child of Earth? true\n\nMoon found: ::Sun::Earth::Moon\n\n::Sun [Star, Position, (Identifier,Name)]\n{1, 1}\n\n::Sun::Mercury [Parent, Position, Planet, (Identifier,Name), (ParentDepth,@1)]\n{2, 2}\n\n::Sun::Venus [Parent, Position, Planet, (Identifier,Name), (ParentDepth,@1)]\n{3, 3}\n\n::Sun::Earth [Parent, Position, Planet, (Identifier,Name), (ParentDepth,@1)]\n{4, 4}\n\n::Sun::Earth::Moon [Parent, Position, Moon, (Identifier,Name), (ParentDepth,@2)]\n{4.1, 4.1}\n\n"

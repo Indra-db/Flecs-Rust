@@ -282,10 +282,6 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new<const MULTITHREADED: bool>(
@@ -322,10 +318,6 @@ impl<'a, T, const LOCK: bool> Field<'a, T, LOCK> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result<const MULTITHREADED: bool>(
@@ -617,10 +609,6 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new<const MULTITHREADED: bool>(
@@ -658,10 +646,6 @@ impl<'a, T, const LOCK: bool> FieldMut<'a, T, LOCK> {
     ///
     /// * `slice_components`: pointer to the component array.
     /// * `is_shared`: whether the component is shared.
-    ///
-    /// # See also
-    ///
-    /// * C++ API: `field::field`
     #[doc(alias = "field::field")]
     #[cfg(feature = "flecs_safety_locks")]
     pub(crate) fn new_result<const MULTITHREADED: bool>(
@@ -1495,11 +1479,88 @@ pub(crate) fn flecs_field<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     p as *mut T
 }
 
+/// Resolve the storage location `(table, column)` of a field under the
+/// current flecs iterator contract.
+///
+/// Resolution order matches `ecs_field_w_size` in flecs.c:
+/// 1. `it.columns[index] >= 0`: field is stored in `it.table`.
+/// 2. `it.trs[index]` non-null: field is stored in the table record's table
+///    (shared fields on uncached iterators).
+/// 3. `it.sources[index]` non-zero: resolve through the source entity's
+///    record (shared fields on cached iterators, which don't store trs).
+///
+/// Returns `(null, -1)` when the field has no table column (tags, sparse
+/// components, unset optional fields).
+#[cfg(feature = "flecs_safety_locks")]
+#[inline(always)]
+pub(crate) unsafe fn flecs_field_table_column(
+    it: &sys::ecs_iter_t,
+    index: usize,
+) -> (*mut sys::ecs_table_t, i16) {
+    unsafe {
+        if !it.columns.is_null() {
+            let column = *it.columns.add(index);
+            if column >= 0 {
+                return (it.table, column);
+            }
+        }
+        if !it.trs.is_null() {
+            let tr = *it.trs.add(index);
+            if !tr.is_null() {
+                let tr = &*tr;
+                if tr.column >= 0 {
+                    return (tr.hdr.table, tr.column);
+                }
+                return (core::ptr::null_mut(), -1);
+            }
+        }
+        let src = *it.sources.add(index);
+        if src == 0 {
+            return (core::ptr::null_mut(), -1);
+        }
+        let record = sys::ecs_record_find(it.real_world, src);
+        if record.is_null() {
+            return (core::ptr::null_mut(), -1);
+        }
+        let table = (*record).table;
+        if table.is_null() {
+            return (core::ptr::null_mut(), -1);
+        }
+        let column = sys::ecs_table_get_column_index(it.real_world, table, *it.ids.add(index));
+        if column < 0 {
+            return (core::ptr::null_mut(), -1);
+        }
+        (table, column as i16)
+    }
+}
+
 #[inline(never)]
 fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     let index_usize = index as usize;
-    let tr = unsafe { *it.trs.add(index_usize) };
+    /* it.columns is the primary storage-column source in the current flecs
+     * iterator contract; it.trs is only set by some iterator kinds. */
+    if !it.columns.is_null() {
+        let column = unsafe { *it.columns.add(index_usize) };
+        if column >= 0 {
+            return unsafe {
+                sys::ecs_table_get_column(it.table, column as i32, it.offset) as *mut T
+            };
+        }
+    }
+    let tr = if it.trs.is_null() {
+        core::ptr::null()
+    } else {
+        unsafe { *it.trs.add(index_usize) }
+    };
     if tr.is_null() {
+        /* Shared fields have no table record and no storage column in
+         * it.table; resolve through the source entity (mirrors
+         * flecs_field_shared in flecs.c). */
+        if unsafe { *it.sources.add(index_usize) } != 0 {
+            return unsafe {
+                sys::ecs_field_w_size(it, const { core::mem::size_of::<T>() }, index) as *mut T
+            };
+        }
         /* We're just passing in a pointer to a value that may not be
          * a component on the entity (such as a pointer to a new value
          * in an on_replace hook). */
@@ -1576,7 +1637,7 @@ fn ecs_field_fallback<T>(it: &sys::ecs_iter_t, index: i8) -> *mut T {
     unsafe { sys::ecs_table_get_column(table, column_index as i32, row as i32) as *mut T }
 }
 
-pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
+pub(crate) fn flecs_field_with_size(it: &sys::ecs_iter_t, _size: usize, index: i8) -> *mut c_void {
     let index_usize = index as usize;
     //TODO should be soft asserts
     ecs_assert!(
@@ -1632,8 +1693,24 @@ pub(crate) fn flecs_field_w_size(it: &sys::ecs_iter_t, _size: usize, index: i8) 
         }
     }
 
-    let tr = unsafe { *it.trs.add(index_usize) };
+    if !it.columns.is_null() {
+        let column = unsafe { *it.columns.add(index_usize) };
+        if column >= 0 {
+            return unsafe { sys::ecs_table_get_column(it.table, column as i32, it.offset) };
+        }
+    }
+    let tr = if it.trs.is_null() {
+        core::ptr::null()
+    } else {
+        unsafe { *it.trs.add(index_usize) }
+    };
     if tr.is_null() {
+        /* Shared fields have no table record and no storage column in
+         * it.table; resolve through the source entity (mirrors
+         * flecs_field_shared in flecs.c). */
+        if unsafe { *it.sources.add(index_usize) } != 0 {
+            return unsafe { sys::ecs_field_w_size(it, _size, index) };
+        }
         ecs_assert!(
             !unsafe { sys::ecs_field_is_set(it, index) },
             FlecsErrorCode::InternalError,

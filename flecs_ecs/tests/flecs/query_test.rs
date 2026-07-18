@@ -3596,8 +3596,49 @@ fn optional_singleton() {
     assert_eq!(invoked, 2);
 }
 
-// NOTE: query.has(entity) is not available in the high-level Rust API.
-// Replaced with equivalent logic using each_entity.
+#[derive(Component)]
+struct TestComponent {
+    a: i32,
+    b: i32,
+    c: i32,
+    d: i32,
+    e: i32,
+}
+
+impl Module for TestComponent {
+    fn module(world: &World) {
+        world.module::<TestComponent>("TestComponent");
+        world.set(TestComponent {
+            a: 10,
+            b: 20,
+            c: 30,
+            d: 40,
+            e: 50,
+        });
+    }
+}
+
+#[test]
+fn optional_module() {
+    let world = World::new();
+
+    world.import::<TestComponent>();
+
+    let mut invoked = 0;
+
+    world.new_query::<Option<&TestComponent>>().each(|ptr| {
+        let ptr = ptr.unwrap();
+        assert_eq!(ptr.a, 10);
+        assert_eq!(ptr.b, 20);
+        assert_eq!(ptr.c, 30);
+        assert_eq!(ptr.d, 40);
+        assert_eq!(ptr.e, 50);
+        invoked += 1;
+    });
+
+    assert_eq!(invoked, 1);
+}
+
 #[test]
 fn has_entity() {
     let world = World::new();
@@ -3607,19 +3648,8 @@ fn has_entity() {
 
     let q = world.new_query::<&Position>();
 
-    let mut found_e1 = false;
-    let mut found_e2 = false;
-    q.each_entity(|e, _| {
-        if e == e1 {
-            found_e1 = true;
-        }
-        if e == e2 {
-            found_e2 = true;
-        }
-    });
-
-    assert!(found_e1);
-    assert!(!found_e2);
+    assert!(q.has(e1));
+    assert!(!q.has(e2));
 }
 
 #[test]
@@ -3631,19 +3661,21 @@ fn has_table() {
 
     let q = world.new_query::<&Position>();
 
-    let mut found_e1 = false;
-    let mut found_e2 = false;
-    q.each_entity(|e, _| {
-        if e == e1 {
-            found_e1 = true;
-        }
-        if e == e2 {
-            found_e2 = true;
-        }
-    });
+    assert!(q.has_table(e1.table().unwrap()));
+    assert!(!q.has_table(e2.table().unwrap()));
+}
 
-    assert!(found_e1);
-    assert!(!found_e2);
+#[test]
+fn has_range() {
+    let world = World::new();
+
+    let e1 = world.entity().set(Position { x: 1, y: 2 });
+    let e2 = world.entity().set(Velocity { x: 3, y: 4 });
+
+    let q = world.new_query::<&Position>();
+
+    assert!(q.has_table_range(e1.range().unwrap()));
+    assert!(!q.has_table_range(e2.range().unwrap()));
 }
 
 #[test]
@@ -4406,4 +4438,698 @@ fn clone_consistency() {
     assert_eq!(q1.count(), q2.count());
     assert_eq!(q1.first_entity(), e);
     assert_eq!(q2.first_entity(), e);
+}
+
+// ── sparse queries ──
+// C++ `world.query<T...>()` returns flecs::sparse_query at compile time when
+// all components are DontFragment; Rust uses an explicit
+// `world.sparse_query::<T>()` since trait-based return-type dispatch is not
+// possible. Query_sparse_query_type is covered by the explicit API.
+
+#[derive(Component)]
+#[flecs(traits(DontFragment, (OnInstantiate, Override)))]
+struct PositionDfOr {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Component)]
+#[flecs(traits(DontFragment, (OnInstantiate, Override)))]
+struct VelocityDfOr {
+    x: i32,
+    y: i32,
+}
+
+#[test]
+fn sparse_query_each() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    let e3 = world.entity().set(VelocityDfOr { x: 3, y: 4 });
+
+    let q = world.sparse_query::<(&mut PositionDfOr, &VelocityDfOr)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p, v)| {
+        assert_eq!(e, e1);
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        p.x += v.x;
+        p.y += v.y;
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    assert!(e2.is_alive());
+    assert!(e3.is_alive());
+}
+
+#[test]
+fn sparse_query_empty() {
+    let world = World::new();
+
+    world.component::<PositionDfOr>();
+    world.component::<VelocityDfOr>();
+
+    let q = world.sparse_query::<(&PositionDfOr, &VelocityDfOr)>();
+
+    let mut count = 0;
+    q.each(|(_p, _v)| {
+        count += 1;
+    });
+
+    assert_eq!(count, 0);
+    assert_eq!(q.count(), 0);
+}
+
+#[test]
+fn sparse_query_recycled_entity() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    e1.destruct();
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    assert!(e1 != e2);
+    assert_eq!(*e1.id() as u32, *e2.id() as u32);
+
+    let q = world.sparse_query::<(&PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        assert_eq!(e, e2);
+        assert_eq!(p.x, 30);
+        assert_eq!(p.y, 40);
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+}
+
+#[test]
+fn sparse_query_skip_prefab_disabled() {
+    let world = World::new();
+
+    let e = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    world
+        .entity()
+        .add(flecs::Prefab::ID)
+        .set(PositionDfOr { x: 1, y: 2 });
+    world
+        .entity()
+        .add(flecs::Disabled::ID)
+        .set(PositionDfOr { x: 3, y: 4 });
+    world
+        .entity()
+        .add(flecs::NotQueryable::ID)
+        .set(PositionDfOr { x: 5, y: 6 });
+
+    let q = world.sparse_query::<(&PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|ent, (pos,)| {
+        assert_eq!(ent, e);
+        assert_eq!(pos.x, 10);
+        assert_eq!(pos.y, 20);
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+}
+
+#[test]
+fn world_each_sparse() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+    world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let mut count = 0;
+    world
+        .sparse_query::<(&mut PositionDfOr, &VelocityDfOr)>()
+        .each(|(p, v)| {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+            p.x += v.x;
+            p.y += v.y;
+            count += 1;
+        });
+
+    assert_eq!(count, 1);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn world_each_sparse_w_entity() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let mut count = 0;
+    world
+        .sparse_query::<(&PositionDfOr,)>()
+        .each_entity(|e, (p,)| {
+            if e == e1 {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+            } else {
+                assert_eq!(e, e2);
+                assert_eq!(p.x, 30);
+                assert_eq!(p.y, 40);
+            }
+            count += 1;
+        });
+
+    assert_eq!(count, 2);
+}
+
+#[derive(Component)]
+#[flecs(traits(DontFragment))]
+struct PositionDf {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Component)]
+#[flecs(traits(DontFragment, (OnInstantiate, DontInherit)))]
+struct PositionDfDi {
+    x: i32,
+    y: i32,
+}
+
+#[test]
+fn sparse_query_type_no_on_instantiate() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDf { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDf { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&PositionDf,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+}
+
+#[test]
+fn sparse_query_each_on_instantiate_override() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    let e3 = world.entity();
+
+    let q = world.sparse_query::<(&mut PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        p.x += 1;
+        p.y += 1;
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(q.count(), 2);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    e2.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 41);
+    });
+
+    assert!(e3.is_alive());
+}
+
+#[test]
+fn sparse_query_each_on_instantiate_dont_inherit() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfDi { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfDi { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&mut PositionDfDi,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        p.x += 1;
+        p.y += 1;
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(q.count(), 2);
+
+    e1.get::<&PositionDfDi>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    e2.get::<&PositionDfDi>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 41);
+    });
+}
+
+#[test]
+fn sparse_query_each_on_instantiate_mixed_terms() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(PositionDfDi { x: 1, y: 2 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+    let e3 = world.entity().set(PositionDfDi { x: 3, y: 4 });
+
+    let q = world.sparse_query::<(&mut PositionDfOr, &PositionDfDi)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p, d)| {
+        assert_eq!(e, e1);
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        p.x += d.x;
+        p.y += d.y;
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+
+    assert!(e2.is_alive());
+    assert!(e3.is_alive());
+}
+
+#[test]
+fn sparse_query_dynamic_inherit_1_term() {
+    let world = World::new();
+
+    world
+        .component::<PositionDfDi>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let owner = world.entity().set(PositionDfDi { x: 10, y: 20 });
+    let base = world.prefab().set(PositionDfDi { x: 1, y: 2 });
+    let inst = world.entity().is_a(base);
+
+    assert!(!inst.owns(PositionDfDi::id()));
+    assert!(inst.has(PositionDfDi::id()));
+
+    for cache_kind in [QueryCacheKind::None, QueryCacheKind::Auto] {
+        let q = world
+            .query::<&PositionDfDi>()
+            .set_cache_kind(cache_kind)
+            .build();
+
+        let mut owner_count = 0;
+        let mut inst_count = 0;
+        q.each_entity(|e, p| {
+            if e == owner {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+                owner_count += 1;
+            } else {
+                assert_eq!(e, inst);
+                assert_eq!(p.x, 1);
+                assert_eq!(p.y, 2);
+                inst_count += 1;
+            }
+        });
+
+        assert_eq!(owner_count, 1);
+        assert_eq!(inst_count, 1);
+    }
+}
+
+#[test]
+fn sparse_query_convert_to_query_1_term() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&PositionDfOr,)>().to_query();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(q.count(), 2);
+}
+
+#[test]
+fn sparse_query_convert_to_query_3_terms() {
+    let world = World::new();
+
+    let e1 = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(VelocityDfOr { x: 1, y: 2 })
+        .set(PositionDfDi { x: 3, y: 4 });
+    world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let q = world
+        .sparse_query::<(&PositionDfOr, &VelocityDfOr, &PositionDfDi)>()
+        .to_query();
+
+    let mut count = 0;
+    q.each_entity(|e, (p, v, d)| {
+        assert_eq!(e, e1);
+        assert_eq!(p.x, 10);
+        assert_eq!(p.y, 20);
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+        assert_eq!(d.x, 3);
+        assert_eq!(d.y, 4);
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+    assert_eq!(q.count(), 1);
+}
+
+#[test]
+fn dont_fragment_trait_registered() {
+    let world = World::new();
+
+    let c = world.component::<PositionDfOr>();
+    assert!(c.has(flecs::DontFragment));
+}
+
+#[derive(Component)]
+struct PositionSpecializedDf {
+    #[allow(dead_code)]
+    x: f32,
+    #[allow(dead_code)]
+    y: f32,
+}
+
+#[test]
+fn dont_fragment_trait_specialized_registered() {
+    let world = World::new();
+
+    let c = world.component::<PositionSpecializedDf>();
+    c.add_trait::<flecs::DontFragment>();
+    assert!(c.has(flecs::DontFragment));
+}
+
+#[test]
+fn each_dont_fragment_trait() {
+    let world = World::new();
+
+    let e1 = world.entity().set(PositionDfOr { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDfOr { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&mut PositionDfOr,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else if e == e2 {
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        p.x += 1;
+        p.y += 1;
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+
+    e1.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 21);
+    });
+    e2.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 31);
+        assert_eq!(p.y, 41);
+    });
+}
+
+#[test]
+fn each_dont_fragment_trait_mixed() {
+    let world = World::new();
+
+    let entity = world
+        .entity()
+        .set(PositionDfOr { x: 10, y: 20 })
+        .set(Velocity { x: 1, y: 2 });
+
+    let q = world.new_query::<(&mut PositionDfOr, &Velocity)>();
+
+    q.each(|(p, v)| {
+        p.x += v.x;
+        p.y += v.y;
+    });
+
+    entity.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn each_dont_fragment_trait_shared() {
+    let world = World::new();
+
+    let parent = world.entity().set(Velocity { x: 1, y: 2 });
+    let entity = world
+        .entity()
+        .child_of(parent)
+        .set(PositionDfOr { x: 10, y: 20 });
+
+    let q = world
+        .query::<(&mut PositionDfOr, &Velocity)>()
+        .term_at(1)
+        .up_id(flecs::ChildOf::ID)
+        .build();
+
+    let mut count = 0;
+    q.each(|(p, v)| {
+        assert_eq!(v.x, 1);
+        assert_eq!(v.y, 2);
+        p.x += v.x;
+        p.y += v.y;
+        count += 1;
+    });
+
+    assert_eq!(count, 1);
+
+    entity.get::<&PositionDfOr>(|p| {
+        assert_eq!(p.x, 11);
+        assert_eq!(p.y, 22);
+    });
+}
+
+#[test]
+fn each_optional_sparse() {
+    let world = World::new();
+
+    world.component::<Position>().add_trait::<flecs::Sparse>();
+
+    let e1 = world
+        .entity()
+        .set(Velocity { x: 1, y: 2 })
+        .set(Position { x: 10, y: 20 });
+    let e2 = world.entity().set(Velocity { x: 3, y: 4 });
+
+    let q = world.new_query::<(&Velocity, Option<&Position>)>();
+
+    let mut count = 0;
+    let mut with_p = 0;
+    q.each_entity(|e, (v, p)| {
+        if e == e1 {
+            let p = p.unwrap();
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+            assert_eq!(v.x, 1);
+            assert_eq!(v.y, 2);
+            with_p += 1;
+        } else {
+            assert_eq!(e, e2);
+            assert!(p.is_none());
+            assert_eq!(v.x, 3);
+            assert_eq!(v.y, 4);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(with_p, 1);
+}
+
+#[test]
+fn sparse_query_dynamic_inherit_3_terms() {
+    let world = World::new();
+
+    world
+        .component::<PositionDfDi>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let owner = world
+        .entity()
+        .set(PositionDfDi { x: 10, y: 20 })
+        .set(PositionDfOr { x: 30, y: 40 })
+        .set(VelocityDfOr { x: 1, y: 2 });
+
+    let base = world.prefab().set(PositionDfDi { x: 50, y: 60 });
+    let inst = world
+        .entity()
+        .is_a(base)
+        .set(PositionDfOr { x: 70, y: 80 })
+        .set(VelocityDfOr { x: 3, y: 4 });
+
+    assert!(!inst.owns(PositionDfDi::id()));
+    assert!(inst.has(PositionDfDi::id()));
+
+    for cache_kind in [QueryCacheKind::None, QueryCacheKind::Auto] {
+        let q = world
+            .query::<(&PositionDfDi, &PositionDfOr, &VelocityDfOr)>()
+            .set_cache_kind(cache_kind)
+            .build();
+
+        let mut owner_count = 0;
+        let mut inst_count = 0;
+        q.each_entity(|e, (p, p2, v)| {
+            if e == owner {
+                assert_eq!(p.x, 10);
+                assert_eq!(p.y, 20);
+                assert_eq!(p2.x, 30);
+                assert_eq!(p2.y, 40);
+                assert_eq!(v.x, 1);
+                assert_eq!(v.y, 2);
+                owner_count += 1;
+            } else {
+                assert_eq!(e, inst);
+                assert_eq!(p.x, 50);
+                assert_eq!(p.y, 60);
+                assert_eq!(p2.x, 70);
+                assert_eq!(p2.y, 80);
+                assert_eq!(v.x, 3);
+                assert_eq!(v.y, 4);
+                inst_count += 1;
+            }
+        });
+
+        assert_eq!(owner_count, 1);
+        assert_eq!(inst_count, 1);
+    }
+}
+
+// C++ Query_sparse_query_dynamic_inherit_assert expects world.query<T>() to
+// abort because the compile-time sparse query cannot match dynamically
+// inherited components. Rust rejects compile-time declared Inherit policies
+// at compile time (QueryTuple::IS_SPARSE_QUERY, see the compile_fail doctests
+// on SparseQuery); policies added at runtime with add_trait are caught by the
+// runtime assert in SparseQuery::assert_policies (debug builds), tested here.
+#[test]
+#[cfg(debug_assertions)]
+fn sparse_query_dynamic_inherit_assert() {
+    let world = World::new();
+
+    world
+        .component::<PositionDfDi>()
+        .add_trait::<(flecs::OnInstantiate, flecs::Inherit)>();
+
+    let result = std::panic::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        world.sparse_query::<(&PositionDfDi,)>();
+    }));
+    assert!(result.is_err());
+}
+
+#[test]
+fn sparse_query_dynamic_dont_inherit() {
+    let world = World::new();
+
+    world
+        .component::<PositionDf>()
+        .add_trait::<(flecs::OnInstantiate, flecs::DontInherit)>();
+
+    let e1 = world.entity().set(PositionDf { x: 10, y: 20 });
+    let e2 = world.entity().set(PositionDf { x: 30, y: 40 });
+
+    let q = world.sparse_query::<(&PositionDf,)>();
+
+    let mut count = 0;
+    q.each_entity(|e, (p,)| {
+        if e == e1 {
+            assert_eq!(p.x, 10);
+            assert_eq!(p.y, 20);
+        } else {
+            assert_eq!(e, e2);
+            assert_eq!(p.x, 30);
+            assert_eq!(p.y, 40);
+        }
+        count += 1;
+    });
+
+    assert_eq!(count, 2);
+    assert_eq!(q.count(), 2);
 }

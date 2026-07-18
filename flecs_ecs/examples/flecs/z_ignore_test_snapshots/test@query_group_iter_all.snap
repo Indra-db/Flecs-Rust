@@ -1,0 +1,5 @@
+---
+source: flecs_ecs/examples/flecs/z_ignore_test_common.rs
+expression: str_output
+---
+"Group ::Asset_A:\n - #[ID] : {1, 1}\n - #[ID] : {2, 2}\nGroup ::Asset_C:\n - #[ID] : {4, 4}\n - #[ID] : {5, 5}\n - #[ID] : {6, 6}\nGroup ::Asset_B:\n - #[ID] : {3, 3}\n"

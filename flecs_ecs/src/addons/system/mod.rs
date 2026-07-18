@@ -92,6 +92,30 @@ impl<'a> System<'a> {
         }
     }
 
+    /// Replace the system's callback or run action.
+    ///
+    /// Returns an updater on which `.each()`/`.run()` (and variants) can be
+    /// called; the change is applied through `ecs_system_update()`.
+    pub fn update<T: QueryTuple>(&self) -> SystemUpdater<'a, T> {
+        SystemUpdater::new(self.entity)
+    }
+
+    /// Limit which groups the system iterates. Only tables in the given
+    /// query group will be iterated by the system.
+    pub fn set_group(&self, group_id: impl IntoEntity) {
+        let group_id = group_id.into_entity(self.world);
+        unsafe {
+            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), *group_id);
+        }
+    }
+
+    /// Reset the system's group filter set by [`System::set_group()`].
+    pub fn clear_group(&self) {
+        unsafe {
+            sys::ecs_system_set_group(self.world.world_ptr_mut(), *self.id(), 0);
+        }
+    }
+
     /// Set the context for the system
     ///
     /// # Arguments
@@ -99,13 +123,12 @@ impl<'a> System<'a> {
     /// * `context` - The context to set.
     pub fn set_context(&mut self, context: *mut c_void) {
         let desc: sys::ecs_system_desc_t = sys::ecs_system_desc_t {
-            entity: *self.id(),
             ctx: context,
             ..Default::default()
         };
 
         unsafe {
-            sys::ecs_system_init(self.world.world_ptr_mut(), &desc);
+            sys::ecs_system_update(self.world.world_ptr_mut(), *self.id(), &desc);
         }
     }
 

@@ -10,6 +10,7 @@ use crate::sys;
 pub struct CachedRef<'a, T> {
     pub(crate) world: WorldRef<'a>,
     pub(crate) component_ref: sys::ecs_ref_t,
+    pub(crate) component_id: sys::ecs_id_t,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -67,6 +68,7 @@ impl<'a, T> CachedRef<'a, T> {
         CachedRef::<T> {
             world,
             component_ref,
+            component_id: id,
             _marker: PhantomData,
         }
     }
@@ -78,7 +80,7 @@ impl<'a, T> CachedRef<'a, T> {
 
     /// Return component associated with reference.
     pub fn component(&self) -> IdView<'a> {
-        IdView::new_from_id(self.world, self.component_ref.id)
+        IdView::new_from_id(self.world, self.component_id)
     }
 
     pub fn has(&mut self) -> bool {
@@ -86,7 +88,7 @@ impl<'a, T> CachedRef<'a, T> {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
-                self.component_ref.id,
+                self.component_id,
             )
         }
         .is_null()
@@ -105,7 +107,7 @@ impl<'a, T: ComponentId> CachedRef<'a, T> {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
-                self.component_ref.id,
+                self.component_id,
             ) as *mut T
         })
         .map(|mut t| unsafe { t.as_mut() })
@@ -118,7 +120,7 @@ impl<'a, T: ComponentId> CachedRef<'a, T> {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
-                self.component_ref.id,
+                self.component_id,
             ) as *mut T
         })
         .expect("Component not found, use try_get if you want to handle this case");
@@ -134,7 +136,7 @@ impl<'a> CachedRef<'a, core::ffi::c_void> {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
-                self.component_ref.id,
+                self.component_id,
             )
         })
         .map(NonNull::as_ptr)
@@ -146,7 +148,7 @@ impl<'a> CachedRef<'a, core::ffi::c_void> {
             sys::ecs_ref_get_id(
                 self.world.world_ptr_mut(),
                 &mut self.component_ref,
-                self.component_ref.id,
+                self.component_id,
             )
         })
         .expect("Component not found, use try_get if you want to handle this case");

@@ -422,7 +422,6 @@ pub trait TermBuilderImpl<'a>: Sized + WorldProvider<'a> + internals::QueryConfi
 
     /// Select src identifier
     ///
-    ///
     /// * initialize it with entity id or
     /// * initialize it with name. If name starts with a $
     ///   the name is interpreted as a variable.

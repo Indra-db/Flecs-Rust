@@ -251,6 +251,10 @@ pub(crate) const ECS_PAIR: u64 = 1 << 63;
 pub(crate) const ECS_AUTO_OVERRIDE: u64 = 1 << 62;
 /// Adds bitset to storage which allows component to be enabled/disabled
 pub(crate) const ECS_TOGGLE: u64 = 1 << 61;
+
+/// Indicates that the id is a value pair: the hi 32 bits encode a value
+/// instead of a target entity.
+pub(crate) const ECS_VALUE_PAIR: u64 = (1 << 60) | (1 << 63);
 /// Include all components from entity to which AND is applied
 pub(crate) const ECS_AND: u64 = 1 << 60;
 
@@ -258,6 +262,9 @@ pub(crate) const ECS_AND: u64 = 1 << 60;
 pub(crate) const ECS_COMPONENT: u64 = 1;
 pub(crate) const ECS_IDENTIFIER: u64 = 2;
 pub(crate) const ECS_POLY: u64 = 3;
+pub(crate) const ECS_PARENT: u64 = 4;
+pub(crate) const ECS_TREE_SPAWNER: u64 = 5;
+pub(crate) const ECS_PARENT_DEPTH: u64 = 6;
 
 // Term id flags
 
@@ -312,14 +319,14 @@ pub(crate) const TRANSITIVE: u64 = 1 << 2;
 pub(crate) const REFLEXIVE: u64 = 1 << 3;
 pub(crate) const ID_INHERITED: u64 = 1 << 4;
 pub(crate) const IS_TRIVIAL: u64 = 1 << 5;
-pub(crate) const IS_CACHEABLE: u64 = 1 << 7;
-pub(crate) const IS_SCOPE: u64 = 1 << 8;
-pub(crate) const IS_MEMBER: u64 = 1 << 9;
-pub(crate) const IS_TOGGLE: u64 = 1 << 10;
-pub(crate) const KEEP_ALIVE: u64 = 1 << 11;
-pub(crate) const IS_SPARSE: u64 = 1 << 12;
-pub(crate) const IS_OR: u64 = 1 << 13;
-pub(crate) const IS_DONT_FRAGMENT: u64 = 1 << 14;
+pub(crate) const IS_CACHEABLE: u64 = 1 << 6;
+pub(crate) const IS_SCOPE: u64 = 1 << 7;
+pub(crate) const IS_MEMBER: u64 = 1 << 8;
+pub(crate) const IS_TOGGLE: u64 = 1 << 9;
+pub(crate) const IS_SPARSE: u64 = 1 << 10;
+pub(crate) const IS_OR: u64 = 1 << 11;
+pub(crate) const IS_DONT_FRAGMENT: u64 = 1 << 12;
+pub(crate) const NON_FRAGMENTING_CHILD_OF: u64 = 1 << 13;
 
 // Query flags
 // Query flags discovered & set during query creation.
@@ -344,6 +351,18 @@ pub(crate) const ECS_QUERY_ALLOW_UNRESOLVED_BY_NAME: u64 = 1 << 6;
 /// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
 pub(crate) const ECS_QUERY_TABLE_ONLY: u64 = 1 << 7;
 
+/// Query detects changes to matched components.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_DETECT_CHANGES: u64 = 1 << 8;
+
+/// Iterate query groups in ascending group id order.
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_GROUP_BY_ORDERED: u64 = 1 << 9;
+
+/// Iterate query groups in descending group id order (with `GroupByOrdered`).
+/// Can be combined with other query flags on the `ecs_query_desc_t::flags` field.
+pub(crate) const ECS_QUERY_GROUP_BY_DESC: u64 = 1 << 10;
+
 // Poly target components
 pub(crate) const ECS_QUERY: u64 = FLECS_HI_COMPONENT_ID;
 pub(crate) const ECS_OBSERVER: u64 = FLECS_HI_COMPONENT_ID + 1;
@@ -353,9 +372,7 @@ pub(crate) const ECS_SYSTEM: u64 = FLECS_HI_COMPONENT_ID + 2;
 pub(crate) const ECS_WORLD: u64 = FLECS_HI_COMPONENT_ID + 3;
 pub(crate) const ECS_FLECS: u64 = FLECS_HI_COMPONENT_ID + 4;
 pub(crate) const ECS_FLECS_CORE: u64 = FLECS_HI_COMPONENT_ID + 5;
-pub(crate) const ECS_FLECS_INTERNALS: u64 = FLECS_HI_COMPONENT_ID + 6;
 pub(crate) const ECS_MODULE: u64 = FLECS_HI_COMPONENT_ID + 7;
-pub(crate) const ECS_PRIVATE: u64 = FLECS_HI_COMPONENT_ID + 8;
 pub(crate) const ECS_PREFAB: u64 = FLECS_HI_COMPONENT_ID + 9;
 pub(crate) const ECS_DISABLED: u64 = FLECS_HI_COMPONENT_ID + 10;
 pub(crate) const ECS_NOT_QUERYABLE: u64 = FLECS_HI_COMPONENT_ID + 11;
@@ -475,36 +492,40 @@ pub(crate) const ECS_ID_T: u64 = FLECS_HI_COMPONENT_ID + 98;
 
 // Meta module component ids
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 99;
+pub(crate) const ECS_META_TYPE: u64 = FLECS_HI_COMPONENT_ID + 110;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 100;
+pub(crate) const ECS_META_TYPE_SERIALIZER: u64 = FLECS_HI_COMPONENT_ID + 109;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 101;
+pub(crate) const ECS_PRIMITIVE: u64 = FLECS_HI_COMPONENT_ID + 99;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 102;
+pub(crate) const ECS_ENUM: u64 = FLECS_HI_COMPONENT_ID + 100;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 103;
+pub(crate) const ECS_BITMASK: u64 = FLECS_HI_COMPONENT_ID + 101;
 #[expect(dead_code, reason = "not meant to be public API")]
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_CONSTANTS: u64 = FLECS_HI_COMPONENT_ID + 104;
+pub(crate) const ECS_CONSTANTS: u64 = FLECS_HI_COMPONENT_ID + 102;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 105;
+pub(crate) const ECS_MEMBER: u64 = FLECS_HI_COMPONENT_ID + 103;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 106;
+pub(crate) const ECS_MEMBER_RANGES: u64 = FLECS_HI_COMPONENT_ID + 104;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 107;
+pub(crate) const ECS_STRUCT: u64 = FLECS_HI_COMPONENT_ID + 105;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 108;
+pub(crate) const ECS_ARRAY: u64 = FLECS_HI_COMPONENT_ID + 106;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 109;
+pub(crate) const ECS_VECTOR: u64 = FLECS_HI_COMPONENT_ID + 107;
 #[cfg(feature = "flecs_meta")]
-pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 110;
+pub(crate) const ECS_OPAQUE: u64 = FLECS_HI_COMPONENT_ID + 108;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_UNIT: u64 = FLECS_HI_COMPONENT_ID + 111;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_UNIT_PREFIX: u64 = FLECS_HI_COMPONENT_ID + 112;
 #[cfg(feature = "flecs_meta")]
 pub(crate) const ECS_QUANTITY: u64 = FLECS_HI_COMPONENT_ID + 113;
+#[cfg(feature = "flecs_meta")]
+pub(crate) const ECS_MAP: u64 = FLECS_HI_COMPONENT_ID + 122;
+#[cfg(feature = "flecs_meta")]
+pub(crate) const ECS_VALUE: u64 = FLECS_HI_COMPONENT_ID + 123;
 
 pub(crate) const ECS_CONSTANT: u64 = FLECS_HI_COMPONENT_ID + 114;
 

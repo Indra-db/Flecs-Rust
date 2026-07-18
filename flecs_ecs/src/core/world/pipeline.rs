@@ -47,7 +47,7 @@ impl World {
     where
         Pipeline: ComponentType<Struct> + ComponentId,
     {
-        PipelineBuilder::<()>::new_w_entity(self, Pipeline::entity_id(self))
+        PipelineBuilder::<()>::new_with_entity(self, Pipeline::entity_id(self))
     }
 
     /// Set a custom pipeline. This operation sets the pipeline to run when [`World::progress()`] is invoked.

@@ -199,4 +199,15 @@ impl World {
         query.each_entity(func);
         query
     }
+
+    /// Create a query that iterates sparse component storages directly.
+    ///
+    /// All components must have the `DontFragment` trait and must not use
+    /// the `(OnInstantiate, Inherit)` policy.
+    pub fn sparse_query<Components>(&self) -> SparseQuery<'_, Components>
+    where
+        Components: QueryTuple,
+    {
+        SparseQuery::new(self)
+    }
 }

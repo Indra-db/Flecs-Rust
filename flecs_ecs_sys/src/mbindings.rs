@@ -102,10 +102,6 @@ unsafe extern "C" {
 pub struct WorldInfo {
     /// Last issued component entity id.
     pub last_component_id: ecs_entity_t,
-    /// First allowed entity id.
-    pub min_id: ecs_entity_t,
-    /// Last allowed entity id.
-    pub max_id: ecs_entity_t,
     /// Raw delta time (no time scaling).
     pub delta_time_raw: f32,
     /// Time passed to or computed by `ecs_progress`.
@@ -210,8 +206,6 @@ fn compile_test_check_if_any_ecs_world_info_fields_changed() {
     // It will fail to compile if the bindgen struct gains/loses fields.
     let _info = ecs_world_info_t {
         last_component_id: 0,
-        min_id: 0,
-        max_id: 0,
         delta_time_raw: 0.0,
         delta_time: 0.0,
         time_scale: 0.0,
@@ -288,6 +282,7 @@ impl Default for ecs_delete_empty_tables_desc_t {
             clear_generation: 0,
             delete_generation: 0,
             time_budget_seconds: 0.0,
+            offset: 0,
         }
     }
 }

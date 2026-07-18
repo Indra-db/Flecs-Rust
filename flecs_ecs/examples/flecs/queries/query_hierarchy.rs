@@ -3,86 +3,87 @@ use crate::z_ignore_test_common::*;
 use flecs_ecs::prelude::*;
 
 #[derive(Debug, Component, Default)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
+struct LocalTransform {
+    x: f32,
+    y: f32,
 }
 
-#[derive(Debug, Component)]
-struct Local;
-
-#[derive(Debug, Component)]
-struct WorldX;
+#[derive(Debug, Component, Default)]
+struct WorldTransform {
+    x: f32,
+    y: f32,
+}
 
 fn main() {
     let world = World::new();
 
+    // Whenever we add LocalTransform, also add WorldTransform.
+    world
+        .component::<LocalTransform>()
+        .add_trait::<(flecs::With, WorldTransform)>();
+
+    // Create a hierarchy. For an explanation see the entity_hierarchy example.
     let sun = world
         .entity_named("Sun")
-        .set_pair::<Position, WorldX>(Position::default())
-        .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
+        .set(LocalTransform { x: 1.0, y: 1.0 });
 
     world
-        .entity_named("Mercury")
-        .child_of(sun)
-        .set_pair::<Position, WorldX>(Position::default())
-        .set_pair::<Position, Local>(Position { x: 1.0, y: 1.0 });
+        .entity_named_child_of(sun, "Mercury")
+        .set(LocalTransform { x: 1.0, y: 1.0 });
 
     world
-        .entity_named("Venus")
-        .child_of(sun)
-        .set_pair::<Position, WorldX>(Position::default())
-        .set_pair::<Position, Local>(Position { x: 2.0, y: 2.0 });
+        .entity_named_child_of(sun, "Venus")
+        .set(LocalTransform { x: 2.0, y: 2.0 });
 
     let earth = world
-        .entity_named("Earth")
-        .child_of(sun)
-        .set_pair::<Position, WorldX>(Position::default())
-        .set_pair::<Position, Local>(Position { x: 3.0, y: 3.0 });
+        .entity_named_child_of(sun, "Earth")
+        .set(LocalTransform { x: 3.0, y: 3.0 });
 
     world
-        .entity_named("Moon")
-        .child_of(earth)
-        .set_pair::<Position, WorldX>(Position::default())
-        .set_pair::<Position, Local>(Position { x: 0.1, y: 0.1 });
+        .entity_named_child_of(earth, "Moon")
+        .set(LocalTransform { x: 0.1, y: 0.1 });
 
+    // Create a hierarchical query to compute the global position from the
+    // local position and the parent position. The three terms are:
+    //  - Local position
+    //  - World parent position (optional, so we match root entities)
+    //  - World position
     let query = world
         .query::<(
-            &(Position, Local),
-            Option<&(Position, WorldX)>,
-            &mut (Position, WorldX),
+            &LocalTransform,
+            Option<&WorldTransform>,
+            &mut WorldTransform,
         )>()
+        // Select the second term from the parent entity with .parent(). The
+        // cascade() modifier ensures that the query iterates parents before
+        // children.
         .term_at(1)
         .parent()
         .cascade()
         .build();
 
-    query.each(|(local, parent_world, world)| {
-        world.x = local.x;
-        world.y = local.y;
-        if let Some(parent_world) = parent_world {
-            world.x += parent_world.x;
-            world.y += parent_world.y;
+    query.each(|(t_local, t_parent, t_world)| {
+        t_world.x = t_local.x;
+        t_world.y = t_local.y;
+        if let Some(t_parent) = t_parent {
+            t_world.x += t_parent.x;
+            t_world.y += t_parent.y;
         }
     });
 
+    // Print world positions
     world
-        .new_query::<&(Position, WorldX)>()
-        .each_entity(|entity, position| {
-            println!(
-                "Entity {} is at ({}, {})",
-                entity.name(),
-                position.x,
-                position.y
-            );
+        .new_query::<&WorldTransform>()
+        .each_entity(|entity, p| {
+            println!("{}: {{{}, {}}}", entity.name(), p.x, p.y);
         });
 
     // Output:
-    //  Entity Sun is at (1, 1)
-    //  Entity Mercury is at (2, 2)
-    //  Entity Venus is at (3, 3)
-    //  Entity Earth is at (4, 4)
-    //  Entity Moon is at (4.1, 4.1)
+    //  Sun: {1, 1}
+    //  Mercury: {2, 2}
+    //  Venus: {3, 3}
+    //  Earth: {4, 4}
+    //  Moon: {4.1, 4.1}
 }
 
 #[cfg(feature = "flecs_nightly_tests")]

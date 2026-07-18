@@ -42,7 +42,7 @@ where
     }
 
     /// Create a new pipeline builder with an associated entity
-    pub(crate) fn new_w_entity(world: &'a World, entity: impl Into<Entity>) -> Self {
+    pub(crate) fn new_with_entity(world: &'a World, entity: impl Into<Entity>) -> Self {
         let mut obj = Self::new(world);
         obj.desc.entity = *entity.into();
         obj

@@ -407,7 +407,7 @@ fn set_generic() {
     let pos = Position { x: 10, y: 20 };
 
     let entity = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             position.id(),
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -1434,7 +1434,7 @@ fn path_custom_sep() {
     world.set_scope(parent.id());
     let child = world.entity_named("child");
 
-    assert_eq!(&child.path_w_sep("_", "?").unwrap(), "?parent_child");
+    assert_eq!(&child.path_with_sep("_", "?").unwrap(), "?parent_child");
 }
 
 #[test]
@@ -1448,11 +1448,11 @@ fn path_from_custom_sep() {
     let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep("_", "?").unwrap(),
+        &grandchild.path_with_sep("_", "?").unwrap(),
         "?parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_w_sep(parent, "_", "::").unwrap(),
+        &grandchild.path_from_with_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -1468,11 +1468,11 @@ fn path_from_type_custom_sep() {
     let grandchild = world.entity_named("grandchild");
 
     assert_eq!(
-        &grandchild.path_w_sep("_", "?").unwrap(),
+        &grandchild.path_with_sep("_", "?").unwrap(),
         "?Parent_child_grandchild"
     );
     assert_eq!(
-        &grandchild.path_from_w_sep(parent, "_", "::").unwrap(),
+        &grandchild.path_from_with_sep(parent, "_", "::").unwrap(),
         "child_grandchild"
     );
 }
@@ -5066,6 +5066,16 @@ fn try_get_n_t() {
         assert_eq!(v.y, 2);
     });
     assert!(found.is_some());
+
+    let e2 = world.entity();
+    e2.set(Position { x: 1, y: 2 });
+    assert!(e2.try_get::<(&Position, &Velocity)>(|_| {}).is_none());
+    let found = e2.try_get::<(&Position, Option<&Velocity>)>(|(p, v)| {
+        assert_eq!(p.x, 1);
+        assert_eq!(p.y, 2);
+        assert!(v.is_none());
+    });
+    assert!(found.is_some());
 }
 
 // try_get_R_t
@@ -5594,7 +5604,7 @@ fn set_generic_w_id() {
     let position = world.component::<Position>();
     let pos = Position { x: 10, y: 20 };
     let e = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             position.id(),
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -5616,7 +5626,7 @@ fn set_generic_w_id_t() {
     let id = position.id();
     let pos = Position { x: 10, y: 20 };
     let e = unsafe {
-        world.entity().set_ptr_w_size(
+        world.entity().set_ptr_with_size(
             id,
             core::mem::size_of::<Position>(),
             &pos as *const _ as *const c_void,
@@ -5724,17 +5734,15 @@ fn set_r_t_3() {
 #[test]
 fn set_r_t_generic_no_size() {
     let world = World::new();
-    let _guard = FlecsPanicAbortGuard::install();
-    let _position = world.component::<Position>();
+    let position = world.component::<Position>();
     let rel = world.entity();
-    // C++: entity.set_ptr(ecs_pair(rel, position_component_entity), &data)
-    // The pair is (rel, Position) — rel is first, Position is second.
-    // set_first::<Position>(data, second_entity) = set pair (second_entity, Position_type)
-    // Actually: set pair where rel=first, Position=second → use set_first<Position>(data, rel)
-    let e = world
-        .entity()
-        .set_first::<Position>(Position { x: 10, y: 20 }, rel);
-    let ptr = e.get_first_untyped::<Position>(rel);
+    let pos = Position { x: 10, y: 20 };
+    let e = unsafe {
+        world
+            .entity()
+            .set_ptr((rel, position), &pos as *const _ as *const c_void)
+    };
+    let ptr = e.get_second_untyped::<Position>(rel);
     assert!(!ptr.is_null());
     let p = unsafe { &*(ptr as *const Position) };
     assert_eq!(p.x, 10);
@@ -6405,12 +6413,13 @@ fn child_of() {
     assert!(e.has((flecs::ChildOf::ID, base)));
 }
 
-// child
+// child (C++ removed the redundant entity_view::child() API; use
+// world.entity_child_of(parent) instead)
 #[test]
 fn child() {
     let world = World::new();
     let base = world.entity();
-    let e = base.child();
+    let e = world.entity_child_of(base);
     assert!(e.has((flecs::ChildOf::ID, base)));
 }
 
@@ -7036,8 +7045,10 @@ fn on_replace_w_emplace() {
 #[test]
 fn entity_w_childof() {
     let world = World::new();
+
     let p = world.entity();
-    let e = world.entity().child_of(p);
+    let e = world.entity_child_of(p);
+
     assert!(e.has((flecs::ChildOf::ID, p)));
 }
 
@@ -7045,50 +7056,89 @@ fn entity_w_childof() {
 #[test]
 fn entity_w_childof_w_name() {
     let world = World::new();
+
     let p = world.entity_named("Parent");
-    let e = world.entity_named("Foo").child_of(p);
+    let e = world.entity_named_child_of(p, "Foo");
+
     assert!(e.has((flecs::ChildOf::ID, p)));
     assert_eq!(e.name(), "Foo");
-    // "Foo" at root scope should not be e (it has a parent)
-    let root_foo = world.try_lookup("Foo");
-    assert!(root_foo.is_none() || root_foo.unwrap() != e);
-    // Full path lookup
-    let found = world.try_lookup_recursive("Parent::Foo");
-    assert_eq!(found, Some(e));
+
+    assert!(world.try_lookup("Foo").is_none());
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
 // entity_w_childof_w_name_existing_w_name
 #[test]
 fn entity_w_childof_w_name_existing_w_name() {
     let world = World::new();
+
     let p = world.entity_named("Parent");
     let f = world.entity_named("Foo");
-    // Create "Foo" as a child of Parent using path syntax — creates a new entity
-    let e = world.entity_named("Parent::Foo");
-    // They should be different entities
-    assert_ne!(f, e);
-    assert!(!f.has((flecs::ChildOf::ID, world.id_view_from(*flecs::Wildcard))));
+    let e = world.entity_named_child_of(p, "Foo");
+
+    assert!(f != e);
+    assert!(!f.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));
     assert!(e.has((flecs::ChildOf::ID, p)));
     assert_eq!(e.name(), "Foo");
+
+    assert_eq!(world.lookup("Foo"), f);
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
-// entity_w_parent
+// entity_with_parent
 #[test]
-fn entity_w_parent() {
-    // TODO: missing API: flecs::Parent - not available in Rust bindings
-    // world.entity(flecs::Parent{p}) creates entity with Parent component
+fn entity_with_parent() {
+    let world = World::new();
+
+    let p = world.entity();
+    let e = world.entity_with_parent(p);
+
+    assert!(e.has(id::<flecs::Parent>()));
+    e.get::<&flecs::Parent>(|parent| {
+        assert_eq!(parent.value, *p.id());
+    });
 }
 
 // entity_w_parent_w_name
 #[test]
 fn entity_w_parent_w_name() {
-    // TODO: missing API: flecs::Parent - not available in Rust bindings
+    let world = World::new();
+
+    let p = world.entity_named("Parent");
+    let e = world.entity_named_with_parent(p, "Foo");
+
+    assert!(e.has(id::<flecs::Parent>()));
+    e.get::<&flecs::Parent>(|parent| {
+        assert_eq!(parent.value, *p.id());
+    });
+    assert_eq!(e.name(), "Foo");
+
+    assert!(world.try_lookup("Foo").is_none());
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
 // entity_w_parent_w_name_existing_w_name
 #[test]
 fn entity_w_parent_w_name_existing_w_name() {
-    // TODO: missing API: flecs::Parent - not available in Rust bindings
+    let world = World::new();
+
+    let p = world.entity_named("Parent");
+    let f = world.entity_named("Foo");
+    let e = world.entity_named_with_parent(p, "Foo");
+
+    assert!(f != e);
+    assert!(!f.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));
+    assert!(!f.has(id::<flecs::Parent>()));
+    assert!(e.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));
+    assert!(e.has((flecs::ChildOf::ID, p)));
+    assert!(e.has(id::<flecs::Parent>()));
+    e.get::<&flecs::Parent>(|parent| {
+        assert_eq!(parent.value, *p.id());
+    });
+    assert_eq!(e.name(), "Foo");
+
+    assert_eq!(world.lookup("Foo"), f);
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
 // entity_w_nested_type
@@ -7107,8 +7157,10 @@ fn entity_w_nested_type() {
 #[test]
 fn prefab_w_childof() {
     let world = World::new();
+
     let p = world.entity();
-    let e = world.prefab().child_of(p);
+    let e = world.prefab_child_of(p);
+
     assert!(e.has(flecs::Prefab::ID));
     assert!(e.has((flecs::ChildOf::ID, p)));
 }
@@ -7117,28 +7169,35 @@ fn prefab_w_childof() {
 #[test]
 fn prefab_w_childof_w_name() {
     let world = World::new();
+
     let p = world.entity_named("Parent");
-    let e = world.prefab_named("Foo").child_of(p);
+    let e = world.prefab_named_child_of(p, "Foo");
+
     assert!(e.has(flecs::Prefab::ID));
     assert!(e.has((flecs::ChildOf::ID, p)));
     assert_eq!(e.name(), "Foo");
-    assert_eq!(world.lookup_recursive("Parent::Foo"), e);
+
+    assert!(world.try_lookup("Foo").is_none());
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
 // prefab_w_childof_w_name_existing_w_name
 #[test]
 fn prefab_w_childof_w_name_existing_w_name() {
     let world = World::new();
+
     let p = world.entity_named("Parent");
     let f = world.entity_named("Foo");
-    // Create "Foo" as a child of Parent using path syntax — creates a new entity
-    let e = world.entity_named("Parent::Foo");
-    e.add(flecs::Prefab::ID);
-    assert_ne!(f, e);
-    assert!(!f.has((flecs::ChildOf::ID, world.id_view_from(*flecs::Wildcard))));
+    let e = world.prefab_named_child_of(p, "Foo");
+
+    assert!(f != e);
+    assert!(!f.has((flecs::ChildOf::ID, flecs::Wildcard::ID)));
     assert!(e.has(flecs::Prefab::ID));
     assert!(e.has((flecs::ChildOf::ID, p)));
     assert_eq!(e.name(), "Foo");
+
+    assert_eq!(world.lookup("Foo"), f);
+    assert_eq!(world.lookup("Parent::Foo"), e);
 }
 
 // prefab_w_parent
@@ -7162,85 +7221,378 @@ fn prefab_w_parent_w_name_existing_w_name() {
 // set_parent
 #[test]
 fn set_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
 }
 
 // defer_set_parent
 #[test]
 fn defer_set_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+
+    world.defer_begin();
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(!child.has(id::<flecs::Parent>()));
+    assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+    world.defer_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
 }
 
 // set_change_parent
 #[test]
 fn set_change_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let parent_2 = world.entity().child_of(parent);
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
+
+    child.set(flecs::Parent {
+        value: *parent_2.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent_2.id());
+    });
 }
 
 // defer_set_change_parent
 #[test]
 fn defer_set_change_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let parent_2 = world.entity().child_of(parent);
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
+
+    world.defer_begin();
+    child.set(flecs::Parent {
+        value: *parent_2.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+    assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+    world.defer_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent_2.id());
+    });
 }
 
 // assign_parent
 #[test]
 fn assign_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let parent_2 = world.entity().child_of(parent);
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
+
+    child.assign(flecs::Parent {
+        value: *parent_2.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent_2.id());
+    });
 }
 
 // defer_assign_parent
 #[test]
 fn defer_assign_parent() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let parent_2 = world.entity().child_of(parent);
+    let child = world.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
+
+    world.defer_begin();
+    child.assign(flecs::Parent {
+        value: *parent_2.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+    assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+    world.defer_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent_2.id());
+    });
 }
 
 // set_parent_on_stage
 #[test]
 fn set_parent_on_stage() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let stage = world.stage(0);
+
+    let parent = world.entity();
+
+    world.readonly_begin(false);
+
+    let child = stage.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(!child.has(id::<flecs::Parent>()));
+    assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    world.readonly_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
 }
 
 // assign_parent_on_stage
 #[test]
 fn assign_parent_on_stage() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let stage = world.stage(0);
+
+    let parent = world.entity();
+    let parent_2 = world.entity().child_of(parent);
+
+    world.readonly_begin(false);
+
+    let child = stage.entity().set(flecs::Parent {
+        value: *parent.id(),
+    });
+
+    assert!(!child.has(id::<flecs::Parent>()));
+    assert!(!child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    world.readonly_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent.id());
+    });
+
+    world.readonly_begin(false);
+
+    child.assign(flecs::Parent {
+        value: *parent_2.id(),
+    });
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 1)));
+
+    world.readonly_end();
+
+    assert!(child.has(id::<flecs::Parent>()));
+    assert!(child.has(ecs_value_pair(flecs::ParentDepth::ID, 2)));
+
+    child.get::<&flecs::Parent>(|p| {
+        assert_eq!(p.value, *parent_2.id());
+    });
 }
 
 // defer_set_parent_to_deleted
 #[test]
 fn defer_set_parent_to_deleted() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let child = world.entity();
+
+    world.defer_begin();
+    parent.destruct();
+    child.set(flecs::Parent {
+        value: *parent.id(),
+    });
+    world.defer_end();
+
+    assert!(!parent.is_alive());
+    assert!(!child.is_alive());
 }
 
 // defer_set_parent_to_deleted_batched
 #[test]
 fn defer_set_parent_to_deleted_batched() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent = world.entity();
+    let child = world.entity();
+
+    world.defer_begin();
+    parent.destruct();
+    child.set(Position { x: 10, y: 20 });
+    child.set(flecs::Parent {
+        value: *parent.id(),
+    });
+    child.set(Velocity { x: 1, y: 2 });
+    world.defer_end();
+
+    assert!(!parent.is_alive());
+    assert!(!child.is_alive());
 }
 
 // defer_set_existing_parent_to_deleted
 #[test]
 fn defer_set_existing_parent_to_deleted() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent_a = world.entity();
+    let parent_b = world.entity();
+    let child = world.entity_with_parent(parent_a);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(flecs::Parent {
+        value: *parent_b.id(),
+    });
+    world.defer_end();
+
+    assert!(parent_a.is_alive());
+    assert!(!parent_b.is_alive());
+    assert!(!child.is_alive());
 }
 
 // defer_set_existing_parent_to_deleted_batched
 #[test]
 fn defer_set_existing_parent_to_deleted_batched() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent_a = world.entity();
+    let parent_b = world.entity();
+    let child = world.entity_with_parent(parent_a);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(Position { x: 10, y: 20 });
+    child.set(flecs::Parent {
+        value: *parent_b.id(),
+    });
+    child.set(Velocity { x: 1, y: 2 });
+    world.defer_end();
+
+    assert!(parent_a.is_alive());
+    assert!(!parent_b.is_alive());
+    assert!(!child.is_alive());
 }
 
 // defer_assign_parent_to_deleted
 #[test]
 fn defer_assign_parent_to_deleted() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent_a = world.entity();
+    let parent_b = world.entity();
+    let child = world.entity_with_parent(parent_a);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.assign(flecs::Parent {
+        value: *parent_b.id(),
+    });
+    world.defer_end();
+
+    assert!(parent_a.is_alive());
+    assert!(!parent_b.is_alive());
+    assert!(!child.is_alive());
 }
 
 // defer_assign_parent_to_deleted_batched
 #[test]
 fn defer_assign_parent_to_deleted_batched() {
-    // TODO: missing API: flecs::Parent component not available in Rust bindings
+    let world = World::new();
+
+    let parent_a = world.entity();
+    let parent_b = world.entity();
+    let child = world.entity_with_parent(parent_a);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(Position { x: 10, y: 20 });
+    child.assign(flecs::Parent {
+        value: *parent_b.id(),
+    });
+    child.set(Velocity { x: 1, y: 2 });
+    world.defer_end();
+
+    assert!(parent_a.is_alive());
+    assert!(!parent_b.is_alive());
+    assert!(!child.is_alive());
 }
 
 // add_if_true_R_O

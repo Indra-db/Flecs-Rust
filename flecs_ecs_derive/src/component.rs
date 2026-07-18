@@ -10,7 +10,7 @@ use syn::{
 // Additionally parse special options like `meta`, `on_registration`, and `name = "..."`.
 pub(crate) fn collect_flecs_traits_calls(
     input: &DeriveInput,
-) -> (TokenStream, bool, bool, Option<LitStr>) {
+) -> (TokenStream, bool, bool, Option<LitStr>, TokenStream) {
     use syn::{
         parenthesized, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma,
     };
@@ -262,6 +262,7 @@ pub(crate) fn collect_flecs_traits_calls(
     }
 
     let mut out = TokenStream::new();
+    let mut trait_consts = TokenStream::new();
     let mut has_flecs_meta = false;
     let mut has_on_registration = false;
     let mut flecs_name: Option<LitStr> = None;
@@ -284,6 +285,17 @@ pub(crate) fn collect_flecs_traits_calls(
                             for t in items {
                                 match t {
                                     Item::Single(p) => {
+                                        if let Some(seg) = p.segments.last() {
+                                            if seg.ident == "Sparse" {
+                                                trait_consts.extend(
+                                                    quote! { const IS_SPARSE: bool = true; },
+                                                );
+                                            } else if seg.ident == "DontFragment" {
+                                                trait_consts.extend(
+                                                    quote! { const IS_DONT_FRAGMENT: bool = true; },
+                                                );
+                                            }
+                                        }
                                         let q = qualify(p);
                                         out.extend(quote! { _component.add_trait::<#q>(); });
                                     }
@@ -291,6 +303,30 @@ pub(crate) fn collect_flecs_traits_calls(
                                         if let Some(err) = validate_traits_pair_first(p1) {
                                             out.extend(err);
                                             continue;
+                                        }
+                                        if p1
+                                            .segments
+                                            .last()
+                                            .is_some_and(|s| s.ident == "OnInstantiate")
+                                        {
+                                            let policy = p2.segments.last().and_then(|s| {
+                                                if s.ident == "Override" {
+                                                    Some(quote! { Override })
+                                                } else if s.ident == "Inherit" {
+                                                    Some(quote! { Inherit })
+                                                } else if s.ident == "DontInherit" {
+                                                    Some(quote! { DontInherit })
+                                                } else {
+                                                    None
+                                                }
+                                            });
+                                            if let Some(policy) = policy {
+                                                trait_consts.extend(quote! {
+                                                    const ON_INSTANTIATE:
+                                                        flecs_ecs::core::component_registration::OnInstantiatePolicy =
+                                                        flecs_ecs::core::component_registration::OnInstantiatePolicy::#policy;
+                                                });
+                                            }
                                         }
                                         let q1 = qualify(p1);
                                         // For special relationship traits (With, OneOf, IsA, ChildOf, DependsOn),
@@ -464,7 +500,13 @@ pub(crate) fn collect_flecs_traits_calls(
         out
     };
 
-    (out, has_flecs_meta, has_on_registration, flecs_name)
+    (
+        out,
+        has_flecs_meta,
+        has_on_registration,
+        flecs_name,
+        trait_consts,
+    )
 }
 
 pub(crate) fn impl_meta(
@@ -632,6 +674,7 @@ pub(crate) fn impl_cached_component_data_struct(
     has_on_registration: bool,
     flecs_traits_calls: &TokenStream,
     flecs_name: &Option<LitStr>,
+    trait_consts: &TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -1006,6 +1049,7 @@ pub(crate) fn impl_cached_component_data_struct(
                 #partial_ord_bound
                 #partial_eq_bound
                 #send_sync_bound
+                #trait_consts
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -1123,7 +1167,7 @@ pub(crate) fn impl_cached_component_data_struct(
             #pre_name
             #[inline(always)]
             fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
+                let _component = flecs_ecs::core::Component::<Self>::new_with_id(world, component_id);
 
                 #flecs_traits_calls
 
@@ -1236,6 +1280,7 @@ pub(crate) fn impl_cached_component_data_enum(
     underlying_enum_type: TokenStream,
     flecs_traits_calls: &TokenStream,
     flecs_name: &Option<LitStr>,
+    trait_consts: &TokenStream,
 ) -> proc_macro2::TokenStream {
     let is_generic = !ast.generics.params.is_empty();
 
@@ -1427,6 +1472,7 @@ pub(crate) fn impl_cached_component_data_enum(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsSync::<#name #type_generics>::IMPLS
                 };
+                #trait_consts
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -1463,6 +1509,7 @@ pub(crate) fn impl_cached_component_data_enum(
                     use flecs_ecs::core::utility::traits::DoesNotImpl;
                     flecs_ecs::core::utility::types::ImplementsSync::<#name #type_generics>::IMPLS
                 };
+                #trait_consts
                 const IS_REF: bool = false;
                 const IS_MUT: bool = false;
             }
@@ -1483,7 +1530,7 @@ pub(crate) fn impl_cached_component_data_enum(
                 #pre_name
                 #[inline(always)]
                 fn internal_on_component_registration(world: flecs_ecs::core::WorldRef, component_id: flecs_ecs::core::Entity) {
-                    let _component = flecs_ecs::core::Component::<Self>::new_w_id(world, component_id);
+                    let _component = flecs_ecs::core::Component::<Self>::new_with_id(world, component_id);
 
                     #flecs_traits_calls
 
@@ -1613,7 +1660,7 @@ pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro
     use alloc::vec::Vec;
 
     // Collect #[flecs(...)] trait requests and options (e.g., meta) to apply on registration
-    let (flecs_traits_calls, has_flecs_meta, has_on_registration, flecs_name) =
+    let (flecs_traits_calls, has_flecs_meta, has_on_registration, flecs_name, trait_consts) =
         collect_flecs_traits_calls(&input);
 
     let has_repr_c = check_repr_c(&input);
@@ -1635,6 +1682,7 @@ pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro
                 has_on_registration,
                 &flecs_traits_calls,
                 &flecs_name,
+                &trait_consts,
             ));
         }
         syn::Data::Enum(_) => {
@@ -1647,6 +1695,7 @@ pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro
                     has_on_registration,
                     &flecs_traits_calls,
                     &flecs_name,
+                    &trait_consts,
                 ));
             } else {
                 generated_impls.push(impl_cached_component_data_enum(
@@ -1655,6 +1704,7 @@ pub(crate) fn expand_component_derive(mut input: syn::DeriveInput) -> proc_macro
                     has_repr_c.1,
                     &flecs_traits_calls,
                     &flecs_name,
+                    &trait_consts,
                 ));
             }
         }

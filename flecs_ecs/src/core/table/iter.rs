@@ -283,7 +283,6 @@ where
     ///
     /// # See also
     ///
-    ///
     /// # Safety
     /// - caller must ensure the ctx variable was set to a type accessible as C and is not aliased
     pub unsafe fn context<T>(&mut self) -> &'a mut T {
@@ -512,14 +511,17 @@ where
             );
         }
         if TYPED {
-            ecs_assert!(
-                {
-                    let term_id = unsafe { sys::ecs_field_id(self.iter, _index) };
-                    let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
-                    id == term_id || unsafe { sys::ecs_id_is_pair(term_id) }
-                },
+            // Always checked, also in release builds: a mismatch would let the
+            // field data be reinterpreted as the wrong type.
+            let term_id = unsafe { sys::ecs_field_id(self.iter, _index) };
+            let id = <T::UnderlyingType as ComponentId>::entity_id(self.world());
+            let matches = id == term_id
+                || (unsafe { sys::ecs_id_is_pair(term_id) }
+                    && unsafe { sys::ecs_get_typeid(self.world().world_ptr_mut(), term_id) == id });
+            assert!(
+                matches,
+                "{}: id mismatch: expected {id}, got term id {term_id} whose component type does not match",
                 FlecsErrorCode::InvalidParameter,
-                "id mismatch: expected {id}, got {term_id} or term_id is not a pair",
             );
         }
     }
@@ -1683,15 +1685,16 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
                 Field::<T, LOCK>::new_result::<true>(
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1701,7 +1704,7 @@ where
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1732,8 +1735,9 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
 
             if world_ref.is_currently_multithreaded() {
@@ -1741,7 +1745,7 @@ where
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1751,7 +1755,7 @@ where
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1781,15 +1785,16 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
                 Some(Field::<T, LOCK>::new::<true>(
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1799,7 +1804,7 @@ where
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1833,15 +1838,16 @@ where
             if slice.is_empty() {
                 return Field::<T, LOCK>::new_empty(is_shared);
             }
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
             if world_ref.is_currently_multithreaded() {
                 Field::<T, LOCK>::new::<true>(
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1851,7 +1857,7 @@ where
                     slice,
                     is_shared,
                     world_ref.stage_id(),
-                    unsafe { (*tr).column },
+                    column_index,
                     index,
                     unsafe { NonNull::new_unchecked(table) },
                     world_ref,
@@ -1894,7 +1900,7 @@ where
             self.count()
         };
 
-        let array = flecs_field_w_size(self.iter, size, index);
+        let array = flecs_field_with_size(self.iter, size, index);
 
         (array, is_shared, count, size)
     }
@@ -1919,10 +1925,10 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
-            let column_index = unsafe { (*tr).column };
             if world_ref.is_currently_multithreaded() {
                 Some(FieldMut::<T, LOCK>::new::<true>(
                     slice,
@@ -1972,10 +1978,10 @@ where
             if slice.is_empty() {
                 return FieldMut::<T, LOCK>::new_empty(is_shared);
             }
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let table = unsafe { (*tr).hdr.table };
+            let (table, column_index) =
+                unsafe { flecs_field_table_column(self.iter, index as usize) };
+            debug_assert!(!table.is_null(), "field {index} has no table column");
             let world_ref = &self.world;
-            let column_index = unsafe { (*tr).column };
             if world_ref.is_currently_multithreaded() {
                 FieldMut::<T, LOCK>::new::<true>(
                     slice,
@@ -2058,10 +2064,11 @@ where
     #[inline(always)]
     fn field_table_column(&self, index: i8) -> (NonNull<sys::ecs_table_t>, i16) {
         // SAFETY: callers only invoke this for a set, dense (non-sparse) field,
-        // so the table record for `index` is non-null, matching field_internal.
+        // so the field resolves to a table column, matching field_internal.
         unsafe {
-            let tr = *self.iter.trs.add(index as usize);
-            (NonNull::new_unchecked((*tr).hdr.table), (*tr).column)
+            let (table, column) = flecs_field_table_column(self.iter, index as usize);
+            debug_assert!(!table.is_null(), "field {index} has no table column");
+            (NonNull::new_unchecked(table), column)
         }
     }
 
@@ -2131,7 +2138,11 @@ where
         #[cfg(feature = "flecs_safety_locks")]
         {
             let world_ref = &self.world;
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
+            let tr = if self.iter.trs.is_null() {
+                core::ptr::null()
+            } else {
+                unsafe { *self.iter.trs.add(index as usize) }
+            };
             let idr = if !tr.is_null() {
                 unsafe { (*tr).hdr.cr }
             } else {
@@ -2175,9 +2186,18 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cr };
             let world_ref = &self.world;
+            let tr = if self.iter.trs.is_null() {
+                core::ptr::null()
+            } else {
+                unsafe { *self.iter.trs.add(index as usize) }
+            };
+            let idr = if !tr.is_null() {
+                unsafe { (*tr).hdr.cr }
+            } else {
+                let comp_id = unsafe { *self.iter.ids.add(index as usize) };
+                unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
+            };
 
             Some(FieldAt::<T::UnderlyingType>::new(
                 component_ref,
@@ -2263,9 +2283,18 @@ where
 
         #[cfg(feature = "flecs_safety_locks")]
         {
-            let tr = unsafe { *self.iter.trs.add(index as usize) };
-            let idr = unsafe { (*tr).hdr.cr };
             let world_ref = &self.world;
+            let tr = if self.iter.trs.is_null() {
+                core::ptr::null()
+            } else {
+                unsafe { *self.iter.trs.add(index as usize) }
+            };
+            let idr = if !tr.is_null() {
+                unsafe { (*tr).hdr.cr }
+            } else {
+                let comp_id = unsafe { *self.iter.ids.add(index as usize) };
+                unsafe { sys::flecs_components_get(world_ref.raw_world.as_ptr(), comp_id) }
+            };
 
             Some(FieldAtMut::<T::UnderlyingType>::new(
                 component_ref,
