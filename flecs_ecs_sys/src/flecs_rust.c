@@ -318,3 +318,59 @@ done:
 error:
     return (ecs_rust_set_t){0};
 }
+ecs_get_ptr_t ecs_rust_get_sparse_id(
+    const ecs_world_t *world,
+    ecs_entity_t entity,
+    ecs_id_t id,
+    size_t size)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    flecs_assert_entity_valid(world, entity, "get_sparse");
+    ecs_check(!ecs_id_is_wildcard(id), ECS_INVALID_PARAMETER,
+        "cannot call get_sparse() with wildcard component '%s'",
+            flecs_errstr(ecs_id_str(world, id)));
+    ecs_check(ecs_id_is_valid(world, id), ECS_INVALID_PARAMETER, NULL);
+
+    world = ecs_get_world(world);
+
+    ecs_component_record_t *cr = flecs_components_get(world, id);
+    if (!cr) {
+        return ECS_GET_PTR_NULL;
+    }
+
+    ecs_check(cr->flags & EcsIdSparse, ECS_INVALID_PARAMETER,
+        "cannot call get_sparse() for non-sparse component '%s' "
+        "(use get()/get_mut())",
+            flecs_errstr(ecs_id_str(world, id)));
+    ecs_check(!(cr->flags & EcsIdOnInstantiateInherit), ECS_INVALID_PARAMETER,
+        "cannot call get_sparse() for component '%s' with the "
+        "(OnInstantiate, Inherit) trait (use get())",
+            flecs_errstr(ecs_id_str(world, id)));
+    ecs_assert(cr->sparse != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    return ECS_GET_PTR(
+        flecs_sparse_get(cr->sparse, flecs_utosize(size), entity),
+        cr, NULL, -1);
+error:
+    return ECS_GET_PTR_NULL;
+}
+
+size_t ecs_rust_sizeof_ecs_ref_t(void) {
+    return sizeof(ecs_ref_t);
+}
+
+size_t ecs_rust_sizeof_ecs_map_t(void) {
+    return sizeof(ecs_map_t);
+}
+
+size_t ecs_rust_sizeof_ecs_map_iter_t(void) {
+    return sizeof(ecs_map_iter_t);
+}
+
+size_t ecs_rust_sizeof_ecs_stack_t(void) {
+    return sizeof(ecs_stack_t);
+}
+
+size_t ecs_rust_sizeof_ecs_stack_cursor_t(void) {
+    return sizeof(ecs_stack_cursor_t);
+}

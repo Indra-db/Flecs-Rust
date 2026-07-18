@@ -209,7 +209,28 @@ pub trait ClonedTuple: Sized {
     ) {
         world.check_thread_affinity_shared::<<T::OnlyType as ComponentOrPairId>::CastType>();
 
-        let get_ptr = unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) };
+        let get_ptr = if const {
+            // mirrors the C++ `is_get_sparse_component` fast path, see
+            // `get_tuple.rs` for details.
+            (<T::OnlyType as ComponentOrPairId>::CastType::IS_SPARSE
+                || <T::OnlyType as ComponentOrPairId>::CastType::IS_DONT_FRAGMENT)
+                && !matches!(
+                    <T::OnlyType as ComponentOrPairId>::CastType::ON_INSTANTIATE,
+                    OnInstantiatePolicy::Inherit
+                )
+                && !<T::OnlyType as ComponentOrPairId>::IS_PAIR
+        } {
+            unsafe {
+                sys::ecs_rust_get_sparse_id(
+                    world_ptr,
+                    entity,
+                    id,
+                    core::mem::size_of::<<T::OnlyType as ComponentOrPairId>::CastType>(),
+                )
+            }
+        } else {
+            unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
+        };
         let component_ptr = get_ptr.ptr;
 
         if <T::OnlyType as ComponentOrPairId>::IS_PAIR {

@@ -2,7 +2,7 @@
 #![allow(warnings)]
 
 #[cfg(feature = "regenerate_binding")]
-fn generate_bindings() {
+fn generate_bindings(c_debug: bool, out_file: &str) {
     use std::{env, path::PathBuf};
 
     #[derive(Debug)]
@@ -215,12 +215,20 @@ fn generate_bindings() {
         .clang_arg(term_arg)
         .raw_line(format!("pub const FLECS_TERM_COUNT_MAX: u32 = {};", term_count_max).as_str());
 
+    // The debug/release variants must only differ in FLECS_DEBUG vs
+    // FLECS_NDEBUG: several structs (ecs_ref_t, ecs_map_t, ...) carry
+    // trailing debug-only fields, so each compiled C profile needs a
+    // layout-matched bindings file (selected in lib.rs via `flecs_c_release`).
+    bindings = if c_debug {
+        bindings.clang_arg("-DFLECS_DEBUG")
+    } else {
+        bindings.clang_arg("-DFLECS_NDEBUG").clang_arg("-DNDEBUG")
+    };
+
     let bindings = bindings.generate().expect("Unable to generate bindings");
 
     let crate_root: PathBuf = env::var("CARGO_MANIFEST_DIR").unwrap().into();
-    bindings
-        .write_to_file(crate_root.join("src/bindings.rs"))
-        .unwrap();
+    bindings.write_to_file(crate_root.join(out_file)).unwrap();
 }
 
 fn main() {
@@ -230,6 +238,20 @@ fn main() {
     println!("cargo:rerun-if-changed=src/flecs_rust.h");
     println!("cargo:rerun-if-changed=src/flecs_rust.c");
     println!("cargo:rerun-if-changed=build.rs");
+
+    // Decide the C build profile from the target profile, not from this build
+    // script's own `debug_assertions` (build scripts can be compiled with a
+    // different profile than the target). lib.rs selects the layout-matched
+    // bindings module via the `flecs_c_release` cfg.
+    let profile = std::env::var("PROFILE").unwrap_or_default();
+    let force_release = std::env::var("CARGO_FEATURE_FORCE_BUILD_RELEASE").is_ok();
+    let force_debug = std::env::var("CARGO_FEATURE_FORCE_BUILD_DEBUG").is_ok();
+    let release_c = force_release || (profile == "release" && !force_debug);
+
+    println!("cargo::rustc-check-cfg=cfg(flecs_c_release)");
+    if release_c {
+        println!("cargo:rustc-cfg=flecs_c_release");
+    }
 
     #[cfg(not(feature = "disable_build_c"))]
     {
@@ -305,15 +327,14 @@ fn main() {
         #[cfg(feature = "flecs_safety_locks")]
         build.define("FLECS_MUT_ALIAS_LOCKS", None);
 
-        #[cfg(any(
-            all(not(debug_assertions), not(feature = "force_build_debug"),),
-            feature = "force_build_release"
-        ))]
-        {
+        if release_c {
             build
                 .opt_level(3)
                 .define("NDEBUG", None)
+                .define("FLECS_NDEBUG", None)
                 .define("flto", None);
+        } else {
+            build.define("FLECS_DEBUG", None);
         }
 
         #[cfg(feature = "use_os_alloc")]
@@ -355,6 +376,9 @@ fn main() {
         //TODO C might complain about unused functions when disabling certain features, turn the warning off?
 
         #[cfg(feature = "regenerate_binding")]
-        generate_bindings();
+        {
+            generate_bindings(true, "src/bindings.rs");
+            generate_bindings(false, "src/bindings_release.rs");
+        }
     }
 }

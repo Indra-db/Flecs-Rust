@@ -965,8 +965,6 @@ pub struct ecs_stack_cursor_t {
     pub sp: i16,
     #[doc = "< Whether this cursor has been freed."]
     pub is_free: bool,
-    #[doc = "< Stack allocator that owns this cursor (debug only)."]
-    pub owner: *mut ecs_stack_t,
 }
 #[doc = "Stack allocator for quick allocation of small temporary values."]
 #[repr(C)]
@@ -978,8 +976,6 @@ pub struct ecs_stack_t {
     pub tail_page: *mut ecs_stack_page_t,
     #[doc = "< Current tail cursor."]
     pub tail_cursor: *mut ecs_stack_cursor_t,
-    #[doc = "< Number of active cursors (debug only)."]
-    pub cursor_count: i32,
 }
 unsafe extern "C-unwind" {
     #[doc = "Initialize a stack allocator.\n\n @param stack The stack allocator to initialize."]
@@ -1057,10 +1053,6 @@ pub struct ecs_map_t {
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     #[doc = "< Allocator used for memory management."]
     pub allocator: *mut ecs_allocator_t,
-    #[doc = "< Track modifications while iterating."]
-    pub change_count: i32,
-    #[doc = "< Currently iterated element."]
-    pub last_iterated: ecs_map_key_t,
 }
 impl ecs_map_t {
     #[inline]
@@ -1158,8 +1150,6 @@ pub struct ecs_map_iter_t {
     pub entry: *mut ecs_bucket_entry_t,
     #[doc = "< Pointer to current key-value pair."]
     pub res: *mut ecs_map_data_t,
-    #[doc = "< Change count at iterator creation for modification detection."]
-    pub change_count: i32,
 }
 unsafe extern "C-unwind" {
     #[doc = "Initialize a new map.\n\n @param map The map to initialize.\n @param allocator Allocator to use for memory management."]
@@ -2264,8 +2254,6 @@ pub struct ecs_ref_t {
     pub table_version: u16,
     #[doc = "Cached component pointer."]
     pub ptr: *mut ::core::ffi::c_void,
-    #[doc = "Component ID (debug only, used for asserts)."]
-    pub id: ecs_entity_t,
 }
 #[doc = "Page-iterator-specific data."]
 #[repr(C)]
@@ -2588,14 +2576,6 @@ unsafe extern "C-unwind" {
 unsafe extern "C-unwind" {
     #[doc = "Query iterator function for trivially cached queries.\n This operation can be called if an iterator matches the conditions for\n trivial iteration.\n\n @param it The query iterator.\n @return Whether the query has more results."]
     pub fn flecs_query_trivial_cached_next(it: *mut ecs_iter_t) -> bool;
-}
-unsafe extern "C-unwind" {
-    #[doc = "Check if the current thread has exclusive access to the world.\n This operation checks if the current thread is allowed to access the world.\n The operation is called by internal functions before mutating the world, and\n will panic if the current thread does not have exclusive access to the world.\n\n Exclusive access is controlled by the ecs_exclusive_access_begin() and\n ecs_exclusive_access_end() operations.\n\n This operation is public so that it shows up in stack traces, but code such\n as language bindings or wrappers could also use it to verify that the world\n is accessed from the correct thread.\n\n @param world The world."]
-    pub fn flecs_check_exclusive_world_access_write(world: *const ecs_world_t);
-}
-unsafe extern "C-unwind" {
-    #[doc = "Same as flecs_check_exclusive_world_access_write(), but for read access.\n\n @param world The world."]
-    pub fn flecs_check_exclusive_world_access_read(world: *const ecs_world_t);
 }
 unsafe extern "C-unwind" {
     #[doc = "End deferred mode (executes commands when stage->defer becomes 0)."]

@@ -6,6 +6,7 @@ extern crate alloc;
 
 pub mod common_test;
 
+mod abi_test;
 mod addons_misc_test;
 mod aliasing_test;
 #[cfg(feature = "flecs_app")]

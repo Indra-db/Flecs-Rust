@@ -49,7 +49,11 @@ fn main() {
     //  - World parent position (optional, so we match root entities)
     //  - World position
     let query = world
-        .query::<(&LocalTransform, Option<&WorldTransform>, &mut WorldTransform)>()
+        .query::<(
+            &LocalTransform,
+            Option<&WorldTransform>,
+            &mut WorldTransform,
+        )>()
         // Select the second term from the parent entity with .parent(). The
         // cascade() modifier ensures that the query iterates parents before
         // children.

@@ -5066,6 +5066,16 @@ fn try_get_n_t() {
         assert_eq!(v.y, 2);
     });
     assert!(found.is_some());
+
+    let e2 = world.entity();
+    e2.set(Position { x: 1, y: 2 });
+    assert!(e2.try_get::<(&Position, &Velocity)>(|_| {}).is_none());
+    let found = e2.try_get::<(&Position, Option<&Velocity>)>(|(p, v)| {
+        assert_eq!(p.x, 1);
+        assert_eq!(p.y, 2);
+        assert!(v.is_none());
+    });
+    assert!(found.is_some());
 }
 
 // try_get_R_t

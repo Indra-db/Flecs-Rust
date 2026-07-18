@@ -46,7 +46,10 @@ fn main() {
     // Hierarchies use ECS relationships and the builtin flecs::ChildOf relationship to
     // create entities as children of other entities.
 
-    let sun = world.entity_named("Sun").set(Position { x: 1.0, y: 1.0 });
+    let sun = world
+        .entity_named("Sun")
+        .add(Star)
+        .set(Position { x: 1.0, y: 1.0 });
 
     world
         .entity_named_in(sun, "Mercury")
@@ -82,7 +85,7 @@ fn main() {
 
     // Output:
     //  Is the Moon a child of the Earth? true / true
-    //  ::Sun [Position, (Identifier,Name)]
+    //  ::Sun [Star, Position, (Identifier,Name)]
     //  Position { x: 1.0, y: 1.0 }
     //  ::Sun::Mercury [Position, Planet, (Identifier,Name), (ChildOf,Sun)]
     //  Position { x: 2.0, y: 2.0 }

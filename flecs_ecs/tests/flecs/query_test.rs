@@ -3626,17 +3626,15 @@ fn optional_module() {
 
     let mut invoked = 0;
 
-    world
-        .new_query::<Option<&TestComponent>>()
-        .each(|ptr| {
-            let ptr = ptr.unwrap();
-            assert_eq!(ptr.a, 10);
-            assert_eq!(ptr.b, 20);
-            assert_eq!(ptr.c, 30);
-            assert_eq!(ptr.d, 40);
-            assert_eq!(ptr.e, 50);
-            invoked += 1;
-        });
+    world.new_query::<Option<&TestComponent>>().each(|ptr| {
+        let ptr = ptr.unwrap();
+        assert_eq!(ptr.a, 10);
+        assert_eq!(ptr.b, 20);
+        assert_eq!(ptr.c, 30);
+        assert_eq!(ptr.d, 40);
+        assert_eq!(ptr.e, 50);
+        invoked += 1;
+    });
 
     assert_eq!(invoked, 1);
 }
@@ -5092,6 +5090,7 @@ fn sparse_query_dynamic_inherit_3_terms() {
 // on SparseQuery); policies added at runtime with add_trait are caught by the
 // runtime assert in SparseQuery::assert_policies (debug builds), tested here.
 #[test]
+#[cfg(debug_assertions)]
 fn sparse_query_dynamic_inherit_assert() {
     let world = World::new();
 

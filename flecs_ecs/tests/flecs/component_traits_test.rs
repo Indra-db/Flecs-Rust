@@ -1,7 +1,7 @@
 #![allow(clippy::float_cmp)]
 //! Ported from test/cpp/src/ComponentTraits.cpp
 
-use flecs_ecs::prelude::*;
+use crate::common_test::*;
 
 #[derive(Component)]
 #[flecs(traits(DontFragment))]
@@ -578,11 +578,15 @@ fn static_inherit_dont_fragment_inherited() {
     );
 }
 
-// The C++ dynamic_inherit sparse/dont_fragment tests expect an abort because
-// the compile-time sparse get fast path cannot handle dynamically added
-// (OnInstantiate, Inherit). Rust dispatches at runtime, so these succeed.
+// Like C++, the compile-time sparse get fast path cannot handle dynamically
+// added (OnInstantiate, Inherit); these tests expect the resulting abort.
+// The abort comes from an ecs_check, which compiles out under NDEBUG, so
+// these only run against a debug C build.
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_sparse_owned() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -591,15 +595,14 @@ fn dynamic_inherit_sparse_owned() {
 
     let e = world.entity().set(TraitSparse { x: 10.0, y: 20.0 });
 
-    let found = e.try_get::<&TraitSparse>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
-    });
-    assert!(found.is_some());
+    e.try_get::<&TraitSparse>(|_| {});
 }
 
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_sparse_owned_get_mut() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -608,15 +611,14 @@ fn dynamic_inherit_sparse_owned_get_mut() {
 
     let e = world.entity().set(TraitSparse { x: 10.0, y: 20.0 });
 
-    let found = e.try_get::<&mut TraitSparse>(|p| {
-        p.x = 30.0;
-    });
-    assert!(found.is_some());
-    e.get::<&TraitSparse>(|p| assert_eq!(p.x, 30.0));
+    e.try_get::<&mut TraitSparse>(|_| {});
 }
 
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_sparse_inherited() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -626,15 +628,14 @@ fn dynamic_inherit_sparse_inherited() {
     let base = world.prefab().set(TraitSparse { x: 10.0, y: 20.0 });
     let inst = world.entity().is_a(base);
 
-    let found = inst.try_get::<&TraitSparse>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
-    });
-    assert!(found.is_some());
+    inst.try_get::<&TraitSparse>(|_| {});
 }
 
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_dont_fragment_owned() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -643,15 +644,14 @@ fn dynamic_inherit_dont_fragment_owned() {
 
     let e = world.entity().set(TraitDontFragment { x: 10.0, y: 20.0 });
 
-    let found = e.try_get::<&TraitDontFragment>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
-    });
-    assert!(found.is_some());
+    e.try_get::<&TraitDontFragment>(|_| {});
 }
 
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_dont_fragment_owned_get_mut() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -660,15 +660,14 @@ fn dynamic_inherit_dont_fragment_owned_get_mut() {
 
     let e = world.entity().set(TraitDontFragment { x: 10.0, y: 20.0 });
 
-    let found = e.try_get::<&mut TraitDontFragment>(|p| {
-        p.x = 30.0;
-    });
-    assert!(found.is_some());
-    e.get::<&TraitDontFragment>(|p| assert_eq!(p.x, 30.0));
+    e.try_get::<&mut TraitDontFragment>(|_| {});
 }
 
 #[test]
+#[should_panic]
+#[cfg(debug_assertions)]
 fn dynamic_inherit_dont_fragment_inherited() {
+    let _guard = FlecsPanicAbortGuard::install();
     let world = World::new();
 
     world
@@ -678,9 +677,5 @@ fn dynamic_inherit_dont_fragment_inherited() {
     let base = world.prefab().set(TraitDontFragment { x: 10.0, y: 20.0 });
     let inst = world.entity().is_a(base);
 
-    let found = inst.try_get::<&TraitDontFragment>(|p| {
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
-    });
-    assert!(found.is_some());
+    inst.try_get::<&TraitDontFragment>(|_| {});
 }

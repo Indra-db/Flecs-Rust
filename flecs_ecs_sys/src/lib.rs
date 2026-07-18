@@ -10,7 +10,14 @@ compile_error!(
 );
 
 //skips whole file from cargo fmt --all --check for CI
+//the two variants match the compiled C profile: several structs carry
+//FLECS_DEBUG-gated fields, so debug and release C builds have different layouts
+#[cfg(not(flecs_c_release))]
 #[rustfmt::skip]
+mod bindings;
+#[cfg(flecs_c_release)]
+#[rustfmt::skip]
+#[path = "bindings_release.rs"]
 mod bindings;
 mod extensions;
 mod mbindings;

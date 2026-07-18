@@ -114,6 +114,12 @@ cwd = "./flecs_ecs/doc/flecs"
 command = "mdbook"
 args = ["serve", "--open"]
 
+[tasks.regenerate-bindings]
+description = "Regenerate flecs_ecs_sys bindings (debug + release variants) with the full addon feature set"
+command = "cargo"
+args = ["build", "-p", "flecs_ecs", "--features", "flecs_regenerate_binding"]
+workspace = false
+
 [tasks.build-tests-with-regeneration]
 description = "Build all build test projects with binding regeneration enabled"
 script = { file = "${CARGO_MAKE_WORKING_DIRECTORY}/scripts/build_tests_with_regeneration.sh", absolute_path = true }

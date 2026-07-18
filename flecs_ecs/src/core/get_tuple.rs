@@ -334,6 +334,28 @@ pub trait GetTuple: Sized {
                 // if there is no matching pair for (r,*), try just r
                 unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
             }
+        } else if const {
+            // mirrors the C++ `is_get_sparse_component` fast path: sparse /
+            // dont_fragment components without (OnInstantiate, Inherit) skip
+            // the table-record lookup and read sparse storage directly.
+            // Restricted to non-pairs: a pair record's sparse trait comes from
+            // its relationship, which the data type's consts can't express.
+            (<T::OnlyType as ComponentOrPairId>::CastType::IS_SPARSE
+                || <T::OnlyType as ComponentOrPairId>::CastType::IS_DONT_FRAGMENT)
+                && !matches!(
+                    <T::OnlyType as ComponentOrPairId>::CastType::ON_INSTANTIATE,
+                    OnInstantiatePolicy::Inherit
+                )
+                && !<T::OnlyType as ComponentOrPairId>::IS_PAIR
+        } {
+            unsafe {
+                sys::ecs_rust_get_sparse_id(
+                    world_ptr,
+                    entity,
+                    id,
+                    core::mem::size_of::<<T::OnlyType as ComponentOrPairId>::CastType>(),
+                )
+            }
         } else if T::IS_IMMUTABLE {
             unsafe { sys::flecs_record_get_id(world_ptr, entity, record, id) }
         } else {
