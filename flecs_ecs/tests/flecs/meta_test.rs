@@ -826,6 +826,134 @@ fn meta_struct_member_ptr() {
     }
 }
 
+#[derive(Debug, Component)]
+#[flecs(meta)]
+struct EcsStructMacroPosition {
+    x: f32,
+    y: f32,
+}
+
+#[derive(Debug, Component)]
+#[flecs(meta)]
+struct EcsStructMacroLine {
+    start: EcsStructMacroPosition,
+    stop: EcsStructMacroPosition,
+}
+
+#[derive(Debug, Component)]
+#[repr(C)]
+#[flecs(meta)]
+enum EcsEnumMacroColor {
+    Red,
+    Green,
+    Blue,
+}
+
+#[derive(Debug, Component)]
+struct EcsBitmaskMacroFlags {
+    value: u32,
+}
+
+impl EcsBitmaskMacroFlags {
+    const A: u32 = 0x1;
+    const B: u32 = 0x2;
+    const C: u32 = 0x4;
+}
+
+#[test]
+fn meta_ecs_struct_macro() {
+    let world = World::new();
+
+    let c = world.component::<EcsStructMacroPosition>();
+    assert_ne!(c.id(), 0);
+
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"x".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *c.id(), c"y".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, flecs::meta::F32);
+    }
+}
+
+#[test]
+fn meta_ecs_struct_macro_nested() {
+    let world = World::new();
+
+    let p = world.component::<EcsStructMacroPosition>();
+    let l = world.component::<EcsStructMacroLine>();
+    assert_ne!(l.id(), 0);
+
+    unsafe {
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *l.id(), c"start".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, p.id());
+
+        let m = sys::ecs_struct_get_member(world.ptr_mut(), *l.id(), c"stop".as_ptr());
+        assert!(!m.is_null());
+        assert_eq!((*m).type_, p.id());
+    }
+}
+
+#[test]
+fn meta_ecs_struct_macro_idempotent() {
+    let world = World::new();
+
+    let c1 = world.component::<EcsStructMacroPosition>();
+    let c2 = world.component::<EcsStructMacroPosition>();
+    assert_eq!(c1.id(), c2.id());
+
+    unsafe {
+        assert!(!sys::ecs_struct_get_member(world.ptr_mut(), *c1.id(), c"x".as_ptr()).is_null());
+        assert!(!sys::ecs_struct_get_member(world.ptr_mut(), *c1.id(), c"y".as_ptr()).is_null());
+    }
+
+    c1.get::<&flecs::meta::EcsStruct>(|s| {
+        assert_eq!(s.members.count, 2);
+    });
+}
+
+#[test]
+fn meta_ecs_enum_macro() {
+    let world = World::new();
+
+    let c = world.component::<EcsEnumMacroColor>();
+    assert_ne!(c.id(), 0);
+    assert!(c.has(id::<flecs::meta::EcsEnum>()));
+}
+
+#[test]
+fn meta_ecs_bitmask_macro() {
+    let world = World::new();
+
+    let c = world
+        .component::<EcsBitmaskMacroFlags>()
+        .bit("a", EcsBitmaskMacroFlags::A)
+        .bit("b", EcsBitmaskMacroFlags::B)
+        .bit("c", EcsBitmaskMacroFlags::C);
+    assert_ne!(c.id(), 0);
+    assert!(c.has(id::<flecs::meta::Bitmask>()));
+}
+
+#[test]
+fn meta_ecs_struct_macro_no_reflection_for_plain_struct() {
+    let world = World::new();
+
+    #[derive(Debug, Component)]
+    struct Plain {
+        #[allow(dead_code)]
+        a: i32,
+        #[allow(dead_code)]
+        b: i32,
+    }
+
+    let c = world.component::<Plain>();
+    assert_ne!(c.id(), 0);
+    assert!(!c.has(id::<flecs::meta::EcsStruct>()));
+}
+
 #[test]
 fn meta_component_as_array() {
     let world = World::new();
@@ -1879,47 +2007,6 @@ fn meta_unit_w_over() {
             "pU1/U0"
         );
     });
-}
-
-// ── ecs_struct_macro / ecs_enum_macro / ecs_bitmask_macro ──
-// C++ uses ECS_STRUCT / ECS_ENUM / ECS_BITMASK macros which auto-register reflection.
-// No Rust equivalent — use .member() / .bit() manually.
-
-#[test]
-fn meta_ecs_struct_macro() {
-    // TODO: missing API: ECS_STRUCT C macro not available in Rust
-    // C++ registers struct reflection automatically via macro; in Rust use .member()
-    let _world = World::new();
-}
-
-#[test]
-fn meta_ecs_struct_macro_nested() {
-    // TODO: missing API: ECS_STRUCT nested struct macro
-    let _world = World::new();
-}
-
-#[test]
-fn meta_ecs_struct_macro_idempotent() {
-    // TODO: missing API: ECS_STRUCT idempotent registration macro
-    let _world = World::new();
-}
-
-#[test]
-fn meta_ecs_enum_macro() {
-    // TODO: missing API: ECS_ENUM C macro not available in Rust
-    let _world = World::new();
-}
-
-#[test]
-fn meta_ecs_bitmask_macro() {
-    // TODO: missing API: ECS_BITMASK C macro not available in Rust
-    let _world = World::new();
-}
-
-#[test]
-fn meta_ecs_struct_macro_no_reflection_for_plain_struct() {
-    // TODO: missing API: ECS_STRUCT on plain struct (no reflection registered)
-    let _world = World::new();
 }
 
 // ─── i32_from_json ────────────────────────────────────────────────────────────

@@ -3596,6 +3596,51 @@ fn optional_singleton() {
     assert_eq!(invoked, 2);
 }
 
+#[derive(Component)]
+struct TestComponent {
+    a: i32,
+    b: i32,
+    c: i32,
+    d: i32,
+    e: i32,
+}
+
+impl Module for TestComponent {
+    fn module(world: &World) {
+        world.module::<TestComponent>("TestComponent");
+        world.set(TestComponent {
+            a: 10,
+            b: 20,
+            c: 30,
+            d: 40,
+            e: 50,
+        });
+    }
+}
+
+#[test]
+fn optional_module() {
+    let world = World::new();
+
+    world.import::<TestComponent>();
+
+    let mut invoked = 0;
+
+    world
+        .new_query::<Option<&TestComponent>>()
+        .each(|ptr| {
+            let ptr = ptr.unwrap();
+            assert_eq!(ptr.a, 10);
+            assert_eq!(ptr.b, 20);
+            assert_eq!(ptr.c, 30);
+            assert_eq!(ptr.d, 40);
+            assert_eq!(ptr.e, 50);
+            invoked += 1;
+        });
+
+    assert_eq!(invoked, 1);
+}
+
 #[test]
 fn has_entity() {
     let world = World::new();
@@ -4828,6 +4873,31 @@ fn sparse_query_convert_to_query_3_terms() {
 
     assert_eq!(count, 1);
     assert_eq!(q.count(), 1);
+}
+
+#[test]
+fn dont_fragment_trait_registered() {
+    let world = World::new();
+
+    let c = world.component::<PositionDfOr>();
+    assert!(c.has(flecs::DontFragment));
+}
+
+#[derive(Component)]
+struct PositionSpecializedDf {
+    #[allow(dead_code)]
+    x: f32,
+    #[allow(dead_code)]
+    y: f32,
+}
+
+#[test]
+fn dont_fragment_trait_specialized_registered() {
+    let world = World::new();
+
+    let c = world.component::<PositionSpecializedDf>();
+    c.add_trait::<flecs::DontFragment>();
+    assert!(c.has(flecs::DontFragment));
 }
 
 #[test]
